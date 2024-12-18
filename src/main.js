@@ -8,7 +8,8 @@ import '@/iconfont/iconfont.css'
 import Draggable from '@/../lib/vuedraggable/dist/vuedraggable.umd.js'
 import {registerIcon} from '@/utils/el-icons'
 import 'virtual:svg-icons-register'
-
+import router from './router'; // Import the router
+import store from './store'; // Import the store
 import ContainerWidgets from '@/components/form-designer/form-widget/container-widget/index'
 import ContainerItems from '@/components/form-render/container-item/index'
 
@@ -22,7 +23,9 @@ if (typeof window !== 'undefined') {
 
 const vfApp = createApp(App)
 
+vfApp.use(router)
 vfApp.use(ElementPlus)
+vfApp.use(store)
 registerIcon(vfApp)
 vfApp.component('draggable', Draggable)
 addDirective(vfApp)
