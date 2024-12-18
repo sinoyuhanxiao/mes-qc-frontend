@@ -1,0 +1,15 @@
+{
+  "name": "vform-builds",
+  "version": "2.2.9",
+  "author": "vform-admin",
+  "private": false,
+  "main": "dist/VFormDesigner.umd.min.js",
+  "description": "VForm Online Form Designer",
+  "homepage": "https://www.vform666.com/",
+  "keywords": [
+    "variant-form",
+    "vform",
+    "element-ui",
+    "form-designer"
+  ]
+}

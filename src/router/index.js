@@ -3,6 +3,8 @@ import store from '@/store';
 import VFormDesigner from '@/components/form-designer/index.vue';
 import UserManagement from '@/user/UserManagement.vue';
 import LoginPage from '@/user/LoginPage.vue';
+import QualityFormManagement from '@/views/QualityFormManagement.vue';
+import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 
 const routes = [
     {
@@ -23,6 +25,16 @@ const routes = [
         path: '/LoginPage',
         name: 'LoginPage',
         component: LoginPage,
+    },
+    {
+        path: '/quality-form-management',
+        name: 'QualityFormManagement',
+        component: QualityFormManagement
+    },
+    {
+        path: '/form-display',
+        name: 'FormDisplay',
+        component: FormDisplay
     },
 ];
 
