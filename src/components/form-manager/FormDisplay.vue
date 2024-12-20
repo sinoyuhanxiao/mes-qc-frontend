@@ -10,7 +10,7 @@
 import {ref, reactive} from 'vue'
 import { ElMessage } from 'element-plus'
 import VFormRender from '@/components/form-render/index' // the documentation was so silly I found this out
-import testFormJsonData from '@/tests/testFormJsonData.json'; // Import the JSON data
+import testFormJsonData from '@/tests/form_json_data.json'; // Import the JSON data
 
 /* 注意：formJson是指表单设计器导出的json，此处演示的formJson只是一个空白表单json！！ */
 const formJson = reactive(testFormJsonData)
@@ -21,7 +21,7 @@ const vFormRef = ref(null)
 const submitForm = () => {
   vFormRef.value.getFormData().then(formData => {
     // Form Validation OK
-    alert( JSON.stringify(formData) )
+    alert( JSON.stringify(formData, null, 2) )
   }).catch(error => {
     // Form Validation failed
     ElMessage.error(error)
