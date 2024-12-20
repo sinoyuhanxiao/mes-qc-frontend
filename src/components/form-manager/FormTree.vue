@@ -80,7 +80,7 @@ const filterNode = (value: string, data: Tree) => {
   return data.label.includes(value)
 }
 
-// Append a new node
+// Append a new child node
 const append = async (parentData: Tree) => {
   try {
     const newNode = {
@@ -88,8 +88,16 @@ const append = async (parentData: Tree) => {
       children: []
     }
 
-    const response = await axios.post('http://10.10.12.68:8086/form-nodes', newNode)
+    console.log(parentData)
+
+    // Call the backend to add the new child node
+    const response = await axios.post('http://10.10.12.68:8086/form-nodes/child', newNode, {
+      params: { parentId: parentData.id }
+    })
+
     const createdNode = response.data
+
+    console.log(createdNode)
 
     if (!parentData.children) {
       parentData.children = []
@@ -104,11 +112,10 @@ const append = async (parentData: Tree) => {
 // Delete a node
 const remove = async (node: any, nodeData: Tree) => {
   try {
-    console.info(nodeData._id)
-    await axios.delete(`http://10.10.12.68:8086/form-nodes/${nodeData._id}`)
+    await axios.delete(`http://10.10.12.68:8086/form-nodes/${nodeData.id}`)
     const parent = node.parent
     const children: Tree[] = parent.data.children || parent.data
-    const index = children.findIndex((d) => d._id === nodeData._id)
+    const index = children.findIndex((d) => d.id === nodeData.id)
     children.splice(index, 1)
     data.value = [...data.value]
   } catch (err) {
