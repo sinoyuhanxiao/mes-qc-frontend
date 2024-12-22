@@ -81,8 +81,8 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch } from 'vue'
 import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
-import axios from 'axios'
 import { Folder, Document } from '@element-plus/icons-vue'
+import api from '@/services/api.js'
 
 interface Tree {
   _id: string
@@ -121,7 +121,7 @@ const toggleEditMode = () => {
 // Fetch data from the backend
 const fetchFormTreeData = async () => {
   try {
-    const response = await axios.get('http://10.10.12.68:8086/form-nodes')
+    const response = await api.get('/form-nodes')
     data.value = response.data
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load form tree data'
@@ -152,7 +152,7 @@ const confirmDelete = async () => {
   if (!nodeToDelete.value) return
   const { node, nodeData } = nodeToDelete.value
   try {
-    await axios.delete(`http://10.10.12.68:8086/form-nodes/${nodeData.id}`)
+    await api.delete(`/form-nodes/${nodeData.id}`)
     const parent = node.parent
     const children: Tree[] = parent.data.children || parent.data
     const index = children.findIndex((d) => d.id === nodeData.id)
@@ -187,10 +187,10 @@ const confirmAppend = async () => {
     // Check if appending to root or a child node
     if (!parentDataToAppend.value) {
       // Add root-level node
-      response = await axios.post('http://10.10.12.68:8086/form-nodes/top-level', newNode);
+      response = await api.post('form-nodes/top-level', newNode);
     } else {
       // Add child node
-      response = await axios.post('http://10.10.12.68:8086/form-nodes/child', newNode, {
+      response = await api.post('/form-nodes/child', newNode, {
         params: { parentId: parentDataToAppend.value.id },
       });
     }
@@ -224,7 +224,7 @@ const addRootNode = async () => {
       children: [],
     }
 
-    const response = await axios.post('http://10.10.12.68:8086/form-nodes/top-level', newNode)
+    const response = await api.post('/form-nodes/top-level', newNode)
     const createdNode = response.data
     data.value.push(createdNode) // Add the new root node to the tree
   } catch (err) {

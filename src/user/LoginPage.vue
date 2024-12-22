@@ -43,6 +43,7 @@ import axios from 'axios';
 import { User, Lock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { mapActions } from 'vuex';
+import api from '@/services/api.js';
 
 export default {
   name: 'LoginPage',
@@ -80,7 +81,7 @@ export default {
         this.loading = true;
         try {
           // Step 1: Validate the user credentials
-          const validateResponse = await axios.post('http://10.10.12.68:8086/user/validate', null, {
+          const validateResponse = await api.post('/user/validate', null, {
             params: {
               username: this.form.username,
               password: btoa(this.form.password), // Encoding the password
@@ -90,7 +91,7 @@ export default {
           // Check if the response indicates success
           if (validateResponse.data.status === '200') {
             // Step 2: Fetch complete user information
-            const userInfoResponse = await axios.get('http://10.10.12.68:8086/user/info', {
+            const userInfoResponse = await api.get('/user/info', {
               params: {username: this.form.username},
             });
 

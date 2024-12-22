@@ -65,8 +65,8 @@
     </el-table>
 
     <!-- Add User Dialog -->
-    <el-dialog title="Add User" v-model="dialogVisible" width="50%">
-      <el-form :model="newUser" label-width="120px">
+    <el-dialog title="Add User" v-model="addDialogVisible" width="50%">
+      <el-form :model="newUser" label-width="140px">
         <el-form-item label="Name">
           <el-input v-model="newUser.name" />
         </el-form-item>
@@ -92,16 +92,60 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">Cancel</el-button>
+        <el-button @click="addDialogVisible = false">Cancel</el-button>
         <el-button type="primary" @click="handleAdd">Confirm</el-button>
       </template>
     </el-dialog>
+
+    <!-- Edit User Dialog -->
+    <el-dialog title="Edit User" v-model="editDialogVisible" width="50%">
+      <el-form :model="editUser" label-width="140px">
+        <el-form-item label="Name">
+          <el-input v-model="editUser.name" />
+        </el-form-item>
+
+        <el-form-item label="Role">
+          <el-select v-model="editUser.role" placeholder="Select Role">
+            <el-option label="管理员" value="管理员" />
+            <el-option label="质检人员" value="质检人员" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="WeChat ID">
+          <el-input v-model="editUser.wecomId" />
+        </el-form-item>
+
+        <el-form-item label="Username">
+          <el-input v-model="editUser.username" />
+        </el-form-item>
+
+        <!-- Change Password Checkbox -->
+        <el-form-item>
+          <el-checkbox v-model="changePassword">Change Password</el-checkbox>
+        </el-form-item>
+
+        <!-- Password Fields -->
+        <el-form-item v-if="changePassword" label="New Password">
+          <el-input v-model="newPassword" type="password" show-password />
+        </el-form-item>
+
+        <el-form-item v-if="changePassword" label="Confirm Password">
+          <el-input v-model="confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="editDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="handleEditConfirm">Confirm</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-import { Search, Plus } from '@element-plus/icons-vue'; // Import Element Plus icons
+import { Search, Plus } from '@element-plus/icons-vue';
+import api from "@/services/api"; // Import Element Plus icons
 
 export default {
   name: 'UserManagement',
@@ -114,15 +158,27 @@ export default {
       tableData: [], // Original data
       filteredData: [], // Filtered data for display
       searchQuery: '', // Search input value
-      dialogVisible: false, // Controls the visibility of the add user dialog
+      addDialogVisible: false, // Controls the visibility of the add user dialog
+      editDialogVisible: false, // Controls the visibility of the edit user dialog
       newUser: {
-        // New user form data
+        // Add user form data
         name: '',
         role: '',
         wecomId: '',
         username: '',
         password: '',
       },
+      editUser: {
+        // Edit user form data
+        id: null,
+        name: '',
+        role: '',
+        wecomId: '',
+        username: '',
+      },
+      changePassword: false, // Checkbox state for edit dialog
+      newPassword: '', // New password input
+      confirmPassword: '', // Confirm password input
     };
   },
   created() {
@@ -131,7 +187,7 @@ export default {
   methods: {
     async fetchUserData() {
       try {
-        const response = await axios.get('http://10.10.12.68:8086/user', {
+        const response = await api.get('/user', {
           auth: {
             username: 'fps-control',
             password: 'fpscontrols123',
@@ -143,7 +199,7 @@ export default {
           this.filteredData = response.data.data;
         }
 
-        console.log(this.tableData)
+        console.log(this.tableData);
 
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -158,62 +214,78 @@ export default {
       }
       return '未知角色';
     },
+    async handleAdd() {
+      try {
+        const roleId = this.newUser.role === '管理员' ? 1 : 2;
+        const encryptedPassword = btoa(this.newUser.password);
+        const payload = {
+          name: this.newUser.name,
+          role_id: roleId,
+          wecom_id: this.newUser.wecomId,
+          username: this.newUser.username,
+          password: encryptedPassword,
+        };
+
+        await api.post('/user', payload);
+        this.addDialogVisible = false;
+        this.fetchUserData();
+      } catch (error) {
+        console.error('Error adding user:', error);
+      }
+    },
+    async handleEditConfirm() {
+      try {
+        const roleId = this.editUser.role === '管理员' ? 1 : 2;
+        const payload = {
+          name: this.editUser.name,
+          role_id: roleId,
+          wecom_id: this.editUser.wecomId,
+          username: this.editUser.username,
+        };
+
+        // Include password if changePassword is checked
+        if (this.changePassword) {
+          if (!this.newPassword || this.newPassword !== this.confirmPassword) {
+            this.$message.error('Passwords do not match or are empty!');
+            return;
+          }
+          payload.password = btoa(this.newPassword);
+        }
+
+        await api.put(`/user/${this.editUser.id}`, payload);
+        this.editDialogVisible = false;
+        this.fetchUserData();
+      } catch (error) {
+        console.error('Error editing user:', error);
+      }
+    },
     handleEdit(index, row) {
-      this.newUser = {
+      this.editUser = {
         id: row.id,
         name: row.name,
         role: row.role_id === 1 ? '管理员' : '质检人员',
         wecomId: row.wecom_id,
         username: row.username,
-        password: row.password,
       };
-      this.dialogVisible = true;
+      this.changePassword = false; // Reset checkbox
+      this.newPassword = ''; // Reset password fields
+      this.confirmPassword = '';
+      this.editDialogVisible = true;
     },
     async handleDelete(index, row) {
       try {
-        await axios.delete(`http://10.10.12.68:8086/user/${row.id}`);
+        await api.delete(`/user/${row.id}`);
         this.fetchUserData(); // Refresh the data after deletion
       } catch (error) {
         console.error('Error deleting user:', error);
       }
     },
     showAddDialog() {
-      this.dialogVisible = true;
+      this.addDialogVisible = true;
       this.resetNewUserForm();
-    },
-    async handleAdd() {
-      try {
-        // Convert role name to role ID
-        const roleId = this.newUser.role === '管理员' ? 1 : 2
-        const encryptedPassword = btoa(this.newUser.password);
-        if (this.newUser.id) {
-          // Update existing user
-          await axios.put(`http://10.10.12.68:8086/user/${this.newUser.id}`, {
-            name: this.newUser.name,
-            role_id: roleId,
-            wecom_id: this.newUser.wecomId,
-            username: this.newUser.username,
-            password: encryptedPassword
-          });
-        } else {
-          // Add new user
-          await axios.post('http://10.10.12.68:8086/user', {
-            name: this.newUser.name,
-            role_id: roleId,
-            wecom_id: this.newUser.wecomId,
-            username: this.newUser.username,
-            password: encryptedPassword
-          });
-        }
-        this.dialogVisible = false;
-        this.fetchUserData(); // Refresh the data after adding/updating
-      } catch (error) {
-        console.error('Error saving user:', error);
-      }
     },
     resetNewUserForm() {
       this.newUser = {
-        id: null,
         name: '',
         role: '',
         wecomId: '',
@@ -231,5 +303,11 @@ export default {
 </script>
 
 <style>
+.el-input {
+  width: 90%;
+}
 
+.el-select {
+  width: 90%;
+}
 </style>
