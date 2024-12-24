@@ -154,6 +154,7 @@ export default {
       mobileLayout: 'H5',
       nodeTreeHint: '组件层次结构树',
       nodeTreeTitle: '组件层次结构树',
+      save: '保存',
       clear: '清空',
       preview: '预览',
       importJson: '导入JSON',

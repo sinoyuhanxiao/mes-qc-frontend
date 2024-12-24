@@ -12,8 +12,8 @@
   <el-container class="main-container full-height">
     <el-header class="main-header">
       <div class="float-left main-title">
-        <img src="../../assets/vform-logo.png" @click="openHome">
-        <span class="bold">VForm 3</span> {{i18nt('application.productTitle')}} <span class="version-span">Ver {{vFormVersion}}</span></div>
+        <img src="../../assets/fps-logo.png" @click="openHome">
+        <span class="bold">FPS Form</span> {{i18nt('application.productTitle')}} <span class="version-span">Ver {{vFormVersion}}</span></div>
       <div class="float-right external-link">
         <el-dropdown v-if="showLink('languageMenu')" :hide-timeout="2000" @command="handleLanguageChanged">
           <span class="el-dropdown-link">{{curLangName}}<svg-icon icon-class="el-arrow-down" /></span>
@@ -24,11 +24,11 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, gitUrl)" target="_blank"><svg-icon icon-class="github" />{{i18nt('application.github')}}</a>
-        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, docUrl)" target="_blank"><svg-icon icon-class="document" />{{i18nt('application.document')}}</a>
-        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, chatUrl)" target="_blank">{{i18nt('application.qqGroup')}}</a>
-        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, subScribeUrl)" target="_blank">
-          {{i18nt('application.subscription')}}<i class="el-icon-top-right"></i></a>
+<!--        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, gitUrl)" target="_blank"><svg-icon icon-class="github" />{{i18nt('application.github')}}</a>-->
+<!--        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, docUrl)" target="_blank"><svg-icon icon-class="document" />{{i18nt('application.document')}}</a>-->
+<!--        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(ev) => openUrl(ev, chatUrl)" target="_blank">{{i18nt('application.qqGroup')}}</a>-->
+<!--        <a v-if="showLink('externalLink')" href="javascript:void(0)" @click="(e          {{i18nt('application.subscription')}}<i class="el-icon-top-right"></i></a>v) => openUrl(ev, subScribeUrl)" target="_blank">-->
+<!--          {{i18nt('application.subscription')}}<i class="el-icon-top-right"></i></a>-->
       </div>
     </el-header>
 
@@ -109,6 +109,7 @@
             eventCollapse: true,  //是否显示组件事件属性折叠面板
             widgetNameReadonly: false,  //禁止修改组件名称
 
+            saveFormButton: true,  //是否显示保存质检单按钮
             clearDesignerButton: true,  //是否显示清空设计器按钮
             previewFormButton: true,  //是否显示预览表单按钮
             importJsonButton: true,  //是否显示导入JSON按钮

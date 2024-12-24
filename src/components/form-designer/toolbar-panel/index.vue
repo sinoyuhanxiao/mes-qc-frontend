@@ -25,6 +25,8 @@
 
     <div class="right-toolbar" :style="{width: toolbarWidth + 'px'}">
       <div class="right-toolbar-con">
+        <el-button v-if="showToolButton('saveFormButton')" link type="primary" @click="showSaveDialog">
+          <svg-icon icon-class="el-file-upload-field" />{{i18nt('designer.toolbar.save')}}质检单</el-button>
         <el-button v-if="showToolButton('clearDesignerButton')" link type="primary" @click="clearFormWidget">
           <svg-icon icon-class="el-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
         <el-button v-if="showToolButton('previewFormButton')" link type="primary" @click="previewForm">
@@ -181,6 +183,33 @@
       </el-dialog>
     </div>
 
+    <div v-if="saveDialogVisible" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
+      <el-dialog title='Save QC Form' v-model="saveDialogVisible"
+                 :show-close="true" class="drag-dialog small-padding-dialog" :append-to-body="true" center
+                 :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true" width="50%">
+        <div>
+          <el-form label-width="150px">
+            <el-form-item label="Form Name">
+              <el-input v-model="formName" :placeholder="i18nt('designer.toolbar.formNamePlaceholder')" />
+            </el-form-item>
+            <el-form-item label="Form ID">
+              <span>{{ createdFormId }}</span>
+            </el-form-item>
+            <el-form-item label="Save to Folder">
+              <FormTree v-model="selectedFolder" />
+            </el-form-item>
+          </el-form>
+        </div>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="saveDialogVisible = false">{{i18nt('designer.hint.cancel')}}</el-button>
+            <el-button type="primary" @click="confirmSave">{{i18nt('designer.hint.save')}}</el-button>
+          </div>
+        </template>
+      </el-dialog>
+    </div>
+
+
   </div>
 </template>
 
@@ -202,11 +231,13 @@
   import { saveAs } from 'file-saver'
   import axios from 'axios'
   import SvgIcon from "@/components/svg-icon/index";
+  import FormTree from "@/components/form-manager/FormTree.vue";
 
   export default {
     name: "ToolbarPanel",
     mixins: [i18n],
     components: {
+      FormTree,
       VFormRender,
       CodeEditor,
       Clipboard,
@@ -225,6 +256,7 @@
         designerConfig: this.getDesignerConfig(),
 
         toolbarWidth: 460,
+        saveDialogVisible: false,
         showPreviewDialogFlag: false,
         showImportJsonDialogFlag: false,
         showExportJsonDialogFlag: false,
@@ -241,6 +273,10 @@
 
         formDataJson: '',
         formDataRawJson: '',
+        formName: '',
+
+        createdFormId: '',
+        selectedFolder: null,
 
         vueCode: '',
         htmlCode: '',
@@ -333,6 +369,14 @@
         }
 
         return !!this.designerConfig[configName]
+      },
+
+      // Show Save Dialog
+      showSaveDialog() {
+        this.saveDialogVisible = true;
+        this.formName = '';
+        this.createdFormId = '';
+        this.selectedFolder = null;
       },
 
       buildTreeNodeOfWidget(widget, treeNode) {

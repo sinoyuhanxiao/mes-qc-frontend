@@ -154,6 +154,7 @@ export default {
       mobileLayout: 'H5',
       nodeTreeHint: 'Tree View Of Component Hierarchy',
       nodeTreeTitle: 'Tree View Of Component Hierarchy',
+      save: 'Save',
       clear: 'Clear',
       preview: 'Preview',
       importJson: 'Import',
