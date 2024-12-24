@@ -190,20 +190,17 @@
         <div>
           <el-form label-width="150px">
             <el-form-item label="Form Name">
-              <el-input v-model="formName" :placeholder="i18nt('designer.toolbar.formNamePlaceholder')" />
+              <el-input v-model="formName" placeholder="Give the new form a name" />
             </el-form-item>
-            <el-form-item label="Form ID">
-              <span>{{ createdFormId }}</span>
-            </el-form-item>
-            <el-form-item label="Save to Folder">
-              <FormTree v-model="selectedFolder" />
+            <el-form-item label="Select Folders">
+              <FormTreeMultipleSelection />
             </el-form-item>
           </el-form>
         </div>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="saveDialogVisible = false">{{i18nt('designer.hint.cancel')}}</el-button>
-            <el-button type="primary" @click="confirmSave">{{i18nt('designer.hint.save')}}</el-button>
+            <el-button @click="saveDialogVisible = false">Cancel</el-button>
+            <el-button type="primary" @click="confirmSave">Save</el-button>
           </div>
         </template>
       </el-dialog>
@@ -232,11 +229,13 @@
   import axios from 'axios'
   import SvgIcon from "@/components/svg-icon/index";
   import FormTree from "@/components/form-manager/FormTree.vue";
+  import FormTreeMultipleSelection from "@/components/form-manager/FormTreeMultipleSelection.vue";
 
   export default {
     name: "ToolbarPanel",
     mixins: [i18n],
     components: {
+      FormTreeMultipleSelection,
       FormTree,
       VFormRender,
       CodeEditor,

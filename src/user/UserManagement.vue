@@ -303,11 +303,5 @@ export default {
 </script>
 
 <style>
-.el-input {
-  width: 90%;
-}
 
-.el-select {
-  width: 90%;
-}
 </style>

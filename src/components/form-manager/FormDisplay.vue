@@ -20,11 +20,24 @@ const optionData = reactive({})
 const vFormRef = ref(null)
 
 let formId = 6;
+const collectionName = `form_template_${formId}_202412`; // Dynamic collection name
 
 const submitForm = () => {
   vFormRef.value.getFormData().then(formData => {
     // Form Validation OK
     alert( JSON.stringify(formData, null, 2) )
+    // Send form data to backend
+    api.post(`/api/test/insert-form/${collectionName}`, formData)
+        .then(res => {
+          if (res.status === 200) {
+            ElMessage.success(res.data);
+          } else {
+            ElMessage.error('Failed to insert form data!');
+          }
+        }).catch(err => {
+          console.error('Error inserting form data:', err);
+          ElMessage.error('Error inserting form data!');
+        });
   }).catch(error => {
     // Form Validation failed
     ElMessage.error(error)
