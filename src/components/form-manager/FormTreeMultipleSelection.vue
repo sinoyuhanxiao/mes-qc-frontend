@@ -5,6 +5,7 @@
         :data="treeData"
         placeholder="Select Folders"
         multiple
+        filterable
         :render-after-expand="false"
         show-checkbox
         check-strictly

@@ -184,7 +184,7 @@
     </div>
 
     <div v-if="saveDialogVisible" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
-      <el-dialog title='Save QC Form' v-model="saveDialogVisible"
+      <el-dialog title='Save QC Form to Folders' v-model="saveDialogVisible"
                  :show-close="true" class="drag-dialog small-padding-dialog" :append-to-body="true" center
                  :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true" width="50%">
         <div>
