@@ -17,10 +17,11 @@
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, watch, defineEmits } from 'vue';
   import api from '@/services/api.js';
 
-  const selectedValues = ref(); // Stores the selected node values
+  const emit = defineEmits(['update:selectedFolders']); // Define emit
+  const selectedValues = ref([]); // Stores the selected node values
   const treeData = ref(); // Tree data for the dropdown
 
   // Fetch tree data from the backend
@@ -49,12 +50,17 @@
     }
   };
 
-
   const logSelectedNodes = (selectedIds) => {
     console.log('Selected Values:', selectedIds); // Simply log the selected IDs
   };
 
   onMounted(fetchTreeData);
+
+  watch(selectedValues, (newValues) => {
+    console.log('Selected Folders Updated:', newValues); // Log the change
+    emit('update:selectedFolders', newValues); // Emit the updated values to parent
+  });
+
 </script>
 
 <style scoped>

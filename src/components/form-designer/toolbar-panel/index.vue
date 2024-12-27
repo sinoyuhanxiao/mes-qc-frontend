@@ -193,14 +193,14 @@
               <el-input v-model="formName" placeholder="Give the new form a name" />
             </el-form-item>
             <el-form-item label="Select Folders">
-              <FormTreeMultipleSelection />
+              <FormTreeMultipleSelection  v-model:selectedFolders="selectedFolder" />
             </el-form-item>
           </el-form>
         </div>
         <template #footer>
           <div class="dialog-footer">
             <el-button @click="saveDialogVisible = false">Cancel</el-button>
-            <el-button type="primary" @click="confirmSave">Save</el-button>
+            <el-button type="primary" @click="confirmQcTemplateSave">Save</el-button>
           </div>
         </template>
       </el-dialog>
@@ -230,6 +230,7 @@
   import SvgIcon from "@/components/svg-icon/index";
   import FormTree from "@/components/form-manager/FormTree.vue";
   import FormTreeMultipleSelection from "@/components/form-manager/FormTreeMultipleSelection.vue";
+  import api from "@/services/api";
 
   export default {
     name: "ToolbarPanel",
@@ -275,7 +276,7 @@
         formName: '',
 
         createdFormId: '',
-        selectedFolder: null,
+        selectedFolder: [],
 
         vueCode: '',
         htmlCode: '',
@@ -765,6 +766,36 @@
           }
         }
       },
+
+      confirmQcTemplateSave() {
+        if (!this.formName || !this.selectedFolder) {
+          this.$message.warning('Please provide a form name and select a folder.');
+          return;
+        }
+
+        // Example save logic
+        const payload = {
+          form: {
+            'name': this.formName,
+            'form_template_json': 'test' // use the real json to do it
+          },
+          parentFolderIds: this.selectedFolder,
+        };
+
+        api.post('/qc-form-templates/create-with-nodes', payload)
+            .then((response) => {
+              if (response.data.status === '200') {
+                this.$message.success('Template saved successfully!');
+                this.saveDialogVisible = false; // Close the dialog
+              } else {
+                this.$message.error(response.data.message || 'Failed to save template.');
+              }
+            })
+            .catch((error) => {
+              console.error('Error saving template:', error);
+              this.$message.error('An error occurred while saving.');
+            });
+      }
 
     }
   }
