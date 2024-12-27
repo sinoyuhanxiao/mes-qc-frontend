@@ -1,5 +1,6 @@
 <template>
   <div class="form-tree-multi-select">
+    Select Folders
     <el-tree-select
         v-model="selectedValues"
         :data="treeData"
@@ -10,7 +11,7 @@
         show-checkbox
         check-strictly
         check-on-click-node
-        style="width: 300px"
+        style="width: 300px; margin-left: 6px"
     >
     </el-tree-select>
   </div>

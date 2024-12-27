@@ -22,6 +22,7 @@
         default-expand-all
         :props="defaultProps"
         :filter-node-method="filterNode"
+        @node-click="handleNodeClick"
     >
       <template #default="{ node, data }">
         <div class="custom-tree-node" @click="logNodeData(node, data)">
@@ -79,7 +80,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, defineEmits } from 'vue'
 import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
 import { Folder, Document } from '@element-plus/icons-vue'
 import api from '@/services/api.js'
@@ -107,12 +108,17 @@ const nodeToDelete = ref<{ node: any; nodeData: Tree } | null>(null)
 const parentDataToAppend = ref<Tree | null>(null)
 const newNodeLabel = ref('')
 const newNodeType = ref('folder') // Default to folder
+const emit = defineEmits(['select-form']);
 
 
 const defaultProps = {
   children: 'children',
   label: 'label',
 }
+
+const handleNodeClick = (nodeData) => {
+  emit('select-form', nodeData); // Emit the full node data to the parent
+};
 
 const toggleEditMode = () => {
   isEditMode.value = !isEditMode.value
@@ -268,6 +274,11 @@ const addRootNode = async () => {
 
 .node-actions a {
   margin-left: 8px;
+}
+
+.el-tree-node:focus > .el-tree-node__content {
+  background-color: #a0a0a0 !important; /* Deeper grey color */
+  color: #ffffff !important;           /* White text for contrast */
 }
 
 </style>

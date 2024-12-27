@@ -184,7 +184,7 @@
     </div>
 
     <div v-if="saveDialogVisible" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
-      <el-dialog title='Save QC Form to Folders' v-model="saveDialogVisible"
+      <el-dialog title='Save QC Form Template to Folders' v-model="saveDialogVisible"
                  :show-close="true" class="drag-dialog small-padding-dialog" :append-to-body="true" center
                  :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true" width="50%">
         <div>
@@ -192,9 +192,7 @@
             <el-form-item label="Form Name">
               <el-input v-model="formName" placeholder="Give the new form a name" />
             </el-form-item>
-            <el-form-item label="Select Folders">
-              <FormTreeMultipleSelection  v-model:selectedFolders="selectedFolder" />
-            </el-form-item>
+            <FormTreeMultipleSelection  style="margin-left: 50px" v-model:selectedFolders="selectedFolder" />
           </el-form>
         </div>
         <template #footer>
@@ -377,6 +375,12 @@
         this.formName = '';
         this.createdFormId = '';
         this.selectedFolder = null;
+
+        // // Log the exported JSON when the dialog is opened
+        // let widgetList = deepClone(this.designer.widgetList);
+        // let formConfig = deepClone(this.designer.formConfig);
+        // const exportedJson = JSON.stringify({ widgetList, formConfig }, null, '  ');
+        // console.log('Exported Form JSON on Dialog Open:', exportedJson);
       },
 
       buildTreeNodeOfWidget(widget, treeNode) {
@@ -773,11 +777,16 @@
           return;
         }
 
+        // Log the exported JSON for debugging
+        let widgetList = deepClone(this.designer.widgetList);
+        let formConfig = deepClone(this.designer.formConfig);
+        const exportedJson = JSON.stringify({ widgetList, formConfig }); // without formatting
+
         // Example save logic
         const payload = {
           form: {
             'name': this.formName,
-            'form_template_json': 'test' // use the real json to do it
+            'form_template_json': exportedJson // use the real json to do it
           },
           parentFolderIds: this.selectedFolder,
         };

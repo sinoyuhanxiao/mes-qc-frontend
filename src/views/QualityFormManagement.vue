@@ -4,30 +4,30 @@
       <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
     <el-main>
-      <FormDisplay :currentForm="selectedForm" />
+      <!-- Render FormDisplay only if selectedForm exists and nodeType is not 'folder' -->
+      <FormDisplay v-if="selectedForm && selectedForm.nodeType !== 'folder'" :currentForm="selectedForm" />
     </el-main>
   </el-container>
 </template>
 
 <script>
-import FormTree from '@/components/form-manager/FormTree.vue'
-import FormDisplay from '@/components/form-manager/FormDisplay.vue'
+import FormTree from '@/components/form-manager/FormTree.vue';
+import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 
 export default {
-
-  components: { FormTree, FormDisplay: FormDisplay },
+  components: { FormTree, FormDisplay },
   data() {
     return {
-      selectedForm: null
-    }
+      selectedForm: null, // Ensure it's initially null
+    };
   },
   methods: {
     selectForm(form) {
-      this.selectedForm = form
+      this.selectedForm = form;
     },
     addForm() {
-      this.selectedForm = { widgetList: [], formConfig: {} }
-    }
-  }
-}
+      this.selectedForm = {widgetList: [], formConfig: {}, qcFormTemplateId: null};
+    },
+  },
+};
 </script>
