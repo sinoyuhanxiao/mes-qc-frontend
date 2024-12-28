@@ -1,26 +1,22 @@
 <template>
-  <div>
-    <!-- Title centered at the top -->
+  <div v-if="formId"> <!-- Updated to render only when formJson is available -->
     <h1 class="form-title">{{ props.currentForm?.label || 'Form Title' }}</h1>
-
-    <!-- Form render -->
-    <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef">
-    </v-form-render>
-
-    <!-- Submit button -->
+    <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
     <el-button type="primary" @click="submitForm">Submit</el-button>
-
-    <!-- Node ID at the bottom-right -->
     <p class="node-id">Node ID: {{ props.currentForm?.id || 'N/A' }}</p>
+    <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || 'N/A' }}</p>
   </div>
 </template>
 
 <script setup>
 import {ref, reactive, watch, onMounted} from 'vue'
+import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import VFormRender from '@/components/form-render/index' // the documentation was so silly I found this out
 import testFormJsonData from '@/tests/form_json_data.json'; // Import the JSON data - original code
 import api from '@/services/api'
+import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
+import { insertFormData } from '@/services/qcFormDataService.js';
 
 const props = defineProps({
   currentForm: {
@@ -34,30 +30,33 @@ const props = defineProps({
 const formData = reactive({})
 const optionData = reactive({})
 const vFormRef = ref(null)
-let formId = null;
+let formId = null
 
-const collectionName = `form_template_${formId}_202412`; // Dynamic collection name
+const store = useStore();
+let userId = store.getters.getUser.id;
 
 const submitForm = () => {
-  vFormRef.value.getFormData().then(formData => {
-    // Form Validation OK
-    alert( JSON.stringify(formData, null, 2) )
-    // Send form data to backend
-    api.post(`/api/test/insert-form/${collectionName}`, formData)
-        .then(res => {
-          if (res.status === 200) {
-            ElMessage.success(res.data);
-          } else {
-            ElMessage.error('Failed to insert form data!');
-          }
-        }).catch(err => {
-          console.error('Error inserting form data:', err);
-          ElMessage.error('Error inserting form data!');
-        });
-  }).catch(error => {
-    // Form Validation failed
-    ElMessage.error(error)
-  })
+  formId = props.currentForm?.qcFormTemplateId;
+  let now = new Date();
+  let year = now.getFullYear();
+  let month = String(now.getMonth() + 1).padStart(2, '0'); // Ensure month is always two digits
+  let collectionName = `form_template_${formId}_${year}${month}`; // Dynamic collection name
+
+  vFormRef.value.getFormData().then(async (formData) => {
+    try {
+      const response = await insertFormData(userId, collectionName, formData); // Use service function
+      if (response.status === 200) {
+        ElMessage.success(response.data);
+      } else {
+        ElMessage.error('Failed to insert form data!');
+      }
+    } catch (err) {
+      console.error('Error inserting form data:', err);
+      ElMessage.error('Error inserting form data!');
+    }
+  }).catch((error) => {
+    ElMessage.error(error); // Form validation failed
+  });
 }
 
 // Watch the qcFormTemplateId in the passed currentForm
@@ -67,7 +66,7 @@ watch(
       formId = newQcFormTemplateId
 
       try {
-        const response = await api.get(`/qc-form-templates/${formId}`);
+        const response = await fetchFormTemplate(formId); // Use service function
         if (response.status === 200 && response.data) {
           const templateJson = JSON.parse(response.data.data.form_template_json);
           vFormRef.value.setFormJson(templateJson); // Update the form JSON dynamically

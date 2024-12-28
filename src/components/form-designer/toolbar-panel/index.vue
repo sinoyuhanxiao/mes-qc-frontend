@@ -229,6 +229,7 @@
   import FormTree from "@/components/form-manager/FormTree.vue";
   import FormTreeMultipleSelection from "@/components/form-manager/FormTreeMultipleSelection.vue";
   import api from "@/services/api";
+  import { createFormTemplateWithNodes } from '@/services/qcFormTemplateService.js';
 
   export default {
     name: "ToolbarPanel",
@@ -777,21 +778,19 @@
           return;
         }
 
-        // Log the exported JSON for debugging
-        let widgetList = deepClone(this.designer.widgetList);
-        let formConfig = deepClone(this.designer.formConfig);
-        const exportedJson = JSON.stringify({ widgetList, formConfig }); // without formatting
+        const widgetList = deepClone(this.designer.widgetList);
+        const formConfig = deepClone(this.designer.formConfig);
+        const exportedJson = JSON.stringify({ widgetList, formConfig }); // Exported JSON
 
-        // Example save logic
         const payload = {
           form: {
-            'name': this.formName,
-            'form_template_json': exportedJson // use the real json to do it
+            name: this.formName,
+            form_template_json: exportedJson, // Use the real JSON
           },
           parentFolderIds: this.selectedFolder,
         };
 
-        api.post('/qc-form-templates/create-with-nodes', payload)
+        createFormTemplateWithNodes(payload) // Use service function
             .then((response) => {
               if (response.data.status === '200') {
                 this.$message.success('Template saved successfully!');
@@ -805,7 +804,6 @@
               this.$message.error('An error occurred while saving.');
             });
       }
-
     }
   }
 </script>

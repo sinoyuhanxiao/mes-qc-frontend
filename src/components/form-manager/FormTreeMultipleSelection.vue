@@ -19,7 +19,7 @@
 
 <script setup>
   import { ref, onMounted, watch, defineEmits } from 'vue';
-  import api from '@/services/api.js';
+  import { fetchFormNodes } from '@/services/formNodeService.js';
 
   const emit = defineEmits(['update:selectedFolders']); // Define emit
   const selectedValues = ref([]); // Stores the selected node values
@@ -28,7 +28,7 @@
   // Fetch tree data from the backend
   const fetchTreeData = async () => {
     try {
-      const response = await api.get('/form-nodes'); // Same API as FormTree.vue
+      const response = await fetchFormNodes();
 
       // Recursive function to filter nodes with type "folder" and rename "id" to "value"
       const filterFolders = (nodes) => {

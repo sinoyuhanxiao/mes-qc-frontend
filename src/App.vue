@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import NavigationMenu from '@/components/NavigationMenu.vue';
+import NavigationMenu from '@/components/common/NavigationMenu.vue';
 
 export default {
   name: 'App',

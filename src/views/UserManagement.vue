@@ -145,7 +145,12 @@
 
 <script>
 import { Search, Plus } from '@element-plus/icons-vue';
-import api from "@/services/api"; // Import Element Plus icons
+import {
+  fetchUsers,
+  addUser,
+  updateUser,
+  deleteUser,
+} from '@/services/userService.js';
 
 export default {
   name: 'UserManagement',
@@ -187,20 +192,11 @@ export default {
   methods: {
     async fetchUserData() {
       try {
-        const response = await api.get('/user', {
-          auth: {
-            username: 'fps-control',
-            password: 'fpscontrols123',
-          },
-        });
-
+        const response = await fetchUsers();
         if (response.data.status === '200') {
           this.tableData = response.data.data;
           this.filteredData = response.data.data;
         }
-
-        console.log(this.tableData);
-
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -226,7 +222,7 @@ export default {
           password: encryptedPassword,
         };
 
-        await api.post('/user', payload);
+        await addUser(payload);
         this.addDialogVisible = false;
         this.fetchUserData();
       } catch (error) {
@@ -252,7 +248,7 @@ export default {
           payload.password = btoa(this.newPassword);
         }
 
-        await api.put(`/user/${this.editUser.id}`, payload);
+        await updateUser(this.editUser.id, payload);
         this.editDialogVisible = false;
         this.fetchUserData();
       } catch (error) {
@@ -274,7 +270,7 @@ export default {
     },
     async handleDelete(index, row) {
       try {
-        await api.delete(`/user/${row.id}`);
+        await deleteUser(row.id);
         this.fetchUserData(); // Refresh the data after deletion
       } catch (error) {
         console.error('Error deleting user:', error);

@@ -83,7 +83,12 @@
 import { ref, onMounted, watch, defineEmits } from 'vue'
 import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
 import { Folder, Document } from '@element-plus/icons-vue'
-import api from '@/services/api.js'
+import {
+  fetchFormNodes,
+  addTopLevelNode,
+  addChildNode,
+  deleteNode,
+} from '@/services/formNodeService.js';
 
 interface Tree {
   _id: string
@@ -127,12 +132,13 @@ const toggleEditMode = () => {
 // Fetch data from the backend
 const fetchFormTreeData = async () => {
   try {
-    const response = await api.get('/form-nodes')
-    data.value = response.data
+    const response = await fetchFormNodes();
+    data.value = response.data;
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load form tree data'
+    error.value = err.response?.data?.message || 'Failed to load form tree data';
   }
-}
+};
+
 
 onMounted(fetchFormTreeData)
 
@@ -155,21 +161,21 @@ const showDeleteConfirmation = (node: any, nodeData: Tree) => {
 
 // Confirm deletion of the node
 const confirmDelete = async () => {
-  if (!nodeToDelete.value) return
-  const { node, nodeData } = nodeToDelete.value
+  if (!nodeToDelete.value) return;
+  const { node, nodeData } = nodeToDelete.value;
   try {
-    await api.delete(`/form-nodes/${nodeData.id}`)
-    const parent = node.parent
-    const children: Tree[] = parent.data.children || parent.data
-    const index = children.findIndex((d) => d.id === nodeData.id)
-    children.splice(index, 1)
-    data.value = [...data.value]
-    deleteDialogVisible.value = false
+    await deleteNode(nodeData.id);
+    const parent = node.parent;
+    const children = parent.data.children || parent.data;
+    const index = children.findIndex((d) => d.id === nodeData.id);
+    children.splice(index, 1);
+    data.value = [...data.value];
+    deleteDialogVisible.value = false;
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to delete node'
-    deleteDialogVisible.value = false
+    error.value = err.response?.data?.message || 'Failed to delete node';
+    deleteDialogVisible.value = false;
   }
-}
+};
 
 // Show the append dialog
 const showAppendPopup = (parentData: Tree | null) => {
@@ -181,33 +187,26 @@ const showAppendPopup = (parentData: Tree | null) => {
 // Confirm appending a new child node
 const confirmAppend = async () => {
   try {
-    const newNode = {
+    let newNode = {
       label: newNodeLabel.value,
-      nodeType: newNodeType.value, // Use the selected node type
-      children: newNodeType.value === 'folder' ? [] : undefined, // Only add children for folders
-      qcFromTemplateId: newNodeType.value === 'document' ? '' : undefined, // Add qc_form_template_id for documents
-    };
+      nodeType: newNodeType.value,
+      children: newNodeType.value === 'folder' ? [] : undefined,
+      qcFormTemplateId: newNodeType.value === 'document' ? '' : undefined,
+    }
 
     let response;
 
-    // Check if appending to root or a child node
     if (!parentDataToAppend.value) {
-      // Add root-level node
-      response = await api.post('form-nodes/top-level', newNode);
+      response = await addTopLevelNode(newNode); // Add root-level node
     } else {
-      // Add child node
-      response = await api.post('/form-nodes/child', newNode, {
-        params: { parentId: parentDataToAppend.value.id },
-      });
+      response = await addChildNode(newNode, parentDataToAppend.value.id); // Add child node
     }
 
     const createdNode = response.data;
 
     if (!parentDataToAppend.value) {
-      // Add as a root node
       data.value.push(createdNode);
     } else {
-      // Add as a child node
       if (!parentDataToAppend.value.children) {
         parentDataToAppend.value.children = [];
       }
@@ -221,23 +220,6 @@ const confirmAppend = async () => {
     appendDialogVisible.value = false;
   }
 };
-
-const addRootNode = async () => {
-  try {
-    const newNode = {
-      label: 'New Root Node',
-      nodeType: 'folder',
-      children: [],
-    }
-
-    const response = await api.post('/form-nodes/top-level', newNode)
-    const createdNode = response.data
-    data.value.push(createdNode) // Add the new root node to the tree
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to add root node'
-  }
-}
-
 
 </script>
 
@@ -274,11 +256,6 @@ const addRootNode = async () => {
 
 .node-actions a {
   margin-left: 8px;
-}
-
-.el-tree-node:focus > .el-tree-node__content {
-  background-color: #a0a0a0 !important; /* Deeper grey color */
-  color: #ffffff !important;           /* White text for contrast */
 }
 
 </style>

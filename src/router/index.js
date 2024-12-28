@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import store from '@/store';
 import VFormDesigner from '@/components/form-designer/index.vue';
-import UserManagement from '@/user/UserManagement.vue';
-import LoginPage from '@/user/LoginPage.vue';
+import UserManagement from '@/views/UserManagement.vue';
+import LoginPage from '@/views/LoginPage.vue';
 import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'

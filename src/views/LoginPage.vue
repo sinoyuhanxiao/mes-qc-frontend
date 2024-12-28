@@ -43,6 +43,7 @@ import axios from 'axios';
 import { User, Lock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { mapActions } from 'vuex';
+import { validateUser, fetchUserInfo } from '@/services/userService.js';
 import api from '@/services/api.js';
 
 export default {
@@ -81,19 +82,15 @@ export default {
         this.loading = true;
         try {
           // Step 1: Validate the user credentials
-          const validateResponse = await api.post('/user/validate', null, {
-            params: {
-              username: this.form.username,
-              password: btoa(this.form.password), // Encoding the password
-            },
-          });
+          const validateResponse = await validateUser(
+              this.form.username,
+              btoa(this.form.password)
+          );
 
           // Check if the response indicates success
           if (validateResponse.data.status === '200') {
             // Step 2: Fetch complete user information
-            const userInfoResponse = await api.get('/user/info', {
-              params: {username: this.form.username},
-            });
+            const userInfoResponse = await fetchUserInfo(this.form.username);
 
             if (userInfoResponse.data.status === '200') {
               // Store user data in Vuex
