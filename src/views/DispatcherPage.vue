@@ -1,0 +1,271 @@
+<template>
+  <el-container class="dispatcher-page">
+    <!-- Top Section -->
+    <el-header class="header">
+      <!--      <el-row align="middle" justify="space-between" style="width: 100%;">-->
+      <!--        <el-col>-->
+      <h2>派发管理</h2>
+      <!--        </el-col>-->
+      <!--        <el-col>-->
+      <el-button-group>
+        <el-button type="primary" @click="handleNewDispatchButtonClick">新增任務派发</el-button>
+        <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任務</el-button>
+        <el-button
+            v-if="selectedRows.length > 0"
+            icon="delete-filled"
+            size="default"
+            type="danger"
+            @click="confirmDeleteSelectedRows"
+        >
+          <DeleteFilled />
+        </el-button>
+      </el-button-group>
+      <!--        </el-col>-->
+      <!--      </el-row>-->
+    </el-header>
+
+    <!-- Dispatch Table -->
+    <el-main class="table-section">
+      <DispatchList
+          :dispatch-list="dispatchList"
+          @column-click="handleNameColumnClicked"
+          @selection-change="updateSelectedRows"
+      />
+    </el-main>
+
+    <!-- Dispatch Details Dialog -->
+    <el-dialog
+        title="任務派发詳情"
+        v-model="isDetailsDialogVisible"
+        width="50%"
+        @close="closeAndResetDetailsDialog"
+    >
+      <template v-if="isDetailsDialogVisible && !isEditMode && currentDispatch">
+        <DispatchDetails
+            :dispatch="currentDispatch"
+            @edit="enableEditMode"
+            @delete="confirmDeleteDispatch"
+        />
+      </template>
+
+      <template v-else-if="isDetailsDialogVisible && isEditMode">
+        <dispatch-form
+            v-model="currentDispatch"
+            :form-data="currentDispatch"
+            @submit="handleDispatchSubmit"/>
+      </template>
+
+      <template v-else>
+        <p>加载中或没有选中的任务。</p> <!-- Placeholder for empty state -->
+      </template>
+    </el-dialog>
+
+    <!-- Dispatched Tests Dialog -->
+    <el-dialog
+        title="已派发任務"
+        v-model="isDispatchedTestsDialogVisible"
+        width="70%"
+        @close="closeViewDispatchedTestsDialog"
+    >
+      <DispatchedTasksList :dispatched-tasks="dispatchedTasks" />
+    </el-dialog>
+  </el-container>
+</template>
+
+<script>
+import DispatchForm from "@/components/dispatch/DispatchForm.vue";
+import DispatchList from "@/components/dispatch/DispatchList.vue";
+import DispatchDetails from "@/components/dispatch/DispatchDetails.vue";
+import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
+import { createDispatch, deleteDispatch, getAllDispatches, updateDispatch, getAllDispatchedTasks } from "@/services/dispatchService";
+import { cleanPayload } from "@/utils/dispatch-utils";
+import { DeleteFilled } from "@element-plus/icons-vue";
+
+export default {
+  components: {
+    DeleteFilled,
+    DispatchForm,
+    DispatchList,
+    DispatchedTasksList,
+    DispatchDetails,
+  },
+  data() {
+    return {
+      isDetailsDialogVisible: false,
+      isDispatchedTestsDialogVisible: false,
+      isEditMode: false,
+      dispatchList: [],
+      dispatchedTasks: [],
+      currentDispatch: null,
+      selectedRows: [],
+    };
+  },
+  methods: {
+    async loadDispatches() {
+      try {
+        const response = await getAllDispatches();
+        this.dispatchList = response.data.data;
+      } catch (error) {
+        this.$message.error("无法加载任务派发列表，请重试。");
+      }
+    },
+    async loadDispatchedTasks() {
+      try {
+        const response = await getAllDispatchedTasks();
+        this.dispatchedTasks = response.data.data;
+      } catch (error) {
+        this.$message.error("无法加载任務列表，请重试。");
+      }
+    },
+    handleNewDispatchButtonClick() {
+      this.resetCurrentDispatch();
+      this.isEditMode = true;
+      this.isDetailsDialogVisible = true;
+    },
+    handleNameColumnClicked(dispatch) {
+      this.currentDispatch = { ...dispatch }; // Use a copy to avoid unintended mutations
+      this.isEditMode = false;
+      this.isDetailsDialogVisible = true;
+    },
+    closeAndResetDetailsDialog() {
+      this.resetCurrentDispatch();
+      this.isEditMode = false;
+      this.isDetailsDialogVisible = false;
+    },
+    openViewDispatchedTestsDialog() {
+      this.isDispatchedTestsDialogVisible = true;
+      this.loadDispatchedTasks();
+    },
+    closeViewDispatchedTestsDialog() {
+      this.isDispatchedTestsDialogVisible = false;
+    },
+    enableEditMode() {
+      if (!this.currentDispatch) {
+        this.$message.error("没有选中的任务派发可以编辑。");
+        this.closeAndResetDetailsDialog(); // Reset the dialog for safety
+        return;
+      }
+
+      this.isEditMode = true;
+    },
+    async handleDispatchSubmit(form) {
+      try {
+        const isEdit = Boolean(this.currentDispatch && this.currentDispatch.id); // Check currentDispatch for edit
+        const cleanFormPayload = cleanPayload(form);
+
+        if (isEdit) {
+          await updateDispatch(this.currentDispatch.id, cleanFormPayload); // Edit
+          this.$message.success("任务派发更新成功！");
+        } else {
+          await createDispatch(cleanFormPayload); // New
+          this.$message.success("任务派发创建成功！");
+        }
+
+        await this.loadDispatches();
+        this.closeAndResetDetailsDialog();
+      } catch (error) {
+        console.error("Error in handleDispatchSubmit:", error);
+        this.$message.error("保存任务派发失败，请重试。");
+      }
+    },
+    async confirmDeleteDispatch() {
+      try {
+        await this.$confirm("确认删除任务派发吗？", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+
+        await deleteDispatch(this.currentDispatch.id);
+        this.$message.success("任务派发已删除！");
+        await this.loadDispatches();
+        this.closeAndResetDetailsDialog();
+      } catch (error) {
+        this.$message.error("删除任务派发失败，请重试。");
+      }
+    },
+    async confirmDeleteSelectedRows() {
+      if (this.selectedRows.length === 0) {
+        this.$message.warning("请选择至少一条记录进行删除！");
+        return;
+      }
+
+      try {
+        await this.$confirm("确认删除选中的任务派发吗？", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+
+        const idsToDelete = this.selectedRows.map(row => row.id);
+        await Promise.all(idsToDelete.map(id => deleteDispatch(id)));
+        this.$message.success("选中的任务派发已删除！");
+        await this.loadDispatches();
+        this.selectedRows = [];
+      } catch (error) {
+        this.$message.error("删除失败，请重试。");
+      }
+    },
+    resetCurrentDispatch() {
+      this.currentDispatch = null;
+    },
+    updateSelectedRows(selected) {
+      this.selectedRows = selected;
+    },
+    openDetailsDialogForEdit() {
+      if (!this.currentDispatch) {
+        this.$message.error("没有选中的任务派发可以编辑。");
+        this.closeAndResetDetailsDialog();
+        return;
+      }
+      this.isEditMode = true;
+      this.isDetailsDialogVisible = true;
+    },
+    openDetailsDialogForNew() {
+      this.resetCurrentDispatch();
+      this.isEditMode = true;
+      this.isDetailsDialogVisible = true;
+    },
+  },
+  mounted() {
+    this.loadDispatches();
+  },
+};
+</script>
+
+<style scoped>
+.dispatcher-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.table-section {
+  flex: 1;
+  padding: 20px;
+}
+
+
+.details-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.readonly-info {
+  padding: 10px;
+  line-height: 1.8;
+}
+
+.readonly-info p {
+  margin: 5px 0;
+  word-wrap: break-word;
+}
+
+</style>

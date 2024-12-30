@@ -6,6 +6,7 @@ import LoginPage from '@/views/LoginPage.vue';
 import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
+import DispatcherPage from "@/views/DispatcherPage.vue";
 
 const routes = [
     {
@@ -40,7 +41,7 @@ const routes = [
     {
         path: '/task-assignment',
         name: 'TaskAssignment',
-        component: TaskAssignment
+        component: DispatcherPage
     },
 ];
 
