@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import viteSvgIcons from 'vite-plugin-svg-icons'
 import { resolve } from 'path'
+import { visualizer } from 'rollup-plugin-visualizer';
 import commonjs from '@rollup/plugin-commonjs'
 import externalGlobals from "rollup-plugin-external-globals"
 
@@ -11,6 +12,12 @@ export default defineConfig({
   base: '',
   plugins: [
     vue(),
+    visualizer({
+      filename: './dist/stats.html', // Output file
+      open: true, // Automatically open in the browser
+      gzipSize: true, // Show gzipped size
+      brotliSize: true, // Show brotli-compressed size
+    }),
 
     //添加jsx/tsx支持
     vueJsx({}),
