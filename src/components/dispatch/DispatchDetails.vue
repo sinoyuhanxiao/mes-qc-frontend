@@ -33,6 +33,10 @@
       {{ dispatch.repeat_count }}
     </el-form-item>
 
+    <el-form-item label="已执行次数" v-if="dispatch.executed_count">
+      {{ dispatch.executed_count }}
+    </el-form-item>
+
     <el-form-item label="具体日期" v-if="dispatch.schedule_type === 'SPECIFIC_DAYS' && dispatch.dispatch_days.length">
       <div class="days-tags">
         <el-tag
