@@ -95,7 +95,7 @@
 
     <!-- Action Buttons -->
     <el-form-item>
-      <el-button type="primary" @click="submitForm">提交</el-button>
+      <el-button type="primary" :disabled="!isFormModified" @click="submitForm">提交</el-button>
       <el-button @click="resetForm" type="warning">重置</el-button>
       <el-button @click="$emit('on-cancel')">取消</el-button>
     </el-form-item>
@@ -106,6 +106,7 @@
 <script>
 import { fetchUsers } from "@/services/userService";
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
+import isEqual from "lodash/isEqual";
 
 export default {
   components: {DispatchFormTreeSelect},
@@ -158,12 +159,19 @@ export default {
       ],
     };
   },
+  computed:{
+    isFormModified() {
+      // Check if `dispatchForm` matches the original `formData`
+      const transformedData = this.transformDispatchData(this.formData || {});
+      return !isEqual(transformedData, this.dispatchForm);
+    }
+  },
   watch: {
     formData: {
       immediate: true,
       handler(newVal) {
         if (newVal) {
-          this.dispatchForm = this.transformDispatchData(newVal);
+          this.dispatchForm = this.transformDispatchData(newVal || {});
           this.updatePartialDaysState();
           this.loadPersonnelOptions(); //Load personnel options when form data changes
         }

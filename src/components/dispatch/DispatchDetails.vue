@@ -93,6 +93,16 @@
       </div>
       <div v-else>-</div>
     </el-form-item>
+
+
+    <el-form-item label="创建时间" v-if="dispatch.created_at">
+      {{ formatDate(dispatch.created_at) }}
+    </el-form-item>
+
+    <el-form-item label="上次更新时间" v-if="dispatch.updated_at">
+      {{ formatDate(dispatch.updated_at) }}
+    </el-form-item>
+
   </el-form>
 </template>
 
