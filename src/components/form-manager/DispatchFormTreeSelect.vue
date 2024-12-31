@@ -96,6 +96,17 @@ const fetchFormTreeData = async () => {
   }
 };
 
+// Watch for changes in `selectedFormIds` and update the tree
+watch(
+    () => props.selectedFormIds,
+    (newVal) => {
+      if (treeRef.value) {
+        treeRef.value.setCheckedKeys(newVal);
+      }
+    },
+    { immediate: true }
+);
+
 
 onMounted(async () => {
   await fetchFormTreeData();

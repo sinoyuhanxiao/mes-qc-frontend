@@ -231,6 +231,8 @@ export default {
     resetForm() {
       this.dispatchForm = this.transformDispatchData(this.formData || {});
       this.updatePartialDaysState();
+      // Emit updated forms to reset the tree
+      this.updateSelectedForms(this.dispatchForm.dispatch_forms);
     },
     updateSelectedForms(formIds) {
       this.dispatchForm.dispatch_forms = formIds;
