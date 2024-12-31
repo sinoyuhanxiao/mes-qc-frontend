@@ -86,7 +86,9 @@
 
     <el-form-item label="选择表单">
     <!-- Form Tree -->
-      <DispatchFormTreeSelect @update-selected-forms="updateSelectedForms"/>
+      <DispatchFormTreeSelect
+          :selected-form-ids="dispatchForm.dispatch_forms"
+          @update-selected-forms="updateSelectedForms"/>
     </el-form-item>
 
 
@@ -163,6 +165,7 @@ export default {
         if (newVal) {
           this.dispatchForm = this.transformDispatchData(newVal);
           this.updatePartialDaysState();
+          this.loadPersonnelOptions(); //Load personnel options when form data changes
         }
       },
     },

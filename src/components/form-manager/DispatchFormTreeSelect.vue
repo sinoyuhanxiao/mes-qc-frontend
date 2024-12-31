@@ -13,10 +13,11 @@
         ref="treeRef"
         style="max-width: 600px"
         :data="data"
-        node-key="_id"
+        node-key="id"
         :props="defaultProps"
         :filter-node-method="filterNode"
         @check-change="handleCheckChange"
+        default-expand-all
         show-checkbox
     >
       <template #default="{ node, data }">
@@ -64,6 +65,12 @@ interface Tree {
   qcFormTemplateId: string | null;
 }
 
+const props = defineProps({
+  selectedFormIds: {
+    type: Array,
+    default: () => [],
+  },
+});
 const emit = defineEmits(['update-selected-forms']);
 const filterText = ref('')
 const treeRef = ref<InstanceType<typeof ElTree>>()
@@ -77,6 +84,8 @@ const defaultProps = {
 }
 
 
+
+
 // Fetch data from the backend
 const fetchFormTreeData = async () => {
   try {
@@ -87,7 +96,30 @@ const fetchFormTreeData = async () => {
   }
 };
 
-onMounted(fetchFormTreeData)
+
+onMounted(async () => {
+  await fetchFormTreeData();
+  if (props.selectedFormIds.length && treeRef.value) {
+    // Pre-check nodes based on `selectedFormIds`
+    // console.log('selected ids: ',props.selectedFormIds)
+    const nodesToCheck = data.value
+        .flatMap(flattenTree) // Flatten the tree to find all nodes
+        .filter(node => props.selectedFormIds.includes(node.id));
+    // console.log('nodesToCheck: ', nodesToCheck)
+
+    const nodeKeys = nodesToCheck.map(node => node.id);
+    // console.log('nodeKeys: ', nodeKeys)
+    // console.log("Tree instance:", treeRef.value);
+    treeRef.value.setCheckedKeys(nodeKeys);
+  }
+});
+
+// Utility to flatten tree recursively
+function flattenTree(treeNode) {
+  return [treeNode].concat(
+      (treeNode.children || []).flatMap(flattenTree)
+  );
+}
 
 // Watch for changes in filterText and apply filtering to the tree
 watch(filterText, (val) => {
