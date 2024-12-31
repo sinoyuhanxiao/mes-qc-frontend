@@ -90,11 +90,14 @@
     </el-form-item>
 
 
+
     <!-- Action Buttons -->
     <el-form-item>
       <el-button type="primary" @click="submitForm">提交</el-button>
-      <el-button @click="resetForm">重置</el-button>
+      <el-button @click="resetForm" type="warning">重置</el-button>
+      <el-button @click="$emit('on-cancel')">取消</el-button>
     </el-form-item>
+
   </el-form>
 </template>
 

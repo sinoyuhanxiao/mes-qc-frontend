@@ -27,6 +27,6 @@ export default {
 }
 
 .status-inactive {
-  background-color: #dc3545;
+  background-color: #c9c9c9;
 }
 </style>

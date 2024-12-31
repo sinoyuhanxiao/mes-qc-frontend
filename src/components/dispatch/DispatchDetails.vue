@@ -40,7 +40,7 @@
             :key="day"
             type="info"
             size="small"
-            effect="dark"
+            effect="light"
         >
           {{ formatDay(day) }}
         </el-tag>
@@ -52,9 +52,9 @@
         <el-tag
             v-for="(formId, index) in dispatch.dispatch_forms"
             :key="formId"
-            type="info"
+            type="success"
             size="small"
-            effect="dark"
+            effect="light"
         >
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>
@@ -75,9 +75,9 @@
         <el-tag
             v-for="(person, index) in dispatch.dispatch_personnel"
             :key="person.id"
-            type="info"
+            type="primary"
             size="small"
-            effect="dark"
+            effect="light"
         >
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>

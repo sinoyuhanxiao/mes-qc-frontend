@@ -12,12 +12,10 @@
         <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任務</el-button>
         <el-button
             v-if="selectedRows.length > 0"
-            icon="delete-filled"
-            size="default"
             type="danger"
             @click="confirmDeleteSelectedRows"
         >
-          <DeleteFilled />
+          删除
         </el-button>
       </el-button-group>
       <!--        </el-col>-->
@@ -54,7 +52,8 @@
         <dispatch-form
             v-model="currentDispatch"
             :form-data="currentDispatch"
-            @submit="handleDispatchSubmit"/>
+            @submit="handleDispatchSubmit"
+            @on-cancel="handleCancelDispatchForm"/>
       </template>
 
       <template v-else>
@@ -156,6 +155,15 @@ export default {
       this.isEditMode = false;
       this.isDetailsDialogVisible = true;
     },
+    handleCancelDispatchForm() {
+      if (this.currentDispatch) {
+        // Editing existing dispatch: show details view
+        this.isEditMode = false;
+      } else {
+        // New dispatch: close dialog completely
+        this.closeAndResetDetailsDialog();
+      }
+    },
     closeAndResetDetailsDialog() {
       this.resetCurrentDispatch();
       this.isEditMode = false;
@@ -218,6 +226,33 @@ export default {
         this.$message.warning("请选择至少一条记录进行删除！");
         return;
       }
+
+      // try {
+      //   await this.$confirm("确认设置选中的任务派发为无效吗？", "提示", {
+      //     confirmButtonText: "确定",
+      //     cancelButtonText: "取消",
+      //     type: "warning",
+      //   });
+      //
+      //   const updates = this.selectedRows.map(row => ({
+      //     id: row.id,
+      //     active: false,
+      //   }));
+      //
+      //   // Send PUT requests to update `active` status
+      //   await Promise.all(
+      //       updates.map(update =>
+      //           updateDispatch(update.id, { active: update.active })
+      //       )
+      //   );
+      //
+      //   this.$message.success("选中的任务派发已设置为无效！");
+      //   await this.loadDispatches();
+      //   this.selectedRows = []; // Clear selection after updating
+      // } catch (error) {
+      //   console.error("Error updating active status:", error);
+      //   this.$message.error("更新任务派发状态失败，请重试。");
+      // }
 
       try {
         await this.$confirm("确认删除选中的任务派发吗？", "提示", {

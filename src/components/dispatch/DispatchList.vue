@@ -1,8 +1,18 @@
 <template>
 
+  <!-- Search Input -->
+  <el-input
+      v-model="filterInput"
+      style="width: 240px; margin-bottom: 10px;"
+      placeholder="输入名称搜索"
+      :prefix-icon="Search"
+      clearable
+  />
+
+  <!-- Dispatch Table -->
   <el-table
       ref="dispatchTable"
-      :data="dispatchList"
+      :data="filteredDispatchList"
       border
       style="width: 100%"
       :default-sort="{ prop: 'updated_at', order: 'descending' }"
@@ -16,12 +26,12 @@
     <!-- Dispatch Name -->
     <el-table-column prop="name" label="任务派发名称" width="200" sortable>
       <template #default="scope">
-    <span
-        class="clickable-name"
-        @click="clickedNameColumn(scope.row)"
-    >
-      {{ scope.row.name}}
-    </span>
+        <span
+            class="clickable-name"
+            @click="clickedNameColumn(scope.row)"
+        >
+          {{ scope.row.name}}
+        </span>
       </template>
     </el-table-column>
 
@@ -43,9 +53,9 @@
           <el-tag
               v-for="(person, index) in scope.row.dispatch_personnel.slice(0, 3)"
               :key="person.id"
-              type="info"
+              type="primary"
               size="small"
-              effect="dark"
+              effect="light"
           >
             <el-popover
                 effect="light"
@@ -81,9 +91,9 @@
           <el-tag
               v-for="(formId, index) in scope.row.dispatch_forms.slice(0, 3)"
               :key="formId"
-              type="info"
+              type="success"
               size="small"
-              effect="dark"
+              effect="light"
           >
             <el-popover
                 effect="light"
@@ -121,16 +131,9 @@
               :key="day"
               type="info"
               size="small"
-              effect="dark"
+              effect="light"
           >
             {{ formatDay(day) }}
-          </el-tag>
-          <el-tag
-              v-if="scope.row.dispatch_days.length > 3"
-              type="warning"
-              size="small"
-          >
-            +{{ scope.row.dispatch_days.length - 3 }}
           </el-tag>
 
           <el-popover
@@ -141,12 +144,24 @@
           >
             <template #default>
               <div>
-                <div v-for="day in scope.row.dispatch_days" :key="day">
+                <!-- Format and display leftover days -->
+                <div v-for="day in scope.row.dispatch_days.slice(3)" :key="day">
                   {{ formatDay(day) }}
                 </div>
               </div>
             </template>
+            <template #reference>
+                <el-tag
+                    v-if="scope.row.dispatch_days.length > 3"
+                    type="warning"
+                    size="small"
+                >
+                  +{{ scope.row.dispatch_days.length - 3 }}
+                </el-tag>
+            </template>
           </el-popover>
+
+
         </div>
         <div v-else>-</div> <!-- Display dash when none are available -->
       </template>
@@ -216,12 +231,25 @@
 import { formatScheduleType } from "@/utils/dispatch-utils";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
-import {DeleteFilled} from "@element-plus/icons-vue";
+import {DeleteFilled, Search} from "@element-plus/icons-vue";
 
 
 export default {
+  computed: {
+    Search() {
+      return Search
+    },
+    filteredDispatchList() {
+      if (!this.filterInput) {
+        return this.dispatchList; // Return full list if no filter is applied
+      }
+      const lowerCaseFilter = this.filterInput.toLowerCase();
+      return this.dispatchList.filter(dispatch =>
+          dispatch.name?.toLowerCase().includes(lowerCaseFilter)
+      );
+    },
+  },
   components: {
-    DeleteFilled,
     StatusCircle,
     TimeSlot,
   },
@@ -237,6 +265,7 @@ export default {
   },
   data() {
     return {
+      filterInput: "", // Bind to the search input
       selectedRows: [], // Tracks selected rows
     }
   },
@@ -280,15 +309,6 @@ export default {
   text-decoration: none;
 }
 
-.bulk-delete-container {
-  margin-bottom: 16px; /* Adjust as needed */
-  display: flex;
-  justify-content: flex-start; /* Align to the left */
-}
-
-.el-icon-delete {
-  color: #ff4d4f; /* Danger color for trash bin */
-}
 
 .el-table .el-button {
   margin-left: 5px; /* Optional for spacing */
