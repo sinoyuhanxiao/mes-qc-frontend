@@ -1,5 +1,6 @@
 <template>
-  <div class="dispatch-details">
+  <el-form label-position="left" label-width="120px" class="dispatch-details">
+
     <div class="details-header">
       <!-- Action Buttons -->
       <el-button-group>
@@ -7,52 +8,92 @@
         <el-button type="danger" @click="$emit('delete')">删除</el-button>
       </el-button-group>
     </div>
-    <div class="readonly-info">
-      <!-- Name -->
-      <div v-if="dispatch">
-        <p v-if="dispatch.name"><strong>任务名称:</strong> {{ dispatch.name }}</p>
 
-        <!-- Schedule Type -->
-        <p v-if="dispatch.schedule_type"><strong>计划类型:</strong> {{ formatScheduleType(dispatch.schedule_type) }}</p>
+    <el-form-item label="派发名称" v-if="dispatch.name">
+      {{ dispatch.name }}
+    </el-form-item>
 
-        <!-- Specific Time -->
-        <p v-if="dispatch.time_of_day"><strong>指定时间:</strong> {{ dispatch.time_of_day }}</p>
+    <el-form-item label="计划类型" v-if="dispatch.schedule_type">
+      {{ formatScheduleType(dispatch.schedule_type) }}
+    </el-form-item>
 
-        <!-- Start Time -->
-        <p v-if="dispatch.start_time"><strong>激活时间:</strong> {{ formatDate(dispatch.start_time) }}</p>
+    <el-form-item label="指定时间" v-if="dispatch.time_of_day">
+      {{ dispatch.time_of_day }}
+    </el-form-item>
 
-        <!-- Interval Minutes -->
-        <p v-if="dispatch.interval_minutes"><strong>时间间隔（分钟）:</strong> {{ dispatch.interval_minutes }}</p>
+    <el-form-item label="激活时间" v-if="dispatch.start_time">
+      {{ formatDate(dispatch.start_time) }}
+    </el-form-item>
 
-        <!-- Repeat Count -->
-        <p v-if="dispatch.repeat_count"><strong>重复次数:</strong> {{ dispatch.repeat_count }}</p>
+    <el-form-item label="时间间隔 (分钟)" v-if="dispatch.interval_minutes">
+      {{ dispatch.interval_minutes }}
+    </el-form-item>
 
-        <!-- Specific Days -->
-        <p v-if="dispatch.schedule_type === 'SPECIFIC_DAYS' && dispatch.dispatch_days.length">
-          <strong>具体日期:</strong> {{ formattedSpecificDays }}
-        </p>
+    <el-form-item label="重复次数" v-if="dispatch.repeat_count">
+      {{ dispatch.repeat_count }}
+    </el-form-item>
 
-        <!-- Forms -->
-        <p><strong>表单:</strong>
-          <span v-if="dispatch.dispatch_forms.length">
-            {{ dispatch.dispatch_forms.join(", ") }}
-          </span>
-          <span v-else>-</span>
-        </p>
-
-        <!-- Personnel -->
-        <p><strong>人员:</strong>
-          <span v-if="dispatch.dispatch_personnel.length">
-            {{ formattedPersonnel }}
-          </span>
-          <span v-else>-</span>
-        </p>
+    <el-form-item label="具体日期" v-if="dispatch.schedule_type === 'SPECIFIC_DAYS' && dispatch.dispatch_days.length">
+      <div class="days-tags">
+        <el-tag
+            v-for="(day, index) in dispatch.dispatch_days"
+            :key="day"
+            type="info"
+            size="small"
+            effect="dark"
+        >
+          {{ formatDay(day) }}
+        </el-tag>
       </div>
-      <div v-else>
-        <p>没有选中的任务派发。</p>
+    </el-form-item>
+
+    <el-form-item label="表单">
+      <div v-if="dispatch.dispatch_forms.length > 0" class="form-tags">
+        <el-tag
+            v-for="(formId, index) in dispatch.dispatch_forms"
+            :key="formId"
+            type="info"
+            size="small"
+            effect="dark"
+        >
+          <el-popover effect="light" trigger="hover" placement="top" width="auto">
+            <template #default>
+              <div>ID: {{ formId }}</div>
+              <div>表单名: {{ getFormById(formId) }}</div>
+            </template>
+            <template #reference>
+              {{ getFormById(formId) }}
+            </template>
+          </el-popover>
+        </el-tag>
       </div>
-    </div>
-  </div>
+      <div v-else>-</div>
+    </el-form-item>
+
+    <el-form-item label="人员">
+      <div v-if="dispatch.dispatch_personnel.length > 0" class="personnel-tags">
+        <el-tag
+            v-for="(person, index) in dispatch.dispatch_personnel"
+            :key="person.id"
+            type="info"
+            size="small"
+            effect="dark"
+        >
+          <el-popover effect="light" trigger="hover" placement="top" width="auto">
+            <template #default>
+              <div>姓名: {{ person.name }}</div>
+              <div>用户名: {{ person.username }}</div>
+              <div>企业微信: {{ person.wecom_id }}</div>
+            </template>
+            <template #reference>
+              {{ person.name }}
+            </template>
+          </el-popover>
+        </el-tag>
+      </div>
+      <div v-else>-</div>
+    </el-form-item>
+  </el-form>
 </template>
 
 <script>
@@ -64,10 +105,16 @@ export default {
       type: Object,
       required: true,
     },
+    formMap: {
+      type: Object,
+      required: true,
+    },
   },
-  computed: {
-    formattedSpecificDays() {
-      const weekDaysMap = {
+  methods: {
+    formatDate,
+    formatScheduleType,
+    formatDay(day) {
+      const dayMap = {
         MONDAY: "星期一",
         TUESDAY: "星期二",
         WEDNESDAY: "星期三",
@@ -76,19 +123,11 @@ export default {
         SATURDAY: "星期六",
         SUNDAY: "星期日",
       };
-      return this.dispatch.dispatch_days
-          .map(day => weekDaysMap[day] || day)
-          .join(", ");
+      return dayMap[day] || day;
     },
-    formattedPersonnel() {
-      return this.dispatch.dispatch_personnel
-          .map(person => person.name)
-          .join(", ");
+    getFormById(id) {
+      return this.formMap[id] || "未知表单";
     },
-  },
-  methods: {
-    formatDate,
-    formatScheduleType,
   },
 };
 </script>
@@ -98,19 +137,17 @@ export default {
   padding: 10px;
 }
 
+.days-tags,
+.personnel-tags,
+.form-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .details-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
 }
 
-.readonly-info {
-  padding: 10px;
-  line-height: 1.8;
-}
-
-.readonly-info p {
-  margin: 5px 0;
-  word-wrap: break-word; /* Ensure text wraps properly */
-}
 </style>
+

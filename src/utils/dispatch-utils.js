@@ -74,3 +74,21 @@ export function formatScheduleType(type) {
             return "未知";
     }
 }
+
+export function generateFormMap(formNodes) {
+    const formMap = {};
+
+    function traverse(nodes) {
+        nodes.forEach(node => {
+            if (node.nodeType === "document") {
+                formMap[node.id] = node.label;
+            }
+            if (node.children && node.children.length) {
+                traverse(node.children);
+            }
+        });
+    }
+
+    traverse(formNodes);
+    return formMap;
+}

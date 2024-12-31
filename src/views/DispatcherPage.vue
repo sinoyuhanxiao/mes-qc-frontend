@@ -28,6 +28,7 @@
     <el-main class="table-section">
       <DispatchList
           :dispatch-list="dispatchList"
+          :form-map="formMap"
           @column-click="handleNameColumnClicked"
           @selection-change="updateSelectedRows"
       />
@@ -43,6 +44,7 @@
       <template v-if="isDetailsDialogVisible && !isEditMode && currentDispatch">
         <DispatchDetails
             :dispatch="currentDispatch"
+            :form-map="formMap"
             @edit="enableEditMode"
             @delete="confirmDeleteDispatch"
         />
@@ -67,7 +69,10 @@
         width="70%"
         @close="closeViewDispatchedTestsDialog"
     >
-      <DispatchedTasksList :dispatched-tasks="dispatchedTasks" />
+      <DispatchedTasksList
+          :dispatched-tasks="dispatchedTasks"
+          :form-map="formMap"
+          :personnel-map="personnelMap"/>
     </el-dialog>
   </el-container>
 </template>
@@ -78,8 +83,10 @@ import DispatchList from "@/components/dispatch/DispatchList.vue";
 import DispatchDetails from "@/components/dispatch/DispatchDetails.vue";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 import { createDispatch, deleteDispatch, getAllDispatches, updateDispatch, getAllDispatchedTasks } from "@/services/dispatchService";
-import { cleanPayload } from "@/utils/dispatch-utils";
+import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
 import { DeleteFilled } from "@element-plus/icons-vue";
+import {fetchFormNodes} from "@/services/formNodeService";
+import {fetchUsers} from "@/services/userService";
 
 export default {
   components: {
@@ -98,6 +105,8 @@ export default {
       dispatchedTasks: [],
       currentDispatch: null,
       selectedRows: [],
+      formMap: {},
+      personnelMap: {},
     };
   },
   methods: {
@@ -115,6 +124,26 @@ export default {
         this.dispatchedTasks = response.data.data;
       } catch (error) {
         this.$message.error("无法加载任務列表，请重试。");
+      }
+    },
+    async loadFormNodes() {
+      try {
+        const response = await fetchFormNodes(); // API call to fetch form nodes
+        this.formMap = generateFormMap(response.data); // Generate the map
+      } catch (error) {
+        console.error("Failed to load form nodes:", error);
+      }
+    },
+    async loadPersonnelMap() {
+      try {
+        const response = await fetchUsers(); // Fetch all personnel
+        this.personnelMap = response.data.data.reduce((map, person) => {
+          map[person.id] = person; // Map each person's ID to their details
+          return map;
+        }, {});
+      } catch (error) {
+        console.error("Error loading personnel data:", error);
+        this.$message.error("无法加载人员信息，请重试。");
       }
     },
     handleNewDispatchButtonClick() {
@@ -226,9 +255,12 @@ export default {
       this.isEditMode = true;
       this.isDetailsDialogVisible = true;
     },
+
   },
   mounted() {
     this.loadDispatches();
+    this.loadFormNodes();
+    this.loadPersonnelMap()
   },
 };
 </script>

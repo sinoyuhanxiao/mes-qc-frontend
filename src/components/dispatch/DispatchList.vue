@@ -20,7 +20,7 @@
         class="clickable-name"
         @click="clickedNameColumn(scope.row)"
     >
-      {{ scope.row.name || "-" }}
+      {{ scope.row.name}}
     </span>
       </template>
     </el-table-column>
@@ -37,7 +37,7 @@
     </el-table-column>
 
     <!-- Personnel -->
-    <el-table-column prop="dispatch_personnel" label="人員" width="180" sortable>
+    <el-table-column prop="dispatch_personnel" label="人員" width="150" >
       <template #default="scope">
         <div class="personnel-tags">
           <el-tag
@@ -75,7 +75,7 @@
     </el-table-column>
 
     <!-- Form -->
-    <el-table-column prop="dispatch_forms" label="表單" width="120">
+    <el-table-column prop="dispatch_forms" label="表單" width="150">
       <template #default="scope">
         <div v-if="scope.row.dispatch_forms && scope.row.dispatch_forms.length > 0" class="form-tags">
           <el-tag
@@ -218,6 +218,7 @@ import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
 import {DeleteFilled} from "@element-plus/icons-vue";
 
+
 export default {
   components: {
     DeleteFilled,
@@ -228,6 +229,10 @@ export default {
     dispatchList: {
       type: Array,
       required: true,
+    },
+    formMap: {
+      type: Object,
+      required: true, // Pass dynamically generated formMap
     },
   },
   data() {
@@ -258,16 +263,7 @@ export default {
       return dayMap[day] || day; // Fallback to the raw value if not found
     },
     getFormById(id) {
-      const formMap = {
-        101: "质量检查表 A",
-        102: "质量检查表 B",
-        103: "安全检查表",
-        104: "维护检查表",
-        1: "表單1",
-        1222: "表單1222",
-        444: "表單444",
-      }
-      return formMap[id];
+      return this.formMap[id] || "未知表单"; // Fallback for undefined IDs
     }
   },
 };

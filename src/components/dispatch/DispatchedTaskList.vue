@@ -9,13 +9,64 @@
     <el-table-column prop="id" label="ID" width="80" sortable></el-table-column>
 
     <!-- Dispatch ID -->
-    <el-table-column prop="dispatch_id" label="推送ID" width="100" sortable></el-table-column>
+    <el-table-column prop="dispatch_id" label="派发ID" width="100" sortable></el-table-column>
 
-    <!-- Personnel ID -->
-    <el-table-column prop="personnel_id" label="人员ID" width="100" sortable></el-table-column>
+    <!-- Personnel -->
+    <el-table-column prop="personnel_id" label="人员" width="200">
+      <template #default="scope">
+        <el-tag
+            v-if="getPersonnelById(scope.row.personnel_id)"
+            type="info"
+            size="small"
+            effect="dark"
+        >
+          <el-popover
+              effect="light"
+              trigger="hover"
+              placement="top"
+              width="auto"
+          >
+            <template #default>
+              <div>姓名: {{ getPersonnelById(scope.row.personnel_id).name }}</div>
+              <div>用户名: {{ getPersonnelById(scope.row.personnel_id).username }}</div>
+              <div>企业微信: {{ getPersonnelById(scope.row.personnel_id).wecom_id }}</div>
+            </template>
+            <template #reference>
+              {{ getPersonnelById(scope.row.personnel_id).name }}
+            </template>
+          </el-popover>
+        </el-tag>
+        <span v-else>-</span>
+      </template>
+    </el-table-column>
 
-    <!-- Form ID -->
-    <el-table-column prop="form_id" label="表单ID" width="100" sortable></el-table-column>
+    <!-- Form -->
+    <el-table-column prop="form_id" label="表单" width="200">
+      <template #default="scope">
+        <el-tag
+            v-if="getFormById(scope.row.form_id)"
+            type="info"
+            size="small"
+            effect="dark"
+        >
+          <el-popover
+              effect="light"
+              trigger="hover"
+              placement="top"
+              width="auto"
+          >
+            <template #default>
+              <div>ID: {{ scope.row.form_id }}</div>
+              <div>表单名: {{ getFormById(scope.row.form_id) }}</div>
+            </template>
+            <template #reference>
+              {{ getFormById(scope.row.form_id) }}
+            </template>
+          </el-popover>
+        </el-tag>
+        <span v-else>-</span>
+      </template>
+    </el-table-column>
 
     <!-- Dispatch Time -->
     <el-table-column prop="dispatch_time" label="推送时间" width="180" sortable>
@@ -59,6 +110,14 @@ export default {
       type: Array,
       required: true,
     },
+    formMap: {
+      type: Object,
+      required: true, // Form ID to Form Name mapping
+    },
+    personnelMap: {
+      type: Object,
+      required: true, // Personnel ID to Personnel Details mapping
+    },
   },
   methods: {
     formatDate(dateString) {
@@ -72,9 +131,17 @@ export default {
       };
       return statusMap[status] || "info";
     },
+    getFormById(formId) {
+      return this.formMap[formId] || "未知表单";
+    },
+    getPersonnelById(personnelId) {
+      return this.personnelMap[personnelId] || null;
+    },
   },
 };
 </script>
 
 <style scoped>
 </style>
+
+

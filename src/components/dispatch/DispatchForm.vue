@@ -19,11 +19,11 @@
         <el-checkbox
             v-model="selectAllDays"
             :indeterminate="isPartialDaysSelected"
-            @change="toggleAllDays"
-            class="checkbox-with-margin"
-        >
+            @change="toggleAllDays">
           每天
         </el-checkbox>
+        </el-form-item>
+        <el-form-item>
         <el-checkbox-group
             v-model="dispatchForm.dispatch_days"
             @change="updatePartialDaysState"
@@ -57,7 +57,7 @@
             placeholder="请选择开始时间"
         ></el-date-picker>
       </el-form-item>
-      <el-form-item label="时间间隔（分钟）">
+      <el-form-item label="时间间隔(分钟)">
         <el-input-number v-model="dispatchForm.intervalMinutes" :min="1"></el-input-number>
       </el-form-item>
       <el-form-item label="重复次数">
@@ -84,22 +84,11 @@
       </el-select>
     </el-form-item>
 
-    <!-- Forms Selection -->
     <el-form-item label="选择表单">
-      <el-select
-          v-model="dispatchForm.dispatch_forms"
-          multiple
-          filterable
-          placeholder="请选择表单"
-      >
-        <el-option
-            v-for="form in formOptions"
-            :key="form.id"
-            :label="form.name"
-            :value="form.id"
-        />
-      </el-select>
+    <!-- Form Tree -->
+      <DispatchFormTreeSelect @update-selected-forms="updateSelectedForms"/>
     </el-form-item>
+
 
     <!-- Action Buttons -->
     <el-form-item>
@@ -111,8 +100,10 @@
 
 <script>
 import { fetchUsers } from "@/services/userService";
+import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 
 export default {
+  components: {DispatchFormTreeSelect},
   props: {
     formData: {
       type: Object,
@@ -227,12 +218,13 @@ export default {
       this.dispatchForm = this.transformDispatchData(this.formData || {});
       this.updatePartialDaysState();
     },
+    updateSelectedForms(formIds) {
+      this.dispatchForm.dispatch_forms = formIds;
+    },
   },
 };
 </script>
 
 <style>
-.checkbox-with-margin {
-  margin-right: 16px;
-}
+
 </style>
