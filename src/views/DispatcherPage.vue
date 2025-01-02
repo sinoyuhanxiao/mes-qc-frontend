@@ -71,6 +71,11 @@
 
       </template>
 
+<!--      <template v-else-if="isDetailsDialogVisible && isEditMode">-->
+<!--        <dispatch-configurator/>-->
+
+<!--      </template>-->
+
       <template v-else>
         <p>加载中或没有选中的任务。</p> <!-- Placeholder for empty state -->
       </template>
