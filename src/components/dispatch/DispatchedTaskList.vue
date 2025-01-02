@@ -16,9 +16,9 @@
       <template #default="scope">
         <el-tag
             v-if="getPersonnelById(scope.row.personnel_id)"
-            type="info"
+            type="primary"
             size="small"
-            effect="dark"
+            effect="light"
         >
           <el-popover
               effect="light"
@@ -45,9 +45,9 @@
       <template #default="scope">
         <el-tag
             v-if="getFormById(scope.row.form_id)"
-            type="info"
+            type="success"
             size="small"
-            effect="dark"
+            effect="light"
         >
           <el-popover
               effect="light"
