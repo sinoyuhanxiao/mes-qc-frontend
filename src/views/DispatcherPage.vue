@@ -8,8 +8,8 @@
       <!--        </el-col>-->
       <!--        <el-col>-->
       <el-button-group>
-        <el-button type="primary" @click="handleNewDispatchButtonClick">新增任務派发</el-button>
-        <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任務</el-button>
+        <el-button type="primary" @click="handleNewDispatchButtonClick">新增任务派发</el-button>
+        <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任务</el-button>
         <el-button
             v-if="selectedRows.length > 0"
             type="danger"
@@ -34,7 +34,7 @@
 
     <!-- Dispatch Details Dialog -->
     <el-dialog
-        title="任務派发詳情"
+        title="任务派发详情"
         v-model="isDetailsDialogVisible"
         width="50%"
         @close="closeAndResetDetailsDialog"
@@ -55,6 +55,11 @@
             @submit="handleDispatchSubmit"
             @on-cancel="handleCancelDispatchForm"/>
       </template>
+
+<!--      <template v-else-if="isDetailsDialogVisible && isEditMode">-->
+<!--        <dispatch-configurator/>-->
+
+<!--      </template>-->
 
       <template v-else>
         <p>加载中或没有选中的任务。</p> <!-- Placeholder for empty state -->
@@ -86,9 +91,12 @@ import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
 import { DeleteFilled } from "@element-plus/icons-vue";
 import {fetchFormNodes} from "@/services/formNodeService";
 import {fetchUsers} from "@/services/userService";
+import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
+
 
 export default {
   components: {
+    DispatchConfigurator,
     DeleteFilled,
     DispatchForm,
     DispatchList,
