@@ -24,22 +24,22 @@
           :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
       >
         <!-- Task Form -->
-        <el-table-column prop="form_id" label="任务表单" width="300">
+        <el-table-column prop="qc_form_tree_node_id" label="任务表单" width="300">
           <template #default="scope">
             <span
                 class="clickable-form-name"
-                @click="handleFormNameClick(scope.row.form_id)"
+                @click="handleFormNameClick(scope.row.qc_form_tree_node_id)"
             >
-              {{ getFormById(scope.row.form_id) || '未知表单' }}
+              {{ getFormNameById(scope.row.qc_form_tree_node_id) || '未知表单' }}
             </span>
           </template>
         </el-table-column>
 
         <!-- Personnel -->
-        <el-table-column prop="personnel_id" label="派发对象" width="200">
+        <el-table-column prop="user_id" label="派发对象" width="200">
           <template #default="scope">
             <el-tag
-                v-if="getPersonnelById(scope.row.personnel_id)"
+                v-if="getUserById(scope.row.user_id)"
                 type="info"
                 size="small"
                 effect="dark"
@@ -51,12 +51,12 @@
                   width="auto"
               >
                 <template #default>
-                  <div>姓名: {{ getPersonnelById(scope.row.personnel_id).name }}</div>
-                  <div>用户名: {{ getPersonnelById(scope.row.personnel_id).username }}</div>
-                  <div>企业微信: {{ getPersonnelById(scope.row.personnel_id).wecom_id }}</div>
+                  <div>姓名: {{ getUserById(scope.row.user_id).name }}</div>
+                  <div>用户名: {{ getUserById(scope.row.user_id).username }}</div>
+                  <div>企业微信: {{ getUserById(scope.row.user_id).wecom_id }}</div>
                 </template>
                 <template #reference>
-                  {{ getPersonnelById(scope.row.personnel_id).name }}
+                  {{ getUserById(scope.row.user_id).name }}
                 </template>
               </el-popover>
             </el-tag>
@@ -71,11 +71,11 @@
           </template>
         </el-table-column>
 
-        <!-- Status -->
-        <el-table-column prop="status" label="状态" width="120" sortable>
+        <!-- state -->
+        <el-table-column prop="state" label="状态" width="120" sortable>
           <template #default="scope">
-            <el-tag :type="statusTagType(scope.row.status)">
-              {{ scope.row.status }}
+            <el-tag :type="stateTagType(scope.row.state)">
+              {{ scope.row.state }}
             </el-tag>
           </template>
         </el-table-column>
@@ -109,6 +109,7 @@
           :page-size="pageSize"
           layout="total, sizes, prev, pager, next"
           :total="dispatchedTasks.length"
+          :hide-on-single-page="true"
       />
 
       <!-- Popup for Details -->
@@ -182,7 +183,7 @@ export default {
         this.filteredTasks = this.dispatchedTasks; // Reset to all tasks if filter is empty
       } else {
         this.filteredTasks = this.dispatchedTasks.filter((task) =>
-            this.getFormById(task.form_id).includes(this.formFilter)
+            this.getFormNameById(task.qc_form_tree_node_id).includes(this.formFilter)
         );
       }
     },
@@ -227,21 +228,25 @@ export default {
         this.$message.error("无法加载人员信息，请重试。");
       }
     },
+    handleFormNameClick(formId) {
+      console.log("Task name clicked, qc_form_tree_node_id:", formId);
+      // Add any additional logic for handling the click
+    },
     formatDate(dateString) {
       return dateString ? dayjs(dateString).format("YYYY-MM-DD HH:mm:ss") : "-";
     },
-    statusTagType(status) {
-      const statusMap = {
+    stateTagType(state) {
+      const stateMap = {
         PENDING: "warning",
         COMPLETED: "success",
         FAILED: "danger",
       };
-      return statusMap[status] || "info";
+      return stateMap[state] || "info";
     },
-    getFormById(formId) {
+    getFormNameById(formId) {
       return this.formMap[formId] || "未知表单";
     },
-    getPersonnelById(personnelId) {
+    getUserById(personnelId) {
       return this.personnelMap[personnelId] || null;
     },
     showDetails(row) {

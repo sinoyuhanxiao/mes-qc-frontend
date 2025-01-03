@@ -13,15 +13,15 @@
     </el-form-item>
 
     <el-form-item label="任务表单">
-      {{ getFormById(task.form_id) }}
+      {{ getFormNameById(task.qc_form_tree_node_id) }}
     </el-form-item>
 
     <el-form-item label="节点编号">
-      {{ task.form_id }}
+      {{ task.qc_form_tree_node_id }}
     </el-form-item>
 
     <el-form-item label="派发对象">
-      {{ getPersonnelById(task.personnel_id)?.name || "未知人员" }}
+      {{ getUserById(task.user_id)?.name || "未知人员" }}
     </el-form-item>
 
     <el-form-item label="派发时间">
@@ -29,8 +29,8 @@
     </el-form-item>
 
     <el-form-item label="状态">
-      <el-tag :type="statusTagType(task.status)">
-        {{ task.status }}
+      <el-tag :type="stateTagType(task.state)">
+        {{ task.state }}
       </el-tag>
     </el-form-item>
 
@@ -61,22 +61,22 @@ export default {
     },
   },
   methods: {
-    getFormById(formId) {
+    getFormNameById(formId) {
       return this.formMap[formId] || "未知表单";
     },
-    getPersonnelById(personnelId) {
+    getUserById(personnelId) {
       return this.personnelMap[personnelId] || null;
     },
     formatDate(dateString) {
       return dateString ? new Date(dateString).toLocaleString() : "-";
     },
-    statusTagType(status) {
-      const statusMap = {
+    stateTagType(state) {
+      const stateMap = {
         PENDING: "warning",
         COMPLETED: "success",
         FAILED: "danger",
       };
-      return statusMap[status] || "info";
+      return stateMap[state] || "info";
     },
   },
 };
