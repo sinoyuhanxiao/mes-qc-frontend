@@ -1,18 +1,18 @@
 <template>
-  <div v-if="formId"> <!-- Updated to render only when formJson is available -->
+  <div v-if="formId">
     <h1 class="form-title">{{ props.currentForm?.label || 'Form Title' }}</h1>
     <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
-    <el-button type="primary" @click="submitForm">Submit</el-button>
+    <el-button type="primary" v-if="props.usable" @click="submitForm">Submit</el-button>
     <p class="node-id">Node ID: {{ props.currentForm?.id || 'N/A' }}</p>
     <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || 'N/A' }}</p>
   </div>
 </template>
 
 <script setup>
-import {ref, reactive, watch, onMounted} from 'vue'
+import {ref, reactive, watch, onMounted, nextTick} from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
-import VFormRender from '@/components/form-render/index' // the documentation was so silly I found this out
+import VFormRender from '@/components/form-render/index'
 import testFormJsonData from '@/tests/form_json_data.json'; // Import the JSON data - original code
 import api from '@/services/api'
 import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
@@ -23,13 +23,18 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  usable: {
+    type: Boolean,
+    default: false, // Default to disabled
+  }
 });
 
 /* 注意：formJson是指表单设计器导出的json，此处演示的formJson只是一个空白表单json！！ */
 // const formJson = reactive(testFormJsonData) // Use the imported JSON data - original code
 const formData = reactive({})
 const optionData = reactive({})
-const vFormRef = ref(null)
+let vFormRef = ref(null)
+const previewState = ref(true)
 let formId = null
 
 const store = useStore();
@@ -59,6 +64,7 @@ const submitForm = () => {
   });
 }
 
+
 // Watch the qcFormTemplateId in the passed currentForm
 watch(
     () => props.currentForm?.qcFormTemplateId, // Safely access qcFormTemplateId
@@ -70,6 +76,10 @@ watch(
         if (response.status === 200 && response.data) {
           const templateJson = JSON.parse(response.data.data.form_template_json);
           vFormRef.value.setFormJson(templateJson); // Update the form JSON dynamically
+          await nextTick();
+          if (!props.usable && vFormRef.value) {
+            vFormRef.value.disableForm();
+          }
           ElMessage.success('Form loaded successfully!');
         } else {
           ElMessage.error('Failed to load form template!');
@@ -82,6 +92,10 @@ watch(
     { immediate: true } // Trigger immediately for the initial load
 );
 
+// onMounted(() => {
+//   console.log("Initial Props - currentForm:", props.currentForm);
+//   console.log("Initial Props - usable:", props.usable);
+// });
 
 </script>
 

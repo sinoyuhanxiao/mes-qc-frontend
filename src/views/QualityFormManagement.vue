@@ -5,7 +5,11 @@
     </el-aside>
     <el-main>
       <!-- Render FormDisplay only if selectedForm exists and nodeType is not 'folder' -->
-      <FormDisplay v-if="selectedForm && selectedForm.nodeType !== 'folder'" :currentForm="selectedForm" />
+      <FormDisplay
+          v-if="selectedForm && selectedForm.nodeType !== 'folder'"
+          :currentForm="selectedForm"
+          :usable="false"
+      />
     </el-main>
   </el-container>
 </template>

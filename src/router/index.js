@@ -7,6 +7,7 @@ import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
 import DispatcherPage from "@/views/DispatcherPage.vue";
+import MyCurrentTask from "@/views/MyCurrentTask.vue";
 
 const routes = [
     {
@@ -42,6 +43,11 @@ const routes = [
         path: '/task-assignment',
         name: 'TaskAssignment',
         component: DispatcherPage
+    },
+    {
+        path: '/current-tasks',
+        name: 'MyCurrentTask',
+        component: MyCurrentTask
     },
 ];
 

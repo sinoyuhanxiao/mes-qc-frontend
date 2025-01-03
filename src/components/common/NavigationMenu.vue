@@ -60,9 +60,25 @@
           <el-icon><Collection /></el-icon>
           <span>任务中心</span>
         </template>
-        <el-menu-item index="/my-tasks">
+        <el-menu-item index="/dashboard">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>任务看板</span>
+        </el-menu-item>
+        <el-menu-item index="/current-tasks">
           <el-icon><Document /></el-icon>
-          <span>我的任务</span>
+          <span>当前任务</span>
+        </el-menu-item>
+        <el-menu-item index="/tasks-in-queue">
+          <el-icon><List /></el-icon>
+          <span>未来任务</span>
+        </el-menu-item>
+        <el-menu-item index="/history-tasks">
+          <el-icon><Files /></el-icon>
+          <span>历史任务</span>
+        </el-menu-item>
+        <el-menu-item index="/task-calendar">
+          <el-icon><Calendar /></el-icon>
+          <span>任务日历</span>
         </el-menu-item>
       </el-sub-menu>
     </div>
@@ -88,11 +104,24 @@
 </template>
 
 <script>
-import { HomeFilled, Setting, User, List, Document, Edit, Files, DataAnalysis, Collection, SwitchButton } from '@element-plus/icons-vue';
+import {
+  HomeFilled,
+  Setting,
+  User,
+  List,
+  Document,
+  Edit,
+  Files,
+  DataAnalysis,
+  Collection,
+  SwitchButton,
+  Calendar
+} from '@element-plus/icons-vue';
 import { mapGetters, mapActions } from 'vuex';
 
 export default {
   components: {
+    Calendar,
     HomeFilled,
     Setting,
     User,
