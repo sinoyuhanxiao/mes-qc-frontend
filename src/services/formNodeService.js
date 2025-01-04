@@ -12,6 +12,15 @@ export const fetchFormNodes = () => {
 };
 
 /**
+ * Fetch the specific node info from object id.
+ * @param {string} id - The ID of the node.
+ * @returns {Promise} API response with the node data.
+ */
+export const fetchFormNodesById = (id) => {
+    return api.get(`${BASE_URL}/${id}`);
+};
+
+/**
  * Add a new root-level node.
  * @param {Object} newNode - The details of the new root node.
  * @returns {Promise} API response.

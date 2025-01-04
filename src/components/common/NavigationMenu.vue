@@ -76,6 +76,10 @@
           <el-icon><Files /></el-icon>
           <span>历史任务</span>
         </el-menu-item>
+        <el-menu-item index="/history-tasks">
+          <el-icon><Warning /></el-icon>
+          <span>逾期任务</span>
+        </el-menu-item>
         <el-menu-item index="/task-calendar">
           <el-icon><Calendar /></el-icon>
           <span>任务日历</span>
@@ -115,12 +119,13 @@ import {
   DataAnalysis,
   Collection,
   SwitchButton,
-  Calendar
+  Calendar, Warning
 } from '@element-plus/icons-vue';
 import { mapGetters, mapActions } from 'vuex';
 
 export default {
   components: {
+    Warning,
     Calendar,
     HomeFilled,
     Setting,

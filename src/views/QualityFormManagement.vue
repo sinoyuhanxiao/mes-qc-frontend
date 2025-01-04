@@ -8,7 +8,7 @@
       <FormDisplay
           v-if="selectedForm && selectedForm.nodeType !== 'folder'"
           :currentForm="selectedForm"
-          :usable="true"
+          :usable="false"
       />
     </el-main>
   </el-container>

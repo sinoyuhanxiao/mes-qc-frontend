@@ -49,6 +49,12 @@ const routes = [
         name: 'MyCurrentTask',
         component: MyCurrentTask
     },
+    {
+        path: '/form-display/:qcFormTemplateId',
+        name: 'FormDisplay',
+        component: FormDisplay,
+        props: true,
+    }
 ];
 
 const router = createRouter({

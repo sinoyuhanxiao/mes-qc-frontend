@@ -107,6 +107,7 @@
           @current-change="handleCurrentChange"
           :current-page="currentPage"
           :page-size="pageSize"
+          :page-sizes = "[15, 30, 45, 60]"
           layout="total, sizes, prev, pager, next"
           :total="dispatchedTasks.length"
           :hide-on-single-page="true"
@@ -136,10 +137,12 @@
 <script>
 import dayjs from "dayjs";
 import { getAllDispatchedTasks } from "@/services/dispatchService";
-import { fetchFormNodes } from "@/services/formNodeService";
+import {fetchFormNodes, fetchFormNodesById} from "@/services/formNodeService";
 import { fetchUsers } from "@/services/userService";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
 import { Search } from "@element-plus/icons-vue";
+import * as qcFormTemplateService from "@/services/qcFormTemplateService";
+import * as formNodeService from "@/services/formNodeService";
 
 
 export default {
@@ -155,7 +158,7 @@ export default {
       isDetailsDialogVisible: false,
       currentTask: null,
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 15,
       formFilter: "",
       filteredTasks: []
     };
@@ -228,9 +231,34 @@ export default {
         this.$message.error("无法加载人员信息，请重试。");
       }
     },
-    handleFormNameClick(formId) {
-      console.log("Task name clicked, qc_form_tree_node_id:", formId);
-      // Add any additional logic for handling the click
+    async handleFormNameClick(nodeId) {
+      console.log("Redirecting to form display with nodeId:", nodeId);
+
+      try {
+        // Fetch the qc form template id asynchronously
+        const response = await formNodeService.fetchFormNodesById(nodeId);
+        const qcFormTemplateId = response.data?.qcFormTemplateId;
+
+        if (!qcFormTemplateId) {
+          console.error("Failed to fetch qcFormTemplateId for nodeId:", nodeId);
+          this.$message.error("无法加载表单模板，请重试。");
+          return;
+        }
+
+        // Construct the URL for the route
+        const newTabUrl = this.$router.resolve({
+          name: 'FormDisplay',
+          params: {
+            qcFormTemplateId: qcFormTemplateId,
+          },
+        }).href;
+
+        // Open the URL in a new tab
+        window.open(newTabUrl, '_blank');
+      } catch (error) {
+        console.error("Error fetching qcFormTemplateId for nodeId:", nodeId, error);
+        this.$message.error("加载表单模板时出错，请稍后重试。");
+      }
     },
     formatDate(dateString) {
       return dateString ? dayjs(dateString).format("YYYY-MM-DD HH:mm:ss") : "-";
