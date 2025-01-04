@@ -8,6 +8,7 @@ import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
 import DispatcherPage from "@/views/DispatcherPage.vue";
 import MyCurrentTask from "@/views/MyCurrentTask.vue";
+import TaskCenterDashboard from "@/views/TaskCenterDashboard.vue";
 
 const routes = [
     {
@@ -54,6 +55,11 @@ const routes = [
         name: 'FormDisplay',
         component: FormDisplay,
         props: true,
+    },
+    {
+        path: '/task-center-dashboard',
+        name: 'TaskCenterDashboard',
+        component: TaskCenterDashboard
     }
 ];
 

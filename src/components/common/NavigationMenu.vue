@@ -76,7 +76,7 @@
           <el-icon><Files /></el-icon>
           <span>历史任务</span>
         </el-menu-item>
-        <el-menu-item index="/history-tasks">
+        <el-menu-item index="/overdue-tasks">
           <el-icon><Warning /></el-icon>
           <span>逾期任务</span>
         </el-menu-item>
