@@ -1,6 +1,6 @@
 <template>
   <MyTaskTable
-      title="未来任务"
+      title="今日任务"
       :columnList="columnList"
       :userId="userId"
       :type="type"
@@ -17,7 +17,7 @@ export default {
   data() {
     return {
       userId: this.$store.getters.getUser.id, // Dynamically fetch the logged-in user's ID
-      type: "future",
+      type: "today",
       columnList: [
         "qc_form_tree_node_id",
         "dispatched_task_state_id",

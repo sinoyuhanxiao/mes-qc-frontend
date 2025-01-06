@@ -62,7 +62,7 @@
                 {{ scope.row[key] === 0 ? '是' : '否' }}
               </el-tag>
             </span>
-            <span v-else-if="key === 'created_by' || key === 'updated_by' || key === 'userId'">
+            <span v-else-if="key === 'created_by' || key === 'updated_by' || key === 'user_id'">
               <el-popover effect="light" trigger="hover" placement="top" width="auto">
                 <template #default>
                   <div>姓名: {{ personnelMap[scope.row[key]]?.name || '未知' }}</div>
@@ -134,7 +134,7 @@ import TaskDetail from "@/components/task-center/TaskDetail.vue";
 import { Search } from "@element-plus/icons-vue";
 import { fetchFormNodes } from "@/services/formNodeService";
 import { fetchUsers } from "@/services/userService";
-import { fetchTodayTasks } from "@/services/taskCenterService";
+import {fetchFutureTasks, fetchHistoricalTasks, fetchOverdueTasks, fetchTodayTasks} from "@/services/taskCenterService";
 import * as formNodeService from "@/services/formNodeService";
 
 export default {
@@ -152,6 +152,10 @@ export default {
       type: Number,
       required: true,
     },
+    type: {
+      type: String,
+      required: true,
+    }
   },
   components: {
     TaskDetail,
@@ -202,12 +206,28 @@ export default {
   methods: {
     async fetchDispatchedTasks() {
       try {
-        const response = await fetchTodayTasks(this.userId);
+        let response;
+        switch (this.type) {
+          case "today":
+            response = await fetchTodayTasks(this.userId);
+            break;
+          case "future":
+            response = await fetchFutureTasks(this.userId);
+            break;
+          case "history":
+            response = await fetchHistoricalTasks(this.userId);
+            break;
+          case "overdue":
+            response = await fetchOverdueTasks(this.userId);
+            break;
+          default:
+            throw new Error(`Invalid task type: ${this.type}`);
+        }
         this.dispatchedTasks = response.data.data;
         this.filteredTasks = this.dispatchedTasks; // Initialize filteredTasks
       } catch (error) {
         console.error("Error fetching dispatched tasks:", error);
-        this.$message.error("无法加载我的任务，请重试。");
+        this.$message.error("无法加载任务列表，请重试。");
       }
     },
     async fetchPersonnelMap() {
@@ -291,6 +311,8 @@ export default {
           name: 'FormDisplay',
           params: {
             qcFormTemplateId: qcFormTemplateId,
+            usable: false,
+            switchDisplayed: false
           },
         }).href;
 

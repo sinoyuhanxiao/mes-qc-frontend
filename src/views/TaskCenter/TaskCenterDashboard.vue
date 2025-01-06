@@ -1,5 +1,22 @@
 <template>
   <div class="task-center-dashboard">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-section">
+      <el-row :gutter="20" align="middle">
+        <el-col :span="18">
+          <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item>Dashboard</el-breadcrumb-item>
+            <el-breadcrumb-item>Home</el-breadcrumb-item>
+            <el-breadcrumb-item>Dashboard</el-breadcrumb-item>
+          </el-breadcrumb>
+        </el-col>
+        <el-col :span="6" class="action-buttons">
+          <el-button type="primary" size="small">New</el-button>
+          <el-button size="small">Filters</el-button>
+        </el-col>
+      </el-row>
+    </div>
+
     <!-- Top Statistics Cards -->
     <div class="stats-cards">
       <el-row :gutter="20">

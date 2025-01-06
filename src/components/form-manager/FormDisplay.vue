@@ -1,8 +1,18 @@
 <template>
   <div v-if="formId">
-    <h1 class="form-title">{{ props.currentForm?.label || formTitle }}</h1>
+    <div class="header-container">
+      <h1 class="form-title">{{ props.currentForm?.label || formTitle }}</h1>
+      <el-button>快速分配任务</el-button>
+      <el-switch
+          v-model="enable_form"
+          v-if="switchDisplayed"
+          inline-prompt
+          active-text="可用"
+          inactive-text="不可用"
+      />
+    </div>
     <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
-    <el-button type="primary" v-if="props.usable" @click="submitForm">Submit</el-button>
+    <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">Submit</el-button>
     <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
     <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
   </div>
@@ -41,7 +51,11 @@ const props = defineProps({
 const formData = reactive({})
 const optionData = reactive({})
 const formTitle = ref(''); // Store form title
+const enable_form = ref(false)
 let vFormRef = ref(null)
+const switchDisplayed = ref(
+    !route.params.qcFormTemplateId
+);
 const previewState = ref(true)
 let formId = null
 
@@ -101,6 +115,30 @@ watch(
     { immediate: true } // Trigger immediately for the initial load
 );
 
+watch(enable_form, (newVal) => {
+  if (newVal && vFormRef.value) {
+    vFormRef.value.enableForm(); // Enable the form when switched on
+  } else if (vFormRef.value) {
+    vFormRef.value.disableForm(); // Disable the form when switched off
+  }
+});
+
+//
+// watch(
+//     () => route.params.switchDisplayed,
+//     (newVal) => {
+//       console.log("switchDisplayed");
+//       console.log(switchDisplayed.value);
+//       switchDisplayed.value = newVal ?? true;
+//       console.log("route params");
+//       console.log(route.params); // Print all parameters in the route
+//       console.log("new val: " + newVal);
+//       console.log("switchDisplayed after newVal");
+//       console.log(switchDisplayed.value);
+//     },
+//     { immediate: true }
+// );
+
 // onMounted(() => {
 //   if (props.qcFormTemplateId) {
 //     console.log("qcFormTemplateId:", props.qcFormTemplateId);
@@ -149,5 +187,12 @@ watch(
     color: grey;
     font-size: 12px;
     margin-top: 20px;
+  }
+
+  .header-container {
+    display: flex;
+    justify-content: space-between; /* Align content to the edges */
+    align-items: center; /* Center items vertically */
+    padding: 0 20px; /* Optional: Add padding for spacing */
   }
 </style>
