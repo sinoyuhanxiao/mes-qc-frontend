@@ -3,13 +3,36 @@
     <div class="details-header">
       <!-- Action Buttons -->
       <el-button-group>
-        <el-button type="success" @click="$emit('edit')">编辑</el-button>
-        <el-button type="danger" @click="$emit('delete')">删除</el-button>
+        <el-button
+            type="info"
+            :disabled="true"
+            class="forbidden-button"
+            @click="$emit('edit')"
+        >
+          编辑
+        </el-button>
+        <el-button
+            type="info"
+            :disabled="true"
+            class="forbidden-button"
+            @click="$emit('delete')"
+        >
+          删除
+        </el-button>
       </el-button-group>
+
     </div>
 
+    <el-form-item label="任务名称">
+      {{ task.name || "未命名任务" }}
+    </el-form-item>
+
+    <el-form-item label="描述">
+      {{ task.description || "无描述" }}
+    </el-form-item>
+
     <el-form-item label="派发ID">
-      {{ task.dispatch_id }}
+      {{ task.dispatch_id || "无" }}
     </el-form-item>
 
     <el-form-item label="任务表单">
@@ -28,9 +51,9 @@
       {{ formatDate(task.dispatch_time) }}
     </el-form-item>
 
-    <el-form-item label="状态">
-      <el-tag :type="stateTagType(task.state)">
-        {{ task.state }}
+    <el-form-item label="任务状态">
+      <el-tag :type="stateTagType(task.dispatched_task_state_id)">
+        {{ stateName(task.dispatched_task_state_id) }}
       </el-tag>
     </el-form-item>
 
@@ -38,8 +61,34 @@
       {{ task.notes || "-" }}
     </el-form-item>
 
+    <el-form-item label="创建时间">
+      {{ formatDate(task.created_at) }}
+    </el-form-item>
+
+    <el-form-item label="创建者">
+      {{ task.created_by || "无" }}
+    </el-form-item>
+
     <el-form-item label="更新时间">
       {{ formatDate(task.updated_at) }}
+    </el-form-item>
+
+    <el-form-item label="更新者">
+      {{ task.updated_by || "无" }}
+    </el-form-item>
+
+    <el-form-item label="截止时间">
+      {{ formatDate(task.due_date) }}
+    </el-form-item>
+
+    <el-form-item label="是否逾期">
+      <el-tag :type="task.is_overdue ? 'danger' : 'success'">
+        {{ task.is_overdue ? "是" : "否" }}
+      </el-tag>
+    </el-form-item>
+
+    <el-form-item label="完成时间">
+      {{ formatDate(task.finished_at) || "未完成" }}
     </el-form-item>
   </el-form>
 </template>
@@ -70,13 +119,25 @@ export default {
     formatDate(dateString) {
       return dateString ? new Date(dateString).toLocaleString() : "-";
     },
-    stateTagType(state) {
+    stateTagType(stateId) {
       const stateMap = {
-        PENDING: "warning",
-        COMPLETED: "success",
-        FAILED: "danger",
+        1: "warning", // Pending
+        2: "primary", // In Progress
+        3: "success", // Completed
+        4: "info",    // Canceled
+        5: "danger",  // Overdue
       };
-      return stateMap[state] || "info";
+      return stateMap[stateId] || "info";
+    },
+    stateName(stateId) {
+      const stateMap = {
+        1: "Pending",
+        2: "In Progress",
+        3: "Completed",
+        4: "Canceled",
+        5: "Overdue",
+      };
+      return stateMap[stateId] || "Unknown";
     },
   },
 };
@@ -90,5 +151,10 @@ export default {
 .details-header {
   display: flex;
   justify-content: flex-end;
+}
+
+.forbidden-button {
+  cursor: not-allowed !important; /* Show forbidden cursor */
+  pointer-events: none; /* Prevent any interaction */
 }
 </style>

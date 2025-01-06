@@ -2,7 +2,7 @@
   <el-container>
     <el-header class="header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>当前任务</h2>
+        <h2>今日任务</h2>
         <el-input
             v-model="formFilter"
             placeholder="搜索任务表单名称"
@@ -35,55 +35,49 @@
           </template>
         </el-table-column>
 
-        <!-- Personnel -->
-        <el-table-column prop="user_id" label="派发对象" width="200">
+        <!-- Task State -->
+        <el-table-column prop="dispatched_task_state_id" label="任务状态" width="120" sortable>
           <template #default="scope">
-            <el-tag
-                v-if="getUserById(scope.row.user_id)"
-                type="info"
-                size="small"
-                effect="dark"
-            >
-              <el-popover
-                  effect="light"
-                  trigger="hover"
-                  placement="top"
-                  width="auto"
-              >
-                <template #default>
-                  <div>姓名: {{ getUserById(scope.row.user_id).name }}</div>
-                  <div>用户名: {{ getUserById(scope.row.user_id).username }}</div>
-                  <div>企业微信: {{ getUserById(scope.row.user_id).wecom_id }}</div>
-                </template>
-                <template #reference>
-                  {{ getUserById(scope.row.user_id).name }}
-                </template>
-              </el-popover>
+            <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
+              {{ stateName(scope.row.dispatched_task_state_id) }}
             </el-tag>
-            <span v-else>-</span>
           </template>
         </el-table-column>
 
-        <!-- Dispatch Time -->
-        <el-table-column prop="dispatch_time" label="派发时间" width="180" sortable>
+        <!-- Task Name -->
+        <el-table-column prop="name" label="任务名称" width="200">
           <template #default="scope">
-            {{ formatDate(scope.row.dispatch_time) }}
+            {{ scope.row.name || '未命名任务' }}
           </template>
         </el-table-column>
 
-        <!-- state -->
-        <el-table-column prop="state" label="状态" width="120" sortable>
+        <!-- Remaining Time -->
+        <el-table-column label="剩余时间" width="200">
           <template #default="scope">
-            <el-tag :type="stateTagType(scope.row.state)">
-              {{ scope.row.state }}
+            <el-tag style="font-weight: bold" :type="remainingTimeTag(scope.row.due_date)">
+              {{ calculateRemainingTime(scope.row.due_date) }}
             </el-tag>
+          </template>
+        </el-table-column>
+
+        <!-- Due Date -->
+        <el-table-column prop="due_date" label="到期时间" width="200" sortable>
+          <template #default="scope">
+            {{ formatDate(scope.row.due_date) }}
+          </template>
+        </el-table-column>
+
+        <!-- Description -->
+        <el-table-column prop="description" label="任务描述" width="400">
+          <template #default="scope">
+            {{ scope.row.description || '-' }}
           </template>
         </el-table-column>
 
         <!-- Notes -->
         <el-table-column prop="notes" label="备注" width="400">
           <template #default="scope">
-            {{ scope.row.notes || "-" }}
+            {{ scope.row.notes || '-' }}
           </template>
         </el-table-column>
 
@@ -93,7 +87,7 @@
             <el-button link type="primary" size="small" @click="showDetails(scope.row)">
               Detail
             </el-button>
-            <el-button link type="primary" size="small" @click="editTask(scope.row)">
+            <el-button link type="info" size="small" @click="editTask(scope.row)">
               Edit
             </el-button>
           </template>
@@ -107,7 +101,7 @@
           @current-change="handleCurrentChange"
           :current-page="currentPage"
           :page-size="pageSize"
-          :page-sizes = "[15, 30, 45, 60]"
+          :page-sizes="[15, 30, 45, 60]"
           layout="total, sizes, prev, pager, next"
           :total="dispatchedTasks.length"
           :hide-on-single-page="true"
@@ -120,14 +114,14 @@
           width="50%"
           @close="closeDetailsDialog"
       >
-      <TaskDetail
-          v-if="currentTask"
-          :task="currentTask"
-          :form-map="formMap"
-          :personnel-map="personnelMap"
-          @edit="editTask(currentTask)"
-          @delete="deleteTask(currentTask)"
-      />
+        <TaskDetail
+            v-if="currentTask"
+            :task="currentTask"
+            :form-map="formMap"
+            :personnel-map="personnelMap"
+            @edit="editTask(currentTask)"
+            @delete="deleteTask(currentTask)"
+        />
 
       </el-dialog>
     </el-main>
@@ -136,14 +130,14 @@
 
 <script>
 import dayjs from "dayjs";
-import { getAllDispatchedTasks } from "@/services/dispatchService";
+import {getAllDispatchedTasks} from "@/services/dispatchService";
 import {fetchFormNodes, fetchFormNodesById} from "@/services/formNodeService";
-import { fetchUsers } from "@/services/userService";
+import {fetchUsers} from "@/services/userService";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
-import { Search } from "@element-plus/icons-vue";
+import {Search} from "@element-plus/icons-vue";
 import * as qcFormTemplateService from "@/services/qcFormTemplateService";
 import * as formNodeService from "@/services/formNodeService";
-
+import {fetchTodayTasks} from "@/services/taskCenterService";
 
 export default {
   components: {
@@ -160,7 +154,8 @@ export default {
       currentPage: 1,
       pageSize: 15,
       formFilter: "",
-      filteredTasks: []
+      filteredTasks: [],
+      pollingInterval: null
     };
   },
   computed: {
@@ -173,12 +168,25 @@ export default {
   methods: {
     async fetchDispatchedTasks() {
       try {
-        const response = await getAllDispatchedTasks();
+        const userId = this.$store.getters.getUser.id; // Get the logged-in user's ID from Vuex
+        console.log("userId here is " + userId)
+        const response = await fetchTodayTasks(userId); // Use the userId dynamically
         this.dispatchedTasks = response.data.data;
         this.filteredTasks = this.dispatchedTasks; // Initialize filteredTasks
       } catch (error) {
         console.error("Error fetching dispatched tasks:", error);
         this.$message.error("无法加载我的任务，请重试。");
+      }
+    },
+    startPolling() {
+      this.pollingInterval = setInterval(() => {
+        this.fetchDispatchedTasks();
+      }, 10000); // Poll every 10 seconds, set up websocket later
+    },
+    stopPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
       }
     },
     async applyFilter() {
@@ -263,13 +271,63 @@ export default {
     formatDate(dateString) {
       return dateString ? dayjs(dateString).format("YYYY-MM-DD HH:mm:ss") : "-";
     },
-    stateTagType(state) {
+    stateTagType(stateId) {
       const stateMap = {
-        PENDING: "warning",
-        COMPLETED: "success",
-        FAILED: "danger",
+        1: 'warning',  // Pending
+        2: 'primary',  // In Progress
+        3: 'success',  // Completed
+        4: 'info',     // Canceled
+        5: 'danger',   // Overdue
       };
-      return stateMap[state] || "info";
+      return stateMap[stateId] || 'info'; // Default to 'info' if stateId is undefined
+    },
+    stateName(stateId) {
+      const stateMap = {
+        1: 'Pending',
+        2: 'In Progress',
+        3: 'Completed',
+        4: 'Canceled',
+        5: 'Overdue',
+      };
+      return stateMap[stateId] || 'Unknown'; // Default to 'Unknown' if stateId is undefined
+    },
+    calculateRemainingTime(dueDate) {
+      if (!dueDate) return "-";
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInMinutes = due.diff(now, 'minute');
+
+      if (diffInMinutes <= 0) return "已过期";
+
+      const days = Math.floor(diffInMinutes / (60 * 24));
+      const hours = Math.floor((diffInMinutes % (60 * 24)) / 60);
+      const minutes = diffInMinutes % 60;
+
+      if (days > 0) {
+        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+      } else if (hours > 0) {
+        return `${hours} 小时 ${minutes} 分钟`;
+      } else {
+        return `${minutes} 分钟`;
+      }
+    },
+    remainingTimeTag(dueDate) {
+      if (!dueDate) return "info";
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInMinutes = due.diff(now, 'minute');
+
+      if (diffInMinutes > 24 * 60) {
+        return "info";
+      } else if (diffInMinutes > 60) {
+        return "primary";
+      } else if (diffInMinutes > 30) {
+        return "warning";
+      } else {
+        return "danger";
+      }
     },
     getFormNameById(formId) {
       return this.formMap[formId] || "未知表单";
@@ -303,7 +361,11 @@ export default {
       this.fetchFormMap(),
       this.fetchPersonnelMap(),
     ]);
+    this.startPolling(); // Start polling after mounting
   },
+  beforeUnmount() {
+    this.stopPolling();
+  }
 };
 </script>
 

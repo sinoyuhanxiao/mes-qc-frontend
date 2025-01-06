@@ -7,8 +7,9 @@ import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
 import DispatcherPage from "@/views/DispatcherPage.vue";
-import MyCurrentTask from "@/views/MyCurrentTask.vue";
-import TaskCenterDashboard from "@/views/TaskCenterDashboard.vue";
+import MyCurrentTask from "@/views/TaskCenter/MyCurrentTask.vue";
+import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
+import MyFutureTask from "@/views/TaskCenter/MyFutureTask.vue";
 
 const routes = [
     {
@@ -48,6 +49,21 @@ const routes = [
     {
         path: '/current-tasks',
         name: 'MyCurrentTask',
+        component: MyCurrentTask
+    },
+    {
+        path: '/future-tasks',
+        name: 'MyFutureTask',
+        component: MyFutureTask
+    },
+    {
+        path: '/history-tasks',
+        name: 'MyHistoryTask',
+        component: MyCurrentTask
+    },
+    {
+        path: '/overdue-tasks',
+        name: 'MyOverdueTask',
         component: MyCurrentTask
     },
     {

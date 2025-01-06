@@ -66,9 +66,9 @@
         </el-menu-item>
         <el-menu-item index="/current-tasks">
           <el-icon><Document /></el-icon>
-          <span>当前任务</span>
+          <span>今日任务</span>
         </el-menu-item>
-        <el-menu-item index="/tasks-in-queue">
+        <el-menu-item index="/future-tasks">
           <el-icon><List /></el-icon>
           <span>未来任务</span>
         </el-menu-item>
