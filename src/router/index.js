@@ -7,6 +7,12 @@ import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
 import DispatcherPage from "@/views/DispatcherPage.vue";
+import MyCurrentTask from "@/views/TaskCenter/MyCurrentTask.vue";
+import MyFutureTask from "@/views/TaskCenter/MyFutureTask.vue";
+import MyTodayTask from "@/views/TaskCenter/MyTodayTask.vue";
+import MyHistoryTask from "@/views/TaskCenter/MyHistoryTask.vue";
+import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
+import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 
 const routes = [
     {
@@ -43,6 +49,37 @@ const routes = [
         name: 'TaskAssignment',
         component: DispatcherPage
     },
+    {
+        path: '/current-tasks',
+        name: 'MyCurrentTask',
+        component: MyTodayTask
+    },
+    {
+        path: '/future-tasks',
+        name: 'MyFutureTask',
+        component: MyFutureTask
+    },
+    {
+        path: '/history-tasks',
+        name: 'MyHistoryTask',
+        component: MyHistoryTask
+    },
+    {
+        path: '/overdue-tasks',
+        name: 'MyOverdueTask',
+        component: MyOverdueTask
+    },
+    {
+        path: '/form-display/:qcFormTemplateId',
+        name: 'FormDisplay',
+        component: FormDisplay,
+        props: true,
+    },
+    {
+        path: '/task-center-dashboard',
+        name: 'TaskCenterDashboard',
+        component: TaskCenterDashboard
+    }
 ];
 
 const router = createRouter({
