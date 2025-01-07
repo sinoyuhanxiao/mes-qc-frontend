@@ -33,6 +33,10 @@
       {{ dispatch.repeat_count }}
     </el-form-item>
 
+    <el-form-item label="已执行次数" v-if="dispatch.executed_count">
+      {{ dispatch.executed_count }}
+    </el-form-item>
+
     <el-form-item label="具体日期" v-if="dispatch.schedule_type === 'SPECIFIC_DAYS' && dispatch.dispatch_days.length">
       <div class="days-tags">
         <el-tag
@@ -93,6 +97,16 @@
       </div>
       <div v-else>-</div>
     </el-form-item>
+
+
+    <el-form-item label="创建时间" v-if="dispatch.created_at">
+      {{ formatDate(dispatch.created_at) }}
+    </el-form-item>
+
+    <el-form-item label="上次更新时间" v-if="dispatch.updated_at">
+      {{ formatDate(dispatch.updated_at) }}
+    </el-form-item>
+
   </el-form>
 </template>
 

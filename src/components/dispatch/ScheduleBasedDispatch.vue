@@ -5,65 +5,64 @@
       <el-input v-model="dispatchForm.name" placeholder="请输入任务名称"></el-input>
     </el-form-item>
 
-    <!-- Schedule Type -->
-    <el-form-item label="计划类型">
-      <el-select v-model="dispatchForm.scheduleType" placeholder="请选择计划类型">
-        <el-option label="指定日期" value="SPECIFIC_DAYS"></el-option>
-        <el-option label="时间间隔" value="INTERVAL"></el-option>
-      </el-select>
+    <el-form-item label="派发开始运行时间">
+      <el-date-picker
+          v-model="dispatchForm.startTime"
+          type="datetime"
+          placeholder="请选择时间"
+      ></el-date-picker>
     </el-form-item>
 
-    <!-- Specific Days Section -->
-    <template v-if="dispatchForm.scheduleType === 'SPECIFIC_DAYS'">
-      <el-form-item label="具体日期">
-        <el-checkbox
-            v-model="selectAllDays"
-            :indeterminate="isPartialDaysSelected"
-            @change="toggleAllDays">
-          每天
-        </el-checkbox>
-        </el-form-item>
-        <el-form-item>
-        <el-checkbox-group
-            v-model="dispatchForm.dispatch_days"
-            @change="updatePartialDaysState"
-        >
-          <el-checkbox
-              v-for="day in weekDaysMap"
-              :key="day.key"
-              :label="day.key"
-          >
-            {{ day.display }}
-          </el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
-      <el-form-item label="时间">
-        <el-time-picker
-            v-model="dispatchForm.timeOfDay"
-            placeholder="请选择时间"
-            format="HH:mm"
-            value-format="HH:mm"
-            :step="60"
-        ></el-time-picker>
-      </el-form-item>
-    </template>
+    <el-form-item label="派发停止运行时间">
+      <el-date-picker
+          v-model="dispatchForm.startTime"
+          type="datetime"
+          placeholder="请选择时间"
+      ></el-date-picker>
+    </el-form-item>
 
-    <!-- Interval Section -->
-    <template v-if="dispatchForm.scheduleType === 'INTERVAL'">
-      <el-form-item label="开始时间">
-        <el-date-picker
-            v-model="dispatchForm.startTime"
-            type="datetime"
-            placeholder="请选择开始时间"
-        ></el-date-picker>
-      </el-form-item>
-      <el-form-item label="时间间隔(分钟)">
-        <el-input-number v-model="dispatchForm.intervalMinutes" :min="1"></el-input-number>
-      </el-form-item>
-      <el-form-item label="重复次数">
-        <el-input-number v-model="dispatchForm.repeatCount" :min="1"></el-input-number>
-      </el-form-item>
-    </template>
+
+
+    <el-form-item label="具体日期">
+      <el-checkbox
+          v-model="selectAllDays"
+          :indeterminate="isPartialDaysSelected"
+          @change="toggleAllDays">
+        每天
+      </el-checkbox>
+    </el-form-item>
+    <el-form-item>
+      <el-checkbox-group
+          v-model="dispatchForm.dispatch_days"
+          @change="updatePartialDaysState"
+      >
+        <el-checkbox
+            v-for="day in weekDaysMap"
+            :key="day.key"
+            :label="day.key"
+        >
+          {{ day.display }}
+        </el-checkbox>
+      </el-checkbox-group>
+    </el-form-item>
+    <el-form-item label="时间">
+      <el-time-picker
+          v-model="dispatchForm.timeOfDay"
+          placeholder="请选择时间"
+          format="HH:mm"
+          value-format="HH:mm"
+          :step="60"
+      ></el-time-picker>
+    </el-form-item>
+
+    <el-form-item label="时间间隔(分钟)">
+      <el-input-number v-model="dispatchForm.intervalMinutes" :min="1"></el-input-number>
+    </el-form-item>
+    <el-form-item label="重复次数">
+      <el-input-number v-model="dispatchForm.repeatCount" :min="1"></el-input-number>
+    </el-form-item>
+
+
 
     <!-- Personnel Selection -->
     <el-form-item label="选择人员">
@@ -85,7 +84,7 @@
     </el-form-item>
 
     <el-form-item label="选择表单">
-    <!-- Form Tree -->
+      <!-- Form Tree -->
       <DispatchFormTreeSelect
           :selected-form-ids="dispatchForm.dispatch_forms"
           @update-selected-forms="updateSelectedForms"/>
