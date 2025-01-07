@@ -1,5 +1,5 @@
 <template>
-  <el-form :model="dispatchForm" :rules="validationRules" ref="formRef" label-width="120px">
+  <el-form :model="dispatchForm" :rules="validationRules" ref="formRef" label-width="150px">
     <!-- Dispatch Name -->
     <el-form-item label="任务名称">
       <el-input v-model="dispatchForm.name" placeholder="请输入任务名称"></el-input>
@@ -15,15 +15,15 @@
 
     <el-form-item label="派发停止运行时间">
       <el-date-picker
-          v-model="dispatchForm.startTime"
+          v-model="dispatchForm.endTime"
           type="datetime"
           placeholder="请选择时间"
       ></el-date-picker>
     </el-form-item>
 
+    <el-divider>具体日期</el-divider>
 
-
-    <el-form-item label="具体日期">
+    <el-form-item label="选择派发日">
       <el-checkbox
           v-model="selectAllDays"
           :indeterminate="isPartialDaysSelected"
@@ -55,6 +55,9 @@
       ></el-time-picker>
     </el-form-item>
 
+
+    <el-divider>设置重复派发</el-divider>
+
     <el-form-item label="时间间隔(分钟)">
       <el-input-number v-model="dispatchForm.intervalMinutes" :min="1"></el-input-number>
     </el-form-item>
@@ -63,7 +66,7 @@
     </el-form-item>
 
 
-
+    <el-divider>人员</el-divider>
     <!-- Personnel Selection -->
     <el-form-item label="选择人员">
       <el-select
@@ -83,6 +86,8 @@
       </el-select>
     </el-form-item>
 
+    <el-divider>表单</el-divider>
+
     <el-form-item label="选择表单">
       <!-- Form Tree -->
       <DispatchFormTreeSelect
@@ -98,6 +103,17 @@
       <el-button @click="resetForm" type="warning">重置</el-button>
       <el-button @click="$emit('on-cancel')">取消</el-button>
     </el-form-item>
+
+    <div>
+      <cron-element-plus
+          v-model="value"
+          :button-props="{ type: 'primary' }"
+          @error="error=$event" />
+
+      <p class="text-lightest pt-2">cron expression: {{value}}</p>
+
+    </div>
+
 
   </el-form>
 </template>
@@ -117,6 +133,8 @@ export default {
   },
   data() {
     return {
+      value: '* * * * *',
+      error: '',
       dispatchForm: {
         id: null,
         name: "",
@@ -130,6 +148,7 @@ export default {
         personnelIds: [],
         dispatch_forms: [],
         active: true,
+        endTime:null,
       },
       validationRules: {
         name: [{ required: true, message: "请输入任务名称", trigger: "blur" }],

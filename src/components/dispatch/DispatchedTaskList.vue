@@ -12,10 +12,10 @@
     <el-table-column prop="dispatch_id" label="派发ID" width="100" sortable></el-table-column>
 
     <!-- Personnel -->
-    <el-table-column prop="personnel_id" label="人员" width="200">
+    <el-table-column prop="user_id" label="人员" width="200">
       <template #default="scope">
         <el-tag
-            v-if="getPersonnelById(scope.row.personnel_id)"
+            v-if="getPersonnelById(scope.row.user_id)"
             type="primary"
             size="small"
             effect="light"
@@ -27,12 +27,12 @@
               width="auto"
           >
             <template #default>
-              <div>姓名: {{ getPersonnelById(scope.row.personnel_id).name }}</div>
-              <div>用户名: {{ getPersonnelById(scope.row.personnel_id).username }}</div>
-              <div>企业微信: {{ getPersonnelById(scope.row.personnel_id).wecom_id }}</div>
+              <div>姓名: {{ getPersonnelById(scope.row.user_id).name }}</div>
+              <div>用户名: {{ getPersonnelById(scope.row.user_id).username }}</div>
+              <div>企业微信: {{ getPersonnelById(scope.row.user_id).wecom_id }}</div>
             </template>
             <template #reference>
-              {{ getPersonnelById(scope.row.personnel_id).name }}
+              {{ getPersonnelById(scope.row.user_id).name }}
             </template>
           </el-popover>
         </el-tag>
@@ -41,10 +41,10 @@
     </el-table-column>
 
     <!-- Form -->
-    <el-table-column prop="form_id" label="表单" width="200">
+    <el-table-column prop="qc_form_tree_node_id" label="表单" width="200">
       <template #default="scope">
         <el-tag
-            v-if="getFormById(scope.row.form_id)"
+            v-if="getFormById(scope.row.qc_form_tree_node_id)"
             type="success"
             size="small"
             effect="light"
@@ -56,11 +56,11 @@
               width="auto"
           >
             <template #default>
-              <div>ID: {{ scope.row.form_id }}</div>
-              <div>表单名: {{ getFormById(scope.row.form_id) }}</div>
+              <div>ID: {{ scope.row.qc_form_tree_node_id }}</div>
+              <div>表单名: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
             </template>
             <template #reference>
-              {{ getFormById(scope.row.form_id) }}
+              {{ getFormById(scope.row.qc_form_tree_node_id) }}
             </template>
           </el-popover>
         </el-tag>
@@ -76,10 +76,10 @@
     </el-table-column>
 
     <!-- Status -->
-    <el-table-column prop="status" label="状态" width="120" sortable>
+    <el-table-column prop="state" label="状态" width="120" sortable>
       <template #default="scope">
-        <el-tag :type="statusTagType(scope.row.status)">
-          {{ scope.row.status }}
+        <el-tag :type="statusTagType(scope.row.state)">
+          {{ scope.row.state }}
         </el-tag>
       </template>
     </el-table-column>
