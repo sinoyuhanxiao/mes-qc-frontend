@@ -83,13 +83,16 @@
         </el-table-column>
 
         <!-- Operations -->
-        <el-table-column fixed="right" label="操作" min-width="120">
+        <el-table-column fixed="right" label="操作" min-width="200">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="showDetails(scope.row)">
               Detail
             </el-button>
             <el-button link type="info" size="small" @click="editTask(scope.row)">
               Edit
+            </el-button>
+            <el-button link type="success" size="small" @click="completeTask(scope.row)">
+              Complete
             </el-button>
           </template>
         </el-table-column>
@@ -134,7 +137,13 @@ import TaskDetail from "@/components/task-center/TaskDetail.vue";
 import { Search } from "@element-plus/icons-vue";
 import { fetchFormNodes } from "@/services/formNodeService";
 import { fetchUsers } from "@/services/userService";
-import {fetchFutureTasks, fetchHistoricalTasks, fetchOverdueTasks, fetchTodayTasks} from "@/services/taskCenterService";
+import {
+  fetchFutureTasks,
+  fetchHistoricalTasks,
+  fetchOverdueTasks,
+  fetchTodayTasks,
+  updateDispatchedTask
+} from "@/services/taskCenterService";
 import * as formNodeService from "@/services/formNodeService";
 
 export default {
@@ -393,6 +402,27 @@ export default {
     },
     editTask(row) {
       console.log("Edit task:", row);
+    },
+    completeTask(row) {
+      console.log("complete task:", row);
+
+      // Show a confirmation popup
+      this.$confirm(
+          "If you mark this task as completed, you will no longer be able to submit this form. Are you sure you want to continue?",
+          "Confirm Completion",
+          {
+            confirmButtonText: "Yes, Complete",
+            cancelButtonText: "Cancel",
+            type: "warning",
+          }
+      )
+          .then(() => {
+            console.log("Task marked as completed:", row);
+            updateDispatchedTask(row.id, { dispatched_task_state_id: 3}) // mark this task as complete, add error handling in the future
+          })
+          .catch(() => {
+            console.log("Task completion canceled.");
+          });
     },
     closeDetailsDialog() {
       this.isDetailsDialogVisible = false;

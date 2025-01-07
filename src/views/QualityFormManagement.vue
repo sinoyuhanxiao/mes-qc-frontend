@@ -1,6 +1,6 @@
 <template>
   <el-container>
-    <el-aside width="20%">
+    <el-aside width="25%">
       <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
     <el-main>

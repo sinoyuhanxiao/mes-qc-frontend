@@ -4,21 +4,28 @@
       <!-- Action Buttons -->
       <el-button-group>
         <el-button
-            type="info"
-            :disabled="true"
-            class="forbidden-button"
-            @click="$emit('edit')"
+            type="primary"
+            :disabled="false"
+            @click="showDevelopmentPopup"
         >
-          编辑
+          查看提交记录
         </el-button>
-        <el-button
-            type="info"
-            :disabled="true"
-            class="forbidden-button"
-            @click="$emit('delete')"
-        >
-          删除
-        </el-button>
+<!--        <el-button-->
+<!--            type="info"-->
+<!--            :disabled="true"-->
+<!--            class="forbidden-button"-->
+<!--            @click="$emit('edit')"-->
+<!--        >-->
+<!--          编辑-->
+<!--        </el-button>-->
+<!--        <el-button-->
+<!--            type="info"-->
+<!--            :disabled="true"-->
+<!--            class="forbidden-button"-->
+<!--            @click="$emit('delete')"-->
+<!--        >-->
+<!--          删除-->
+<!--        </el-button>-->
       </el-button-group>
 
     </div>
@@ -118,6 +125,13 @@ export default {
     },
     formatDate(dateString) {
       return dateString ? new Date(dateString).toLocaleString() : "-";
+    },
+    showDevelopmentPopup() {
+      this.$message({
+        message: "此功能正在开发中，感谢您的点击！",
+        type: "info",
+        duration: 3000,
+      });
     },
     stateTagType(stateId) {
       const stateMap = {

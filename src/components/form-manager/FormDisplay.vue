@@ -1,15 +1,17 @@
 <template>
   <div v-if="formId">
     <div class="header-container">
-      <h1 class="form-title">{{ props.currentForm?.label || formTitle }}</h1>
-      <el-button>快速分配任务</el-button>
-      <el-switch
-          v-model="enable_form"
-          v-if="switchDisplayed"
-          inline-prompt
-          active-text="可用"
-          inactive-text="不可用"
-      />
+      <div style="display: flex; align-items: center;">
+        <h1 class="form-title" style="margin-right: 10px">{{ props.currentForm?.label || formTitle }}</h1>
+        <el-switch
+            v-model="enable_form"
+            v-if="switchDisplayed"
+            inline-prompt
+            active-text="可用"
+            inactive-text="不可用"
+        />
+      </div>
+      <el-button type="primary" v-if="switchDisplayed">快速分配任务</el-button>
     </div>
     <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
     <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">Submit</el-button>
