@@ -1,11 +1,15 @@
 <template>
   <el-container>
-    <el-aside width="20%">
-      <FormTree @select-form="selectForm" @add-form="addForm" />
+    <el-aside width="25%">
+        <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
     <el-main>
       <!-- Render FormDisplay only if selectedForm exists and nodeType is not 'folder' -->
-      <FormDisplay v-if="selectedForm && selectedForm.nodeType !== 'folder'" :currentForm="selectedForm" />
+      <FormDisplay
+          v-if="selectedForm && selectedForm.nodeType !== 'folder'"
+          :currentForm="selectedForm"
+          :usable="false"
+      />
     </el-main>
   </el-container>
 </template>
@@ -31,3 +35,10 @@ export default {
   },
 };
 </script>
+
+<style>
+  #app > div > div {
+     overflow-y: hidden
+  }
+</style>
+

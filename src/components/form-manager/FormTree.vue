@@ -14,33 +14,34 @@
       </el-button>
     </div>
 
-    <el-tree
-        ref="treeRef"
-        style="max-width: 600px"
-        :data="data"
-        node-key="_id"
-        default-expand-all
-        :props="defaultProps"
-        :filter-node-method="filterNode"
-        @node-click="handleNodeClick"
-    >
-      <template #default="{ node, data }">
-        <div class="custom-tree-node" @click="logNodeData(node, data)">
-          <div class="node-content">
-            <el-icon>
-              <Folder v-if="data.nodeType === 'folder'" />
-              <Document v-else />
-            </el-icon>
-            <span class="node-label">{{ data.label }}</span>
+    <el-scrollbar :height="scrollbarHeight">
+      <el-tree
+          ref="treeRef"
+          style="max-width: 600px"
+          :data="data"
+          node-key="_id"
+          default-expand-all
+          :props="defaultProps"
+          :filter-node-method="filterNode"
+          @node-click="handleNodeClick"
+      >
+        <template #default="{ node, data }">
+          <div class="custom-tree-node" @click="logNodeData(node, data)">
+            <div class="node-content">
+              <el-icon>
+                <Folder v-if="data.nodeType === 'folder'" />
+                <Document v-else />
+              </el-icon>
+              <span class="node-label">{{ data.label }}</span>
+            </div>
+            <div class="node-actions" v-if="isEditMode">
+              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data)" style="color: #3f9dfd; cursor: pointer;">Append</a>
+              <a @click="showDeleteConfirmation(node, data)" style="color: #3f9dfd; cursor: pointer; margin-left: 8px;">Delete</a>
+            </div>
           </div>
-          <div class="node-actions" v-if="isEditMode">
-            <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data)" style="color: #3f9dfd; cursor: pointer;">Append</a>
-            <a @click="showDeleteConfirmation(node, data)" style="color: #3f9dfd; cursor: pointer; margin-left: 8px;">Delete</a>
-          </div>
-        </div>
-      </template>
-
-    </el-tree>
+        </template>
+      </el-tree>
+    </el-scrollbar>
 
     <el-alert
         v-if="error"
@@ -115,6 +116,16 @@ const newNodeLabel = ref('')
 const newNodeType = ref('folder') // Default to folder
 const emit = defineEmits(['select-form']);
 
+const scrollbarHeight = ref(`${window.innerHeight - 70}px`); // Adjust height dynamically
+
+const updateScrollbarHeight = () => {
+  scrollbarHeight.value = `${window.innerHeight - 70}px`; // Adjust height dynamically with padding
+};
+
+onMounted(() => {
+  window.addEventListener('resize', updateScrollbarHeight);
+  updateScrollbarHeight(); // Initialize height
+});
 
 const defaultProps = {
   children: 'children',
