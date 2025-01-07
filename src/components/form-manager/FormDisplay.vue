@@ -13,15 +13,17 @@
       </div>
       <el-button type="primary" v-if="switchDisplayed">快速分配任务</el-button>
     </div>
-    <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
-    <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">Submit</el-button>
-    <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
-    <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
+    <el-scrollbar :height="scrollBarHeight" width="100%">
+      <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
+      <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">Submit</el-button>
+      <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
+      <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
+    </el-scrollbar>
   </div>
 </template>
 
 <script setup>
-import {ref, reactive, watch, onMounted, nextTick} from 'vue'
+import {ref, reactive, watch, onMounted, onUnmounted, nextTick} from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import VFormRender from '@/components/form-render/index'
@@ -55,14 +57,32 @@ const optionData = reactive({})
 const formTitle = ref(''); // Store form title
 const enable_form = ref(false)
 let vFormRef = ref(null)
+
 const switchDisplayed = ref(
     !route.params.qcFormTemplateId
 );
+
 const previewState = ref(true)
 let formId = null
 
 const store = useStore();
 let userId = store.getters.getUser.id;
+
+// dynamic size:
+const scrollBarHeight = ref(`${window.innerHeight-140}px`);
+
+const updateScrollBarHeight = () => {
+  scrollBarHeight.value = `${window.innerHeight-140}px`;
+};
+
+onMounted(() => {
+  window.addEventListener('resize', updateScrollBarHeight);
+  updateScrollBarHeight();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScrollBarHeight);
+});
 
 const submitForm = () => {
   formId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
@@ -176,25 +196,37 @@ watch(enable_form, (newVal) => {
 
 </script>
 
-<style>
-  .form-title {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-  }
+<style scoped>
+.form-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
 
-  .node-id {
-    text-align: right;
-    color: grey;
-    font-size: 12px;
-    margin-top: 20px;
-  }
+.node-id {
+  text-align: right;
+  color: grey;
+  font-size: 12px;
+  margin-top: 20px;
+}
 
-  .header-container {
-    display: flex;
-    justify-content: space-between; /* Align content to the edges */
-    align-items: center; /* Center items vertically */
-    padding: 0 20px; /* Optional: Add padding for spacing */
-  }
+.header-container {
+  display: flex;
+  justify-content: space-between; /* Align content to the edges */
+  align-items: center; /* Center items vertically */
+  padding: 0 20px; /* Optional: Add padding for spacing */
+}
+
+::v-deep(.el-scrollbar__wrap--hidden-default) {
+  scrollbar-width: thin !important; /* Override to allow normal scroll behavior */
+}
+
+::v-deep(.el-scrollbar__wrap) {
+  overflow-x: hidden !important; /* Ensure horizontal scrolling is hidden */
+  box-sizing: border-box; /* Handle padding correctly */
+  padding-top: 10px; /* Add space above the content */
+  padding-left: 10px;
+}
 </style>
+
