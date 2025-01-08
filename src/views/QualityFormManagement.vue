@@ -37,8 +37,10 @@ export default {
 </script>
 
 <style>
-  #app > div > div {
-     overflow-y: hidden
-  }
+  /*
+    #app > div > div {
+       overflow-y: hidden
+    }
+   */
 </style>
 

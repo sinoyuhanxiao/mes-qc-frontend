@@ -197,36 +197,36 @@ watch(enable_form, (newVal) => {
 </script>
 
 <style scoped>
-.form-title {
-  text-align: center;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
+  .form-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
 
-.node-id {
-  text-align: right;
-  color: grey;
-  font-size: 12px;
-  margin-top: 20px;
-}
+  .node-id {
+    text-align: right;
+    color: grey;
+    font-size: 12px;
+    margin-top: 20px;
+  }
 
-.header-container {
-  display: flex;
-  justify-content: space-between; /* Align content to the edges */
-  align-items: center; /* Center items vertically */
-  padding: 0 20px; /* Optional: Add padding for spacing */
-}
+  .header-container {
+    display: flex;
+    justify-content: space-between; /* Align content to the edges */
+    align-items: center; /* Center items vertically */
+    padding: 0 20px; /* Optional: Add padding for spacing */
+  }
 
-::v-deep(.el-scrollbar__wrap--hidden-default) {
-  scrollbar-width: thin !important; /* Override to allow normal scroll behavior */
-}
+  ::v-deep(.el-scrollbar__wrap--hidden-default) {
+    scrollbar-width: thin !important; /* Override to allow normal scroll behavior */
+  }
 
-::v-deep(.el-scrollbar__wrap) {
-  overflow-x: hidden !important; /* Ensure horizontal scrolling is hidden */
-  box-sizing: border-box; /* Handle padding correctly */
-  padding-top: 10px; /* Add space above the content */
-  padding-left: 10px;
-}
+  ::v-deep(.el-scrollbar__wrap) {
+    overflow-x: hidden !important; /* Ensure horizontal scrolling is hidden */
+    box-sizing: border-box; /* Handle padding correctly */
+    padding-top: 10px; /* Add space above the content */
+    padding-left: 10px;
+  }
 </style>
 
