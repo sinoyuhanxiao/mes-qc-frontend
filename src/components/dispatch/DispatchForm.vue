@@ -5,12 +5,17 @@
       <el-input v-model="dispatchForm.name" placeholder="请输入任务名称"></el-input>
     </el-form-item>
 
-    <!-- Schedule Type -->
-    <el-form-item label="计划类型">
-      <el-select v-model="dispatchForm.scheduleType" placeholder="请选择计划类型">
-        <el-option label="指定日期" value="SPECIFIC_DAYS"></el-option>
-        <el-option label="时间间隔" value="INTERVAL"></el-option>
+    <!-- Dispatch Type -->
+    <el-form-item label="派发类型" required>
+      <el-select v-model="dispatchForm.type" placeholder="请选择派发类型">
+        <el-option label="定时派发" value="SCHEDULED"></el-option>
+        <el-option label="手动派发" value="MANUAL"></el-option>
       </el-select>
+    </el-form-item>
+
+    <!-- Remark -->
+    <el-form-item label="备注">
+      <el-input type="textarea" v-model="dispatchForm.remark" placeholder="请输入备注"></el-input>
     </el-form-item>
 
     <!-- Specific Days Section -->

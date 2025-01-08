@@ -2,11 +2,7 @@
   <el-container class="dispatcher-page">
     <!-- Top Section -->
     <el-header class="header">
-      <!--      <el-row align="middle" justify="space-between" style="width: 100%;">-->
-      <!--        <el-col>-->
       <h2>派发管理</h2>
-      <!--        </el-col>-->
-      <!--        <el-col>-->
       <el-button-group>
         <el-button type="primary" @click="handleNewDispatchButtonClick">新增任务派发</el-button>
         <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任务</el-button>
@@ -48,18 +44,18 @@
         />
       </template>
 
-      <template v-else-if="isDetailsDialogVisible && isEditMode">
-        <dispatch-form
-            v-model="currentDispatch"
-            :form-data="currentDispatch"
-            @submit="handleDispatchSubmit"
-            @on-cancel="handleCancelDispatchForm"/>
-      </template>
-
 <!--      <template v-else-if="isDetailsDialogVisible && isEditMode">-->
-<!--        <dispatch-configurator/>-->
-
+<!--        <dispatch-form-->
+<!--            v-model="currentDispatch"-->
+<!--            :form-data="currentDispatch"-->
+<!--            @submit="handleDispatchSubmit"-->
+<!--            @on-cancel="handleCancelDispatchForm"/>-->
 <!--      </template>-->
+
+      <template v-else-if="isDetailsDialogVisible && isEditMode">
+        <dispatch-configurator/>
+
+      </template>
 
       <template v-else>
         <p>加载中或没有选中的任务。</p> <!-- Placeholder for empty state -->
@@ -76,7 +72,7 @@
       <DispatchedTasksList
           :dispatched-tasks="dispatchedTasks"
           :form-map="formMap"
-          :personnel-map="personnelMap"/>
+          :personnel-map="userMap"/>
     </el-dialog>
   </el-container>
 </template>
@@ -113,7 +109,7 @@ export default {
       currentDispatch: null,
       selectedRows: [],
       formMap: {},
-      personnelMap: {},
+      userMap: {},
     };
   },
   methods: {
@@ -141,11 +137,11 @@ export default {
         console.error("Failed to load form nodes:", error);
       }
     },
-    async loadPersonnelMap() {
+    async loadUserMap() {
       try {
         const response = await fetchUsers(); // Fetch all personnel
-        this.personnelMap = response.data.data.reduce((map, person) => {
-          map[person.id] = person; // Map each person's ID to their details
+        this.userMap = response.data.data.reduce((map, user) => {
+          map[user.id] = user; // Map each person's ID to their details
           return map;
         }, {});
       } catch (error) {
@@ -154,6 +150,8 @@ export default {
       }
     },
     handleNewDispatchButtonClick() {
+      // console.log('current user is:' ,JSON.parse(localStorage.getItem('current_user')) || {});
+      console.log('current user is:' ,this.$store.getters.getUser.id);
       this.resetCurrentDispatch();
       this.isEditMode = true;
       this.isDetailsDialogVisible = true;
@@ -303,7 +301,7 @@ export default {
   mounted() {
     this.loadDispatches();
     this.loadFormNodes();
-    this.loadPersonnelMap()
+    this.loadUserMap()
   },
 };
 </script>

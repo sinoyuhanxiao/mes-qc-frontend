@@ -75,7 +75,7 @@
     </el-form-item>
 
     <el-form-item label="人员">
-      <div v-if="dispatch.dispatch_personnel.length > 0" class="personnel-tags">
+      <div v-if="dispatch.dispatch_personnel.length > 0" class="user-tags">
         <el-tag
             v-for="(person, index) in dispatch.dispatch_personnel"
             :key="person.id"
@@ -152,7 +152,7 @@ export default {
 }
 
 .days-tags,
-.personnel-tags,
+.user-tags,
 .form-tags {
   display: flex;
   flex-wrap: wrap;
