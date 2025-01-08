@@ -13,6 +13,7 @@ import MyTodayTask from "@/views/TaskCenter/MyTodayTask.vue";
 import MyHistoryTask from "@/views/TaskCenter/MyHistoryTask.vue";
 import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
 import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
+import ErikTestView from "@/views/ErikTestView.vue";
 
 const routes = [
     {
@@ -79,6 +80,11 @@ const routes = [
         path: '/task-center-dashboard',
         name: 'TaskCenterDashboard',
         component: TaskCenterDashboard
+    },
+    {
+        path: '/erik-test',
+        name: 'ErikTest',
+        component: ErikTestView
     }
 ];
 
