@@ -2,21 +2,24 @@
   <div>
     <!-- Toolbar with Search Bar and Add Button -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-      <el-input
-          v-model="searchQuery"
-          placeholder="Search by name"
-          clearable
-          @input="filterTable"
-          style="width: 300px;"
-      >
-        <template #append>
-          <el-button>
-            <el-icon>
-              <Search />
-            </el-icon>
-          </el-button>
-        </template>
-      </el-input>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>用户管理</h2>
+        <el-input
+            v-model="searchQuery"
+            placeholder="Search by name"
+            clearable
+            @input="filterTable"
+            style="width: 300px; margin-left: 20px"
+        >
+          <template #append>
+            <el-button>
+              <el-icon>
+                <Search />
+              </el-icon>
+            </el-button>
+          </template>
+        </el-input>
+      </div>
 
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
@@ -37,7 +40,7 @@
     </div>
 
     <!-- Table -->
-    <el-table :data="filteredData" style="width: 100%">
+    <el-table :data="paginatedUsers" style="width: 100%">
       <el-table-column label="ID" width="100" prop="id" sortable>
         <template #default="scope">
           <span>{{ scope.row.id }}</span>
@@ -65,7 +68,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Email">
+      <el-table-column label="Email" width="220px">
         <template #default="scope">
           <span>{{ scope.row.email ?? '-' }}</span>
         </template>
@@ -96,7 +99,7 @@
       </el-table-column>
 
       <el-table-column
-          label="Status" prop="status" sortable
+          label="Status" prop="status" width="120px" sortable
       >
         <template #header>
           <span>
@@ -124,6 +127,18 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-pagination
+        style="margin-top: 10px"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="currentPage"
+        :page-size="pageSize"
+        :page-sizes="[15, 30, 45, 60]"
+        layout="total, sizes, prev, pager, next"
+        :total="filteredData.length"
+        :hide-on-single-page="true"
+    />
 
     <!-- Add User Dialog -->
     <el-dialog title="Add User" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddUser">
@@ -265,6 +280,8 @@ export default {
     return {
       tableData: [], // Original data
       filteredData: [], // Filtered data for display
+      currentPage: 1, // Current page number
+      pageSize: 15, // Number of items per page
       searchQuery: '', // Search input value
       addDialogVisible: false, // Controls the visibility of the add user dialog
       editDialogVisible: false, // Controls the visibility of the edit user dialog
@@ -335,6 +352,13 @@ export default {
   },
   created() {
     this.fetchUserData();
+  },
+  computed: {
+    paginatedUsers() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.filteredData.slice(start, end);
+    },
   },
   methods: {
     async fetchUserData() {
@@ -564,6 +588,12 @@ export default {
       this.filteredData = this.tableData.filter((item) =>
           item.name.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
+    },
+    handleSizeChange(size) {
+      this.pageSize = size;
+    },
+    handleCurrentChange(page) {
+      this.currentPage = page;
     },
   },
 };
