@@ -26,6 +26,20 @@
           @column-click="handleNameColumnClicked"
           @selection-change="updateSelectedRows"
       />
+
+      <!-- Pagination -->
+      <el-pagination
+          v-if="dispatchList.length > 0"
+          style="margin-top: 16px; text-align: right;"
+          background
+          layout="total, sizes, prev, pager, next"
+          :total="dispatchList.length"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+      />
     </el-main>
 
     <!-- Dispatch Details Dialog -->
@@ -110,6 +124,8 @@ export default {
       selectedRows: [],
       formMap: {},
       userMap: {},
+      currentPage: 1,
+      pageSize: 10,
     };
   },
   methods: {
@@ -296,12 +312,29 @@ export default {
       this.isEditMode = true;
       this.isDetailsDialogVisible = true;
     },
+    handleSizeChange(newSize) {
+      this.pageSize = newSize;
+      this.currentPage = 1; // Reset to first page on size change
+    },
+    handlePageChange(newPage) {
+      this.currentPage = newPage;
+    },
+    async fetchDispatchList() {
+      // Fetch `dispatchList` from backend API
+      try {
+        const response = await fetchDispatchesFromAPI(); // Replace with actual API call
+        this.dispatchList = response.data || [];
+      } catch (error) {
+        console.error("Failed to fetch dispatches:", error);
+      }
+    },
 
   },
   mounted() {
     this.loadDispatches();
     this.loadFormNodes();
-    this.loadUserMap()
+    this.loadUserMap();
+    this.fetchDispatchList();
   },
 };
 </script>
