@@ -145,10 +145,11 @@ const filterNode = (value: string, data: Tree) => {
 
 const handleCheckChange = () => {
   const checkedNodes = treeRef.value.getCheckedNodes(false, false);
-  const selectedFormIds = checkedNodes
-      .filter(node => node.nodeType === 'document') // Only include documents
-      .map(node => node.id); // Extract IDs
-  emit('update-selected-forms', selectedFormIds); // Emit IDs to parent
+  const selectedForms = checkedNodes
+      .filter((node) => node.nodeType === 'document') // Only include documents
+      .map((node) => ({ id: node.id, label: node.label })); // Include both ID and label
+
+  emit('update-selected-forms', selectedForms); // Emit IDs to parent
 };
 
 

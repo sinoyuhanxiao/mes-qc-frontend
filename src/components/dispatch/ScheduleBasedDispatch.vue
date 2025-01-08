@@ -5,14 +5,6 @@
       <el-input v-model="dispatchForm.name" placeholder="请输入任务名称"></el-input>
     </el-form-item>
 
-    <!-- Dispatch Type -->
-    <el-form-item label="派发类型" required>
-      <el-select v-model="dispatchForm.type" placeholder="请选择派发类型">
-        <el-option label="定时派发" value="SCHEDULED"></el-option>
-        <el-option label="手动派发" value="MANUAL"></el-option>
-      </el-select>
-    </el-form-item>
-
     <el-form-item label="派发开始运行时间">
       <el-date-picker
           v-model="dispatchForm.startTime"
@@ -30,14 +22,15 @@
     </el-form-item>
 
     <!-- Cron Expression -->
-    <el-form-item label="Cron 表达式" required>
+    <el-form-item label="派发计划" required>
       <cron-element-plus
           v-model="dispatchForm.cronExpression"
           :button-props="{ type: 'primary' }"
           @error="error = $event"
       />
-      <p class="text-lightest pt-2">当前 Cron 表达式: {{ dispatchForm.cronExpression }}</p>
+<!--      <p class="text-lightest pt-2">当前 Cron 表达式: {{ normalizedCronExpression }}</p>-->
     </el-form-item>
+
 
     <!-- Dispatch Limit -->
     <el-form-item label="派发次数上限">
@@ -93,9 +86,9 @@
 <!--      <el-input-number v-model="dispatchForm.repeatCount" :min="1"></el-input-number>-->
 <!--    </el-form-item>-->
 
-
-    <el-divider>人员</el-divider>
     <!-- User Selection -->
+    <el-divider>人员</el-divider>
+
     <el-form-item label="选择人员">
       <el-select
           v-model="dispatchForm.userIds"
@@ -116,17 +109,28 @@
 
     <el-divider>表单</el-divider>
 
+    <!-- Form Tree -->
     <el-form-item label="选择表单">
-      <!-- Form Tree -->
       <DispatchFormTreeSelect
-          :selected-form-ids="dispatchForm.dispatch_forms"
-          @update-selected-forms="updateSelectedForms"/>
+          :selected-form-ids="dispatchForm.formIds"
+          @update-selected-forms="handleSelectedForms"/>
     </el-form-item>
 
     <!-- Remark -->
     <el-form-item label="备注">
       <el-input type="textarea" v-model="dispatchForm.remark" placeholder="请输入备注"></el-input>
     </el-form-item>
+
+    <!-- Schedule Summary -->
+    <el-card class="mt-4" shadow="always">
+      <h4>预览</h4>
+      <p>派发计划: <strong>{{ chineseSchedule }}</strong></p>
+      <p>派发开始运行时间: <strong>{{ formattedStartTime }}</strong></p>
+      <p>派发停止运行时间: <strong>{{ formattedEndTime }}</strong></p>
+      <p>派发表单: <strong>{{ selectedFormNames.join(", ") }}</strong></p>
+      <p>派发给: <strong>{{ selectedUsers }}</strong></p>
+    </el-card>
+
 
     <!-- Action Buttons -->
     <el-form-item>
@@ -149,9 +153,83 @@
 </template>
 
 <script>
-import { fetchUsers } from "@/services/userService";
+import {fetchUsers} from "@/services/userService";
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import isEqual from "lodash/isEqual";
+
+
+function parseCronExpression(cronExpression) {
+
+  // Normalize to include seconds if missing
+  const normalizedExpression = normalizeCronExpression(cronExpression);
+
+  const parts = normalizedExpression.split(" ");
+  const [second, minute, hour, day, month, weekday] = parts;
+
+  const dayMap = {
+    "0": "周日",
+    "1": "周一",
+    "2": "周二",
+    "3": "周三",
+    "4": "周四",
+    "5": "周五",
+    "6": "周六",
+    "7": "周日", // Allow for both 0 and 7 as Sunday
+  };
+
+  // Helper function to parse ranges or lists
+  const parseListOrRange = (value, unit) => {
+    if (value === "*") return null;
+    if (value.includes("-")) {
+      const [start, end] = value.split("-").map(v => `${v}${unit}`);
+      return `${start}-${end}`;
+    }
+    return value
+        .split(",")
+        .map(v => `${v}${unit}`)
+        .join(", ");
+  };
+
+  const minuteText =
+      minute === "*"
+          ? "每分钟"
+          : minute.startsWith("*/")
+              ? `每${minute.slice(2)}分钟`
+              : `第${parseListOrRange(minute, "分")}`;
+
+  const hourText =
+      hour === "*"
+          ? "每小时"
+          : hour.startsWith("*/")
+              ? `每${hour.slice(2)}小时`
+              : `第${parseListOrRange(hour, "时")}`;
+
+  const dayText = day === "*" ? "" : `每月${day.split(",").join(",")}号`;
+
+  const monthText =
+      month === "*"
+          ? ""
+          : `每年${month.split(",").map(v => `${v}月`).join(",")}`;
+
+  const weekdayText =
+      weekday === "*"
+          ? ""
+          : weekday.includes("-")
+              ? `每周${parseListOrRange(weekday, "")}`
+              : `每周${weekday.split(",").map(v => dayMap[v.trim()] || `未知周${v.trim()}`).join(",")}`;
+
+  // Combine parts with appropriate logic to remove redundancy
+  const timeText = `${hourText}: ${minuteText}`;
+  return [dayText, weekdayText, monthText, timeText]
+      .filter(Boolean)
+      .join(", ");
+}
+
+function normalizeCronExpression(cronExpression) {
+  return cronExpression.trim().split(" ").length === 5
+      ? `0 ${cronExpression}` // Add "0" as the seconds field
+      : cronExpression;
+}
 
 export default {
   components: {DispatchFormTreeSelect},
@@ -167,7 +245,7 @@ export default {
         name: "",
         type: "SCHEDULED",
         remark: "",
-        cronExpression: "",
+        cronExpression: "* * * * *",
         startTime: null,
         endTime: null,
         dispatchLimit: -1,
@@ -186,16 +264,11 @@ export default {
         userIds: [{ required: true, message: "请选择人员", trigger: "change" }],
         formIds: [{ required: true, message: "请选择表单", trigger: "change" }],
       },
+      selectedFormNames: [], // For displaying form names in preview
+      userOptions: [],
+      isLoadingUser: false,
       selectAllDays: false,
       isPartialDaysSelected: false,
-      userOptions: [],
-      formOptions: [
-        { id: 101, name: "质量检查表 A" },
-        { id: 102, name: "质量检查表 B" },
-        { id: 103, name: "安全检查表" },
-        { id: 104, name: "维护检查表" },
-      ],
-      isLoadingUser: false,
       weekDaysMap: [
         { key: "MONDAY", display: "星期一" },
         { key: "TUESDAY", display: "星期二" },
@@ -208,6 +281,41 @@ export default {
     };
   },
   computed:{
+    formattedStartTime() {
+      return this.dispatchForm.startTime
+          ? new Date(this.dispatchForm.startTime).toLocaleString("zh-CN", {
+            timeZone: "Asia/Shanghai",
+          })
+          : "未设置";
+    },
+    formattedEndTime() {
+      return this.dispatchForm.endTime
+          ? new Date(this.dispatchForm.endTime).toLocaleString("zh-CN", {
+            timeZone: "Asia/Shanghai",
+          })
+          : "未设置";
+    },
+    chineseSchedule() {
+      if (!this.dispatchForm.cronExpression) return "无效的 Cron 表达式";
+      try {
+        return parseCronExpression(this.dispatchForm.cronExpression);
+      } catch {
+        return "无法解析 Cron 表达式";
+      }
+    },
+    selectedForms() {
+      return this.dispatchForm.formIds.join(", ");
+    },
+    selectedUsers() {
+      const selected = this.userOptions.filter(user => this.dispatchForm.userIds.includes(user.id));
+      return selected.map(user => user.name).join(", ");
+    },
+    normalizedCronExpression() {
+      const cronExpression = this.dispatchForm.cronExpression || "* * * * *";
+      return cronExpression.trim().split(" ").length === 5
+          ? `0 ${cronExpression}` // Add "0" as the seconds field
+          : cronExpression;
+    },
     isFormModified() {
       // Check if `dispatchForm` matches the original `formData`
       const transformedData = this.transformDispatchData(this.formData || {});
@@ -230,9 +338,9 @@ export default {
     transformDispatchData(data) {
       return {
         name: data.name || "",
-        type: data.type || "SCHEDULED",
+        type: "SCHEDULED",
         remark: data.remark || "",
-        cronExpression: data.cronExpression || "",
+        cronExpression: data.cronExpression || "* * * * *",
         startTime: data.startTime || null,
         endTime: data.endTime || null,
         dispatchLimit: data.dispatchLimit ?? -1,
@@ -274,9 +382,11 @@ export default {
       }
     },
     submitForm() {
+      const normalizedCron = normalizeCronExpression(this.dispatchForm.cronExpression);
       const payload = {
         ...this.dispatchForm,
         created_by: this.$store.getters.getUser.id, // Example: Set the user ID dynamically
+        cronExpression: normalizedCron,
         updated_by: null,
       };
       this.$emit("submit", payload);
@@ -285,16 +395,18 @@ export default {
       this.dispatchForm = this.transformDispatchData(this.formData || {});
       // this.updatePartialDaysState();
       // Emit updated forms to reset the tree
-      this.dispatch
-      this.updateSelectedForms(this.dispatchForm.dispatch_forms);
+      this.updateSelectedForms(this.dispatchForm.formIds);
     },
-    updateSelectedForms(formIds) {
-      this.dispatchForm.dispatch_forms = formIds;
+    handleSelectedForms(selectedForms) {
+      this.dispatchForm.formIds = selectedForms.map((form) => form.id); // API-ready IDs
+      this.selectedFormNames = selectedForms.map((form) => form.label); // Names for display
     },
   },
 };
 </script>
 
 <style>
-
+.mt-4 {
+  margin-top: 16px;
+}
 </style>
