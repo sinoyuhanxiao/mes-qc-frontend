@@ -46,13 +46,34 @@
       </template>
     </el-table-column>
 
-    <!-- Personnel -->
-    <el-table-column prop="dispatch_personnel" label="人員" width="150" >
+    <!-- Cron Expression -->
+    <el-table-column prop="cron_expression" label="Cron 表达式" width="200">
       <template #default="scope">
-        <div class="personnel-tags">
+        {{ scope.row.cron_expression || "-" }}
+      </template>
+    </el-table-column>
+
+    <!-- Start Time -->
+    <el-table-column prop="start_time" label="派发开始运行时间" width="180" sortable>
+      <template #default="scope">
+        <time-slot :value="scope.row.start_time" />
+      </template>
+    </el-table-column>
+
+    <!-- End Time -->
+    <el-table-column prop="end_time" label="派发停止运行时间" width="180" sortable>
+      <template #default="scope">
+        <time-slot :value="scope.row.end_time" />
+      </template>
+    </el-table-column>
+
+    <!-- Personnel -->
+    <el-table-column prop="dispatch_users" label="人員" width="200">
+      <template #default="scope">
+        <div class="user-tags">
           <el-tag
-              v-for="(person, index) in scope.row.dispatch_personnel.slice(0, 3)"
-              :key="person.id"
+              v-for="(user, index) in scope.row.dispatch_users.slice(0, 3)"
+              :key="user.id"
               type="primary"
               size="small"
               effect="light"
@@ -64,21 +85,23 @@
                 width="auto"
             >
               <template #default>
-                <div>姓名: {{ person.name }}</div>
-                <div>用户名: {{ person.username }}</div>
-                <div>企业微信: {{ person.wecom_id }}</div>
+                <div>姓名: {{ user.name }}</div>
+                <div>用户名: {{ user.username }}</div>
+                <div>邮箱: {{ user.email }}</div>
+                <div>电话: {{ user.phone_number }}</div>
+                <div>企业微信: {{ user.wecom_id }}</div>
               </template>
               <template #reference>
-                {{ person.name }}
+                {{ user.name }}
               </template>
             </el-popover>
           </el-tag>
           <el-tag
-              v-if="scope.row.dispatch_personnel.length > 3"
+              v-if="scope.row.dispatch_users.length > 3"
               type="warning"
               size="small"
           >
-            +{{ scope.row.dispatch_personnel.length - 3 }}
+            +{{ scope.row.dispatch_users.length - 3 }}
           </el-tag>
         </div>
       </template>
@@ -122,77 +145,24 @@
       </template>
     </el-table-column>
 
-    <!-- Specified Day -->
-    <el-table-column prop="dispatch_days" label="指定日期" width="180" sortable>
+    <!-- Executed Count -->
+    <el-table-column prop="executed_count" label="已执行次数" width="120" sortable>
       <template #default="scope">
-        <div v-if="scope.row.dispatch_days && scope.row.dispatch_days.length > 0" class="days-tags">
-          <el-tag
-              v-for="(day, index) in scope.row.dispatch_days.slice(0, 3)"
-              :key="day"
-              type="info"
-              size="small"
-              effect="light"
-          >
-            {{ formatDay(day) }}
-          </el-tag>
-
-          <el-popover
-              effect="light"
-              trigger="hover"
-              placement="top"
-              width="auto"
-          >
-            <template #default>
-              <div>
-                <!-- Format and display leftover days -->
-                <div v-for="day in scope.row.dispatch_days.slice(3)" :key="day">
-                  {{ formatDay(day) }}
-                </div>
-              </div>
-            </template>
-            <template #reference>
-                <el-tag
-                    v-if="scope.row.dispatch_days.length > 3"
-                    type="warning"
-                    size="small"
-                >
-                  +{{ scope.row.dispatch_days.length - 3 }}
-                </el-tag>
-            </template>
-          </el-popover>
-
-
-        </div>
-        <div v-else>-</div> <!-- Display dash when none are available -->
+        {{ scope.row.executed_count || "0" }}
       </template>
     </el-table-column>
 
-
-    <!-- Time of Day -->
-    <el-table-column prop="time_of_day" label="指定时间" width="110" sortable>
+    <!-- Dispatch Limit -->
+    <el-table-column prop="dispatch_limit" label="派发次数上限" width="120" sortable>
       <template #default="scope">
-        {{ scope.row.time_of_day || "-" }}
+        {{ scope.row.dispatch_limit === -1 ? "无限制" : scope.row.dispatch_limit }}
       </template>
     </el-table-column>
 
-    <!-- Start Time -->
-    <el-table-column prop="start_time" label="激活时间" width="150" sortable>
+    <!-- Due Date Offset (Minutes) -->
+    <el-table-column prop="due_date_offset_minute" label="任务时限(分钟)" width="150" sortable>
       <template #default="scope">
-        <time-slot :value="scope.row.start_time" />
-      </template>
-    </el-table-column>
-
-    <!-- Interval Minutes -->
-    <el-table-column prop="interval_minutes" label="时间间隔（分钟）" width="165" sortable>
-      <template #default="scope">
-        {{ scope.row.interval_minutes || "-" }}
-      </template>
-    </el-table-column>
-
-    <!-- Repeat Count -->
-    <el-table-column prop="repeat_count" label="重复次数" width="110" sortable>
-      <template #default="scope">
-        {{ scope.row.repeat_count || "-" }}
+        {{ scope.row.due_date_offset_minute || "-" }}
       </template>
     </el-table-column>
 
@@ -204,9 +174,9 @@
     </el-table-column>
 
     <!-- Active Status -->
-    <el-table-column prop="active" label="状态" width="60">
+    <el-table-column prop="status" label="状态" width="60">
       <template #default="scope">
-        <status-circle :active="scope.row.active" />
+        <status-circle :active="scope.row.status" />
       </template>
     </el-table-column>
 
@@ -231,7 +201,7 @@
 import { formatScheduleType } from "@/utils/dispatch-utils";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
-import {DeleteFilled, Search} from "@element-plus/icons-vue";
+import { Search } from "@element-plus/icons-vue";
 
 
 export default {
@@ -279,18 +249,6 @@ export default {
       console.log("Selection changed:", selected);
       this.$emit("selection-change", selected); // Emit selected rows to parent
     },
-    formatDay(day) {
-      const dayMap = {
-        MONDAY: "星期一",
-        TUESDAY: "星期二",
-        WEDNESDAY: "星期三",
-        THURSDAY: "星期四",
-        FRIDAY: "星期五",
-        SATURDAY: "星期六",
-        SUNDAY: "星期日",
-      };
-      return dayMap[day] || day; // Fallback to the raw value if not found
-    },
     getFormById(id) {
       return this.formMap[id] || "未知表单"; // Fallback for undefined IDs
     }
@@ -309,24 +267,17 @@ export default {
   text-decoration: none;
 }
 
-
 .el-table .el-button {
   margin-left: 5px; /* Optional for spacing */
 }
 
-.personnel-tags {
+.user-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
 .form-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.days-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

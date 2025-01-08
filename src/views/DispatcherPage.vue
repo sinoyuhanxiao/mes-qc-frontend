@@ -2,11 +2,7 @@
   <el-container class="dispatcher-page">
     <!-- Top Section -->
     <el-header class="header">
-      <!--      <el-row align="middle" justify="space-between" style="width: 100%;">-->
-      <!--        <el-col>-->
       <h2>派发管理</h2>
-      <!--        </el-col>-->
-      <!--        <el-col>-->
       <el-button-group>
         <el-button type="primary" @click="handleNewDispatchButtonClick">新增任务派发</el-button>
         <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任务</el-button>
