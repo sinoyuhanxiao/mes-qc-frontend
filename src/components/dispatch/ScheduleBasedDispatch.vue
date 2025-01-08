@@ -134,9 +134,12 @@
 
     <!-- Action Buttons -->
     <el-form-item>
-      <el-button type="primary" :disabled="!isFormModified" @click="submitForm">提交</el-button>
-      <el-button @click="resetForm" type="warning">重置</el-button>
-      <el-button @click="$emit('on-cancel')">取消</el-button>
+<!--      <el-button type="primary" :disabled="!isFormModified" @click="submitForm">提交</el-button>-->
+<!--      <el-button @click="resetForm" type="warning">重置</el-button>-->
+<!--      <el-button @click="$emit('on-cancel')">取消</el-button>-->
+      <el-button type="primary" >提交</el-button>
+      <el-button type="warning">重置</el-button>
+      <el-button >取消</el-button>
     </el-form-item>
 
 <!--    <div>-->

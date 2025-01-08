@@ -13,43 +13,38 @@
       {{ dispatch.name }}
     </el-form-item>
 
-    <el-form-item label="计划类型" v-if="dispatch.schedule_type">
-      {{ formatScheduleType(dispatch.schedule_type) }}
+    <el-form-item label="类型" v-if="dispatch.schedule_type">
+      {{ formatDispatchType(dispatch.schedule_type) }}
     </el-form-item>
 
-    <el-form-item label="指定时间" v-if="dispatch.time_of_day">
-      {{ dispatch.time_of_day }}
+    <el-form-item label="备注" v-if="dispatch.remark">
+      {{ dispatch.remark }}
     </el-form-item>
 
-    <el-form-item label="激活时间" v-if="dispatch.start_time">
+    <el-form-item label="Cron 表达式" v-if="dispatch.cron_expression">
+      {{ dispatch.cron_expression }}
+    </el-form-item>
+
+    <el-form-item label="派发开始运行时间" v-if="dispatch.start_time">
       {{ formatDate(dispatch.start_time) }}
     </el-form-item>
 
-    <el-form-item label="时间间隔 (分钟)" v-if="dispatch.interval_minutes">
-      {{ dispatch.interval_minutes }}
+    <el-form-item label="派发停止运行时间" v-if="dispatch.end_time">
+      {{ formatDate(dispatch.end_time) }}
     </el-form-item>
 
-    <el-form-item label="重复次数" v-if="dispatch.repeat_count">
-      {{ dispatch.repeat_count }}
+    <el-form-item label="派发次数上限" v-if="dispatch.dispatch_limit">
+      {{ dispatch.dispatch_limit === -1 ? "无限制" : dispatch.dispatch_limit }}
     </el-form-item>
 
     <el-form-item label="已执行次数" v-if="dispatch.executed_count">
       {{ dispatch.executed_count }}
     </el-form-item>
 
-    <el-form-item label="具体日期" v-if="dispatch.schedule_type === 'SPECIFIC_DAYS' && dispatch.dispatch_days.length">
-      <div class="days-tags">
-        <el-tag
-            v-for="(day, index) in dispatch.dispatch_days"
-            :key="day"
-            type="info"
-            size="small"
-            effect="light"
-        >
-          {{ formatDay(day) }}
-        </el-tag>
-      </div>
+    <el-form-item label="任务时限 (分钟)" v-if="dispatch.due_date_offset_minute">
+      {{ dispatch.due_date_offset_minute }}
     </el-form-item>
+
 
     <el-form-item label="表单">
       <div v-if="dispatch.dispatch_forms.length > 0" class="form-tags">
@@ -75,22 +70,22 @@
     </el-form-item>
 
     <el-form-item label="人员">
-      <div v-if="dispatch.dispatch_personnel.length > 0" class="user-tags">
+      <div v-if="dispatch.dispatch_users.length > 0" class="user-tags">
         <el-tag
-            v-for="(person, index) in dispatch.dispatch_personnel"
-            :key="person.id"
+            v-for="user in dispatch.dispatch_users"
+            :key="user.id"
             type="primary"
             size="small"
             effect="light"
         >
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>
-              <div>姓名: {{ person.name }}</div>
-              <div>用户名: {{ person.username }}</div>
-              <div>企业微信: {{ person.wecom_id }}</div>
+              <div>姓名: {{ user.name }}</div>
+              <div>用户名: {{ user.username }}</div>
+              <div>企业微信: {{ user.wecom_id }}</div>
             </template>
             <template #reference>
-              {{ person.name }}
+              {{ user.name }}
             </template>
           </el-popover>
         </el-tag>
@@ -103,7 +98,7 @@
       {{ formatDate(dispatch.created_at) }}
     </el-form-item>
 
-    <el-form-item label="上次更新时间" v-if="dispatch.updated_at">
+    <el-form-item label="更新时间" v-if="dispatch.updated_at">
       {{ formatDate(dispatch.updated_at) }}
     </el-form-item>
 
