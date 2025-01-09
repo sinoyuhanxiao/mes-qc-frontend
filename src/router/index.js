@@ -41,11 +41,6 @@ const routes = [
         component: QualityFormManagement
     },
     {
-        path: '/form-display',
-        name: 'FormDisplay',
-        component: FormDisplay
-    },
-    {
         path: '/task-assignment',
         name: 'TaskAssignment',
         component: DispatcherPage
