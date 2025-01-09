@@ -67,7 +67,7 @@ export function formatDate(dateString) {
 export function formatScheduleType(type) {
     switch (type) {
         case "SCHEDULED":
-            return "定时派发";
+            return "计划派发";
         case "MANUAL":
             return "手动派发";
         default:

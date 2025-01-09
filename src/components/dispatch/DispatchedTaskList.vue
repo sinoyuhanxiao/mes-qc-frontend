@@ -70,6 +70,14 @@
         </template>
       </el-table-column>
 
+      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="180" sortable>
+        <template #default="scope">
+          <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
+            {{ stateName(scope.row.dispatched_task_state_id) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
       <!-- Dispatch Time -->
       <el-table-column prop="dispatch_time" label="推送时间" width="180" sortable>
         <template #default="scope">
@@ -77,11 +85,11 @@
         </template>
       </el-table-column>
 
-      <!-- Status -->
-      <el-table-column prop="state" label="状态" width="120" sortable>
+      <!-- Due Date -->
+      <el-table-column prop="due_date" label="到期时间" width="180" sortable>
         <template #default="scope">
-          <el-tag :type="statusTagType(scope.row.state)">
-            {{ scope.row.state }}
+          <el-tag style="font-weight: bold" :type="remainingTimeTag(scope.row['due_date'])">
+            {{ calculateRemainingTime(scope.row['due_date']) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -93,12 +101,7 @@
         </template>
       </el-table-column>
 
-      <!-- Updated At -->
-      <el-table-column prop="updated_at" label="更新时间" width="180" sortable>
-        <template #default="scope">
-          {{ formatDate(scope.row.updated_at) }}
-        </template>
-      </el-table-column>
+
     </el-table>
 
     <!-- Pagination -->
@@ -166,6 +169,64 @@ export default {
     },
     handlePageChange(page) {
       this.currentPage = page;
+    },
+    stateTagType(stateId) {
+      const stateMap = {
+        1: "warning", // Pending
+        2: "primary", // In Progress
+        3: "success", // Completed
+        4: "info", // Canceled
+        5: "danger", // Overdue
+      };
+      return stateMap[stateId] || "info"; // Default to 'info' if stateId is undefined
+    },
+    stateName(stateId) {
+      const stateMap = {
+        1: "Pending",
+        2: "In Progress",
+        3: "Completed",
+        4: "Canceled",
+        5: "Overdue",
+      };
+      return stateMap[stateId] || "Unknown"; // Default to 'Unknown' if stateId is undefined
+    },
+    calculateRemainingTime(dueDate) {
+      if (!dueDate) return "-";
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInMinutes = due.diff(now, "minute");
+
+      if (diffInMinutes <= 0) return "已过期";
+
+      const days = Math.floor(diffInMinutes / (60 * 24));
+      const hours = Math.floor((diffInMinutes % (60 * 24)) / 60);
+      const minutes = diffInMinutes % 60;
+
+      if (days > 0) {
+        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+      } else if (hours > 0) {
+        return `${hours} 小时 ${minutes} 分钟`;
+      } else {
+        return `${minutes} 分钟`;
+      }
+    },
+    remainingTimeTag(dueDate) {
+      if (!dueDate) return "info";
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInMinutes = due.diff(now, "minute");
+
+      if (diffInMinutes > 24 * 60) {
+        return "info";
+      } else if (diffInMinutes > 60) {
+        return "primary";
+      } else if (diffInMinutes > 30) {
+        return "warning";
+      } else {
+        return "danger";
+      }
     },
   },
 };
