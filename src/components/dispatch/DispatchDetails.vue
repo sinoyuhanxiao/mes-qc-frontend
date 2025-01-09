@@ -1,5 +1,5 @@
 <template>
-  <el-form label-position="left" label-width="120px" class="dispatch-details">
+  <el-form label-position="left" label-width="140px" class="dispatch-details">
 
     <div class="details-header">
       <!-- Action Buttons -->
@@ -31,6 +31,12 @@
 
     <el-form-item label="派发停止运行时间" v-if="dispatch.end_time">
       {{ formatDate(dispatch.end_time) }}
+    </el-form-item>
+
+    <el-form-item label="下次派发时间" v-if="nextExecutionTime">
+      <el-tag style="font-weight: bold" :type="info">
+        {{ calculateRemainingTime(nextExecutionTime) }}
+      </el-tag>
     </el-form-item>
 
     <el-form-item label="派发次数上限" v-if="dispatch.dispatch_limit">
@@ -107,6 +113,8 @@
 
 <script>
 import { formatDate, formatScheduleType } from "@/utils/dispatch-utils";
+import {getDispatchNextExecutionTime} from "@/services/dispatchService";
+import dayjs from "dayjs";
 
 export default {
   props: {
@@ -118,6 +126,11 @@ export default {
       type: Object,
       required: true,
     },
+  },
+  data() {
+    return {
+      nextExecutionTime: null, // Store next execution time
+    };
   },
   methods: {
     formatDate,
@@ -137,6 +150,42 @@ export default {
     getFormById(id) {
       return this.formMap[id] || "未知表单";
     },
+    async fetchNextExecutionTime() {
+      if (!this.dispatch || !this.dispatch.id) return;
+      try {
+        const response = await getDispatchNextExecutionTime(this.dispatch.id);
+        console.log(response);
+        this.nextExecutionTime = response.data.data; // Save next execution time
+        console.log('dispatch id:' + this.dispatch.id + ' next-execute-time: ' + response.data.data);
+      } catch (error) {
+        console.error("Failed to fetch next execution time:", error);
+        this.nextExecutionTime = null; // Fallback in case of error
+      }
+    },
+    calculateRemainingTime(dueDate) {
+      if (!dueDate) return "-";
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInMinutes = due.diff(now, "minute");
+
+      if (diffInMinutes <= 0) return "已过期";
+
+      const days = Math.floor(diffInMinutes / (60 * 24));
+      const hours = Math.floor((diffInMinutes % (60 * 24)) / 60);
+      const minutes = diffInMinutes % 60;
+
+      if (days > 0) {
+        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+      } else if (hours > 0) {
+        return `${hours} 小时 ${minutes} 分钟`;
+      } else {
+        return `${minutes} 分钟`;
+      }
+    },
+  },
+  mounted() {
+    this.fetchNextExecutionTime(); // Fetch next execution time on mount
   },
 };
 </script>

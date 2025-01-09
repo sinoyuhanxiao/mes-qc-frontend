@@ -1,21 +1,10 @@
 <template>
-
-  <!-- Search Input -->
-  <el-input
-      v-model="filterInput"
-      style="width: 240px; margin-bottom: 10px;"
-      placeholder="输入名称搜索"
-      :prefix-icon="Search"
-      clearable
-  />
-
   <!-- Dispatch Table -->
   <el-table
       ref="dispatchTable"
-      :data="filteredDispatchList"
+      :data="dispatchList"
       border
       style="width: 100%"
-      :default-sort="{ prop: 'updated_at', order: 'descending' }"
       @selection-change="onSelectionChange"
   >
 
@@ -40,9 +29,9 @@
     <el-table-column prop="id" label="ID" width="65" sortable></el-table-column>
 
     <!-- Schedule Type -->
-    <el-table-column prop="schedule_type" label="类型" width="100" sortable>
+    <el-table-column prop="type" label="类型" width="100" sortable>
       <template #default="scope">
-        {{ formatScheduleType(scope.row.schedule_type) || "-"}}
+        {{ formatScheduleType(scope.row.type) || "-"}}
       </template>
     </el-table-column>
 
@@ -208,15 +197,6 @@ export default {
   computed: {
     Search() {
       return Search
-    },
-    filteredDispatchList() {
-      if (!this.filterInput) {
-        return this.dispatchList; // Return full list if no filter is applied
-      }
-      const lowerCaseFilter = this.filterInput.toLowerCase();
-      return this.dispatchList.filter(dispatch =>
-          dispatch.name?.toLowerCase().includes(lowerCaseFilter)
-      );
     },
   },
   components: {

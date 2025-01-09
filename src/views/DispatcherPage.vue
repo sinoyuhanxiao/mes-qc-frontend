@@ -18,10 +18,19 @@
       <!--      </el-row>-->
     </el-header>
 
+    <!-- Search Input -->
+    <el-input
+        v-model="searchInput"
+        style="width: 240px; margin: 10px;"
+        placeholder="输入名称搜索"
+        clearable
+        :prefix-icon="Search"
+    />
+
     <!-- Dispatch Table -->
     <el-main class="table-section">
       <DispatchList
-          :dispatch-list="dispatchList"
+          :dispatch-list="paginatedDispatchList"
           :form-map="formMap"
           @column-click="handleNameColumnClicked"
           @selection-change="updateSelectedRows"
@@ -29,11 +38,11 @@
 
       <!-- Pagination -->
       <el-pagination
-          v-if="dispatchList.length > 0"
+          v-if="filteredAndSortedDispatchList.length > 0"
           style="margin-top: 16px; text-align: right;"
           background
           layout="total, sizes, prev, pager, next"
-          :total="dispatchList.length"
+          :total="filteredAndSortedDispatchList.length"
           :page-sizes="[10, 20, 50, 100]"
           :page-size="pageSize"
           :current-page="currentPage"
@@ -84,7 +93,7 @@
         @close="closeViewDispatchedTestsDialog"
     >
       <DispatchedTasksList
-          :dispatched-tasks="dispatchedTasks"
+          :dispatched-tasks="filteredAndSortedDispatchedTaskList"
           :form-map="formMap"
           :personnel-map="userMap"/>
     </el-dialog>
@@ -98,7 +107,7 @@ import DispatchDetails from "@/components/dispatch/DispatchDetails.vue";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 import { createDispatch, deleteDispatch, getAllDispatches, updateDispatch, getAllDispatchedTasks } from "@/services/dispatchService";
 import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
-import { DeleteFilled } from "@element-plus/icons-vue";
+import {DeleteFilled, Search} from "@element-plus/icons-vue";
 import {fetchFormNodes} from "@/services/formNodeService";
 import {fetchUsers} from "@/services/userService";
 import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
@@ -113,6 +122,41 @@ export default {
     DispatchedTasksList,
     DispatchDetails,
   },
+  computed: {
+    Search() {
+      return Search;
+    },
+    filteredAndSortedDispatchList() {
+      const filtered = this.dispatchList
+          .filter((dispatch) => dispatch.status === 1) // Filter by active status
+          .filter((dispatch) =>
+              this.searchInput
+                  ? dispatch.name.toLowerCase().includes(this.searchInput.toLowerCase())
+                  : true
+          ); // Filter by search input
+
+      return filtered.sort((a, b) => {
+        const dateA = a.updated_at || a.created_at;
+        const dateB = b.updated_at || b.created_at;
+        return new Date(dateB) - new Date(dateA); // Sort by updated_at or created_at
+      });
+    },
+    filteredAndSortedDispatchedTaskList() {
+      const filtered = this.dispatchedTasks
+          .filter((dispatchTask) => dispatchTask.status === 1) // Filter by active status
+
+      return filtered.sort((a, b) => {
+        const dateA = a.updated_at || a.created_at;
+        const dateB = b.updated_at || b.created_at;
+        return new Date(dateB) - new Date(dateA); // Sort by updated_at or created_at
+      });
+    },
+    paginatedDispatchList() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.filteredAndSortedDispatchList.slice(start, end);
+    },
+  },
   data() {
     return {
       isDetailsDialogVisible: false,
@@ -122,6 +166,7 @@ export default {
       dispatchedTasks: [],
       currentDispatch: null,
       selectedRows: [],
+      searchInput: "",
       formMap: {},
       userMap: {},
       currentPage: 1,
@@ -343,6 +388,10 @@ export default {
 .dispatcher-page {
   display: flex;
   flex-direction: column;
+
+  height: 100vh; /* Fit the viewport height */
+  max-width: 100%; /* Prevent horizontal scrolling */
+  overflow: hidden; /* Prevent unwanted scrollbars */
 }
 
 .header {
@@ -350,23 +399,26 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
+
+  //background-color: #f5f7fa;
+  //border-bottom: 1px solid #ebeef5;
+
 }
 
 .table-section {
   flex: 1;
   padding: 20px;
+  //max-width: 400px;
+  //margin: 10px auto;
+
+  overflow: auto; /* Allow vertical scrolling for table if needed */
 }
 
 
-.details-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-}
-
-.readonly-info {
-  padding: 10px;
-  line-height: 1.8;
+.pagination {
+  margin-top: 16px;
+  text-align: right;
+  padding: 0 20px;
 }
 
 .readonly-info p {
