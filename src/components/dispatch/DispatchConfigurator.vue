@@ -4,12 +4,18 @@
       <!-- Schedule-Based Dispatch -->
       <el-tab-pane label="基于计划" name="schedule">
         <schedule-based-dispatch
-          :form-data="currentDispatch"/>
+          :form-data="currentDispatch"
+          @on-submit="handleSubmit"
+          @on-cancel="handleCancel"
+        />
       </el-tab-pane>
 
       <!-- Manual Dispatch -->
       <el-tab-pane label="手动派发" name="manual">
-        <manual-dispatch @on-submit="handleManualDispatch" />
+        <manual-dispatch
+            @on-submit="handleSubmit"
+            @on-cancel="handleCancel"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -33,17 +39,12 @@ export default {
     };
   },
   methods: {
-    handleScheduleDispatch(data) {
-      console.log("Schedule-Based Dispatch Data:", data);
-      // Submit or process schedule-based dispatch data
+    handleSubmit(data) {
+      this.$emit("on-submit", data);
+      console.log('payload in DispatchConfigurator component' + data)
     },
-    handleTriggerDispatch(data) {
-      console.log("Trigger-Based Dispatch Data:", data);
-      // Submit or process trigger-based dispatch data
-    },
-    handleManualDispatch(data) {
-      console.log("Manual Dispatch Data:", data);
-      // Submit or process manual dispatch data
+    handleCancel() {
+      this.$emit("on-cancel");
     },
   },
 };

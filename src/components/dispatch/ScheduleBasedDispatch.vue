@@ -1,11 +1,11 @@
 <template>
-  <el-form :model="dispatchForm" :rules="validationRules" ref="formRef" label-width="150px">
+  <el-form :model="dispatchForm" :rules="validationRules" ref="formRef" label-width="200px">
     <!-- Dispatch Name -->
-    <el-form-item label="任务名称">
+    <el-form-item label="任务名称" required>
       <el-input v-model="dispatchForm.name" placeholder="请输入任务名称"></el-input>
     </el-form-item>
 
-    <el-form-item label="派发开始运行时间">
+    <el-form-item label="派发开始运行时间" required>
       <el-date-picker
           v-model="dispatchForm.startTime"
           type="datetime"
@@ -13,7 +13,7 @@
       ></el-date-picker>
     </el-form-item>
 
-    <el-form-item label="派发停止运行时间">
+    <el-form-item label="派发停止运行时间" required>
       <el-date-picker
           v-model="dispatchForm.endTime"
           type="datetime"
@@ -33,12 +33,12 @@
 
 
     <!-- Dispatch Limit -->
-    <el-form-item label="派发次数上限">
-      <el-input-number v-model="dispatchForm.dispatchLimit" :min="-1" placeholder="输入派发限制 (-1 为无限制)"></el-input-number>
+    <el-form-item label="派发次数上限 (-1 为无限制)">
+      <el-input-number v-model="dispatchForm.dispatchLimit" :min="-1"></el-input-number>
     </el-form-item>
 
     <!-- Due Date Offset (Minutes) -->
-    <el-form-item label="任务时限(分钟)">
+    <el-form-item label="任务时限(分钟)" required>
       <el-input-number v-model="dispatchForm.dueDateOffsetMinute" :min="0"></el-input-number>
     </el-form-item>
 
@@ -89,7 +89,7 @@
     <!-- User Selection -->
     <el-divider>人员</el-divider>
 
-    <el-form-item label="选择人员">
+    <el-form-item label="选择人员" required>
       <el-select
           v-model="dispatchForm.userIds"
           multiple
@@ -110,7 +110,7 @@
     <el-divider>表单</el-divider>
 
     <!-- Form Tree -->
-    <el-form-item label="选择表单">
+    <el-form-item label="选择表单" required>
       <DispatchFormTreeSelect
           :selected-form-ids="dispatchForm.formIds"
           @update-selected-forms="handleSelectedForms"/>
@@ -123,10 +123,10 @@
 
     <!-- Schedule Summary -->
     <el-card class="mt-4" shadow="always">
-      <h4>预览</h4>
-      <p>派发计划: <strong>{{ chineseSchedule }}</strong></p>
-      <p>派发开始运行时间: <strong>{{ formattedStartTime }}</strong></p>
-      <p>派发停止运行时间: <strong>{{ formattedEndTime }}</strong></p>
+      <h4>派发计划预览</h4>
+      <p>计划: <strong>{{ chineseSchedule }}</strong></p>
+      <p>开始运行时间: <strong>{{ formattedStartTime }}</strong></p>
+      <p>停止运行时间: <strong>{{ formattedEndTime }}</strong></p>
       <p>派发表单: <strong>{{ selectedFormNames.join(", ") }}</strong></p>
       <p>派发给: <strong>{{ selectedUsers }}</strong></p>
     </el-card>
@@ -134,12 +134,9 @@
 
     <!-- Action Buttons -->
     <el-form-item>
-<!--      <el-button type="primary" :disabled="!isFormModified" @click="submitForm">提交</el-button>-->
-<!--      <el-button @click="resetForm" type="warning">重置</el-button>-->
-<!--      <el-button @click="$emit('on-cancel')">取消</el-button>-->
-      <el-button type="primary" >提交</el-button>
-      <el-button type="warning">重置</el-button>
-      <el-button >取消</el-button>
+      <el-button type="primary" :disabled="!isFormModified" @click="submitForm">提交</el-button>
+      <el-button @click="resetForm" type="warning">重置</el-button>
+      <el-button @click="$emit('on-cancel')">取消</el-button>
     </el-form-item>
 
 <!--    <div>-->
@@ -392,7 +389,8 @@ export default {
         cronExpression: normalizedCron,
         updated_by: null,
       };
-      this.$emit("submit", payload);
+      this.$emit("on-submit", payload);
+      console.log('payload in scheduleBasedDispatch component' + payload)
     },
     resetForm() {
       this.dispatchForm = this.transformDispatchData(this.formData || {});

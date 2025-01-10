@@ -67,16 +67,12 @@
         />
       </template>
 
-<!--      <template v-else-if="isDetailsDialogVisible && isEditMode">-->
-<!--        <dispatch-form-->
-<!--            v-model="currentDispatch"-->
-<!--            :form-data="currentDispatch"-->
-<!--            @submit="handleDispatchSubmit"-->
-<!--            @on-cancel="handleCancelDispatchForm"/>-->
-<!--      </template>-->
-
       <template v-else-if="isDetailsDialogVisible && isEditMode">
-        <dispatch-configurator/>
+        <dispatch-configurator
+             :form-data="currentDispatch"
+             @on-submit="handleDispatchSubmit"
+             @on-cancel="handleCancelDispatchForm"
+        />
 
       </template>
 
@@ -112,7 +108,7 @@ import DispatchDetails from "@/components/dispatch/DispatchDetails.vue";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 import { createDispatch, deleteDispatch, getAllDispatches, updateDispatch, getAllDispatchedTasks } from "@/services/dispatchService";
 import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
-import {DeleteFilled, Search} from "@element-plus/icons-vue";
+import {Search} from "@element-plus/icons-vue";
 import {fetchFormNodes} from "@/services/formNodeService";
 import {fetchUsers} from "@/services/userService";
 import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
@@ -121,19 +117,21 @@ import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue
 export default {
   components: {
     DispatchConfigurator,
-    DeleteFilled,
     DispatchForm,
     DispatchList,
     DispatchedTasksList,
     DispatchDetails,
   },
+
+  // To derive or calculate data dynamically without directly mutating it.
+  // Automatically updates when dependencies change.
+  // Commonly used for filtering, sorting, or formatting data for display.
   computed: {
     Search() {
       return Search;
     },
     filteredAndSortedDispatchList() {
       const filtered = this.dispatchList
-          .filter((dispatch) => dispatch.status === 1) // Filter by active status
           .filter((dispatch) =>
               this.searchInput
                   ? dispatch.name.toLowerCase().includes(this.searchInput.toLowerCase())
@@ -369,22 +367,12 @@ export default {
     handlePageChange(newPage) {
       this.currentPage = newPage;
     },
-    async fetchDispatchList() {
-      // Fetch `dispatchList` from backend API
-      try {
-        const response = await fetchDispatchesFromAPI(); // Replace with actual API call
-        this.dispatchList = response.data || [];
-      } catch (error) {
-        console.error("Failed to fetch dispatches:", error);
-      }
-    },
 
   },
   mounted() {
     this.loadDispatches();
     this.loadFormNodes();
     this.loadUserMap();
-    this.fetchDispatchList();
   },
 };
 </script>
@@ -404,19 +392,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-
-  //background-color: #f5f7fa;
-  //border-bottom: 1px solid #ebeef5;
-
 }
 
 .table-section {
   flex: 1;
   padding: 20px;
-  //max-width: 400px;
-  //margin: 10px auto;
-
-  overflow: auto; /* Allow vertical scrolling for table if needed */
 }
 
 

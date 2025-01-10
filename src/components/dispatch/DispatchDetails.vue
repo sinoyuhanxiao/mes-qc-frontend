@@ -9,12 +9,16 @@
       </el-button-group>
     </div>
 
-    <el-form-item label="派发名称" v-if="dispatch.name">
+    <el-form-item label="派发名称">
       {{ dispatch.name }}
     </el-form-item>
 
-    <el-form-item label="类型" v-if="dispatch.schedule_type">
-      {{ formatDispatchType(dispatch.schedule_type) }}
+    <el-form-item label="ID">
+      {{ dispatch.id }}
+    </el-form-item>
+
+    <el-form-item label="类型">
+      {{ formatScheduleType(dispatch.type) }}
     </el-form-item>
 
     <el-form-item label="备注" v-if="dispatch.remark">
@@ -32,9 +36,14 @@
     <el-form-item label="派发停止运行时间" v-if="dispatch.end_time">
       {{ formatDate(dispatch.end_time) }}
     </el-form-item>
+    <!-- Is Schedule -->
+    <el-form-item label="运行状态">
+      <status-circle :status="isSchedule" />
+    </el-form-item>
 
-    <el-form-item label="下次派发时间" v-if="nextExecutionTime">
-      <el-tag style="font-weight: bold" :type="info">
+    <!-- Next Execution Time -->
+    <el-form-item label="下次派发时间">
+      <el-tag style="font-weight: bold" type="info">
         {{ calculateRemainingTime(nextExecutionTime) }}
       </el-tag>
     </el-form-item>
@@ -43,7 +52,7 @@
       {{ dispatch.dispatch_limit === -1 ? "无限制" : dispatch.dispatch_limit }}
     </el-form-item>
 
-    <el-form-item label="已执行次数" v-if="dispatch.executed_count">
+    <el-form-item label="已执行次数">
       {{ dispatch.executed_count }}
     </el-form-item>
 
@@ -113,10 +122,12 @@
 
 <script>
 import { formatDate, formatScheduleType } from "@/utils/dispatch-utils";
-import {getDispatchNextExecutionTime} from "@/services/dispatchService";
+import {getDispatchNextExecutionTime, getIsScheduled} from "@/services/dispatchService";
 import dayjs from "dayjs";
+import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 
 export default {
+  components: {StatusCircle},
   props: {
     dispatch: {
       type: Object,
@@ -130,6 +141,7 @@ export default {
   data() {
     return {
       nextExecutionTime: null, // Store next execution time
+      isSchedule: 0,
     };
   },
   methods: {
@@ -162,6 +174,18 @@ export default {
         this.nextExecutionTime = null; // Fallback in case of error
       }
     },
+    async fetchIsScheduled() {
+      if (!this.dispatch || !this.dispatch.id) return;
+      try {
+        const response = await getIsScheduled(this.dispatch.id);
+        if (response.data.data === true) {
+          this.isSchedule = 1;
+        }
+      } catch (error) {
+        console.error("Failed to fetch is schedule for dispatch :", this.dispatch.id);
+        this.isSchedule = 0; // Fallback in case of error
+      }
+    },
     calculateRemainingTime(dueDate) {
       if (!dueDate) return "-";
 
@@ -186,6 +210,7 @@ export default {
   },
   mounted() {
     this.fetchNextExecutionTime(); // Fetch next execution time on mount
+    this.fetchIsScheduled();
   },
 };
 </script>

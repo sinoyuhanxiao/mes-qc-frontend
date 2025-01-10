@@ -4,12 +4,6 @@ export function cleanPayload(payload) {
     // Clone the payload to avoid mutating the original object
     const cleanedPayload = { ...payload };
 
-    // Map 'dispatch_days' to 'specificDays' (camelCase, no space)
-    if (cleanedPayload.dispatch_days) {
-        cleanedPayload.specificDays = cleanedPayload.dispatch_days;
-        delete cleanedPayload.dispatch_days;
-    }
-
     // Map 'dispatch_forms' to 'formIds'
     if (cleanedPayload.dispatch_forms) {
         cleanedPayload.formIds = cleanedPayload.dispatch_forms;
@@ -22,6 +16,8 @@ export function cleanPayload(payload) {
             delete cleanedPayload[key];
         }
     }
+
+    console.log("clean payload: " + cleanedPayload);
 
     return cleanedPayload;
 }

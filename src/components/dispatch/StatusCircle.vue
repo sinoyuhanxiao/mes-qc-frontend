@@ -1,12 +1,12 @@
 <template>
-  <span :class="['status-circle', active ? 'status-active' : 'status-inactive']"></span>
+  <span :class="['status-circle', status ? 'status-active' : 'status-inactive']"></span>
 </template>
 
 <script>
 export default {
   props: {
-    active: {
-      type: Boolean,
+    status: {
+      type: Number,
       required: true,
     },
   },
