@@ -162,10 +162,10 @@
       </template>
     </el-table-column>
 
-    <!-- Active Status -->
+    <!-- Status -->
     <el-table-column prop="status" label="状态" width="60">
       <template #default="scope">
-        <status-circle :active="scope.row.status" />
+        <status-circle :status="scope.row.status" />
       </template>
     </el-table-column>
 

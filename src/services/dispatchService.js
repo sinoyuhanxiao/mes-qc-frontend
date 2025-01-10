@@ -18,6 +18,10 @@ export const getDispatchNextExecutionTime = (id) => {
     return api.get(`${BASE_URL}/next-execution-time/${id}`);
 }
 
+export const getIsScheduled = (id) => {
+    return api.get(`${BASE_URL}/is-scheduled/${id}`);
+}
+
 export const getDispatchById = (id) => {
     return api.get(`${BASE_URL}/${id}`);
 }

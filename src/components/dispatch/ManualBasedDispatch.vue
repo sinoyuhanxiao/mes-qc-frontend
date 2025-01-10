@@ -74,7 +74,7 @@ export default {
     submitForm() {
       this.$refs.formRef.validate((valid) => {
         if (valid) {
-          this.$emit("on-submit", this.manualDispatchForm);
+          this.$emit("submit", this.manualDispatchForm);
         } else {
           this.$message.error("表单验证失败，请检查输入！");
         }
