@@ -25,15 +25,15 @@
       {{ dispatch.remark }}
     </el-form-item>
 
-    <el-form-item label="Cron 表达式" v-if="dispatch.cron_expression">
-      {{ dispatch.cron_expression }}
+    <el-form-item label="派发计划" v-if="dispatch.cron_expression">
+      {{ humanizeCronInChinese(dispatch.cron_expression) }}
     </el-form-item>
 
-    <el-form-item label="派发开始运行时间" v-if="dispatch.start_time">
+    <el-form-item label="开始运行时间" v-if="dispatch.start_time">
       {{ formatDate(dispatch.start_time) }}
     </el-form-item>
 
-    <el-form-item label="派发停止运行时间" v-if="dispatch.end_time">
+    <el-form-item label="停止运行时间" v-if="dispatch.end_time">
       {{ formatDate(dispatch.end_time) }}
     </el-form-item>
     <!-- Is Schedule -->
@@ -108,7 +108,6 @@
       <div v-else>-</div>
     </el-form-item>
 
-
     <el-form-item label="创建时间" v-if="dispatch.created_at">
       {{ formatDate(dispatch.created_at) }}
     </el-form-item>
@@ -116,6 +115,15 @@
     <el-form-item label="更新时间" v-if="dispatch.updated_at">
       {{ formatDate(dispatch.updated_at) }}
     </el-form-item>
+
+    <el-form-item label="已派发任务列表" v-if="dispatchedTasks.length > 0">
+    </el-form-item>
+    <DispatchedTasksList
+          :dispatched-tasks="dispatchedTasks"
+          :form-map="formMap"
+          :user-map="userMap"
+          v-if="dispatchedTasks.length > 0"/>
+
 
   </el-form>
 </template>
@@ -125,9 +133,12 @@ import { formatDate, formatScheduleType } from "@/utils/dispatch-utils";
 import {getDispatchNextExecutionTime, getIsScheduled} from "@/services/dispatchService";
 import dayjs from "dayjs";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
+import {humanizeCronInChinese} from "cron-chinese";
+import DispatchedTasksTable from "@/components/dispatch/DispatchedTaskList.vue";
+import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 
 export default {
-  components: {StatusCircle},
+  components: {DispatchedTasksList, DispatchedTasksTable, StatusCircle},
   props: {
     dispatch: {
       type: Object,
@@ -137,6 +148,14 @@ export default {
       type: Object,
       required: true,
     },
+    dispatchedTasks: {
+      type: Array,
+      required: true,
+    },
+    userMap: {
+      type: Object,
+      required: true,
+    }
   },
   data() {
     return {
@@ -145,6 +164,7 @@ export default {
     };
   },
   methods: {
+    humanizeCronInChinese,
     formatDate,
     formatScheduleType,
     formatDay(day) {
