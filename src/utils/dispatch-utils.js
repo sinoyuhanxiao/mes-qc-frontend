@@ -17,7 +17,8 @@ export function cleanPayload(payload) {
         }
     }
 
-    console.log("clean payload: " + cleanedPayload);
+    console.log("clean payload: ");
+    console.log(cleanedPayload);
 
     return cleanedPayload;
 }
@@ -87,4 +88,81 @@ export function generateFormMap(formNodes) {
 
     traverse(formNodes);
     return formMap;
+}
+
+export function parseCronExpressionToChinese(cronExpression) {
+
+    // Normalize to include seconds if missing
+    const normalizedExpression = normalizeCronExpression(cronExpression);
+    const parts = normalizedExpression.split(" ");
+    const [second, minute, hour, day, month, weekday] = parts;
+    const dayMap = {
+        "0": "周日",
+        "1": "周一",
+        "2": "周二",
+        "3": "周三",
+        "4": "周四",
+        "5": "周五",
+        "6": "周六",
+        "7": "周日", // Allow for both 0 and 7 as Sunday
+    };
+
+    // Helper function to parse ranges or lists
+    const parseListOrRange = (value, unit) => {
+        if (value === "*") return null;
+        if (value.includes("-")) {
+            const [start, end] = value.split("-").map(v => `${v}${unit}`);
+            return `${start}-${end}`;
+        }
+        return value
+            .split(",")
+            .map(v => `${v}${unit}`)
+            .join(", ");
+    };
+
+    const minuteText =
+        minute === "*"
+            ? "每分钟"
+            : minute.startsWith("*/")
+                ? `每${minute.slice(2)}分钟`
+                : `第${parseListOrRange(minute, "分")}`;
+
+    const hourText =
+        hour === "*"
+            ? "每小时"
+            : hour.startsWith("*/")
+                ? `每${hour.slice(2)}小时`
+                : `第${parseListOrRange(hour, "时")}`;
+
+    const dayText = day === "*" ? "" : `每月${day.split(",").join(",")}号`;
+
+    const monthText =
+        month === "*"
+            ? ""
+            : `每年${month.split(",").map(v => `${v}月`).join(",")}`;
+
+    const weekdayText =
+        weekday === "*"
+            ? ""
+            : weekday.includes("-")
+                ? `每周${parseListOrRange(weekday, "")}`
+                : `每周${weekday.split(",").map(v => dayMap[v.trim()] || `未知周${v.trim()}`).join(",")}`;
+
+    // Combine parts with appropriate logic to remove redundancy
+    const timeText = `${hourText}: ${minuteText}`;
+    return [dayText, weekdayText, monthText, timeText]
+        .filter(Boolean)
+        .join(", ");
+}
+
+export function normalizeCronExpression(cronExpression) {
+    return cronExpression.trim().split(" ").length === 5
+        ? `0 ${cronExpression}` // Add "0" as the seconds field
+        : cronExpression;
+}
+
+export function unnormalizeCronExpression(cronExpression) {
+    if (cronExpression != null) {
+        return cronExpression.startsWith("0 ") ? cronExpression.substring(2) : cronExpression;
+    }
 }

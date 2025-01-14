@@ -4,7 +4,7 @@
       <!-- Schedule-Based Dispatch -->
       <el-tab-pane label="基于计划" name="schedule">
         <schedule-based-dispatch
-          :form-data="currentDispatch"
+          :current-dispatch="currentDispatch"
           @on-submit="handleSubmit"
           @on-cancel="handleCancel"
         />
@@ -13,6 +13,7 @@
       <!-- Manual Dispatch -->
       <el-tab-pane label="手动派发" name="manual">
         <manual-dispatch
+            :current-dispatch="currentDispatch"
             @on-submit="handleSubmit"
             @on-cancel="handleCancel"
         />
@@ -32,9 +33,14 @@ export default {
     ScheduleBasedDispatch,
     ManualDispatch,
   },
+  props: {
+    currentDispatch: {
+      type: Object,
+      required: true, // Expect this prop to always be provided
+    },
+  },
   data() {
     return {
-      currentDispatch:null,
       activeTab: "schedule", // Default tab
     };
   },

@@ -1,5 +1,15 @@
 <template>
   <div>
+
+    <!-- Search Input -->
+    <el-input
+        v-model="searchInput"
+        style="width: 240px; margin: 10px;"
+        placeholder="输入派发ID搜索"
+        clearable
+        :prefix-icon="Search"
+    />
+
     <!-- Table -->
     <el-table
         :data="paginatedTasks"
@@ -17,7 +27,7 @@
       <el-table-column prop="user_id" label="人员" width="200">
         <template #default="scope">
           <el-tag
-              v-if="getPersonnelById(scope.row.user_id)"
+              v-if="getUserById(scope.row.user_id)"
               type="primary"
               size="small"
               effect="light"
@@ -29,12 +39,12 @@
                 width="auto"
             >
               <template #default>
-                <div>姓名: {{ getPersonnelById(scope.row.user_id).name }}</div>
-                <div>用户名: {{ getPersonnelById(scope.row.user_id).username }}</div>
-                <div>企业微信: {{ getPersonnelById(scope.row.user_id).wecom_id }}</div>
+                <div>姓名: {{ getUserById(scope.row.user_id).name }}</div>
+                <div>用户名: {{ getUserById(scope.row.user_id).username }}</div>
+                <div>企业微信: {{ getUserById(scope.row.user_id).wecom_id }}</div>
               </template>
               <template #reference>
-                {{ getPersonnelById(scope.row.user_id).name }}
+                {{ getUserById(scope.row.user_id).name }}
               </template>
             </el-popover>
           </el-tag>
@@ -109,7 +119,7 @@
         class="mt-4"
         background
         layout="prev, pager, next, jumper, ->, total"
-        :total="dispatchedTasks.length"
+        :total="totalFilteredRows()"
         :page-size="pageSize"
         :current-page="currentPage"
         @current-change="handlePageChange"
@@ -119,6 +129,7 @@
 
 <script>
 import dayjs from "dayjs";
+import {Search} from "@element-plus/icons-vue";
 
 export default {
   name: "DispatchedTasksTable",
@@ -131,7 +142,7 @@ export default {
       type: Object,
       required: true, // Form ID to Form Name mapping
     },
-    personnelMap: {
+    userMap: {
       type: Object,
       required: true, // Personnel ID to Personnel Details mapping
     },
@@ -140,13 +151,23 @@ export default {
     return {
       currentPage: 1,
       pageSize: 10, // Number of rows per page
+      searchInput: "",
     };
   },
+  watch: {
+    // Reset to page 1 when search changes to prevent empty pages
+    searchInput() {
+      this.currentPage = 1;
+    },
+  },
   computed: {
+    Search() {
+      return Search
+    },
     paginatedTasks() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.dispatchedTasks.slice(start, end);
+      return this.filteredRows().slice(start, end);
     },
   },
   methods: {
@@ -164,8 +185,8 @@ export default {
     getFormById(formId) {
       return this.formMap[formId] || "未知表单";
     },
-    getPersonnelById(personnelId) {
-      return this.personnelMap[personnelId] || null;
+    getUserById(userId) {
+      return this.userMap[userId] || null;
     },
     handlePageChange(page) {
       this.currentPage = page;
@@ -228,6 +249,26 @@ export default {
         return "danger";
       }
     },
+
+    filteredRows() {
+      // Ensure dispatchedTasks is an array
+      if (!Array.isArray(this.dispatchedTasks)) return [];
+
+      // If no search input, return all rows
+      if (!this.searchInput.trim()) return this.dispatchedTasks;
+
+      // Filter by search input
+      return this.dispatchedTasks.filter((task) =>
+          this.searchInput
+              ? task.dispatch_id.toString().includes(this.searchInput) // Convert to string first
+              : true
+      );
+    },
+    // Dynamic total count for pagination
+    totalFilteredRows() {
+      return this.filteredRows().length;
+    },
+
   },
 };
 </script>

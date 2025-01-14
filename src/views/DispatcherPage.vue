@@ -4,8 +4,20 @@
     <el-header class="header">
       <h2>派发管理</h2>
       <el-button-group>
+        <!-- Refresh Button -->
+        <el-tooltip content="刷新列表" placement="top">
+          <el-button
+              class="refresh-button"
+              type="primary"
+              circle
+              @click="loadDispatches"
+          >
+            <el-icon style="color: #004085;"><RefreshRight /></el-icon>
+          </el-button>
+        </el-tooltip>
         <el-button type="primary" @click="handleNewDispatchButtonClick">新增任务派发</el-button>
-        <el-button type="info" @click="openViewDispatchedTestsDialog">查看已派发任务</el-button>
+        <el-button type="info" @click="openViewDispatchedTestsDialog">查看全部派发任务</el-button>
+        <el-button type="info" @click="openViewDispatchStatusDialog">查看派发状态</el-button>
         <el-button
             v-if="selectedRows.length > 0"
             type="danger"
@@ -62,6 +74,8 @@
         <DispatchDetails
             :dispatch="currentDispatch"
             :form-map="formMap"
+            :user-map="userMap"
+            :dispatched-tasks="getDispatchedTasksById(currentDispatch.id)"
             @edit="enableEditMode"
             @delete="confirmDeleteDispatch"
         />
@@ -69,7 +83,7 @@
 
       <template v-else-if="isDetailsDialogVisible && isEditMode">
         <dispatch-configurator
-             :form-data="currentDispatch"
+             :current-dispatch="currentDispatch"
              @on-submit="handleDispatchSubmit"
              @on-cancel="handleCancelDispatchForm"
         />
@@ -91,7 +105,18 @@
       <DispatchedTasksList
           :dispatched-tasks="filteredAndSortedDispatchedTaskList"
           :form-map="formMap"
-          :personnel-map="userMap"/>
+          :user-map="userMap"/>
+    </el-dialog>
+
+    <!-- Dispatched Status Dialog -->
+    <el-dialog
+        title="派发状态列表"
+        v-model="isDispatchStatusDialogVisible"
+        width="70%"
+        @close="closeViewDispatchStatusDialog">
+      <DispatchStatusRowList
+        :dispatch-statuses="dispatchStatuses"
+      />
     </el-dialog>
   </el-container>
 </template>
@@ -101,12 +126,20 @@ import DispatchForm from "@/components/dispatch/DispatchForm.vue";
 import DispatchList from "@/components/dispatch/DispatchList.vue";
 import DispatchDetails from "@/components/dispatch/DispatchDetails.vue";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
-import { createDispatch, deleteDispatch, getAllDispatches, updateDispatch, getAllDispatchedTasks } from "@/services/dispatchService";
+import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
+import DispatchStatusRowList from "@/components/dispatch/DispatchStatusRowList.vue";
+import {
+  createDispatch,
+  deleteDispatch,
+  getAllDispatches,
+  updateDispatch,
+  getAllDispatchedTasks,
+  getScheduledTasks
+} from "@/services/dispatchService";
 import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
-import {Search} from "@element-plus/icons-vue";
+import {Search, RefreshRight} from "@element-plus/icons-vue";
 import {fetchFormNodes} from "@/services/formNodeService";
 import {fetchUsers} from "@/services/userService";
-import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
 
 
 export default {
@@ -116,6 +149,8 @@ export default {
     DispatchList,
     DispatchedTasksList,
     DispatchDetails,
+    DispatchStatusRowList,
+    RefreshRight,
   },
 
   // To derive or calculate data dynamically without directly mutating it.
@@ -128,9 +163,10 @@ export default {
     filteredAndSortedDispatchList() {
       const filtered = this.dispatchList
           .filter((dispatch) =>
-              this.searchInput
+              dispatch.status !== 0 &&
+              (this.searchInput
                   ? dispatch.name.toLowerCase().includes(this.searchInput.toLowerCase())
-                  : true
+                  : true)
           ); // Filter by search input
 
       return filtered.sort((a, b) => {
@@ -159,9 +195,11 @@ export default {
     return {
       isDetailsDialogVisible: false,
       isDispatchedTestsDialogVisible: false,
+      isDispatchStatusDialogVisible: false,
       isEditMode: false,
       dispatchList: [],
       dispatchedTasks: [],
+      dispatchStatuses: [],
       currentDispatch: null,
       selectedRows: [],
       searchInput: "",
@@ -188,6 +226,15 @@ export default {
         this.$message.error("无法加载任務列表，请重试。");
       }
     },
+    async loadDispatchStatuses() {
+      try {
+        const response = await getScheduledTasks();
+        this.dispatchStatuses = response.data.data;
+      } catch (error) {
+        this.$message.error("无法加载派发状态列表，请重试。");
+      }
+    }
+    ,
     async loadFormNodes() {
       try {
         const response = await fetchFormNodes(); // API call to fetch form nodes
@@ -238,8 +285,15 @@ export default {
       this.isDispatchedTestsDialogVisible = true;
       this.loadDispatchedTasks();
     },
+    openViewDispatchStatusDialog() {
+      this.isDispatchStatusDialogVisible = true;
+      this.loadDispatchStatuses();
+    },
     closeViewDispatchedTestsDialog() {
       this.isDispatchedTestsDialogVisible = false;
+    },
+    closeViewDispatchStatusDialog() {
+      this.isDispatchStatusDialogVisible = false;
     },
     enableEditMode() {
       if (!this.currentDispatch) {
@@ -256,9 +310,12 @@ export default {
         const cleanFormPayload = cleanPayload(form);
 
         if (isEdit) {
+          cleanFormPayload.updatedBy = this.$store.getters.getUser.id;
           await updateDispatch(this.currentDispatch.id, cleanFormPayload); // Edit
           this.$message.success("任务派发更新成功！");
         } else {
+          cleanFormPayload.createdBy = this.$store.getters.getUser.id;
+          cleanFormPayload.updatedBy = null;
           await createDispatch(cleanFormPayload); // New
           this.$message.success("任务派发创建成功！");
         }
@@ -362,12 +419,17 @@ export default {
     handlePageChange(newPage) {
       this.currentPage = newPage;
     },
+    getDispatchedTasksById(id) {
+      return this.dispatchedTasks.filter((task) => task.dispatch_id === id);
+    }
 
   },
   mounted() {
     this.loadDispatches();
+    this.loadDispatchedTasks()
     this.loadFormNodes();
     this.loadUserMap();
+    this.loadDispatchStatuses()
   },
 };
 </script>
