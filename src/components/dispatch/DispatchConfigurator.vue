@@ -12,11 +12,11 @@
 
       <!-- Manual Dispatch -->
       <el-tab-pane label="手动派发" name="manual">
-        <manual-dispatch
+        <manual-based-dispatch
             :current-dispatch="currentDispatch"
-            @on-submit="handleSubmit"
+            @on-submit="handleManualSubmit"
             @on-cancel="handleCancel"
-        />
+          />
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -24,14 +24,14 @@
 
 
 <script>
-import ManualDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
+import ManualBasedDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
 import ScheduleBasedDispatch from "@/components/dispatch/ScheduleBasedDispatch.vue";
 
 
 export default {
   components: {
     ScheduleBasedDispatch,
-    ManualDispatch,
+    ManualBasedDispatch,
   },
   props: {
     currentDispatch: {
@@ -47,7 +47,12 @@ export default {
   methods: {
     handleSubmit(data) {
       this.$emit("on-submit", data);
-      console.log('payload in DispatchConfigurator component' + data)
+      console.log('payload in DispatchConfigurator component')
+      console.log(data)
+    },
+    handleManualSubmit(data) {
+      this.$emit("on-manual-submit", data);
+      console.log(data)
     },
     handleCancel() {
       this.$emit("on-cancel");

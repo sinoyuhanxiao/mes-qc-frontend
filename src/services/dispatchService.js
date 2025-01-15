@@ -30,8 +30,8 @@ export const createDispatch = (data) => {
     return api.post(BASE_URL, data);
 }
 
-export const createManualDispatch = (id) => {
-    return api.post(`${BASE_URL}/manual`);
+export const createManualDispatch = (data) => {
+    return api.post(`${BASE_URL}/manual`, data);
 }
 
 export const updateDispatch = (id, data) => {

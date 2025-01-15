@@ -37,7 +37,7 @@
     <!-- Cron Expression -->
     <el-table-column prop="cron_expression" label="派发计划" width="200" sortable>
       <template #default="scope">
-        {{ humanizeCronInChinese(scope.row.cron_expression)  || "-" }}
+        {{ scope.row.cron_expression ? humanizeCronInChinese(unnormalizeCronExpression(scope.row.cron_expression)) : "-" }}
       </template>
     </el-table-column>
 
@@ -179,7 +179,7 @@
 
 
 <script>
-import {formatScheduleType, parseCronExpressionToChinese} from "@/utils/dispatch-utils";
+import {formatScheduleType, parseCronExpressionToChinese, unnormalizeCronExpression} from "@/utils/dispatch-utils";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
 import { Search } from "@element-plus/icons-vue";
@@ -213,6 +213,7 @@ export default {
     }
   },
   methods: {
+    unnormalizeCronExpression,
     humanizeCronInChinese,
     parseCronExpressionToChinese,
     formatScheduleType,

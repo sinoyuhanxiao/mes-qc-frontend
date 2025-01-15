@@ -5,8 +5,8 @@
            label-position="left"
            label-width="200px">
     <!-- Dispatch Name -->
-    <el-form-item label="任务名称" required prop="name">
-      <el-input v-model="dispatchForm.name" placeholder="请输入任务名称"></el-input>
+    <el-form-item label="派发名称" required prop="name">
+      <el-input v-model="dispatchForm.name" placeholder="请输入派发名称"></el-input>
     </el-form-item>
 
     <!-- Start/End Time -->
@@ -183,8 +183,7 @@ export default {
         updatedBy: null, // Assign in submitForm
       },
       validationRules: {
-        name: [{ required: true, message: "请输入任务名称", trigger: "blur" }],
-        type: [{ required: true, message: "请选择派发类型", trigger: "change" }],
+        name: [{ required: true, message: "请输入派发名称", trigger: "blur" }],
         dateRange: [{ required: true, message: "请选择派发运行时间", trigger: "change" }],
         cronExpression: [{ required: true, message: "请输入派发计划", trigger: "change" }],
         dispatchLimit: [{ required: true, message: "请输入派发计划", trigger: "change" }],
@@ -223,20 +222,6 @@ export default {
 
         return `${formattedDates[0]} 到 ${formattedDates[1]}`;
     },
-    formattedStartTime() {
-      return this.dispatchForm.startTime
-          ? new Date(this.dispatchForm.startTime).toLocaleString("zh-CN", {
-            timeZone: "Asia/Shanghai",
-          })
-          : "未设置";
-    },
-    formattedEndTime() {
-      return this.dispatchForm.endTime
-          ? new Date(this.dispatchForm.endTime).toLocaleString("zh-CN", {
-            timeZone: "Asia/Shanghai",
-          })
-          : "未设置";
-    },
     chineseSchedule() {
       if (!this.dispatchForm.cronExpression) return "无效的 Cron 表达式";
       try {
@@ -269,7 +254,6 @@ export default {
     },
   },
   methods: {
-    humanizeCronInChinese,
     transformDispatchData(data) {
       // Called when resetting form, prefill form when currentDispatch is changed, check if there are changes
       return {
@@ -332,7 +316,6 @@ export default {
           cronExpression: normalizedCron,
           startTime: this.dispatchForm.dateRange[0],
           endTime: this.dispatchForm.dateRange[1],
-          isActive: true,
         };
 
         // remove dateRange since endpoint require in startDate, endDate format

@@ -10,12 +10,12 @@ export function cleanPayload(payload) {
         delete cleanedPayload.dispatch_forms;
     }
 
-    // Remove empty or null fields
-    for (const key in cleanedPayload) {
-        if (cleanedPayload[key] === "" || cleanedPayload[key] === null) {
-            delete cleanedPayload[key];
-        }
-    }
+    // // Remove empty or null fields
+    // for (const key in cleanedPayload) {
+    //     if (cleanedPayload[key] === "" || cleanedPayload[key] === null) {
+    //         delete cleanedPayload[key];
+    //     }
+    // }
 
     console.log("clean payload: ");
     console.log(cleanedPayload);
@@ -164,5 +164,30 @@ export function normalizeCronExpression(cronExpression) {
 export function unnormalizeCronExpression(cronExpression) {
     if (cronExpression != null) {
         return cronExpression.startsWith("0 ") ? cronExpression.substring(2) : cronExpression;
+    }
+}
+
+export function calculateRemainingTime(date) {
+    if (!date) return "-";
+
+    const now = dayjs();
+    const due = dayjs(date);
+    const diffInSeconds = due.diff(now, "second"); // Use seconds for finer granularity
+
+    if (diffInSeconds <= 0) return "已过期";
+
+    const days = Math.floor(diffInSeconds / (60 * 60 * 24));
+    const hours = Math.floor((diffInSeconds % (60 * 60 * 24)) / (60 * 60));
+    const minutes = Math.floor((diffInSeconds % (60 * 60)) / 60);
+    const seconds = diffInSeconds % 60;
+
+    if (days > 0) {
+        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+    } else if (hours > 0) {
+        return `${hours} 小时 ${minutes} 分钟`;
+    } else if (minutes > 0) {
+        return `${minutes} 分钟 ${seconds} 秒`;
+    } else {
+        return `${seconds} 秒`;
     }
 }

@@ -26,7 +26,7 @@
     </el-form-item>
 
     <el-form-item label="派发计划" v-if="dispatch.cron_expression">
-      {{ humanizeCronInChinese(dispatch.cron_expression) }}
+      {{ humanizeCronInChinese(unnormalizeCronExpression(dispatch.cron_expression)) }}
     </el-form-item>
 
     <el-form-item label="开始运行时间" v-if="dispatch.start_time">
@@ -38,7 +38,7 @@
     </el-form-item>
     <!-- Is Schedule -->
     <el-form-item label="运行状态">
-      <status-circle :status="isSchedule" />
+      <status-circle :status="convertBooleanToNumber(dispatch.is_active)" />
     </el-form-item>
 
     <!-- Next Execution Time -->
@@ -122,6 +122,7 @@
           :dispatched-tasks="dispatchedTasks"
           :form-map="formMap"
           :user-map="userMap"
+          :show-search-box="false"
           v-if="dispatchedTasks.length > 0"/>
 
 
@@ -129,7 +130,12 @@
 </template>
 
 <script>
-import { formatDate, formatScheduleType } from "@/utils/dispatch-utils";
+import {
+  calculateRemainingTime,
+  formatDate,
+  formatScheduleType,
+  unnormalizeCronExpression
+} from "@/utils/dispatch-utils";
 import {getDispatchNextExecutionTime, getIsScheduled} from "@/services/dispatchService";
 import dayjs from "dayjs";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
@@ -164,6 +170,8 @@ export default {
     };
   },
   methods: {
+    unnormalizeCronExpression,
+    calculateRemainingTime,
     humanizeCronInChinese,
     formatDate,
     formatScheduleType,
@@ -194,44 +202,27 @@ export default {
         this.nextExecutionTime = null; // Fallback in case of error
       }
     },
-    async fetchIsScheduled() {
-      if (!this.dispatch || !this.dispatch.id) return;
-      try {
-        const response = await getIsScheduled(this.dispatch.id);
-        if (response.data.data === true) {
-          this.isSchedule = 1;
-        }
-      } catch (error) {
-        console.error("Failed to fetch is schedule for dispatch :", this.dispatch.id);
-        this.isSchedule = 0; // Fallback in case of error
-      }
-    },
-    calculateRemainingTime(dueDate) {
-      if (!dueDate) return "-";
-
-      const now = dayjs();
-      const due = dayjs(dueDate);
-      const diffInMinutes = due.diff(now, "minute");
-
-      if (diffInMinutes <= 0) return "已过期";
-
-      const days = Math.floor(diffInMinutes / (60 * 24));
-      const hours = Math.floor((diffInMinutes % (60 * 24)) / 60);
-      const minutes = diffInMinutes % 60;
-
-      if (days > 0) {
-        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
-      } else if (hours > 0) {
-        return `${hours} 小时 ${minutes} 分钟`;
+    convertBooleanToNumber(isActive) {
+      if (isActive) {
+        return 1;
       } else {
-        return `${minutes} 分钟`;
+        return 0;
       }
-    },
+    }
   },
   mounted() {
     this.fetchNextExecutionTime(); // Fetch next execution time on mount
-    this.fetchIsScheduled();
   },
+  watch: {
+    dispatch: {
+      immediate: true, // Trigger on initial load
+      handler(newDispatch) {
+        if (newDispatch) {
+          this.fetchNextExecutionTime();
+        }
+      }
+    }
+  }
 };
 </script>
 
