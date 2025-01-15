@@ -8,6 +8,7 @@
         placeholder="输入派发ID搜索"
         clearable
         :prefix-icon="Search"
+        v-if="showSearchBox"
     />
 
     <!-- Table -->
@@ -145,6 +146,10 @@ export default {
     userMap: {
       type: Object,
       required: true, // Personnel ID to Personnel Details mapping
+    },
+    showSearchBox: {
+      type: Boolean,
+      required: true,
     },
   },
   data() {

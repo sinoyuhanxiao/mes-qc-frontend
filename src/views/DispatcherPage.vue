@@ -15,7 +15,7 @@
             <el-icon style="color: #004085;"><RefreshRight /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-button type="primary" @click="handleNewDispatchButtonClick">新增任务派发</el-button>
+        <el-button type="primary" @click="handleNewDispatchButtonClick">新增派发</el-button>
         <el-button type="info" @click="openViewDispatchedTestsDialog">查看全部派发任务</el-button>
         <el-button type="info" @click="openViewDispatchStatusDialog">查看派发状态</el-button>
         <el-button
@@ -65,7 +65,7 @@
 
     <!-- Dispatch Details Dialog -->
     <el-dialog
-        title="任务派发详情"
+        title="派发详情"
         v-model="isDetailsDialogVisible"
         width="50%"
         @close="closeAndResetDetailsDialog"
@@ -86,6 +86,7 @@
              :current-dispatch="currentDispatch"
              @on-submit="handleDispatchSubmit"
              @on-cancel="handleCancelDispatchForm"
+             @on-manual-submit="handleManualDispatchSubmit"
         />
 
       </template>
@@ -100,7 +101,7 @@
       </template>
     </el-dialog>
 
-    <!-- Dispatched Tests Dialog -->
+    <!-- Dispatched Tasks Dialog -->
     <el-dialog
         title="已派发任務"
         v-model="isDispatchedTestsDialogVisible"
@@ -110,7 +111,9 @@
       <DispatchedTasksList
           :dispatched-tasks="filteredAndSortedDispatchedTaskList"
           :form-map="formMap"
-          :user-map="userMap"/>
+          :user-map="userMap"
+          :show-search-box="true"
+      />
     </el-dialog>
 
     <!-- Dispatched Status Dialog -->
@@ -139,7 +142,7 @@ import {
   getAllDispatches,
   updateDispatch,
   getAllDispatchedTasks,
-  getScheduledTasks
+  getScheduledTasks, createManualDispatch
 } from "@/services/dispatchService";
 import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
 import {Search, RefreshRight} from "@element-plus/icons-vue";
@@ -220,7 +223,7 @@ export default {
         const response = await getAllDispatches();
         this.dispatchList = response.data.data;
       } catch (error) {
-        this.$message.error("无法加载任务派发列表，请重试。");
+        this.$message.error("无法加载派发列表，请重试。");
       }
     },
     async loadDispatchedTasks() {
@@ -302,7 +305,7 @@ export default {
     },
     enableEditMode() {
       if (!this.currentDispatch) {
-        this.$message.error("没有选中的任务派发可以编辑。");
+        this.$message.error("没有选中的派发可以编辑。");
         this.closeAndResetDetailsDialog(); // Reset the dialog for safety
         return;
       }
@@ -317,40 +320,63 @@ export default {
         if (isEdit) {
           cleanFormPayload.updatedBy = this.$store.getters.getUser.id;
           await updateDispatch(this.currentDispatch.id, cleanFormPayload); // Edit
-          this.$message.success("任务派发更新成功！");
+          this.$message.success("派发更新成功！");
         } else {
           cleanFormPayload.createdBy = this.$store.getters.getUser.id;
           cleanFormPayload.updatedBy = null;
           await createDispatch(cleanFormPayload); // New
-          this.$message.success("任务派发创建成功！");
+          this.$message.success("派发创建成功！");
         }
 
         await this.loadDispatches();
         this.closeAndResetDetailsDialog();
       } catch (error) {
         console.error("Error in handleDispatchSubmit:", error);
-        this.$message.error("保存任务派发失败，请重试。");
+        this.$message.error("保存派发失败，请重试。");
+      }
+    },
+    async handleManualDispatchSubmit(form) {
+      try {
+        const isEdit = Boolean(this.currentDispatch && this.currentDispatch.id); // Check currentDispatch for edit
+        const cleanFormPayload = cleanPayload(form);
+
+        if (isEdit) {
+          cleanFormPayload.updatedBy = this.$store.getters.getUser.id;
+          await updateDispatch(this.currentDispatch.id, cleanFormPayload); // Edit
+          this.$message.success("派发更新成功！");
+        } else {
+          cleanFormPayload.createdBy = this.$store.getters.getUser.id;
+          cleanFormPayload.updatedBy = null;
+          await createManualDispatch(cleanFormPayload); // New
+          this.$message.success("派发创建成功！");
+        }
+
+        await this.loadDispatches();
+        this.closeAndResetDetailsDialog();
+      } catch (error) {
+        console.error("Error in handleDispatchSubmit:", error);
+        this.$message.error("保存派发失败，请重试。");
       }
     },
     async confirmDeleteDispatch() {
       try {
-        await this.$confirm("确认删除任务派发吗？", "提示", {
+        await this.$confirm("确认删除派发吗？", "提示", {
           confirmButtonText: "确定",
           cancelButtonText: "取消",
           type: "warning",
         });
 
         await deleteDispatch(this.currentDispatch.id);
-        this.$message.success("任务派发已删除！");
+        this.$message.success("派发已删除！");
         await this.loadDispatches();
         this.closeAndResetDetailsDialog();
       } catch (error) {
-        this.$message.error("删除任务派发失败，请重试。");
+        this.$message.error("删除派发失败，请重试。");
       }
     },
     async confirmDeleteSelectedRows() {
       if (this.selectedRows.length === 0) {
-        this.$message.warning("请选择至少一条记录进行删除！");
+        this.$message.warning("请选择至少一条派发进行删除！");
         return;
       }
 
@@ -382,7 +408,7 @@ export default {
       // }
 
       try {
-        await this.$confirm("确认删除选中的任务派发吗？", "提示", {
+        await this.$confirm("确认删除选中的派发吗？", "提示", {
           confirmButtonText: "确定",
           cancelButtonText: "取消",
           type: "warning",
@@ -390,7 +416,7 @@ export default {
 
         const idsToDelete = this.selectedRows.map(row => row.id);
         await Promise.all(idsToDelete.map(id => deleteDispatch(id)));
-        this.$message.success("选中的任务派发已删除！");
+        this.$message.success("选中的派发已删除！");
         await this.loadDispatches();
         this.selectedRows = [];
       } catch (error) {
@@ -405,7 +431,7 @@ export default {
     },
     openDetailsDialogForEdit() {
       if (!this.currentDispatch) {
-        this.$message.error("没有选中的任务派发可以编辑。");
+        this.$message.error("没有选中的派发可以编辑。");
         this.closeAndResetDetailsDialog();
         return;
       }
