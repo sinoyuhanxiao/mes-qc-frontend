@@ -11,7 +11,9 @@
             inactive-text="不可用"
         />
       </div>
-      <el-button type="primary" v-if="switchDisplayed">快速分配任务</el-button>
+      <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
+        快速分配此任务
+      </el-button>
     </div>
     <el-scrollbar :height="scrollBarHeight" width="100%">
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
@@ -19,7 +21,23 @@
       <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
       <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
     </el-scrollbar>
+
   </div>
+
+  <el-dialog
+      v-model="showQuickDispatch"
+      :title="`此表单任务快速派发`"
+      width="50%"
+      @close="showQuickDispatch = false"
+  >
+    <QuickDispatch
+        :visible.sync="showQuickDispatch"
+        :qcFormTreeNodeId="props.currentForm?.id"
+        @close="showQuickDispatch = false"
+        @dispatch="handleDispatch"
+    />
+  </el-dialog>
+
 </template>
 
 <script setup>
@@ -32,6 +50,7 @@ import testFormJsonData from '@/tests/form_json_data.json'; // Import the JSON d
 import api from '@/services/api'
 import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
 import { insertFormData } from '@/services/qcFormDataService.js';
+import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 
 const route = useRoute()
 
@@ -42,7 +61,7 @@ const props = defineProps({
   },
   usable: {
     type: Boolean,
-    default: true, // Default to disabled
+    default: true,
   },
   qcFormTemplateId: {
     type: String,
@@ -57,6 +76,7 @@ const optionData = reactive({})
 const formTitle = ref(''); // Store form title
 const enable_form = ref(false)
 let vFormRef = ref(null)
+const showQuickDispatch = ref(false);
 
 const switchDisplayed = ref(
     !route.params.qcFormTemplateId
@@ -83,6 +103,16 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', updateScrollBarHeight);
 });
+
+const handleDispatch = (data) => {
+  console.log("Dispatched data:", data);
+  // Add your API call or logic to handle the dispatched data
+};
+
+const handleQuickDispatch = () => {
+  console.log("Opening QuickDispatch dialog...");
+  showQuickDispatch.value = true;
+};
 
 const submitForm = () => {
   formId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;

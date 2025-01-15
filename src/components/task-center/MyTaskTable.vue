@@ -30,11 +30,25 @@
             :label="keyMap[key] || key"
             width="200"
         >
+          <template #header>
+            <span v-if="key === 'qc_form_tree_node_id'">
+                {{ keyMap[key] || key }}
+                <el-tooltip content="任务过期、未来30分钟后或已完成则无法填写。" placement="top">
+                    <el-icon><QuestionFilled /></el-icon>
+                </el-tooltip>
+            </span>
+                <span v-else>
+                {{ keyMap[key] || key }}
+            </span>
+          </template>
           <template #default="scope">
             <span v-if="key === 'qc_form_tree_node_id'">
               <span
-                  class="clickable-form-name"
-                  @click="handleFormNameClick(scope.row[key])"
+                  :class="{
+                    'usable-form-name': !isTaskNotUsable(scope.row.due_date, scope.row.dispatched_task_state_id),
+                    'unusable-form-name': isTaskNotUsable(scope.row.due_date, scope.row.dispatched_task_state_id)
+                  }"
+                  @click="handleFormNameClick(scope.row[key], scope.row)"
               >
                 {{ getFormNameById(scope.row[key]) || '未知表单' }}
               </span>
@@ -134,7 +148,7 @@
 <script>
 import dayjs from "dayjs";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
-import { Search } from "@element-plus/icons-vue";
+import {QuestionFilled, Search} from "@element-plus/icons-vue";
 import { fetchFormNodes } from "@/services/formNodeService";
 import { fetchUsers } from "@/services/userService";
 import {
@@ -145,6 +159,8 @@ import {
   updateDispatchedTask
 } from "@/services/taskCenterService";
 import * as formNodeService from "@/services/formNodeService";
+import { Base64 } from 'js-base64';
+import isTaskNotUsable from "@/utils/task-center/taskUtils.js";
 
 export default {
   name: "MyTaskTable",
@@ -167,6 +183,7 @@ export default {
     }
   },
   components: {
+    QuestionFilled,
     TaskDetail,
     Search,
   },
@@ -213,6 +230,7 @@ export default {
     },
   },
   methods: {
+    isTaskNotUsable,
     async fetchDispatchedTasks() {
       try {
         let response;
@@ -301,11 +319,16 @@ export default {
         this.$message.error("无法加载表单信息，请重试。");
       }
     },
-    async handleFormNameClick(nodeId) {
+    async handleFormNameClick(nodeId, row) {
       console.log("Redirecting to form display with nodeId:", nodeId);
 
-      try {
-        // Fetch the qc form template id asynchronously
+      // Determine if the task is not usable
+      let taskUsable = !isTaskNotUsable(row.due_date, row.dispatched_task_state_id);
+      if (!taskUsable) {
+        this.$message.warning("任务不可填写。");
+      }
+
+      try {        // Fetch the qc form template id asynchronously
         const response = await formNodeService.fetchFormNodesById(nodeId);
         const qcFormTemplateId = response.data?.qcFormTemplateId;
 
@@ -315,15 +338,18 @@ export default {
           return;
         }
 
-        // Construct the URL for the route
+        // Encode query parameters into a Base64 string
+        console.log("taskUsable: " + taskUsable)
+        const queryParams = { usable: taskUsable, switchDisplayed: false };
+        const encodedQuery = Base64.encode(JSON.stringify(queryParams));
+
+        // Construct the URL
         const newTabUrl = this.$router.resolve({
           name: 'FormDisplay',
-          params: {
-            qcFormTemplateId: qcFormTemplateId,
-            usable: false,
-            switchDisplayed: false
-          },
+          params: { qcFormTemplateId }, // Path parameter
+          query: { encoded: encodedQuery }, // Encoded query
         }).href;
+
 
         // Open the URL in a new tab
         window.open(newTabUrl, '_blank');
@@ -438,7 +464,7 @@ export default {
   async mounted() {
     await this.fetchDispatchedTasks();
     await this.fetchFormMap();
-    await this.startPolling();
+    // await this.startPolling();
     await this.fetchPersonnelMap();
   },
   async beforeUnmount() {
@@ -448,18 +474,35 @@ export default {
 </script>
 
 <style scoped>
-.header {
-  padding-bottom: 10px;
-  border-bottom: 1px solid #dcdcdc;
-}
+  .header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dcdcdc;
+  }
 
-.clickable-form-name {
-  color: #409eff;
-  cursor: pointer;
-  text-decoration: underline;
-}
+  .clickable-form-name {
+    color: #409eff;
+    cursor: pointer;
+    text-decoration: underline;
+  }
 
-.clickable-form-name:hover {
-  color: #66b1ff;
-}
+  .clickable-form-name:hover {
+    color: #66b1ff;
+  }
+
+  .usable-form-name {
+    color: #409eff;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .usable-form-name:hover {
+    color: #66b1ff;
+  }
+
+  .unusable-form-name {
+    color: #4d6c85;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
 </style>

@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
 // Utility function to determine if the task is false (not usable)
-function isTaskNotUsable(dueDate) {
+function isTaskNotUsable(dueDate, dispatchedTaskStateId) {
     if (!dueDate) {
         return true; // If no due date, the task is not usable
     }
@@ -13,10 +13,13 @@ function isTaskNotUsable(dueDate) {
     const isOverdue = due.isBefore(now);
 
     // Condition 2: Check if it's a future 30-minute task
-    const isFuture30Minutes = due.diff(now, "minute") > 30;
+    const isTooFarInFuture  = due.diff(now, "minute") > 30;
 
-    // The task is not usable if it's either overdue or a future 30-minute task
-    return isOverdue || isFuture30Minutes;
+    // Condition 3: Check if dispatched_task_state_id is not 4, 5, or 3
+    const isNotDuable = [4, 5, 3].includes(dispatchedTaskStateId);
+
+    // The task is not usable if any of the conditions are true
+    return isOverdue || isTooFarInFuture  || isNotDuable;
 }
 
 export default isTaskNotUsable;

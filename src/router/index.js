@@ -69,7 +69,11 @@ const routes = [
         path: '/form-display/:qcFormTemplateId',
         name: 'FormDisplay',
         component: FormDisplay,
-        props: true,
+        props: route => ({
+            qcFormTemplateId: route.params.qcFormTemplateId, // Path parameter
+            usable: route.query.usable === 'true', // Query parameter, parse to boolean
+            switchDisplayed: route.query.switchDisplayed === 'true' // Query parameter, parse to boolean
+        }),
     },
     {
         path: '/task-center-dashboard',
