@@ -2,10 +2,25 @@
   <el-container>
     <el-header class="header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>{{ title }}</h2>
+        <!-- Left Section: Title and Refresh Button -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h2 style="margin: 0;">{{ title }}</h2>
+          <el-tooltip content="Refresh table" placement="top">
+            <el-button
+                class="refresh-button"
+                type="primary"
+                circle
+                @click="fetchDispatchedTasks"
+            >
+              <el-icon style="color: #004085;"><RefreshRight /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </div>
+
+        <!-- Right Section: Search Input -->
         <el-input
             v-model="formFilter"
-            placeholder="搜索任务表单名称"
+            placeholder="搜索任务表单名称或任务名称"
             clearable
             style="width: 300px;"
             @input="applyFilter"
@@ -21,7 +36,7 @@
           :data="paginatedTasks"
           border
           style="width: 100%"
-          :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
+          :default-sort="{ prop: 'due_date', order: 'ascending' }"
       >
         <el-table-column
             v-for="(key, index) in columnList"
@@ -45,8 +60,8 @@
             <span v-if="key === 'qc_form_tree_node_id'">
               <span
                   :class="{
-                    'usable-form-name': !isTaskNotUsable(scope.row.due_date, scope.row.dispatched_task_state_id),
-                    'unusable-form-name': isTaskNotUsable(scope.row.due_date, scope.row.dispatched_task_state_id)
+                    'usable-form-name': isTaskUsable(scope.row.due_date, scope.row.dispatched_task_state_id),
+                    'unusable-form-name': !isTaskUsable(scope.row.due_date, scope.row.dispatched_task_state_id)
                   }"
                   @click="handleFormNameClick(scope.row[key], scope.row)"
               >
@@ -102,12 +117,20 @@
             <el-button link type="primary" size="small" @click="showDetails(scope.row)">
               Detail
             </el-button>
-            <el-button link type="info" size="small" @click="editTask(scope.row)">
+            <el-button link type="info" size="small" style="cursor: not-allowed" disabled @click="editTask(scope.row)">
               Edit
             </el-button>
-            <el-button link type="success" size="small" @click="completeTask(scope.row)">
+            <el-button
+                link
+                :type="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id)) ? 'info' : 'success'"
+                size="small"
+                :style="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id)) ? 'cursor: not-allowed;' : ''"
+                :disabled="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id))"
+                @click="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id)) ? null : completeTask(scope.row)"
+            >
               Complete
             </el-button>
+
           </template>
         </el-table-column>
       </el-table>
@@ -148,7 +171,7 @@
 <script>
 import dayjs from "dayjs";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
-import {QuestionFilled, Search} from "@element-plus/icons-vue";
+import {QuestionFilled, RefreshRight, Search} from "@element-plus/icons-vue";
 import { fetchFormNodes } from "@/services/formNodeService";
 import { fetchUsers } from "@/services/userService";
 import {
@@ -160,7 +183,8 @@ import {
 } from "@/services/taskCenterService";
 import * as formNodeService from "@/services/formNodeService";
 import { Base64 } from 'js-base64';
-import isTaskNotUsable from "@/utils/task-center/taskUtils.js";
+import isTaskUsable from "@/utils/task-center/taskUtils.js";
+import {ElNotification} from "element-plus";
 
 export default {
   name: "MyTaskTable",
@@ -183,6 +207,7 @@ export default {
     }
   },
   components: {
+    RefreshRight,
     QuestionFilled,
     TaskDetail,
     Search,
@@ -202,9 +227,22 @@ export default {
   },
   computed: {
     paginatedTasks() {
+      const sortedTasks = [...this.filteredTasks].sort((a, b) => {
+        const usableA = this.isTaskUsable(a.due_date, a.dispatched_task_state_id) ? 1 : 0;
+        const usableB = this.isTaskUsable(b.due_date, b.dispatched_task_state_id) ? 1 : 0;
+
+        // Sort usable tasks first
+        if (usableB !== usableA) {
+          return usableB - usableA;
+        }
+
+        // If both are equally usable, sort by due_date ascending
+        return dayjs(a.due_date).isBefore(dayjs(b.due_date)) ? 1 : -1;
+      });
+
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.filteredTasks.slice(start, end);
+      return sortedTasks.slice(start, end);
     },
     keyMap() {
       return {
@@ -230,7 +268,7 @@ export default {
     },
   },
   methods: {
-    isTaskNotUsable,
+    isTaskUsable,
     async fetchDispatchedTasks() {
       try {
         let response;
@@ -252,6 +290,17 @@ export default {
         }
         this.dispatchedTasks = response.data.data;
         this.filteredTasks = this.dispatchedTasks; // Initialize filteredTasks
+
+        // Re-apply the filter if one is active
+        if (this.formFilter.trim() !== "") {
+          this.applyFilter();
+        }
+
+        if (this.type === "today") {
+          this.notifyDueSoonTasks();
+          this.notifyTasksDueToday();
+        }
+
       } catch (error) {
         console.error("Error fetching dispatched tasks:", error);
         this.$message.error("无法加载任务列表，请重试。");
@@ -283,11 +332,19 @@ export default {
     },
     async applyFilter() {
       if (this.formFilter.trim() === "") {
-        this.filteredTasks = this.dispatchedTasks; // Reset to all tasks if filter is empty
+        this.filteredTasks = this.dispatchedTasks; // Reset to all tasks if the filter is empty
       } else {
-        this.filteredTasks = this.dispatchedTasks.filter((task) =>
-            this.getFormNameById(task.qc_form_tree_node_id).includes(this.formFilter)
-        );
+        const searchText = this.formFilter.trim().toLowerCase();
+
+        this.filteredTasks = this.dispatchedTasks.filter((task) => {
+          // Check if the form name matches the search term
+          const formNameMatches = this.getFormNameById(task.qc_form_tree_node_id).toLowerCase().includes(searchText);
+
+          // Check if the task name matches the search term
+          const taskNameMatches = (task.name || "").toLowerCase().includes(searchText);
+
+          return formNameMatches || taskNameMatches; // Match if either condition is true
+        });
       }
     },
     async fetchFormMap() {
@@ -320,12 +377,18 @@ export default {
       }
     },
     async handleFormNameClick(nodeId, row) {
-      console.log("Redirecting to form display with nodeId:", nodeId);
+      console.log("Redirecting to form display with nodeId:", nodeId)
 
       // Determine if the task is not usable
-      let taskUsable = !isTaskNotUsable(row.due_date, row.dispatched_task_state_id);
+      let taskUsable = isTaskUsable(row.due_date, row.dispatched_task_state_id);
       if (!taskUsable) {
         this.$message.warning("任务不可填写。");
+      } else {
+        if (row.dispatched_task_state_id !== 2) {
+          await updateDispatchedTask(row.id, { dispatched_task_state_id: 2 });
+          row.dispatched_task_state_id = 2;
+          this.$message.success("任务状态已更新为进行中。");
+        }
       }
 
       try {        // Fetch the qc form template id asynchronously
@@ -340,6 +403,7 @@ export default {
 
         // Encode query parameters into a Base64 string
         console.log("taskUsable: " + taskUsable)
+        // const queryParams = { usable: taskUsable, switchDisplayed: false };
         const queryParams = { usable: taskUsable, switchDisplayed: false };
         const encodedQuery = Base64.encode(JSON.stringify(queryParams));
 
@@ -347,7 +411,7 @@ export default {
         const newTabUrl = this.$router.resolve({
           name: 'FormDisplay',
           params: { qcFormTemplateId }, // Path parameter
-          query: { encoded: encodedQuery }, // Encoded query
+          query: queryParams, // Encoded query
         }).href;
 
 
@@ -356,6 +420,41 @@ export default {
       } catch (error) {
         console.error("Error fetching qcFormTemplateId for nodeId:", nodeId, error);
         this.$message.error("加载表单模板时出错，请稍后重试。");
+      }
+    },
+    notifyDueSoonTasks() {
+      const now = dayjs();
+      const dueSoonTasks = this.dispatchedTasks.filter((task) => {
+        const dueDate = dayjs(task.due_date);
+        return dueDate.diff(now, "minute") <= 30 && dueDate.isAfter(now);
+      });
+
+      if (dueSoonTasks.length > 0) {
+        ElNotification({
+          title: "警告",
+          message: `您有 ${dueSoonTasks.length} 个任务即将到期！`,
+          type: "warning",
+          duration: 5000,
+        });
+      }
+    },
+    notifyTasksDueToday() {
+      const today = dayjs().startOf("day");
+      const tomorrow = dayjs().add(1, "day").startOf("day");
+
+      const todayTasks = this.dispatchedTasks.filter((task) => {
+        const dueDate = dayjs(task.due_date);
+        return dueDate.isAfter(today) && dueDate.isBefore(tomorrow);
+      });
+
+      if (todayTasks.length > 0) {
+        ElNotification({
+          title: "信息",
+          message: `您今天有 ${todayTasks.length} 个任务到期。`,
+          type: "info",
+          offset: 100,
+          duration: 5000,
+        });
       }
     },
     formatDate(dateString) {
@@ -442,9 +541,12 @@ export default {
             type: "warning",
           }
       )
-          .then(() => {
+          .then(async () => {
             console.log("Task marked as completed:", row);
-            updateDispatchedTask(row.id, { dispatched_task_state_id: 3}) // mark this task as complete, add error handling in the future
+            await updateDispatchedTask(row.id, {dispatched_task_state_id: 3}) // mark this task as complete, add error handling in the future
+            // Refresh table
+            await this.fetchDispatchedTasks();
+            this.$message.success("任务已标记为完成");
           })
           .catch(() => {
             console.log("Task completion canceled.");
@@ -503,6 +605,18 @@ export default {
     color: #4d6c85;
     text-decoration: underline;
     cursor: pointer;
+  }
+
+  .refresh-button {
+    background-color: #80cfff; /* Slightly lighter shade of primary color */
+    border-color: #80cfff; /* Match lighter background */
+  }
+
+  .refresh-button:hover {
+    background-color: #66b5ff; /* Slightly darker hover effect */
+    border-color: #66b5ff;
+    transform: rotate(360deg); /* Rotate on hover */
+    transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
   }
 
 </style>

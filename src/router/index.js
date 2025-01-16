@@ -14,6 +14,7 @@ import MyHistoryTask from "@/views/TaskCenter/MyHistoryTask.vue";
 import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
 import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 import ErikTestView from "@/views/ErikTestView.vue";
+import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
 
 const routes = [
     {
@@ -84,6 +85,11 @@ const routes = [
         path: '/erik-test',
         name: 'ErikTest',
         component: ErikTestView
+    },
+    {
+        path: '/my-task-logs',
+        name: 'MyTaskLogs',
+        component: QcTaskSubmissionLogs
     }
 ];
 

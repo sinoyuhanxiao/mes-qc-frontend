@@ -51,6 +51,13 @@ export default {
     removeDateTime(index) {
       this.dateTimeSelections.splice(index, 1);
     },
+    resetFields() {
+      // Clear all fields
+      this.taskName = "";
+      this.taskDescription = "";
+      this.selectedPersonnel = [];
+      this.dateTimeSelections = [];
+    },
     async handleDispatch() {
       console.log("Dispatching task:", this.taskName, this.taskDescription, this.selectedPersonnel, this.dateTimeSelections)
       if (!this.taskName) {
@@ -94,6 +101,7 @@ export default {
         }
         this.$message.success("任务派发成功！");
         this.$emit("dispatch", tasks); // Emit success event
+        this.resetFields(); // Clear fields after successful dispatch
         this.$emit("close"); // Emit close event to close the dialog
       } catch (error) {
         console.error("Error dispatching task:", error);
