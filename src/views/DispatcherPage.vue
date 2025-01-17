@@ -84,6 +84,7 @@
       <template v-else-if="isDetailsDialogVisible && isEditMode">
         <dispatch-configurator
              :current-dispatch="currentDispatch"
+             :is-edit-mode="isEditMode"
              @on-submit="handleDispatchSubmit"
              @on-cancel="handleCancelDispatchForm"
              @on-manual-submit="handleManualDispatchSubmit"
@@ -205,6 +206,7 @@ export default {
       isDispatchedTestsDialogVisible: false,
       isDispatchStatusDialogVisible: false,
       isEditMode: false,
+      isUserInteracting: false, // Flag to debounce polling
       dispatchList: [],
       dispatchedTasks: [],
       dispatchStatuses: [],
@@ -218,10 +220,45 @@ export default {
     };
   },
   methods: {
+    // Polling Logic
+    startPolling() {
+      this.pollingInterval = setInterval(async () => {
+        if (!this.isUserInteracting) {
+          await this.loadAllData(); // Load all data periodically
+        }
+      }, 60000); // Poll every 1 minute
+    },
+    stopPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval);
+        this.pollingInterval = null;
+      }
+    },
+    async loadAllData() {
+      try {
+        await Promise.all([
+          this.loadDispatches(),
+          this.loadDispatchedTasks(),
+          this.loadFormNodes(),
+          this.loadUserMap(),
+        ]);
+      } catch (error) {
+        console.error("Failed to load data during polling:", error);
+      }
+    },
     async loadDispatches() {
       try {
         const response = await getAllDispatches();
-        this.dispatchList = response.data.data;
+        const updatedDispatchList = response.data.data;
+
+        if (JSON.stringify(this.dispatchList) !== JSON.stringify(updatedDispatchList)) {
+          this.$notify({
+            title: "派发列表更新",
+            message: "派发列表已更新。",
+            type: "success",
+          });
+          this.dispatchList = updatedDispatchList;
+        }
       } catch (error) {
         this.$message.error("无法加载派发列表，请重试。");
       }
@@ -229,9 +266,18 @@ export default {
     async loadDispatchedTasks() {
       try {
         const response = await getAllDispatchedTasks();
-        this.dispatchedTasks = response.data.data;
+        const updatedTasks = response.data.data;
+
+        if (JSON.stringify(this.dispatchedTasks) !== JSON.stringify(updatedTasks)) {
+          this.$notify({
+            title: "任务列表更新",
+            message: "任务列表已更新。",
+            type: "success",
+          });
+          this.dispatchedTasks = updatedTasks;
+        }
       } catch (error) {
-        this.$message.error("无法加载任務列表，请重试。");
+        this.$message.error("无法加载任务列表，请重试。");
       }
     },
     async loadDispatchStatuses() {
@@ -245,26 +291,51 @@ export default {
     ,
     async loadFormNodes() {
       try {
-        const response = await fetchFormNodes(); // API call to fetch form nodes
-        this.formMap = generateFormMap(response.data); // Generate the map
+        const response = await fetchFormNodes();
+        const updatedFormMap = generateFormMap(response.data);
+
+        if (JSON.stringify(this.formMap) !== JSON.stringify(updatedFormMap)) {
+          this.$notify({
+            title: "表单列表更新",
+            message: "表单列表已更新。",
+            type: "success",
+          });
+          this.formMap = updatedFormMap;
+        }
       } catch (error) {
-        console.error("Failed to load form nodes:", error);
+        this.$message.error("无法加载表单，请重试。");
       }
     },
     async loadUserMap() {
       try {
-        const response = await fetchUsers(); // Fetch all personnel
-        this.userMap = response.data.data.reduce((map, user) => {
-          map[user.id] = user; // Map each person's ID to their details
+        const response = await fetchUsers();
+        const updatedUserMap = response.data.data.reduce((map, user) => {
+          map[user.id] = user;
           return map;
         }, {});
+
+        if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
+          this.$notify({
+            title: "人员列表更新",
+            message: "人员列表已更新。",
+            type: "success",
+          });
+          this.userMap = updatedUserMap;
+        }
       } catch (error) {
-        console.error("Error loading personnel data:", error);
         this.$message.error("无法加载人员信息，请重试。");
       }
     },
+    // Debounce Polling During User Interaction
+    setUserInteracting(interacting) {
+      this.isUserInteracting = interacting;
+      if (interacting) {
+        this.stopPolling();
+      } else {
+        this.startPolling();
+      }
+    },
     handleNewDispatchButtonClick() {
-      // console.log('current user is:' ,JSON.parse(localStorage.getItem('current_user')) || {});
       console.log('current user is:' ,this.$store.getters.getUser.id);
       this.resetCurrentDispatch();
       this.isEditMode = true;
@@ -274,6 +345,8 @@ export default {
       this.currentDispatch = { ...dispatch }; // Use a copy to avoid unintended mutations
       this.isEditMode = false;
       this.isDetailsDialogVisible = true;
+
+      this.loadDispatchedTasks();
     },
     handleCancelDispatchForm() {
       if (this.currentDispatch) {
@@ -429,20 +502,6 @@ export default {
     updateSelectedRows(selected) {
       this.selectedRows = selected;
     },
-    openDetailsDialogForEdit() {
-      if (!this.currentDispatch) {
-        this.$message.error("没有选中的派发可以编辑。");
-        this.closeAndResetDetailsDialog();
-        return;
-      }
-      this.isEditMode = true;
-      this.isDetailsDialogVisible = true;
-    },
-    openDetailsDialogForNew() {
-      this.resetCurrentDispatch();
-      this.isEditMode = true;
-      this.isDetailsDialogVisible = true;
-    },
     handleSizeChange(newSize) {
       this.pageSize = newSize;
       this.currentPage = 1; // Reset to first page on size change
@@ -456,11 +515,12 @@ export default {
 
   },
   mounted() {
-    this.loadDispatches();
-    this.loadDispatchedTasks()
-    this.loadFormNodes();
-    this.loadUserMap();
+    this.startPolling(); // Start polling on component mount
+    this.loadAllData(); // Initial load of data
     this.loadDispatchStatuses()
+  },
+  beforeDestroy() {
+    this.stopPolling(); // Cleanup polling on component destroy
   },
 };
 </script>

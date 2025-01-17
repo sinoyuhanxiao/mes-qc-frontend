@@ -1,22 +1,28 @@
 <template>
   <div class="dispatch-configurator">
-    <el-tabs v-model="activeTab">
+    <el-tabs
+        v-model="activeTab"
+        @tab-click="handleTabClick">
       <!-- Schedule-Based Dispatch -->
-      <el-tab-pane label="基于计划" name="schedule">
+      <el-tab-pane
+          label="计划派发"
+          name="schedule"
+          v-if="!currentDispatch || currentDispatch.type === 'SCHEDULED'">
         <schedule-based-dispatch
           :current-dispatch="currentDispatch"
           @on-submit="handleSubmit"
-          @on-cancel="handleCancel"
-        />
+          @on-cancel="handleCancel"/>
       </el-tab-pane>
 
       <!-- Manual Dispatch -->
-      <el-tab-pane label="手动派发" name="manual">
+      <el-tab-pane
+          label="快速派发"
+          name="manual"
+          v-if="!currentDispatch || currentDispatch.type === 'MANUAL'">
         <manual-based-dispatch
             :current-dispatch="currentDispatch"
             @on-submit="handleManualSubmit"
-            @on-cancel="handleCancel"
-          />
+            @on-cancel="handleCancel"/>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -36,13 +42,21 @@ export default {
   props: {
     currentDispatch: {
       type: Object,
-      required: true, // Expect this prop to always be provided
+      required: false, // Expect this prop to always be provided
     },
   },
   data() {
     return {
-      activeTab: "schedule", // Default tab
+      activeTab: "manual", // Default tab
     };
+  },
+  watch: {
+    currentDispatch: {
+      immediate: true,
+      handler() {
+        this.activeTab = this.determineDefaultTab();
+      },
+    },
   },
   methods: {
     handleSubmit(data) {
@@ -56,6 +70,13 @@ export default {
     },
     handleCancel() {
       this.$emit("on-cancel");
+    },
+    handleTabClick(tab) {
+      this.activeTab = tab.name; // Update activeTab when the user clicks a tab
+    },
+    determineDefaultTab() {
+      if (!this.currentDispatch) return "schedule"; // Default to manual for new dispatches
+      return this.currentDispatch.type === "SCHEDULED" ? "schedule" : "manual";
     },
   },
 };
