@@ -51,6 +51,8 @@ import api from '@/services/api'
 import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
 import { insertFormData } from '@/services/qcFormDataService.js';
 import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
+import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
+import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 
 const route = useRoute()
 
@@ -64,6 +66,10 @@ const props = defineProps({
     default: true,
   },
   qcFormTemplateId: {
+    type: String,
+    required: false // Make it optional
+  },
+  dispatchedTaskId: {
     type: String,
     required: false // Make it optional
   }
@@ -124,6 +130,22 @@ const submitForm = () => {
   vFormRef.value.getFormData().then(async (formData) => {
     try {
       const response = await insertFormData(userId, collectionName, formData); // Use service function
+      // step 1 get the object id of the insertFormData's returned object id
+      console.log(response.data.object_id)
+      const dispatchedTaskId = props.dispatchedTaskId || null;
+      console.log(dispatchedTaskId)
+      // Step 2: Insert the form into PostgreSQL log
+      const logResponse = await insertTaskSubmissionLog({
+        submission_id: response.data.object_id, // Map the MongoDB object_id to submissionId
+        reviewed_at: null, // Set default value or use actual data
+        reviewed_by: null, // Set default value or use actual data
+        dispatched_task_id: dispatchedTaskId, // Retrieve taskId from formData if available
+        qc_form_template_id: props.qcFormTemplateId, // Retrieve formId from formData if available
+        created_by: userId, // User who submitted the form
+        status: 1 // Set a default status, e.g., 1 for active
+      });
+      console.log("logResponse")
+      console.log(logResponse)
       if (response.status === 200) {
         ElMessage.success(response.data);
       } else {

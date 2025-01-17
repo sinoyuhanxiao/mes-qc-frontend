@@ -73,6 +73,7 @@ const routes = [
         props: route => ({
             qcFormTemplateId: route.params.qcFormTemplateId, // Path parameter
             usable: route.query.usable === 'true', // Query parameter, parse to boolean
+            dispatchedTaskId: route.query.dispatchedTaskId, // Query parameter, parse to number
             switchDisplayed: route.query.switchDisplayed === 'true' // Query parameter, parse to boolean
         }),
     },

@@ -404,7 +404,7 @@ export default {
         // Encode query parameters into a Base64 string
         console.log("taskUsable: " + taskUsable)
         // const queryParams = { usable: taskUsable, switchDisplayed: false };
-        const queryParams = { usable: taskUsable, switchDisplayed: false };
+        const queryParams = { usable: taskUsable, switchDisplayed: false, dispatchedTaskId: row.id};
         const encodedQuery = Base64.encode(JSON.stringify(queryParams));
 
         // Construct the URL
@@ -450,7 +450,7 @@ export default {
       if (todayTasks.length > 0) {
         ElNotification({
           title: "信息",
-          message: `您今天有 ${todayTasks.length} 个任务到期。`,
+          message: `您今天一共有 ${todayTasks.length} 个任务。`,
           type: "info",
           offset: 100,
           duration: 5000,

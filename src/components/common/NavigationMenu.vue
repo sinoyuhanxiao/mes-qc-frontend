@@ -60,7 +60,7 @@
           <el-icon><Collection /></el-icon>
           <span>任务中心</span>
         </template>
-        <el-menu-item index="/dashboard">
+        <el-menu-item index="/task-center-dashboard">
           <el-icon><DataAnalysis /></el-icon>
           <span>任务看板</span>
         </el-menu-item>
