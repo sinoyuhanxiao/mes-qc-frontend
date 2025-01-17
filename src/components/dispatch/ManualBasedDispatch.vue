@@ -1,5 +1,7 @@
 <template>
   <el-form :model="dispatchForm" :rules="validationRules" ref="formRef" label-width="150px">
+
+    <!-- Dispatch Name -->
     <el-form-item label="派发名称" prop="name">
       <el-input v-model="dispatchForm.name" placeholder="请输入派发名称" />
     </el-form-item>
@@ -11,7 +13,6 @@
 
     <!-- User Selection -->
     <el-divider>人员</el-divider>
-
     <el-form-item label="选择人员" required prop="userIds">
       <el-select
           v-model="dispatchForm.userIds"
@@ -30,20 +31,22 @@
       </el-select>
     </el-form-item>
 
+    <!-- Form Tree -->
+    <el-divider>表单</el-divider>
     <el-form-item label="选择表单" required prop="formIds">
-      <!-- Form Tree -->
       <DispatchFormTreeSelect
-          :selected-form-ids="dispatchForm.dispatch_forms"
+          :selected-form-ids="dispatchForm.formIds"
           @update-selected-forms="handleSelectedForms"/>
     </el-form-item>
 
+    <!-- Remark -->
     <el-form-item label="备注">
       <el-input type="textarea" v-model="dispatchForm.remark" placeholder="请输入备注"></el-input>
     </el-form-item>
 
-
+    <!-- Action Buttons -->
     <el-form-item>
-      <el-button type="primary" @click="submitForm">提交</el-button>
+      <el-button type="primary" :disabled="!isFormModified" @click="submitForm">提交</el-button>
       <el-button @click="resetForm" type="warning">重置</el-button>
       <el-button @click="$emit('on-cancel')">取消</el-button>
 
@@ -56,6 +59,7 @@ import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSe
 import {fetchUsers} from "@/services/userService";
 import dispatchForm from "@/components/dispatch/DispatchForm.vue";
 import {normalizeCronExpression, unnormalizeCronExpression} from "@/utils/dispatch-utils";
+import isEqual from "lodash/isEqual";
 
 export default {
   components: {DispatchFormTreeSelect},
@@ -66,9 +70,21 @@ export default {
     },
   },
   computed: {
-    selectedUsers() {
-      const selected = this.userOptions.filter(user => this.dispatchForm.userIds.includes(user.id));
-      return selected.map(user => user.name).join(", ");
+    isFormModified() {
+      const transformedData = this.transformDispatchData(this.currentDispatch || {});
+      return !isEqual(transformedData, this.dispatchForm);
+    },
+  },
+  watch: {
+    currentDispatch: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.dispatchForm = this.transformDispatchData(newVal || {});
+          // this.updatePartialDaysState();
+          this.loadUserOptions(); //Load personnel options when form data changes
+        }
+      },
     },
   },
   data() {
@@ -108,7 +124,6 @@ export default {
 
         const payload = {
           ...this.dispatchForm,
-          isActive: true,
           startTime: null,
           endTime: null,
           cronExpression: null,
@@ -122,6 +137,10 @@ export default {
     },
     resetForm() {
       this.$refs.formRef.resetFields();
+      // this.dispatchForm = this.transformDispatchData(this.currentDispatch || {});
+      // this.updatePartialDaysState();
+      // Emit updated forms to reset the tree
+      // this.updateSelectedForms(this.dispatchForm.formIds);
     },
     handleSelectedForms(selectedForms) {
       this.dispatchForm.formIds = selectedForms.map((form) => form.id); // API-ready IDs
@@ -149,25 +168,17 @@ export default {
         name: data.name || "",
         type: data.type || "",
         remark: data.remark || "",
-        cronExpression: unnormalizeCronExpression(data.cron_expression) || "* * * * *",
+        cronExpression: unnormalizeCronExpression(data.cron_expression) || null,
         dispatchLimit: data.dispatch_limit ?? -1,
         dueDateOffsetMinute: data.due_date_offset_minute || 60,
-        dateRange: [
-          data.start_time ? this.formatToLocalISO(data.start_time) : null,
-          data.end_time ? this.formatToLocalISO(data.end_time) : null
-        ],
+        startTime: null,
+        endTime: null,
         formIds: data.dispatch_forms || [],
         userIds: data.dispatch_users?.map(user => user.id) || [],
         createdBy: data.created_by || null,
         updatedBy: data.updated_by || null,
       };
     },
-    // resetForm() {
-    //   this.dispatchForm = this.transformDispatchData(this.currentDispatch || {});
-    //   // this.updatePartialDaysState();
-    //   // Emit updated forms to reset the tree
-    //   this.updateSelectedForms(this.dispatchForm.formIds);
-    // },
   },
 };
 </script>

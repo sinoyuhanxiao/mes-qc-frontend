@@ -4,6 +4,7 @@
            ref="formRef"
            label-position="left"
            label-width="200px">
+
     <!-- Dispatch Name -->
     <el-form-item label="派发名称" required prop="name">
       <el-input v-model="dispatchForm.name" placeholder="请输入派发名称"></el-input>
@@ -39,6 +40,11 @@
     <!-- Due Date Offset (Minutes) -->
     <el-form-item label="任务时限(分钟)" required prop="dueDateOffsetMinute">
       <el-input-number v-model="dispatchForm.dueDateOffsetMinute" :min="0"></el-input-number>
+    </el-form-item>
+
+    <!-- Remark -->
+    <el-form-item label="备注">
+      <el-input type="textarea" v-model="dispatchForm.remark" placeholder="请输入备注"></el-input>
     </el-form-item>
 
 <!--    <el-divider>具体日期</el-divider>-->
@@ -87,7 +93,6 @@
 
     <!-- User Selection -->
     <el-divider>人员</el-divider>
-
     <el-form-item label="选择人员" required prop="userIds">
       <el-select
           v-model="dispatchForm.userIds"
@@ -106,24 +111,80 @@
       </el-select>
     </el-form-item>
 
-    <el-divider>表单</el-divider>
-
     <!-- Form Tree -->
+    <el-divider>表单</el-divider>
     <el-form-item label="选择表单" required prop="formIds">
       <DispatchFormTreeSelect
           :selected-form-ids="dispatchForm.formIds"
           @update-selected-forms="handleSelectedForms"/>
     </el-form-item>
 
-    <!-- Remark -->
-    <el-form-item label="备注">
-      <el-input type="textarea" v-model="dispatchForm.remark" placeholder="请输入备注"></el-input>
-    </el-form-item>
+    <el-divider>生产模块关联</el-divider>
+      <el-form-item label="选择产品">
+        <el-select v-model="dispatchForm.selectedProducts" multiple filterable>
+          <el-option
+              v-for="product in productOptions"
+              :key="product.value"
+              :label="product.label"
+              :value="product.value"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="选择原料">
+        <el-select v-model="dispatchForm.selectedRawMaterials" multiple filterable>
+          <el-option
+              v-for="material in rawMaterialOptions"
+              :key="material.value"
+              :label="material.label"
+              :value="material.value"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="选择生产工单">
+        <el-select v-model="dispatchForm.selectedProductionWorkOrders" multiple filterable>
+          <el-option
+              v-for="workOrder in productionWorkOrderOptions"
+              :key="workOrder.value"
+              :label="workOrder.label"
+              :value="workOrder.value"
+          />
+        </el-select>
+      </el-form-item>
+
+    <el-divider>维护模块关联</el-divider>
+      <el-form-item label="选择设备">
+        <el-select v-model="dispatchForm.selectedEquipments" multiple filterable>
+          <el-option
+              v-for="equipment in equipmentOptions"
+              :key="equipment.value"
+              :label="equipment.label"
+              :value="equipment.value"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="选择维护工单">
+        <el-select v-model="dispatchForm.selectedMaintenanceWorkOrders" multiple filterable>
+          <el-option
+              v-for="workOrder in maintenanceWorkOrderOptions"
+              :key="workOrder.value"
+              :label="workOrder.label"
+              :value="workOrder.value"
+          />
+        </el-select>
+      </el-form-item>
+
+
+
 
     <!-- Schedule Summary -->
     <el-card class="mt-4" shadow="always">
       <h4>派发预览</h4>
       <p>计划: <strong>{{ chineseSchedule }}</strong></p>
+      <p>派发次数上限: <strong>{{ formattedDispatchLimit }}</strong></p>
+      <p>任务时限: <strong>{{ dispatchForm.dueDateOffsetMinute + "分鐘" }}</strong></p>
       <p>运行时间: <strong>{{ displayActiveRange }}</strong></p>
       <p>派发表单: <strong>{{ selectedFormNames.join(", ") }}</strong></p>
       <p>派发给: <strong>{{ selectedUsers }}</strong></p>
@@ -151,11 +212,21 @@
 </template>
 
 <script>
-import {fetchUsers} from "@/services/userService";
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import isEqual from "lodash/isEqual";
 import {normalizeCronExpression, unnormalizeCronExpression, parseCronExpressionToChinese } from "@/utils/dispatch-utils";
 import { humanizeCronInChinese } from "cron-chinese";
+import {fetchUsers} from "@/services/userService";
+import {
+  getAllProducts,
+  getAllRawMaterials,
+  getAllProductionWorkOrders,
+} from "@/services/productionService";
+import {
+  getAllEquipments,
+  getAllMaintenanceWorkOrders,
+} from "@/services/maintenanceService";
+
 
 export default {
   components: {DispatchFormTreeSelect},
@@ -181,18 +252,40 @@ export default {
         userIds: [],
         createdBy: null, // Assign in submitForm
         updatedBy: null, // Assign in submitForm
+        selectedProducts: [],
+        selectedRawMaterials: [],
+        selectedProductionWorkOrders: [],
+        selectedEquipments: [],
+        selectedMaintenanceWorkOrders: [],
       },
       validationRules: {
         name: [{ required: true, message: "请输入派发名称", trigger: "blur" }],
         dateRange: [{ required: true, message: "请选择派发运行时间", trigger: "change" }],
         cronExpression: [{ required: true, message: "请输入派发计划", trigger: "change" }],
         dispatchLimit: [{ required: true, message: "请输入派发计划", trigger: "change" }],
-        dueDateOffsetMinute: [{ required: true, message: "请输入派发计划", trigger: "change" }],
+        dueDateOffsetMinute: [
+            { required: true, message: "请输入派发计划", trigger: "change" },
+            {
+              validator: (rule, value, callback) => {
+                if (value < 1) {
+                  callback(new Error("任务时限不能小于1分钟"));
+                } else {
+                  callback();
+                }
+              },
+              trigger: "change",
+            },
+        ],
         userIds: [{ required: true, message: "请选择人员", trigger: "change" }],
         formIds: [{ required: true, message: "请选择表单", trigger: "change" }],
       },
       selectedFormNames: [], // For displaying form names in preview
       userOptions: [],
+      productOptions: [],
+      rawMaterialOptions: [],
+      productionWorkOrderOptions: [],
+      equipmentOptions: [],
+      maintenanceWorkOrderOptions: [],
       isLoadingUser: false,
       selectAllDays: false,
       isPartialDaysSelected: false,
@@ -240,6 +333,9 @@ export default {
       const transformedData = this.transformDispatchData(this.currentDispatch || {});
       return !isEqual(transformedData, this.dispatchForm);
     },
+    formattedDispatchLimit() {
+      return this.dispatchForm.dispatchLimit === -1 ? "无限制" : this.dispatchForm.dispatchLimit;
+    },
   },
   watch: {
     currentDispatch: {
@@ -263,10 +359,11 @@ export default {
         cronExpression: unnormalizeCronExpression(data.cron_expression) || "* * * * *",
         dispatchLimit: data.dispatch_limit ?? -1,
         dueDateOffsetMinute: data.due_date_offset_minute || 60,
-        dateRange: [
-          data.start_time ? this.formatToLocalISO(data.start_time) : null,
-          data.end_time ? this.formatToLocalISO(data.end_time) : null
-        ],
+        // dateRange: [
+        //   data.start_time ? this.formatToLocalISO(data.start_time) : null,
+        //   data.end_time ? this.formatToLocalISO(data.end_time) : null
+        // ],
+        dateRange: [data.start_time, data.end_time],
         formIds: data.dispatch_forms || [],
         userIds: data.dispatch_users?.map(user => user.id) || [],
         createdBy: data.created_by || null,
@@ -333,27 +430,87 @@ export default {
     handleSelectedForms(selectedForms) {
       this.dispatchForm.formIds = selectedForms.map((form) => form.id); // API-ready IDs
       this.selectedFormNames = selectedForms.map((form) => form.label); // Names for display
+      // Trigger validation for formIds
+      this.$refs.formRef.validateField("formIds");
     },
-    formatToLocalISO(utcDateString) {
-      const date = new Date(utcDateString);
+    async loadProductOptions() {
+      try {
+        const response = await getAllProducts();
+        const products = response.data?.data || [];
+        this.productOptions = products.map((product) => ({
+          value: product.id,
+          label: product.name,
+        }));
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      }
+    },
+    async loadRawMaterialOptions() {
+      try {
+        const response = await getAllRawMaterials();
+        const rawMaterials = response.data?.data || [];
+        this.rawMaterialOptions = rawMaterials.map((material) => ({
+          value: material.id,
+          label: material.name,
+        }));
+      } catch (error) {
+        console.error("Failed to load raw materials:", error);
+      }
+    },
+    async loadProductionWorkOrderOptions() {
+      try {
+        const response = await getAllProductionWorkOrders();
+        const workOrders = response.data?.data || [];
+        this.productionWorkOrderOptions = workOrders.map((workOrder) => ({
+          value: workOrder.id,
+          label: `${workOrder.name} (${workOrder.code})`,
+        }));
+      } catch (error) {
+        console.error("Failed to load production work orders:", error);
+      }
+    },
+    async loadEquipmentOptions() {
+      try {
+        const response = await getAllEquipments();
+        const equipments = response.data?.data || [];
+        this.equipmentOptions = equipments.map((equipment) => ({
+          value: equipment.id,
+          label: `${equipment.name} (${equipment.code})`,
+        }));
+      } catch (error) {
+        console.error("Failed to load equipments:", error);
+      }
+    },
+    async loadMaintenanceWorkOrderOptions() {
+      try {
+        const response = await getAllMaintenanceWorkOrders();
 
-      // Get timezone offset in minutes
-      const timezoneOffset = date.getTimezoneOffset();
+        // Extract the data array from the response
+        const workOrders = response.data?.data || [];
 
-      // Convert offset to hours and minutes
-      const offsetHours = String(Math.abs(Math.floor(timezoneOffset / 60))).padStart(2, "0");
-      const offsetMinutes = String(Math.abs(timezoneOffset % 60)).padStart(2, "0");
+        // Map the work orders into options for the dropdown
+        this.maintenanceWorkOrderOptions = workOrders.map((workOrder) => ({
+          value: workOrder.id,        // Use `id` as the value
+          label: `${workOrder.name} (${workOrder.code})`, // Combine `name` and `code` for clarity
+        }));
+      } catch (error) {
+        console.error("Failed to load maintenance work orders:", error);
+      }
+    },
+    async loadAllOptions() {
+      await Promise.all([
+        this.loadProductOptions(),
+        this.loadRawMaterialOptions(),
+        this.loadProductionWorkOrderOptions(),
+        this.loadEquipmentOptions(),
+        this.loadMaintenanceWorkOrderOptions(),
+      ]);
+    },
+  },
+  mounted() {
+    this.loadAllOptions();
+  },
 
-      // Determine offset sign
-      const offsetSign = timezoneOffset > 0 ? "-" : "+";
-
-      // Convert to ISO string without 'Z' (which represents UTC)
-      const isoString = date.toISOString().replace("Z", "");
-
-      // Attach correct timezone offset
-      return `${isoString}${offsetSign}${offsetHours}:${offsetMinutes}`;
-    }
-  }
 };
 </script>
 

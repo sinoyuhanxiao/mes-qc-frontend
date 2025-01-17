@@ -66,7 +66,7 @@ export function formatScheduleType(type) {
         case "SCHEDULED":
             return "计划派发";
         case "MANUAL":
-            return "手动派发";
+            return "快速派发";
         default:
             return "未知";
     }
