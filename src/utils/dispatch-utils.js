@@ -1,27 +1,5 @@
 import dayjs from "dayjs";
 
-export function cleanPayload(payload) {
-    // Clone the payload to avoid mutating the original object
-    const cleanedPayload = { ...payload };
-
-    // Map 'dispatch_forms' to 'formIds'
-    if (cleanedPayload.dispatch_forms) {
-        cleanedPayload.formIds = cleanedPayload.dispatch_forms;
-        delete cleanedPayload.dispatch_forms;
-    }
-
-    // // Remove empty or null fields
-    // for (const key in cleanedPayload) {
-    //     if (cleanedPayload[key] === "" || cleanedPayload[key] === null) {
-    //         delete cleanedPayload[key];
-    //     }
-    // }
-
-    console.log("clean payload: ");
-    console.log(cleanedPayload);
-
-    return cleanedPayload;
-}
 
 // Extracts time in HH:mm format from different time structures
 export function extractTimeOfDay(timeOfDay) {

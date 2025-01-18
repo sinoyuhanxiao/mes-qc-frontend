@@ -140,7 +140,7 @@ import {
   getAllDispatchedTasks,
   getScheduledTasks, createManualDispatch
 } from "@/services/dispatchService";
-import {cleanPayload, generateFormMap} from "@/utils/dispatch-utils";
+import {generateFormMap} from "@/utils/dispatch-utils";
 import {Search, RefreshRight} from "@element-plus/icons-vue";
 import {fetchFormNodes} from "@/services/formNodeService";
 import {fetchUsers} from "@/services/userService";
@@ -221,7 +221,7 @@ export default {
         if (!this.isUserInteracting) {
           await this.loadAllData(); // Load all data periodically
         }
-      }, 60000); // Poll every 1 minute
+      }, 300000); // Poll every 5 minute
     },
     stopPolling() {
       if (this.pollingInterval) {
@@ -383,16 +383,15 @@ export default {
     async handleDispatchSubmit(form) {
       try {
         const isEdit = Boolean(this.currentDispatch && this.currentDispatch.id); // Check currentDispatch for edit
-        const cleanFormPayload = cleanPayload(form);
 
         if (isEdit) {
-          cleanFormPayload.updatedBy = this.$store.getters.getUser.id;
-          await updateDispatch(this.currentDispatch.id, cleanFormPayload); // Edit
+          form.updatedBy = this.$store.getters.getUser.id;
+          await updateDispatch(this.currentDispatch.id, form); // Edit
           this.$message.success("派发更新成功！");
         } else {
-          cleanFormPayload.createdBy = this.$store.getters.getUser.id;
-          cleanFormPayload.updatedBy = null;
-          await createDispatch(cleanFormPayload); // New
+          form.createdBy = this.$store.getters.getUser.id;
+          form.updatedBy = null;
+          await createDispatch(form); // New
           this.$message.success("派发创建成功！");
         }
 
@@ -406,16 +405,15 @@ export default {
     async handleManualDispatchSubmit(form) {
       try {
         const isEdit = Boolean(this.currentDispatch && this.currentDispatch.id); // Check currentDispatch for edit
-        const cleanFormPayload = cleanPayload(form);
 
         if (isEdit) {
-          cleanFormPayload.updatedBy = this.$store.getters.getUser.id;
-          await updateDispatch(this.currentDispatch.id, cleanFormPayload); // Edit
+          form.updatedBy = this.$store.getters.getUser.id;
+          await updateDispatch(this.currentDispatch.id, form); // Edit
           this.$message.success("派发更新成功！");
         } else {
-          cleanFormPayload.createdBy = this.$store.getters.getUser.id;
-          cleanFormPayload.updatedBy = null;
-          await createManualDispatch(cleanFormPayload); // New
+          form.createdBy = this.$store.getters.getUser.id;
+          form.updatedBy = null;
+          await createManualDispatch(form); // New
           this.$message.success("派发创建成功！");
         }
 
