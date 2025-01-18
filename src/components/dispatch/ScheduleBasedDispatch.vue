@@ -121,7 +121,7 @@
 
     <el-divider>生产模块关联</el-divider>
       <el-form-item label="选择产品">
-        <el-select v-model="dispatchForm.selectedProducts" multiple filterable>
+        <el-select v-model="dispatchForm.productIds" multiple filterable>
           <el-option
               v-for="product in productOptions"
               :key="product.value"
@@ -132,7 +132,7 @@
       </el-form-item>
 
       <el-form-item label="选择原料">
-        <el-select v-model="dispatchForm.selectedRawMaterials" multiple filterable>
+        <el-select v-model="dispatchForm.rawMaterialIds" multiple filterable>
           <el-option
               v-for="material in rawMaterialOptions"
               :key="material.value"
@@ -143,7 +143,7 @@
       </el-form-item>
 
       <el-form-item label="选择生产工单">
-        <el-select v-model="dispatchForm.selectedProductionWorkOrders" multiple filterable>
+        <el-select v-model="dispatchForm.productionWorkOrderIds" multiple filterable>
           <el-option
               v-for="workOrder in productionWorkOrderOptions"
               :key="workOrder.value"
@@ -155,7 +155,7 @@
 
     <el-divider>维护模块关联</el-divider>
       <el-form-item label="选择设备">
-        <el-select v-model="dispatchForm.selectedEquipments" multiple filterable>
+        <el-select v-model="dispatchForm.equipmentIds" multiple filterable>
           <el-option
               v-for="equipment in equipmentOptions"
               :key="equipment.value"
@@ -166,7 +166,7 @@
       </el-form-item>
 
       <el-form-item label="选择维护工单">
-        <el-select v-model="dispatchForm.selectedMaintenanceWorkOrders" multiple filterable>
+        <el-select v-model="dispatchForm.maintenanceWorkOrderIds" multiple filterable>
           <el-option
               v-for="workOrder in maintenanceWorkOrderOptions"
               :key="workOrder.value"
@@ -252,11 +252,11 @@ export default {
         userIds: [],
         createdBy: null, // Assign in submitForm
         updatedBy: null, // Assign in submitForm
-        selectedProducts: [],
-        selectedRawMaterials: [],
-        selectedProductionWorkOrders: [],
-        selectedEquipments: [],
-        selectedMaintenanceWorkOrders: [],
+        productIds: [],
+        rawMaterialIds: [],
+        productionWorkOrderIds: [],
+        equipmentIds: [],
+        maintenanceWorkOrderIds: [],
       },
       validationRules: {
         name: [{ required: true, message: "请输入派发名称", trigger: "blur" }],
@@ -359,15 +359,16 @@ export default {
         cronExpression: unnormalizeCronExpression(data.cron_expression) || "* * * * *",
         dispatchLimit: data.dispatch_limit ?? -1,
         dueDateOffsetMinute: data.due_date_offset_minute || 60,
-        // dateRange: [
-        //   data.start_time ? this.formatToLocalISO(data.start_time) : null,
-        //   data.end_time ? this.formatToLocalISO(data.end_time) : null
-        // ],
         dateRange: [data.start_time, data.end_time],
         formIds: data.dispatch_forms || [],
         userIds: data.dispatch_users?.map(user => user.id) || [],
         createdBy: data.created_by || null,
         updatedBy: data.updated_by || null,
+        productIds: data.product_ids || [],
+        rawMaterialIds: data.raw_material_ids || [],
+        productionWorkOrderIds: data.production_work_order_ids || [],
+        equipmentIds: data.equipment_ids || [],
+        maintenanceWorkOrderIds: data.maintenance_work_order_ids || [],
       };
     },
     toggleAllDays(isChecked) {
@@ -414,6 +415,27 @@ export default {
           startTime: this.dispatchForm.dateRange[0],
           endTime: this.dispatchForm.dateRange[1],
         };
+
+        // transform empty arrays to null to match endpoint request
+        if (payload.productIds.length === 0) {
+          payload.productIds = null;
+        }
+
+        if (payload.rawMaterialIds.length === 0) {
+          payload.rawMaterialIds = null;
+        }
+
+        if (payload.productionWorkOrderIds.length === 0) {
+          payload.productionWorkOrderIds = null;
+        }
+
+        if (payload.equipmentIds.length === 0) {
+          payload.equipmentIds = null;
+        }
+
+        if (payload.maintenanceWorkOrderIds.length === 0) {
+          payload.maintenanceWorkOrderIds = null;
+        }
 
         // remove dateRange since endpoint require in startDate, endDate format
         delete payload.dateRange;
