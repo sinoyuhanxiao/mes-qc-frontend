@@ -127,11 +127,16 @@ export default {
       return dateString ? new Date(dateString).toLocaleString() : "-";
     },
     showDevelopmentPopup() {
-      this.$message({
-        message: "此功能正在开发中，感谢您的点击！",
-        type: "info",
-        duration: 3000,
-      });
+      const url = this.$router.resolve({
+        name: 'TaskLog',
+        params: {
+          createdBy: this.$store.getters.getUser.id, // the record created by myself
+          dispatchedTaskId: this.task.id, // Replace with actual `dispatchedTaskId`
+        },
+      }).href;
+
+      // Open the URL in a new tab
+      window.open(url, '_blank');
     },
     stateTagType(stateId) {
       const stateMap = {

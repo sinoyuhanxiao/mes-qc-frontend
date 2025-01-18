@@ -15,6 +15,7 @@ import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
 import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
+import ShowGifOverlay from "@/views/ShowGifOverlay.vue";
 
 const routes = [
     {
@@ -88,10 +89,16 @@ const routes = [
         component: ErikTestView
     },
     {
-        path: '/my-task-logs',
-        name: 'MyTaskLogs',
-        component: QcTaskSubmissionLogs
-    }
+        path: '/qc_dispatched',
+        name: 'QcDispatched',
+        component: ShowGifOverlay
+    },
+    {
+        path: '/task-log/:createdBy/:dispatchedTaskId',
+        name: 'TaskLog',
+        component: QcTaskSubmissionLogs,
+        props: true, // Pass route params as props to the component
+    },
 ];
 
 const router = createRouter({

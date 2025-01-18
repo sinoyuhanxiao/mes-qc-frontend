@@ -54,6 +54,8 @@ import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 
+import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
+
 const route = useRoute()
 
 const props = defineProps({
@@ -196,6 +198,9 @@ watch(enable_form, (newVal) => {
     vFormRef.value.disableForm(); // Disable the form when switched off
   }
 });
+
+const audio = new Audio(soundEffect);
+audio.play();
 
 //
 // watch(

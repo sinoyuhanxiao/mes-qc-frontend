@@ -20,7 +20,7 @@
         <!-- Right Section: Search Input -->
         <el-input
             v-model="searchTerm"
-            placeholder="搜索任务表单名称或任务名称"
+            placeholder="Search by ID or Submission ID"
             clearable
             style="width: 300px;"
             @input="applyFilter"
@@ -44,17 +44,6 @@
             :label="columnHeaders[key]"
             :width="columnWidths[key]"
         >
-          <template #header>
-            <span v-if="key === 'formName'">
-              {{ columnHeaders[key] }}
-              <el-tooltip content="点击查看提交内容" placement="top">
-                <el-icon style="margin-left: 5px;"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-            <span v-else>
-              {{ columnHeaders[key] }}
-            </span>
-          </template>
         </el-table-column>
 
         <!-- Operations -->
@@ -66,7 +55,7 @@
                 size="small"
                 @click="viewDetails(scope.row)"
             >
-              Detail
+              查看
             </el-button>
           </template>
         </el-table-column>
@@ -85,102 +74,114 @@
       />
     </el-main>
   </el-container>
+
+  <el-dialog
+      title="提交记录"
+      v-model="dialogVisible"
+      width="50%"
+      @close="closeDetailsDialog"
+  >
+    <el-row gutter="20">
+      <el-col
+          v-for="(columnItems, columnIndex) in columns"
+          :key="columnIndex"
+          :span="Math.min(24 / columns.length, 12)"
+      >
+        <el-form label-position="left" label-width="120px" class="task-details">
+          <el-form-item
+              v-for="(value, key) in columnItems"
+              :key="key"
+              :label="key"
+          >
+            <span>{{ Array.isArray(value) ? value.join(', ') : value || " - " }}</span>
+          </el-form-item>
+        </el-form>
+      </el-col>
+    </el-row>
+  </el-dialog>
+
 </template>
 
 <script>
-import { RefreshRight, Search, QuestionFilled } from "@element-plus/icons-vue";
+import { RefreshRight, Search } from "@element-plus/icons-vue";
+import {getAllTaskLogs, getMyDocument} from "@/services/qcTaskSubmissionLogsService"; // Import the backend service
+import { formatDate } from "@/utils/task-center/dateFormatUtils";
+import TaskDetail from "@/components/task-center/TaskDetail.vue";
 
 export default {
   name: "QcTaskSubmissionLogs",
   components: {
+    TaskDetail,
     RefreshRight,
     Search,
-    QuestionFilled,
+  },
+  props: {
+    createdBy: {
+      type: String,
+      required: true,
+    },
+    dispatchedTaskId: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
-      title: "提交历史记录",
+      title: "质检任务提交记录",
       searchTerm: "",
-      staticData: [
-        {
-          formName: "质检表单 A",
-          taskName: "任务 1",
-          submissionTime: "2025-01-10 10:00:00",
-          submitter: "张三",
-          reviewTime: "2025-01-11 14:00:00",
-          reviewer: "李四",
-          remark: "备注 A",
-        },
-        {
-          formName: "质检表单 B",
-          taskName: "任务 2",
-          submissionTime: "2025-01-09 15:00:00",
-          submitter: "王五",
-          reviewTime: "2025-01-10 12:00:00",
-          reviewer: "赵六",
-          remark: "备注 B",
-        },
-        {
-          formName: "质检表单 C",
-          taskName: "任务 3",
-          submissionTime: "2025-01-08 09:00:00",
-          submitter: "陈七",
-          reviewTime: "2025-01-09 10:30:00",
-          reviewer: "孙八",
-          remark: "备注 C",
-        },
-        {
-          formName: "质检表单 D",
-          taskName: "任务 4",
-          submissionTime: "2025-01-12 08:30:00",
-          submitter: "周九",
-          reviewTime: "2025-01-12 11:00:00",
-          reviewer: "吴十",
-          remark: "备注 D",
-        },
-        {
-          formName: "质检表单 E",
-          taskName: "任务 5",
-          submissionTime: "2025-01-11 16:20:00",
-          submitter: "朱十一",
-          reviewTime: "2025-01-12 13:45:00",
-          reviewer: "何十二",
-          remark: "备注 E",
-        },
-      ],
+      tableData: [], // Backend data
+      filteredData: [],
+      dialogVisible: false,
+      selectedDetails: null, // Stores the selected details for the dialog
       columnList: [
-        "formName",
-        "taskName",
-        "submissionTime",
-        "submitter",
-        "reviewTime",
-        "reviewer",
-        "remark",
+        "id",
+        "submission_id",
+        "created_at",
+        "created_by",
+        "dispatched_task_id",
+        "qc_form_template_id",
+        "comment",
+        // "status",
       ],
       columnHeaders: {
-        formName: "质检任务表单",
-        taskName: "任务名称",
-        submissionTime: "提交时间",
-        submitter: "提交人",
-        reviewTime: "审核时间",
-        reviewer: "审核人",
-        remark: "备注",
+        id: "ID",
+        submission_id: "提交单号",
+        created_at: "提交时间",
+        created_by: "提交人号码",
+        comment: "备注",
+        dispatched_task_id: "任务派遣ID",
+        qc_form_template_id: "质检表单ID",
+        status: "状态"
       },
       columnWidths: {
-        formName: "150px",
-        taskName: "150px",
-        submissionTime: "200px",
-        submitter: "100px",
-        reviewTime: "200px",
-        reviewer: "100px",
-        remark: "150px",
+        id: "100px",
+        submission_id: "300px",
+        created_at: "200px",
+        created_by: "150px",
+        comment: "400px",
+        dispatched_task_id: "200px",
+        qc_form_template_id: "200px",
+        status: "100px",
       },
-      filteredData: [],
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 20,
     };
   },
   computed: {
+    filteredDetails() {
+      return Object.fromEntries(
+          Object.entries(this.selectedDetails).filter(([key]) => key !== '_id' && key !== 'created_at' && key !== 'created_by')
+      );
+    },
+    columns() {
+      // Split the details into arrays of 10 items each for each column
+      const entries = Object.entries(this.filteredDetails); // Convert object to [key, value] pairs
+      const result = [];
+      for (let i = 0; i < entries.length; i += 10) {
+        result.push(Object.fromEntries(entries.slice(i, i + 10))); // Create a new object for each column
+      }
+      return result;
+    },
     paginatedData() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
@@ -188,19 +189,50 @@ export default {
     },
   },
   methods: {
+    async fetchTableData() {
+      try {
+        const response = await getAllTaskLogs(this.createdBy, this.dispatchedTaskId);
+        // Map response to the fields used in the table
+        this.tableData = response.data.map((log) => ({
+          id: log.id,
+          submission_id: log.submission_id || " - ",
+          created_at: formatDate(log.created_at) || " - ",
+          created_by: log.created_by || " - ",
+          comment: log.comment || " - ",
+          dispatched_task_id: log.dispatched_task_id || " - ",
+          qc_form_template_id: log.qc_form_template_id || " - ",
+          status: log.status,
+        }));
+        this.filteredData = [...this.tableData]; // Apply the fetched data to filteredData
+      } catch (err) {
+        console.error("Error fetching task logs:", err);
+      }
+    },
     refreshTable() {
-      console.log("Table refreshed");
+      console.log("Refreshing table...");
+      this.fetchTableData(); // Fetch fresh data
     },
     applyFilter() {
       const term = this.searchTerm.trim().toLowerCase();
-      this.filteredData = this.staticData.filter(
+      this.filteredData = this.tableData.filter(
           (row) =>
-              row.formName.toLowerCase().includes(term) ||
-              row.taskName.toLowerCase().includes(term)
+              row.id.toString().includes(term) || row.submission_id.toLowerCase().includes(term)
       );
     },
-    viewDetails(row) {
-      console.log("Viewing details for row:", row);
+    async viewDetails(row) {
+      try {
+        const response = await getMyDocument(row.submission_id, row.qc_form_template_id, row.created_by);
+        this.selectedDetails = response.data; // Populate the details
+        console.log("selectedDetails: ", this.selectedDetails);
+        this.dialogVisible = true; // Show the dialog
+      } catch (err) {
+        console.error("Error fetching document details:", err);
+      }
+    },
+    // Close the details dialog
+    closeDetailsDialog() {
+      this.dialogVisible = false; // Close the dialog
+      this.currentTask = null; // Reset currentTask
     },
     handlePageSizeChange(newSize) {
       this.pageSize = newSize;
@@ -210,10 +242,11 @@ export default {
     },
   },
   mounted() {
-    this.filteredData = [...this.staticData]; // Initialize with full data
+    this.fetchTableData(); // Fetch data on mount
   },
 };
 </script>
+
 
 <style scoped>
 .header {
