@@ -450,10 +450,15 @@ export default {
       this.updateSelectedForms(this.dispatchForm.formIds);
     },
     handleSelectedForms(selectedForms) {
-      this.dispatchForm.formIds = selectedForms.map((form) => form.id); // API-ready IDs
-      this.selectedFormNames = selectedForms.map((form) => form.label); // Names for display
-      // Trigger validation for formIds
-      this.$refs.formRef.validateField("formIds");
+      try {
+        this.dispatchForm.formIds = selectedForms.map((form) => form.id); // API-ready IDs
+        this.selectedFormNames = selectedForms.map((form) => form.label); // Names for display
+        // // Trigger validation for formIds
+        this.$refs.formRef.validateField("formIds");
+      } catch (error) {
+        console.error("Failed to select form:", error);
+      }
+
     },
     async loadProductOptions() {
       try {
