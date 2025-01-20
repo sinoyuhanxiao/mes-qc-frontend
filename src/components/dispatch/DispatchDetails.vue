@@ -131,6 +131,7 @@
     </el-form-item>
 
     <!-- Association with other modules -->
+    <template v-if="showSystemAssociation">
     <el-divider>系统关联</el-divider>
       <el-form-item label="产品" v-if="productDetails.length > 0">
         <div class="tag-container">
@@ -174,188 +175,186 @@
         </div>
       </el-form-item>
 
-    <el-form-item label="原料" v-if="rawMaterialDetails.length > 0">
-      <div class="tag-container">
-        <el-tag
-            v-for="material in rawMaterialDetails"
-            :key="material.id"
-            type="warning"
-            size="small"
-            effect="light"
-        >
-          <el-popover
+      <el-form-item label="原料" v-if="rawMaterialDetails.length > 0">
+        <div class="tag-container">
+          <el-tag
+              v-for="material in rawMaterialDetails"
+              :key="material.id"
+              type="warning"
+              size="small"
               effect="light"
-              trigger="hover"
-              placement="top"
-              width="300px">
-            <template #default>
-              <!-- Raw Material Details -->
-              <div><strong>ID:</strong> {{ material.id }}</div>
-              <div><strong>代码:</strong> {{ material.code }}</div>
-              <div><strong>描述:</strong> {{ material.description || '无' }}</div>
-              <div><strong>单位价格:</strong> {{ material.unit_price }}</div>
-              <div><strong>最小库存:</strong> {{ material.minimum_inventory }}</div>
-              <div><strong>当前库存:</strong> {{ material.current_stock }}</div>
-              <div><strong>可用库存:</strong> {{ material.available_stock }}</div>
-              <div><strong>已分配库存:</strong> {{ material.held_stock }}</div>
-              <div><strong>供应商 ID:</strong> {{ material.vendor_id }}</div>
-              <div><strong>更新时间:</strong> {{ formatDate(material.updated_at) }}</div>
+          >
+            <el-popover
+                effect="light"
+                trigger="hover"
+                placement="top"
+                width="300px">
+              <template #default>
+                <!-- Raw Material Details -->
+                <div><strong>ID:</strong> {{ material.id }}</div>
+                <div><strong>代码:</strong> {{ material.code }}</div>
+                <div><strong>描述:</strong> {{ material.description || '无' }}</div>
+                <div><strong>单位价格:</strong> {{ material.unit_price }}</div>
+                <div><strong>最小库存:</strong> {{ material.minimum_inventory }}</div>
+                <div><strong>当前库存:</strong> {{ material.current_stock }}</div>
+                <div><strong>可用库存:</strong> {{ material.available_stock }}</div>
+                <div><strong>已分配库存:</strong> {{ material.held_stock }}</div>
+                <div><strong>供应商 ID:</strong> {{ material.vendor_id }}</div>
+                <div><strong>更新时间:</strong> {{ formatDate(material.updated_at) }}</div>
 
-              <!-- Image Display -->
-              <div v-if="material.image_path" style="margin-top: 10px;">
-                <el-image
-                    :src="material.image_path"
-                    fit="fill"
-                    style="width: 50%; max-height: 50%;"
-                    :preview-src-list="[material.image_path]"
-                    preview/>
-              </div>
-            </template>
-            <template #reference>
-              {{ material.name }}
-            </template>
-          </el-popover>
-        </el-tag>
-      </div>
-    </el-form-item>
+                <!-- Image Display -->
+                <div v-if="material.image_path" style="margin-top: 10px;">
+                  <el-image
+                      :src="material.image_path"
+                      fit="fill"
+                      style="width: 50%; max-height: 50%;"
+                      :preview-src-list="[material.image_path]"
+                      preview/>
+                </div>
+              </template>
+              <template #reference>
+                {{ material.name }}
+              </template>
+            </el-popover>
+          </el-tag>
+        </div>
+      </el-form-item>
 
-
-    <el-form-item label="生产工单" v-if="productionWorkOrderDetails.length > 0">
-      <div class="tag-container">
-        <el-tag
-            v-for="workOrder in productionWorkOrderDetails"
-            :key="workOrder.id"
-            type="primary"
-            size="small"
-            effect="light"
-        >
-          <el-popover
+      <el-form-item label="生产工单" v-if="productionWorkOrderDetails.length > 0">
+        <div class="tag-container">
+          <el-tag
+              v-for="workOrder in productionWorkOrderDetails"
+              :key="workOrder.id"
+              type="primary"
+              size="small"
               effect="light"
-              trigger="hover"
-              placement="top"
-              width="300px">
-            <template #default>
-              <!-- Production Work Order Details -->
-              <div><strong>ID:</strong> {{ workOrder.id }}</div>
-              <div><strong>代码:</strong> {{ workOrder.code }}</div>
-              <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
-              <div><strong>计划数量:</strong> {{ workOrder.wo_quantity }}</div>
-              <div><strong>未排数量:</strong> {{ workOrder.unscheduled_quantity }}</div>
-              <div><strong>工单截止日期:</strong> {{ formatDate(workOrder.wo_deadline) }}</div>
-              <div><strong>产品 ID:</strong> {{ workOrder.product_id }}</div>
-              <div><strong>批准时间:</strong> {{ formatDate(workOrder.approved_at) }}</div>
-              <div><strong>起始时间:</strong> {{ formatDate(workOrder.start_date) }}</div>
-              <div><strong>结束时间:</strong> {{ formatDate(workOrder.end_date) }}</div>
-              <div><strong>预计生产时间:</strong> {{ workOrder.estimated_production_time }} 小时</div>
-              <div><strong>生产线:</strong> {{ workOrder.production_line }}</div>
-              <div><strong>更新日期:</strong> {{ formatDate(workOrder.updated_at) }}</div>
-              <div><strong>UUID:</strong> {{ workOrder.recurrence_uuid }}</div>
+          >
+            <el-popover
+                effect="light"
+                trigger="hover"
+                placement="top"
+                width="300px">
+              <template #default>
+                <!-- Production Work Order Details -->
+                <div><strong>ID:</strong> {{ workOrder.id }}</div>
+                <div><strong>代码:</strong> {{ workOrder.code }}</div>
+                <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
+                <div><strong>计划数量:</strong> {{ workOrder.wo_quantity }}</div>
+                <div><strong>未排数量:</strong> {{ workOrder.unscheduled_quantity }}</div>
+                <div><strong>工单截止日期:</strong> {{ formatDate(workOrder.wo_deadline) }}</div>
+                <div><strong>产品 ID:</strong> {{ workOrder.product_id }}</div>
+                <div><strong>批准时间:</strong> {{ formatDate(workOrder.approved_at) }}</div>
+                <div><strong>起始时间:</strong> {{ formatDate(workOrder.start_date) }}</div>
+                <div><strong>结束时间:</strong> {{ formatDate(workOrder.end_date) }}</div>
+                <div><strong>预计生产时间:</strong> {{ workOrder.estimated_production_time }} 小时</div>
+                <div><strong>生产线:</strong> {{ workOrder.production_line }}</div>
+                <div><strong>更新日期:</strong> {{ formatDate(workOrder.updated_at) }}</div>
+                <div><strong>UUID:</strong> {{ workOrder.recurrence_uuid }}</div>
 
-              <!-- Image Display -->
-              <div v-if="workOrder.image_path" style="margin-top: 10px;">
-                <el-image
-                    :src="workOrder.image_path"
-                    fit="fill"
-                    style="width: 50%; max-height: 50%;"
-                    :preview-src-list="[workOrder.image_path]"
-                    preview/>
-              </div>
-            </template>
-            <template #reference>
-              {{ workOrder.name }}
-            </template>
-          </el-popover>
-        </el-tag>
-      </div>
-    </el-form-item>
+                <!-- Image Display -->
+                <div v-if="workOrder.image_path" style="margin-top: 10px;">
+                  <el-image
+                      :src="workOrder.image_path"
+                      fit="fill"
+                      style="width: 50%; max-height: 50%;"
+                      :preview-src-list="[workOrder.image_path]"
+                      preview/>
+                </div>
+              </template>
+              <template #reference>
+                {{ workOrder.name }}
+              </template>
+            </el-popover>
+          </el-tag>
+        </div>
+      </el-form-item>
 
-
-    <el-form-item label="设备" v-if="equipmentDetails.length > 0">
-      <div class="tag-container">
-        <el-tag
-            v-for="equipment in equipmentDetails"
-            :key="equipment.id"
-            type="info"
-            size="small"
-            effect="light"
-        >
-          <el-popover
+      <el-form-item label="设备" v-if="equipmentDetails.length > 0">
+        <div class="tag-container">
+          <el-tag
+              v-for="equipment in equipmentDetails"
+              :key="equipment.id"
+              type="info"
+              size="small"
               effect="light"
-              trigger="hover"
-              placement="top"
-              width="300px">
-            <template #default>
-              <!-- Equipment Details -->
+          >
+            <el-popover
+                effect="light"
+                trigger="hover"
+                placement="top"
+                width="300px">
+              <template #default>
+                <!-- Equipment Details -->
 
-              <div><strong>ID:</strong> {{ equipment.id }}</div>
-              <div><strong>代码:</strong> {{ equipment.code }}</div>
-              <div><strong>PLC:</strong> {{ equipment.plc }}</div>
-              <div><strong>序列号:</strong> {{ equipment.serial_number }}</div>
-              <div><strong>供应商 ID:</strong> {{ equipment.vendor_id }}</div>
-              <div><strong>位置 ID:</strong> {{ equipment.location_id }}</div>
+                <div><strong>ID:</strong> {{ equipment.id }}</div>
+                <div><strong>代码:</strong> {{ equipment.code }}</div>
+                <div><strong>PLC:</strong> {{ equipment.plc }}</div>
+                <div><strong>序列号:</strong> {{ equipment.serial_number }}</div>
+                <div><strong>供应商 ID:</strong> {{ equipment.vendor_id }}</div>
+                <div><strong>位置 ID:</strong> {{ equipment.location_id }}</div>
 
-              <!-- Image Display -->
-              <div v-if="equipment.image_path" style="margin-top: 10px;">
-                <el-image
-                    :src="equipment.image_path"
-                    fit="fill"
-                    style="width: 50%; max-height: 50%;"
-                    :preview-src-list="[equipment.image_path]"
-                    preview/>
-              </div>
-            </template>
-            <template #reference>
-              {{ equipment.name }}
-            </template>
-          </el-popover>
-        </el-tag>
-      </div>
-    </el-form-item>
+                <!-- Image Display -->
+                <div v-if="equipment.image_path" style="margin-top: 10px;">
+                  <el-image
+                      :src="equipment.image_path"
+                      fit="fill"
+                      style="width: 50%; max-height: 50%;"
+                      :preview-src-list="[equipment.image_path]"
+                      preview/>
+                </div>
+              </template>
+              <template #reference>
+                {{ equipment.name }}
+              </template>
+            </el-popover>
+          </el-tag>
+        </div>
+      </el-form-item>
 
-    <el-form-item label="维护工单" v-if="maintenanceWorkOrderDetails.length > 0">
-      <div class="tag-container">
-        <el-tag
-            v-for="workOrder in maintenanceWorkOrderDetails"
-            :key="workOrder.id"
-            type="danger"
-            size="small"
-            effect="light"
-        >
-          <el-popover
+      <el-form-item label="维护工单" v-if="maintenanceWorkOrderDetails.length > 0">
+        <div class="tag-container">
+          <el-tag
+              v-for="workOrder in maintenanceWorkOrderDetails"
+              :key="workOrder.id"
+              type="danger"
+              size="small"
               effect="light"
-              trigger="hover"
-              placement="top"
-              width="300px">
-            <template #default>
-              <!-- Maintenance Work Order Details -->
-              <div><strong>ID:</strong> {{ workOrder.id }}</div>
-              <div><strong>代码:</strong> {{ workOrder.code }}</div>
-              <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
-              <div><strong>开始日期:</strong> {{ formatDate(workOrder.start_date) }}</div>
-              <div><strong>结束日期:</strong> {{ formatDate(workOrder.end_date) }}</div>
-              <div><strong>重复 UUID:</strong> {{ workOrder.recurrence_uuid }}</div>
-              <div><strong>到期时间:</strong> {{ formatDate(workOrder.due_date) }}</div>
-              <div><strong>预计分钟数:</strong> {{ workOrder.estimated_minutes }}</div>
-              <div><strong>生产线 ID:</strong> {{ workOrder.production_line_id }}</div>
+          >
+            <el-popover
+                effect="light"
+                trigger="hover"
+                placement="top"
+                width="300px">
+              <template #default>
+                <!-- Maintenance Work Order Details -->
+                <div><strong>ID:</strong> {{ workOrder.id }}</div>
+                <div><strong>代码:</strong> {{ workOrder.code }}</div>
+                <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
+                <div><strong>开始日期:</strong> {{ formatDate(workOrder.start_date) }}</div>
+                <div><strong>结束日期:</strong> {{ formatDate(workOrder.end_date) }}</div>
+                <div><strong>重复 UUID:</strong> {{ workOrder.recurrence_uuid }}</div>
+                <div><strong>到期时间:</strong> {{ formatDate(workOrder.due_date) }}</div>
+                <div><strong>预计分钟数:</strong> {{ workOrder.estimated_minutes }}</div>
+                <div><strong>生产线 ID:</strong> {{ workOrder.production_line_id }}</div>
 
-              <!-- Image Display -->
-              <div v-if="workOrder.image_path" style="margin-top: 10px;">
-                <el-image
-                    :src="workOrder.image_path"
-                    fit="fill"
-                    style="width: 50%; max-height: 50%;"
-                    :preview-src-list="[workOrder.image_path]"
-                    preview/>
-              </div>
-            </template>
-            <template #reference>
-              {{ workOrder.name }}
-            </template>
-          </el-popover>
-        </el-tag>
-      </div>
-    </el-form-item>
-
+                <!-- Image Display -->
+                <div v-if="workOrder.image_path" style="margin-top: 10px;">
+                  <el-image
+                      :src="workOrder.image_path"
+                      fit="fill"
+                      style="width: 50%; max-height: 50%;"
+                      :preview-src-list="[workOrder.image_path]"
+                      preview/>
+                </div>
+              </template>
+              <template #reference>
+                {{ workOrder.name }}
+              </template>
+            </el-popover>
+          </el-tag>
+        </div>
+      </el-form-item>
+    </template>
     <el-divider>已派发任务列表</el-divider>
     <DispatchedTasksList
           :dispatched-tasks="dispatchedTasks"
@@ -427,6 +426,17 @@ export default {
       maintenanceWorkOrderDetails: [],
       isGifVisible: false,
     };
+  },
+  computed: {
+    showSystemAssociation() {
+      return (
+          this.productDetails.length > 0 ||
+          this.rawMaterialDetails.length > 0 ||
+          this.productionWorkOrderDetails.length > 0 ||
+          this.equipmentDetails.length > 0 ||
+          this.maintenanceWorkOrderDetails.length > 0
+      );
+    },
   },
   methods: {
     unnormalizeCronExpression,

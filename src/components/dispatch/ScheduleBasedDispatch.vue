@@ -418,23 +418,23 @@ export default {
 
         // transform empty arrays to null to match endpoint request
         if (payload.productIds.length === 0) {
-          payload.productIds = null;
+          payload.productIds = [];
         }
 
         if (payload.rawMaterialIds.length === 0) {
-          payload.rawMaterialIds = null;
+          payload.rawMaterialIds = [];
         }
 
         if (payload.productionWorkOrderIds.length === 0) {
-          payload.productionWorkOrderIds = null;
+          payload.productionWorkOrderIds = [];
         }
 
         if (payload.equipmentIds.length === 0) {
-          payload.equipmentIds = null;
+          payload.equipmentIds = [];
         }
 
         if (payload.maintenanceWorkOrderIds.length === 0) {
-          payload.maintenanceWorkOrderIds = null;
+          payload.maintenanceWorkOrderIds = [];
         }
 
         // remove dateRange since endpoint require in startDate, endDate format
