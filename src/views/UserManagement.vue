@@ -365,9 +365,15 @@ export default {
       try {
         const response = await fetchUsers();
         if (response.data.status === '200') {
-          const sortedData = response.data.data.sort((a, b) => a.id - b.id); // will change logic later
+          const sortedData = response.data.data.sort((a, b) => a.id - b.id); // Sort by ID
           this.tableData = sortedData;
-          this.filteredData = sortedData;
+
+          // Apply the filter if a search query is present
+          if (this.searchQuery.trim()) {
+            this.filterTable(); // Filter data based on searchQuery
+          } else {
+            this.filteredData = sortedData; // Show all data if no filter is applied
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);

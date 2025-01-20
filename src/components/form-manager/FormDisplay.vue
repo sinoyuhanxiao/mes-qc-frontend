@@ -11,7 +11,9 @@
             inactive-text="不可用"
         />
       </div>
-      <el-button type="primary" v-if="switchDisplayed">快速分配任务</el-button>
+      <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
+        快速分配此任务
+      </el-button>
     </div>
     <el-scrollbar :height="scrollBarHeight" width="100%">
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
@@ -19,7 +21,23 @@
       <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
       <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
     </el-scrollbar>
+
   </div>
+
+  <el-dialog
+      v-model="showQuickDispatch"
+      :title="`此表单任务快速派发`"
+      width="50%"
+      @close="showQuickDispatch = false"
+  >
+    <QuickDispatch
+        :visible.sync="showQuickDispatch"
+        :qcFormTreeNodeId="props.currentForm?.id"
+        @close="showQuickDispatch = false"
+        @dispatch="handleDispatch"
+    />
+  </el-dialog>
+
 </template>
 
 <script setup>
@@ -32,6 +50,11 @@ import testFormJsonData from '@/tests/form_json_data.json'; // Import the JSON d
 import api from '@/services/api'
 import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
 import { insertFormData } from '@/services/qcFormDataService.js';
+import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
+import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
+import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
+
+import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 
 const route = useRoute()
 
@@ -42,9 +65,13 @@ const props = defineProps({
   },
   usable: {
     type: Boolean,
-    default: true, // Default to disabled
+    default: true,
   },
   qcFormTemplateId: {
+    type: String,
+    required: false // Make it optional
+  },
+  dispatchedTaskId: {
     type: String,
     required: false // Make it optional
   }
@@ -57,6 +84,7 @@ const optionData = reactive({})
 const formTitle = ref(''); // Store form title
 const enable_form = ref(false)
 let vFormRef = ref(null)
+const showQuickDispatch = ref(false);
 
 const switchDisplayed = ref(
     !route.params.qcFormTemplateId
@@ -84,6 +112,16 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateScrollBarHeight);
 });
 
+const handleDispatch = (data) => {
+  console.log("Dispatched data:", data);
+  // Add your API call or logic to handle the dispatched data
+};
+
+const handleQuickDispatch = () => {
+  console.log("Opening QuickDispatch dialog...");
+  showQuickDispatch.value = true;
+};
+
 const submitForm = () => {
   formId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
   let now = new Date();
@@ -94,6 +132,22 @@ const submitForm = () => {
   vFormRef.value.getFormData().then(async (formData) => {
     try {
       const response = await insertFormData(userId, collectionName, formData); // Use service function
+      // step 1 get the object id of the insertFormData's returned object id
+      console.log(response.data.object_id)
+      const dispatchedTaskId = props.dispatchedTaskId || null;
+      console.log(dispatchedTaskId)
+      // Step 2: Insert the form into PostgreSQL log
+      const logResponse = await insertTaskSubmissionLog({
+        submission_id: response.data.object_id, // Map the MongoDB object_id to submissionId
+        reviewed_at: null, // Set default value or use actual data
+        reviewed_by: null, // Set default value or use actual data
+        dispatched_task_id: dispatchedTaskId, // Retrieve taskId from formData if available
+        qc_form_template_id: props.qcFormTemplateId, // Retrieve formId from formData if available
+        created_by: userId, // User who submitted the form
+        status: 1 // Set a default status, e.g., 1 for active
+      });
+      console.log("logResponse")
+      console.log(logResponse)
       if (response.status === 200) {
         ElMessage.success(response.data);
       } else {
@@ -144,6 +198,9 @@ watch(enable_form, (newVal) => {
     vFormRef.value.disableForm(); // Disable the form when switched off
   }
 });
+
+const audio = new Audio(soundEffect);
+audio.play();
 
 //
 // watch(

@@ -1,237 +1,114 @@
+
 <template>
   <div class="task-center-dashboard">
-    <!-- Breadcrumb Navigation -->
-    <div class="breadcrumb-section">
-      <el-row :gutter="20" align="middle">
-        <el-col :span="18">
-          <el-breadcrumb separator-class="el-icon-arrow-right">
-            <el-breadcrumb-item>Dashboard</el-breadcrumb-item>
-            <el-breadcrumb-item>Home</el-breadcrumb-item>
-            <el-breadcrumb-item>Dashboard</el-breadcrumb-item>
-          </el-breadcrumb>
-        </el-col>
-        <el-col :span="6" class="action-buttons">
-          <el-button type="primary" size="small">New</el-button>
-          <el-button size="small">Filters</el-button>
-        </el-col>
-      </el-row>
+    <el-row :gutter="20" class="row-bg" justify="space-between">
+      <el-col :span="10"><h1>My Task Dashboard</h1></el-col>
+      <el-col :span="3.5" style="align-self: center;">
+        <el-button>New</el-button>
+        <el-button>Filter</el-button>
+      </el-col>
+    </el-row>
+
+    <!-- Card for Statistics -->
+    <div class="card">
+      <TaskCenterCardStatistics />
     </div>
 
-    <!-- Top Statistics Cards -->
-    <div class="stats-cards">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <el-icon class="stat-icon">
-                <i class="el-icon-s-data"></i>
-              </el-icon>
-              <div>
-                <div class="stat-title">Total Tasks</div>
-                <div class="stat-value">350,897</div>
-                <div class="stat-difference">⬆️ 3.48% Since last month</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <el-icon class="stat-icon">
-                <i class="el-icon-s-unfold"></i>
-              </el-icon>
-              <div>
-                <div class="stat-title">Future Tasks</div>
-                <div class="stat-value">2,356</div>
-                <div class="stat-difference">⬆️ 3.48% Since last month</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <el-icon class="stat-icon">
-                <i class="el-icon-s-check"></i>
-              </el-icon>
-              <div>
-                <div class="stat-title">Overdue Tasks</div>
-                <div class="stat-value">924</div>
-                <div class="stat-difference">⬆️ 3.48% Since last month</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="6">
-          <el-card class="stat-card">
-            <div class="stat-content">
-              <el-icon class="stat-icon">
-                <i class="el-icon-pie-chart"></i>
-              </el-icon>
-              <div>
-                <div class="stat-title">Completion Rate</div>
-                <div class="stat-value">49.65%</div>
-                <div class="stat-difference">⬆️ 3.48% Since last month</div>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </div>
+    <!-- Row 1: Bar Chart and Pie Chart -->
+    <el-row :gutter="20">
+      <el-col :span="16">
+        <div class="card">
+          <div class="content-border">
+            <QuarterlyTaskCompletionVolumeBarChart />
+          </div>
+        </div>
+      </el-col>
+      <el-col :span="8">
+        <div class="card">
+          <div class="content-border">
+            <OverduePercentagePieChart />
+          </div>
+        </div>
+      </el-col>
+    </el-row>
 
-    <!-- Sales Value and Performance Graphs -->
-    <div class="charts-section">
-      <el-row :gutter="20">
-        <el-col :span="16">
-          <el-card class="chart-card">
-            <div class="chart-title">Task Progress</div>
-            <el-button-group class="time-toggle">
-              <el-button size="small">Month</el-button>
-              <el-button size="small">Week</el-button>
-            </el-button-group>
-            <div id="sales-chart" class="chart"></div>
-          </el-card>
-        </el-col>
-        <el-col :span="8">
-          <el-card class="chart-card">
-            <div class="chart-title">Task Categories</div>
-            <div id="performance-chart" class="chart"></div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </div>
+    <!-- Row 2: Line Chart and Radar Chart -->
+    <el-row :gutter="20">
+      <el-col :span="16">
+        <div class="card">
+          <div class="content-border">
+            <CreatedVsCompletedLineChart />
+          </div>
+        </div>
+      </el-col>
+      <el-col :span="8">
+        <div class="card">
+          <div class="content-border">
+          <TaskCompletionAcrossCategoriesRadar />
+          </div>
+        </div>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
-<script>
-import * as echarts from "echarts";
 
-export default {
-  name: "TaskCenterDashboard",
-  mounted() {
-    this.initCharts();
-  },
-  methods: {
-    initCharts() {
-      const salesChart = echarts.init(document.getElementById("sales-chart"));
-      const performanceChart = echarts.init(document.getElementById("performance-chart"));
-
-      const salesOption = {
-        xAxis: {
-          type: "category",
-          data: ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        },
-        yAxis: {
-          type: "value",
-        },
-        series: [
-          {
-            data: [10, 20, 15, 40, 30, 50, 35, 60],
-            type: "line",
-            smooth: true,
-          },
-        ],
-      };
-
-      const performanceOption = {
-        xAxis: {
-          type: "category",
-          data: ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        },
-        yAxis: {
-          type: "value",
-        },
-        series: [
-          {
-            data: [20, 15, 30, 10, 25, 30],
-            type: "bar",
-            barWidth: "50%",
-            itemStyle: {
-              color: "#FF5722",
-            },
-          },
-        ],
-      };
-
-      salesChart.setOption(salesOption);
-      performanceChart.setOption(performanceOption);
-    },
-  },
-};
+<script setup>
+  import QuarterlyTaskCompletionVolumeBarChart
+    from "@/components/task-center/dashboard/QuarterlyTaskCompletionVolumeBarChart.vue";
+  import OverduePercentagePieChart from "@/components/task-center/dashboard/OverduePercentagePieChart.vue";
+  import CreatedVsCompletedLineChart from "@/components/task-center/dashboard/CreatedVsCompletedLineChart.vue";
+  import TaskCompletionAcrossCategoriesRadar
+    from "@/components/task-center/dashboard/TaskCompletionAcrossCategoriesRadar.vue";
+  import TaskCenterCardStatistics from "@/components/task-center/dashboard/TaskCenterCardStatistics.vue";
 </script>
 
 <style scoped>
+/* Add spacing between rows */
+.el-row {
+  margin-bottom: 20px; /* Adds 20px space between rows */
+}
+
+/* Add padding inside each card */
+.card {
+  padding: 10px; /* Adds 5px of padding inside the cards */
+  background-color: #ffffff; /* White background */
+  border-radius: 5px; /* Rounded corners */
+  transition: transform 0.2s
+}
+
+.card > .content-border {
+  border: 1px solid #e0e0e0; /* Apply the border inside the card */
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  border-radius: 5px; /* Match the card's border radius */
+  overflow: hidden; /* Prevent overflow issues */
+  height: 530px; /* Default height for larger resolutions */
+}
+
+/* Adjust height for smaller screens */
+@media (max-width: 1750px) {
+  .card > .content-border {
+    height: 400px; /* Reduced height for smaller resolutions */
+  }
+}
+
+/* Background for the entire page */
 .task-center-dashboard {
+  /* background: linear-gradient(to bottom, #0085a4 10%, #ffffff 90%); */
   padding: 20px;
+  min-height: 100vh; /* Ensures full-screen background */
+  display: grid;
 }
 
-.stats-cards {
-  margin-bottom: 20px;
+/* Hover effect for cards */
+.card > .content-border:hover {
+  transform: scale(1.001); /* Slightly enlarge on hover */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
 }
 
-.stat-card {
-  text-align: center;
-  padding: 20px;
-  background: #f5f7fa;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.stat-icon {
-  font-size: 36px;
-  color: #409eff;
-}
-
-.stat-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 5px 0;
-  color: #409eff;
-}
-
-.stat-difference {
-  font-size: 14px;
-  color: #67c23a;
-}
-
-.charts-section {
-  margin-top: 20px;
-}
-
+/* Chart inside the card */
 .chart-card {
-  padding: 20px;
-  background: #f5f7fa;
-  border-radius: 10px;
+  padding: 20px; /* Ensure space for content inside cards */
 }
 
-.chart-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.chart {
-  height: 300px;
-}
-
-.time-toggle {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-}
 </style>

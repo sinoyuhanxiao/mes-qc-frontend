@@ -1,5 +1,6 @@
 // src/services/taskCenterService.js
 import api from './api';
+import qs from 'qs';
 
 const BASE_URL = '/dispatched-tasks';
 
@@ -54,8 +55,8 @@ export const fetchOverdueTasks = (userId) => {
  * @returns {Promise} API response.
  */
 export const insertDispatchedTasks = (task, userIds) => {
-    return api.post(`${BASE_URL}/insert`, task, {
-        params: { userIds },
+    return api.post('/dispatched-tasks/insert', task, {
+        params: { userIds: userIds.join(',') }, // Format as a comma-separated string
     });
 };
 
