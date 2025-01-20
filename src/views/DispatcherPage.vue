@@ -252,28 +252,29 @@ export default {
         const updatedDispatchList = response.data.data;
 
         if (JSON.stringify(this.dispatchList) !== JSON.stringify(updatedDispatchList)) {
-          this.$notify({
-            title: "派发列表更新",
-            message: "派发列表已更新。",
-            type: "success",
-          });
+          // this.$notify({
+          //   title: "派发列表更新",
+          //   message: "派发列表已更新。",
+          //   type: "success",
+          // });
           this.dispatchList = updatedDispatchList;
         }
       } catch (error) {
         this.$message.error("无法加载派发列表，请重试。");
       }
     },
+
     async loadDispatchedTasks() {
       try {
         const response = await getAllDispatchedTasks();
         const updatedTasks = response.data.data;
 
         if (JSON.stringify(this.dispatchedTasks) !== JSON.stringify(updatedTasks)) {
-          this.$notify({
-            title: "任务列表更新",
-            message: "任务列表已更新。",
-            type: "success",
-          });
+          // this.$notify({
+          //   title: "任务列表更新",
+          //   message: "任务列表已更新。",
+          //   type: "success",
+          // });
           this.dispatchedTasks = updatedTasks;
         }
       } catch (error) {
@@ -295,11 +296,11 @@ export default {
         const updatedFormMap = generateFormMap(response.data);
 
         if (JSON.stringify(this.formMap) !== JSON.stringify(updatedFormMap)) {
-          this.$notify({
-            title: "表单列表更新",
-            message: "表单列表已更新。",
-            type: "success",
-          });
+          // this.$notify({
+          //   title: "表单列表更新",
+          //   message: "表单列表已更新。",
+          //   type: "success",
+          // });
           this.formMap = updatedFormMap;
         }
       } catch (error) {
@@ -315,11 +316,11 @@ export default {
         }, {});
 
         if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
-          this.$notify({
-            title: "人员列表更新",
-            message: "人员列表已更新。",
-            type: "success",
-          });
+          // this.$notify({
+          //   title: "人员列表更新",
+          //   message: "人员列表已更新。",
+          //   type: "success",
+          // });
           this.userMap = updatedUserMap;
         }
       } catch (error) {
