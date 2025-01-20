@@ -17,7 +17,6 @@
         :props="defaultProps"
         :filter-node-method="filterNode"
         @check-change="handleCheckChange"
-        default-expand-all
         show-checkbox
     >
       <template #default="{ node, data }">

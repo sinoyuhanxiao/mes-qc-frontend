@@ -10,12 +10,28 @@ export const getAllDispatchedTasks = () => {
     return api.get(`${BASE_URL}/dispatched-tasks`);
 }
 
+export const getScheduledTasks = (id) => {
+    return api.get(`${BASE_URL}/scheduled-tasks`);
+}
+
+export const getDispatchNextExecutionTime = (id) => {
+    return api.get(`${BASE_URL}/next-execution-time/${id}`);
+}
+
+export const getIsScheduled = (id) => {
+    return api.get(`${BASE_URL}/is-scheduled/${id}`);
+}
+
 export const getDispatchById = (id) => {
     return api.get(`${BASE_URL}/${id}`);
 }
 
 export const createDispatch = (data) => {
     return api.post(BASE_URL, data);
+}
+
+export const createManualDispatch = (data) => {
+    return api.post(`${BASE_URL}/manual`, data);
 }
 
 export const updateDispatch = (id, data) => {
@@ -26,7 +42,5 @@ export const deleteDispatch = (id) => {
     return api.delete(`${BASE_URL}/${id}`);
 }
 
-export const manualTriggerDispatch = (id) => {
-    return api.post(`${BASE_URL}/manual_trigger/${id}`);
-}
+
 

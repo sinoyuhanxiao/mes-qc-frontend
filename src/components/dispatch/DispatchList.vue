@@ -1,21 +1,10 @@
 <template>
-
-  <!-- Search Input -->
-  <el-input
-      v-model="filterInput"
-      style="width: 240px; margin-bottom: 10px;"
-      placeholder="输入名称搜索"
-      :prefix-icon="Search"
-      clearable
-  />
-
   <!-- Dispatch Table -->
   <el-table
       ref="dispatchTable"
-      :data="filteredDispatchList"
+      :data="dispatchList"
       border
       style="width: 100%"
-      :default-sort="{ prop: 'updated_at', order: 'descending' }"
       @selection-change="onSelectionChange"
   >
 
@@ -24,7 +13,7 @@
     </el-table-column>
 
     <!-- Dispatch Name -->
-    <el-table-column prop="name" label="任务派发名称" width="200" sortable>
+    <el-table-column prop="name" label="派发名称" width="200" sortable>
       <template #default="scope">
         <span
             class="clickable-name"
@@ -35,33 +24,32 @@
       </template>
     </el-table-column>
 
-
     <!-- ID -->
     <el-table-column prop="id" label="ID" width="65" sortable></el-table-column>
 
-    <!-- Schedule Type -->
-    <el-table-column prop="schedule_type" label="类型" width="100" sortable>
+    <!-- Status -->
+    <el-table-column prop="is_active" label="运行状态" width="120" sortable>
       <template #default="scope">
-        {{ formatScheduleType(scope.row.schedule_type) || "-"}}
+        <status-circle :status="convertBooleanToNumber(scope.row.is_active)" />
       </template>
     </el-table-column>
 
     <!-- Cron Expression -->
-    <el-table-column prop="cron_expression" label="Cron 表达式" width="200">
+    <el-table-column prop="cron_expression" label="派发计划" width="200" sortable>
       <template #default="scope">
-        {{ scope.row.cron_expression || "-" }}
+        {{ scope.row.cron_expression ? humanizeCronInChinese(unnormalizeCronExpression(scope.row.cron_expression)) : "-" }}
       </template>
     </el-table-column>
 
     <!-- Start Time -->
-    <el-table-column prop="start_time" label="派发开始运行时间" width="180" sortable>
+    <el-table-column prop="start_time" label="开始运行时间" width="180" sortable>
       <template #default="scope">
         <time-slot :value="scope.row.start_time" />
       </template>
     </el-table-column>
 
     <!-- End Time -->
-    <el-table-column prop="end_time" label="派发停止运行时间" width="180" sortable>
+    <el-table-column prop="end_time" label="停止运行时间" width="180" sortable>
       <template #default="scope">
         <time-slot :value="scope.row.end_time" />
       </template>
@@ -153,7 +141,7 @@
     </el-table-column>
 
     <!-- Dispatch Limit -->
-    <el-table-column prop="dispatch_limit" label="派发次数上限" width="120" sortable>
+    <el-table-column prop="dispatch_limit" label="派发次数上限" width="140" sortable>
       <template #default="scope">
         {{ scope.row.dispatch_limit === -1 ? "无限制" : scope.row.dispatch_limit }}
       </template>
@@ -163,20 +151,6 @@
     <el-table-column prop="due_date_offset_minute" label="任务时限(分钟)" width="150" sortable>
       <template #default="scope">
         {{ scope.row.due_date_offset_minute || "-" }}
-      </template>
-    </el-table-column>
-
-    <!-- Executed Count -->
-    <el-table-column prop="executed_count" label="已执行次数" width="120" sortable>
-      <template #default="scope">
-        {{ scope.row.executed_count || "-" }}
-      </template>
-    </el-table-column>
-
-    <!-- Active Status -->
-    <el-table-column prop="status" label="状态" width="60">
-      <template #default="scope">
-        <status-circle :active="scope.row.status" />
       </template>
     </el-table-column>
 
@@ -193,30 +167,29 @@
         <time-slot :value="scope.row.updated_at" />
       </template>
     </el-table-column>
+
+    <!-- Type -->
+    <el-table-column prop="type" label="类型" width="100" sortable>
+      <template #default="scope">
+        {{ formatScheduleType(scope.row.type) || "-"}}
+      </template>
+    </el-table-column>
   </el-table>
 </template>
 
 
 <script>
-import { formatScheduleType } from "@/utils/dispatch-utils";
+import {formatScheduleType, parseCronExpressionToChinese, unnormalizeCronExpression} from "@/utils/dispatch-utils";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
 import { Search } from "@element-plus/icons-vue";
+import {humanizeCronInChinese} from "cron-chinese";
 
 
 export default {
   computed: {
     Search() {
       return Search
-    },
-    filteredDispatchList() {
-      if (!this.filterInput) {
-        return this.dispatchList; // Return full list if no filter is applied
-      }
-      const lowerCaseFilter = this.filterInput.toLowerCase();
-      return this.dispatchList.filter(dispatch =>
-          dispatch.name?.toLowerCase().includes(lowerCaseFilter)
-      );
     },
   },
   components: {
@@ -240,6 +213,9 @@ export default {
     }
   },
   methods: {
+    unnormalizeCronExpression,
+    humanizeCronInChinese,
+    parseCronExpressionToChinese,
     formatScheduleType,
     clickedNameColumn (row){
       console.log('emit clickedNameColumn', row)
@@ -251,6 +227,13 @@ export default {
     },
     getFormById(id) {
       return this.formMap[id] || "未知表单"; // Fallback for undefined IDs
+    },
+    convertBooleanToNumber(isActive) {
+      if (isActive) {
+        return 1;
+      } else {
+        return 0;
+      }
     }
   },
 };

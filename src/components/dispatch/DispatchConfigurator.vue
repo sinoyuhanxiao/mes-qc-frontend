@@ -1,15 +1,28 @@
 <template>
   <div class="dispatch-configurator">
-    <el-tabs v-model="activeTab">
+    <el-tabs
+        v-model="activeTab"
+        @tab-click="handleTabClick">
       <!-- Schedule-Based Dispatch -->
-      <el-tab-pane label="基于计划" name="schedule">
+      <el-tab-pane
+          label="计划派发"
+          name="schedule"
+          v-if="!currentDispatch || currentDispatch.type === 'SCHEDULED'">
         <schedule-based-dispatch
-          :form-data="currentDispatch"/>
+          :current-dispatch="currentDispatch"
+          @on-submit="handleSubmit"
+          @on-cancel="handleCancel"/>
       </el-tab-pane>
 
       <!-- Manual Dispatch -->
-      <el-tab-pane label="手动派发" name="manual">
-        <manual-dispatch @on-submit="handleManualDispatch" />
+      <el-tab-pane
+          label="快速派发"
+          name="manual"
+          v-if="!currentDispatch || currentDispatch.type === 'MANUAL'">
+        <manual-based-dispatch
+            :current-dispatch="currentDispatch"
+            @on-submit="handleManualSubmit"
+            @on-cancel="handleCancel"/>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -17,33 +30,53 @@
 
 
 <script>
-import ManualDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
+import ManualBasedDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
 import ScheduleBasedDispatch from "@/components/dispatch/ScheduleBasedDispatch.vue";
 
 
 export default {
   components: {
     ScheduleBasedDispatch,
-    ManualDispatch,
+    ManualBasedDispatch,
+  },
+  props: {
+    currentDispatch: {
+      type: Object,
+      required: false, // Expect this prop to always be provided
+    },
   },
   data() {
     return {
-      currentDispatch:null,
-      activeTab: "schedule", // Default tab
+      activeTab: "manual", // Default tab
     };
   },
+  watch: {
+    currentDispatch: {
+      immediate: true,
+      handler() {
+        this.activeTab = this.determineDefaultTab();
+      },
+    },
+  },
   methods: {
-    handleScheduleDispatch(data) {
-      console.log("Schedule-Based Dispatch Data:", data);
-      // Submit or process schedule-based dispatch data
+    handleSubmit(data) {
+      this.$emit("on-submit", data);
+      console.log('payload in DispatchConfigurator component')
+      console.log(data)
     },
-    handleTriggerDispatch(data) {
-      console.log("Trigger-Based Dispatch Data:", data);
-      // Submit or process trigger-based dispatch data
+    handleManualSubmit(data) {
+      this.$emit("on-manual-submit", data);
+      console.log(data)
     },
-    handleManualDispatch(data) {
-      console.log("Manual Dispatch Data:", data);
-      // Submit or process manual dispatch data
+    handleCancel() {
+      this.$emit("on-cancel");
+    },
+    handleTabClick(tab) {
+      this.activeTab = tab.name; // Update activeTab when the user clicks a tab
+    },
+    determineDefaultTab() {
+      if (!this.currentDispatch) return "schedule"; // Default to manual for new dispatches
+      return this.currentDispatch.type === "SCHEDULED" ? "schedule" : "manual";
     },
   },
 };
