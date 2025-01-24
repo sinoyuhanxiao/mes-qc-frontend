@@ -6,17 +6,13 @@
         <h2>用户管理</h2>
         <el-input
             v-model="searchQuery"
-            placeholder="Search by name"
+            placeholder="搜索关键字"
             clearable
             @input="filterTable"
             style="width: 300px; margin-left: 20px"
         >
-          <template #append>
-            <el-button>
-              <el-icon>
-                <Search />
-              </el-icon>
-            </el-button>
+          <template #prefix>
+            <el-icon><Search /></el-icon>
           </template>
         </el-input>
       </div>
@@ -40,14 +36,14 @@
     </div>
 
     <!-- Table -->
-    <el-table :data="paginatedUsers" style="width: 100%">
+    <el-table :data="paginatedUsers" style="width: 100%" @sort-change="handleSortChange">
       <el-table-column label="ID" width="100" prop="id" sortable>
         <template #default="scope">
           <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="Name" width="180">
+      <el-table-column label="Name" prop="name" width="180" sortable>
         <template #default="scope">
           <el-popover trigger="hover" placement="top">
             <template #default>
@@ -62,25 +58,25 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Username">
+      <el-table-column label="Username" prop="username" sortable>
         <template #default="scope">
           <span>{{ scope.row.username ?? '-' }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="Email" width="220px">
+      <el-table-column label="Email" prop="email" width="220px" sortable>
         <template #default="scope">
           <span>{{ scope.row.email ?? '-' }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="Phone Number">
+      <el-table-column label="Phone Number" prop="phone_number" width="180px" sortable >
         <template #default="scope">
           <span>{{ scope.row.phone_number ?? '-' }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="WeCom ID">
+      <el-table-column label="WeCom ID" prop="wecom_id" sortable>
         <template #default="scope">
           <span>{{ scope.row.wecom_id }}</span>
         </template>
@@ -129,6 +125,7 @@
     </el-table>
 
     <el-pagination
+        v-if="filteredData.length > 15"
         style="margin-top: 10px"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -159,7 +156,7 @@
             <el-input v-model="newUser.wecomId" />
           </el-form-item>
 
-          <el-form-item label="Email">
+          <el-form-item label="Email" prop="email">
             <el-input v-model="newUser.email" />
           </el-form-item>
 
@@ -266,7 +263,6 @@ import {
   updateUser,
   deleteUser,
 } from '@/services/userService.js';
-import { ElMessage, ElMessageBox } from "element-plus";
 
 export default {
   name: 'UserManagement',
@@ -285,6 +281,7 @@ export default {
       searchQuery: '', // Search input value
       addDialogVisible: false, // Controls the visibility of the add user dialog
       editDialogVisible: false, // Controls the visibility of the edit user dialog
+      sortSettings: { prop: '', order: '' }, // store sorting column and order
       newUser: {
         name: '',
         role: '',
@@ -355,12 +352,30 @@ export default {
   },
   computed: {
     paginatedUsers() {
+      // Apply sorting first
+      const sortedData = [...this.filteredData].sort((a, b) => {
+        const { prop, order } = this.sortSettings;
+        if (!prop || !order) return 0; // No sorting applied
+
+        const valueA = a[prop];
+        const valueB = b[prop];
+
+        if (order === 'ascending') return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+        if (order === 'descending') return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
+        return 0;
+      });
+
+      // Then apply pagination
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.filteredData.slice(start, end);
+      return sortedData.slice(start, end);
     },
   },
   methods: {
+    handleSortChange({ prop, order }) {
+      // Update the sorting settings
+      this.sortSettings = { prop, order };
+    },
     async fetchUserData() {
       try {
         const response = await fetchUsers();
@@ -591,9 +606,24 @@ export default {
       };
     },
     filterTable() {
-      this.filteredData = this.tableData.filter((item) =>
-          item.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
+      const searchText = this.searchQuery.toLowerCase();
+      this.filteredData = this.tableData.filter((item) => {
+        return Object.keys(item).some((key) => {
+          // Apply transformations or computed values for specific columns
+          let value;
+          switch (key) {
+            case 'role_id': // Use role name instead of raw role_id
+              value = this.getRoleName(item[key]);
+              break;
+            case 'status': // Map status to "Active" or "Inactive"
+              value = item[key] === 1 ? '已激活' : '未激活';
+              break;
+            default: // Use raw value for other fields
+              value = item[key];
+          }
+          return value && String(value).toLowerCase().includes(searchText);
+        });
+      });
     },
     handleSizeChange(size) {
       this.pageSize = size;

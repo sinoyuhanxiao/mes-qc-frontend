@@ -26,7 +26,7 @@
     <div class="right-toolbar" :style="{width: toolbarWidth + 'px'}">
       <div class="right-toolbar-con">
         <el-button v-if="showToolButton('saveFormButton')" link type="primary" @click="showSaveDialog">
-          <svg-icon icon-class="el-file-upload-field" />{{i18nt('designer.toolbar.save')}}质检单</el-button>
+          <svg-icon icon-class="el-file-upload-field" />{{i18nt('designer.toolbar.saveQcForm')}}</el-button>
         <el-button v-if="showToolButton('clearDesignerButton')" link type="primary" @click="clearFormWidget">
           <svg-icon icon-class="el-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
         <el-button v-if="showToolButton('previewFormButton')" link type="primary" @click="previewForm">
