@@ -201,7 +201,7 @@
 <script>
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import isEqual from "lodash/isEqual";
-import {normalizeCronExpression, unnormalizeCronExpression, parseCronExpressionToChinese } from "@/utils/dispatch-utils";
+import {normalizeCronExpression, unnormalizeCronExpression } from "@/utils/dispatch-utils";
 import { humanizeCronInChinese } from "cron-chinese";
 import {fetchUsers} from "@/services/userService";
 import {

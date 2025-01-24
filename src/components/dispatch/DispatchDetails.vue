@@ -128,7 +128,7 @@
       <el-form-item label="表单">
       <div v-if="dispatch.dispatch_forms.length > 0" class="tags">
         <el-tag
-            v-for="(formId, index) in dispatch.dispatch_forms"
+            v-for="(formId) in dispatch.dispatch_forms"
             :key="formId"
             type="success"
             size="small"
@@ -183,7 +183,7 @@
       <el-form-item label="产品" v-if="productDetails.length > 0">
         <div class="tags">
           <el-tag
-            v-for="(product, index) in productDetails"
+            v-for="(product) in productDetails"
             :key="product.id"
             type="success"
             size="small"
@@ -426,7 +426,7 @@ import {
   unnormalizeCronExpression
 } from "@/utils/dispatch-utils";
 
-import {getDispatchNextExecutionTime, getIsScheduled} from "@/services/dispatchService";
+import {getDispatchNextExecutionTime} from "@/services/dispatchService";
 import StatusCircle from "@/components/dispatch/StatusCircle.vue";
 import {humanizeCronInChinese} from "cron-chinese";
 import DispatchedTasksTable from "@/components/dispatch/DispatchedTaskList.vue";

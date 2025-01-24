@@ -636,11 +636,6 @@ export default {
   flex: 1;
   padding: 20px;
 }
-.pagination {
-  margin-top: 16px;
-  text-align: right;
-  padding: 0 20px;
-}
 
 .readonly-info p {
   margin: 5px 0;
