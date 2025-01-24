@@ -2,33 +2,38 @@
   <el-container>
     <el-header class="header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <!-- Left Section: Title and Refresh Button -->
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <h2 style="margin: 0;">{{ title }}</h2>
+        <!-- Left Section: Title -->
+        <div style="display: flex; align-items: center;">
+          <h2 style="margin-right: 20px;">{{ title }}</h2>
+          <el-input
+              v-model="formFilter"
+              placeholder="搜索关键字"
+              clearable
+              style="width: 300px;"
+              @input="applyFilter"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+
+        <!-- Right Section: Search Input, Tooltip, and Refresh Button -->
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
           <el-tooltip content="Refresh table" placement="top">
             <el-button
                 class="refresh-button"
                 type="primary"
                 circle
-                @click="fetchDispatchedTasks"
+                @click="showFeatureDevelopmentMessage"
             >
               <el-icon style="color: #004085;"><RefreshRight /></el-icon>
             </el-button>
           </el-tooltip>
+          <el-tooltip content="请求新任务给我做" placement="top">
+            <el-button type="primary" @click="showFeatureDevelopmentMessage"> + 请求新任务</el-button>
+          </el-tooltip>
         </div>
-
-        <!-- Right Section: Search Input -->
-        <el-input
-            v-model="formFilter"
-            placeholder="搜索任务表单名称或任务名称"
-            clearable
-            style="width: 300px;"
-            @input="applyFilter"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
       </div>
     </el-header>
     <el-main>
@@ -37,13 +42,15 @@
           border
           style="width: 100%"
           :default-sort="{ prop: 'due_date', order: 'ascending' }"
+          @sort-change="handleSortChange"
       >
         <el-table-column
             v-for="(key, index) in columnList"
             :key="index"
             :prop="key"
             :label="keyMap[key] || key"
-            width="200"
+            :width="getColumnWidth(key)"
+            sortable
         >
           <template #header>
             <span v-if="key === 'qc_form_tree_node_id'">
@@ -171,7 +178,7 @@
 <script>
 import dayjs from "dayjs";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
-import {QuestionFilled, RefreshRight, Search} from "@element-plus/icons-vue";
+import {Plus, QuestionFilled, RefreshRight, Search} from "@element-plus/icons-vue";
 import { fetchFormNodes } from "@/services/formNodeService";
 import { fetchUsers } from "@/services/userService";
 import {
@@ -223,26 +230,21 @@ export default {
       pageSize: 15,
       formFilter: "",
       filteredTasks: [],
+      sortSettings: {
+        prop: 'due_date', // Default sorting column
+        order: 'ascending', // Default sorting order
+      },
     };
   },
   computed: {
+    Plus() {
+      return Plus
+    },
     paginatedTasks() {
-      const sortedTasks = [...this.filteredTasks].sort((a, b) => {
-        const usableA = this.isTaskUsable(a.due_date, a.dispatched_task_state_id) ? 1 : 0;
-        const usableB = this.isTaskUsable(b.due_date, b.dispatched_task_state_id) ? 1 : 0;
-
-        // Sort usable tasks first
-        if (usableB !== usableA) {
-          return usableB - usableA;
-        }
-
-        // If both are equally usable, sort by due_date ascending
-        return dayjs(a.due_date).isBefore(dayjs(b.due_date)) ? 1 : -1;
-      });
-
+      // Apply pagination directly to already sorted filteredTasks
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return sortedTasks.slice(start, end);
+      return this.filteredTasks.slice(start, end);
     },
     keyMap() {
       return {
@@ -269,6 +271,21 @@ export default {
   },
   methods: {
     isTaskUsable,
+    getColumnWidth(key) {
+      if (['description'].includes(key)) {
+        return '350';
+      } else if (['dispatched_task_state_id', 'remaining_time'].includes(key)) {
+        return '150';
+      } else {
+        return '200';
+      }
+    },
+    showFeatureDevelopmentMessage() {
+      this.$message({
+        type: 'info',
+        message: '此功能正在开发中，感谢您的点击。',
+      });
+    },
     async fetchDispatchedTasks() {
       try {
         let response;
@@ -319,6 +336,21 @@ export default {
         this.$message.error("无法加载人员信息，请重试。");
       }
     },
+    handleSortChange({ prop, order }) {
+      this.sortSettings = { prop, order }; // Save the sorting settings
+
+      // Sort the entire dispatchedTasks array
+      this.dispatchedTasks.sort((a, b) => {
+        const valA = a[prop];
+        const valB = b[prop];
+
+        // Default sorting logic
+        if (order === "ascending") return valA > valB ? 1 : valA < valB ? -1 : 0;
+        if (order === "descending") return valA < valB ? 1 : valA > valB ? -1 : 0;
+        return 0;
+      });
+
+    },
     startPolling() {
       this.pollingInterval = setInterval(() => {
         this.fetchDispatchedTasks();
@@ -337,13 +369,43 @@ export default {
         const searchText = this.formFilter.trim().toLowerCase();
 
         this.filteredTasks = this.dispatchedTasks.filter((task) => {
-          // Check if the form name matches the search term
-          const formNameMatches = this.getFormNameById(task.qc_form_tree_node_id).toLowerCase().includes(searchText);
+          return Object.keys(task).some((key) => {
+            let value;
 
-          // Check if the task name matches the search term
-          const taskNameMatches = (task.name || "").toLowerCase().includes(searchText);
+            // Dynamically map displayed values for each column
+            switch (key) {
+              case 'qc_form_tree_node_id':
+                value = this.getFormNameById(task[key]); // Use the function to get the display name
+                break;
 
-          return formNameMatches || taskNameMatches; // Match if either condition is true
+              case 'dispatched_task_state_id':
+                value = this.stateName(task[key]); // Use function to map state to displayed name
+                break;
+
+              case 'due_date':
+              case 'dispatch_time':
+              case 'created_at':
+              case 'updated_at':
+                value = this.formatDate(task[key]); // Format date for display
+                break;
+
+              case 'remaining_time':
+                value = this.calculateRemainingTime(task['due_date']); // Use dynamic calculated value
+                break;
+
+              case 'created_by':
+              case 'updated_by':
+              case 'user_id':
+                value = this.personnelMap[task[key]]?.name; // Display personnel name
+                break;
+
+              default:
+                value = task[key]; // Use raw value for other keys
+            }
+
+            if (value === null || value === undefined) return false; // Skip null/undefined values
+            return String(value).toLowerCase().includes(searchText); // Match against the transformed value
+          });
         });
       }
     },
@@ -578,7 +640,6 @@ export default {
 <style scoped>
   .header {
     padding-bottom: 10px;
-    border-bottom: 1px solid #dcdcdc;
   }
 
   .clickable-form-name {
