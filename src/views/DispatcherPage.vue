@@ -1,9 +1,27 @@
 <template>
   <el-container class="dispatcher-page">
     <!-- Top Section -->
-    <el-header class="header">
-      <h2>派发管理</h2>
-      <el-button-group>
+    <!-- Top Section -->
+    <div class="top-section">
+      <div class="top-left">
+        <h2>派发管理</h2>
+        <el-input
+            v-model="searchInput"
+            placeholder="输入名称或ID搜索"
+            clearable
+            style="width: 300px; margin-left: 20px"
+        >
+          <template #append>
+            <el-button>
+              <el-icon>
+                <Search />
+              </el-icon>
+            </el-button>
+          </template>
+        </el-input>
+      </div>
+
+      <div class="top-right">
         <!-- Refresh Button -->
         <el-tooltip content="刷新列表" placement="top">
           <el-button
@@ -12,12 +30,28 @@
               circle
               @click="loadDispatches"
           >
-            <el-icon style="color: #004085;"><RefreshRight /></el-icon>
+            <el-icon style="color: #004085;">
+              <RefreshRight />
+            </el-icon>
           </el-button>
         </el-tooltip>
-        <el-button type="primary" @click="handleNewDispatchButtonClick">新增派发</el-button>
-        <el-button type="info" @click="openViewDispatchedTestsDialog">查看全部派发任务</el-button>
-        <el-button type="info" @click="openViewDispatchStatusDialog">查看派发状态</el-button>
+
+        <!-- New Dispatch Button -->
+        <el-button type="primary" @click="handleNewDispatchButtonClick">
+          新增派发
+        </el-button>
+
+        <!-- View All Tasks Button -->
+        <el-button type="info" @click="openViewDispatchedTestsDialog">
+          查看全部派发任务
+        </el-button>
+
+        <!-- View Dispatch Status Button -->
+        <el-button type="info" @click="openViewDispatchStatusDialog">
+          查看派发状态
+        </el-button>
+
+        <!-- Delete Button -->
         <el-button
             v-if="selectedRows.length > 0"
             type="danger"
@@ -25,19 +59,45 @@
         >
           删除
         </el-button>
-      </el-button-group>
-      <!--        </el-col>-->
-      <!--      </el-row>-->
-    </el-header>
+      </div>
+    </div>
+<!--    <el-header class="header">-->
+<!--      <h2>派发管理</h2>-->
+<!--      <el-button-group>-->
+<!--        &lt;!&ndash; Refresh Button &ndash;&gt;-->
+<!--        <el-tooltip content="刷新列表" placement="top">-->
+<!--          <el-button-->
+<!--              class="refresh-button"-->
+<!--              type="primary"-->
+<!--              circle-->
+<!--              @click="loadDispatches"-->
+<!--          >-->
+<!--            <el-icon style="color: #004085;"><RefreshRight /></el-icon>-->
+<!--          </el-button>-->
+<!--        </el-tooltip>-->
+<!--        <el-button type="primary" @click="handleNewDispatchButtonClick">新增派发</el-button>-->
+<!--        <el-button type="info" @click="openViewDispatchedTestsDialog">查看全部派发任务</el-button>-->
+<!--        <el-button type="info" @click="openViewDispatchStatusDialog">查看派发状态</el-button>-->
+<!--        <el-button-->
+<!--            v-if="selectedRows.length > 0"-->
+<!--            type="danger"-->
+<!--            @click="confirmDeleteSelectedRows"-->
+<!--        >-->
+<!--          删除-->
+<!--        </el-button>-->
+<!--      </el-button-group>-->
+<!--      &lt;!&ndash;        </el-col>&ndash;&gt;-->
+<!--      &lt;!&ndash;      </el-row>&ndash;&gt;-->
+<!--    </el-header>-->
 
     <!-- Search Input -->
-    <el-input
-        v-model="searchInput"
-        style="width: 240px; margin: 10px;"
-        placeholder="输入名称搜索"
-        clearable
-        :prefix-icon="Search"
-    />
+<!--    <el-input-->
+<!--        v-model="searchInput"-->
+<!--        style="width: 240px; margin: 10px;"-->
+<!--        placeholder="输入名称搜索"-->
+<!--        clearable-->
+<!--        :prefix-icon="Search"-->
+<!--    />-->
 
     <!-- Dispatch Table -->
     <el-main class="table-section">
@@ -160,6 +220,7 @@ export default {
     DispatchDetails,
     DispatchStatusRowList,
     RefreshRight,
+    Search
   },
 
   // To derive or calculate data dynamically without directly mutating it.
@@ -170,29 +231,22 @@ export default {
       return Search;
     },
     filteredAndSortedDispatchList() {
-      const filtered = this.dispatchList
-          .filter((dispatch) =>
+      return this.filterAndSortList(
+          this.dispatchList,
+          (dispatch) =>
               dispatch.status !== 0 &&
-              (this.searchInput
-                  ? dispatch.name.toLowerCase().includes(this.searchInput.toLowerCase())
-                  : true)
-          ); // Filter by search input
-
-      return filtered.sort((a, b) => {
-        const dateA = a.updated_at || a.created_at;
-        const dateB = b.updated_at || b.created_at;
-        return new Date(dateB) - new Date(dateA); // Sort by updated_at or created_at
-      });
+              (!this.searchInput ||
+                  this.matchesSearch(dispatch.name, this.searchInput) ||
+                  this.matchesSearch(dispatch.id, this.searchInput)),
+          ["updated_at", "created_at"]
+      );
     },
     filteredAndSortedDispatchedTaskList() {
-      const filtered = this.dispatchedTasks
-          .filter((dispatchTask) => dispatchTask.status === 1) // Filter by active status
-
-      return filtered.sort((a, b) => {
-        const dateA = a.updated_at || a.created_at;
-        const dateB = b.updated_at || b.created_at;
-        return new Date(dateB) - new Date(dateA); // Sort by updated_at or created_at
-      });
+      return this.filterAndSortList(
+          this.dispatchedTasks,
+          (task) =>
+              task.status !== 0,
+          ["updated_at","created_at"]);
     },
     paginatedDispatchList() {
       const start = (this.currentPage - 1) * this.pageSize;
@@ -242,6 +296,7 @@ export default {
           this.loadFormNodes(),
           this.loadUserMap(),
         ]);
+        this.displayActiveDispatchCountMessage() // Display the notification with the count
       } catch (error) {
         console.error("Failed to load data during polling:", error);
       }
@@ -443,7 +498,8 @@ export default {
         await this.loadDispatches();
         this.closeAndResetDetailsDialog();
       } catch (error) {
-        this.$message.error("删除派发失败，请重试。");
+        // Commented temporally
+        // this.$message.error("删除派发失败，请重试。");
       }
     },
     async confirmDeleteSelectedRows() {
@@ -492,7 +548,7 @@ export default {
         await this.loadDispatches();
         this.selectedRows = [];
       } catch (error) {
-        this.$message.error("删除失败，请重试。");
+        // this.$message.error("删除失败，请重试。");
       }
     },
     resetCurrentDispatch() {
@@ -510,7 +566,33 @@ export default {
     },
     getDispatchedTasksById(id) {
       return this.dispatchedTasks.filter((task) => task.dispatch_id === id);
-    }
+    },
+    displayActiveDispatchCountMessage() {
+      // Count active dispatches by filtering the list where is_active is true
+      const activeDispatchCount = this.dispatchList.filter(dispatch => dispatch.is_active).length;
+
+      // Display the notification with the count
+      this.$notify({
+        title: "信息",
+        message: `当前活动的派发数量为: ${activeDispatchCount}`,
+        type: "info",
+      });
+    },
+    // Utility function to filter and sort a list
+    filterAndSortList(list, filterFn, sortFields) {
+      const filtered = list.filter(filterFn);
+      return filtered.sort((a, b) => {
+        const dateA = sortFields.map((field) => new Date(a[field])).find((date) => !isNaN(date));
+        const dateB = sortFields.map((field) => new Date(b[field])).find((date) => !isNaN(date));
+        return dateB - dateA;
+      });
+    },
+
+    // Utility function for search matching
+    matchesSearch(value, searchInput) {
+      if (!value || !searchInput) return false;
+      return value.toString().toLowerCase().includes(searchInput.toLowerCase());
+    },
 
   },
   mounted() {
@@ -528,25 +610,32 @@ export default {
 .dispatcher-page {
   display: flex;
   flex-direction: column;
-
-  height: 100vh; /* Fit the viewport height */
-  max-width: 100%; /* Prevent horizontal scrolling */
-  overflow: hidden; /* Prevent unwanted scrollbars */
+  height: 100vh;
+  max-width: 100%;
+  overflow: hidden;
 }
 
-.header {
+.top-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
 }
 
+.top-left {
+  display: flex;
+  align-items: center;
+}
+
+.top-right {
+  display: flex;
+  gap: 10px;
+}
+
 .table-section {
   flex: 1;
   padding: 20px;
 }
-
-
 .pagination {
   margin-top: 16px;
   text-align: right;
