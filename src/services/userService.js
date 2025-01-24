@@ -64,3 +64,13 @@ export const validateUser = (username, password) => {
 export const fetchUserInfo = (username) => {
     return api.get(`${BASE_URL}/info`, { params: { username } });
 };
+
+
+/**
+ * Get user information by user id.
+ * @param {integer} id - The user ID.
+ * @returns {Promise} API response with user details.
+ */
+export const getUserById = (id) => {
+    return api.get(`${BASE_URL}/${id}`, { params: {id}});
+}
