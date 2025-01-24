@@ -18,14 +18,34 @@
         style="width: 100%"
         :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
     >
+      <!-- 查看提交记录 -->
+      <el-table-column label="操作" width="150">
+        <template #default="scope">
+          <el-button
+              type="primary"
+              v-if="scope.row.dispatched_task_state_id !== 1 && scope.row.dispatched_task_state_id !== 4"
+              @click="openTaskLogTab(scope.row)"
+          >
+            查看提交记录
+          </el-button>
+        </template>
+      </el-table-column>
+
       <!-- ID -->
-      <el-table-column prop="id" label="ID" width="80" sortable></el-table-column>
+      <el-table-column prop="id" label="ID" width="90" sortable></el-table-column>
 
       <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="派发ID" width="100" sortable></el-table-column>
+      <el-table-column prop="dispatch_id" label="派发ID" width="90" sortable></el-table-column>
+
+      <!-- Name -->
+      <el-table-column prop="name" label="派发名称" width="150" sortable>
+        <template #default="scope">
+          {{ scope.row.name || "-" }}
+        </template>
+      </el-table-column>
 
       <!-- Personnel -->
-      <el-table-column prop="user_id" label="人员" width="200">
+      <el-table-column prop="user_id" label="人员" width="110">
         <template #default="scope">
           <el-tag
               v-if="getUserById(scope.row.user_id)"
@@ -81,7 +101,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="180" sortable>
+      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="120" sortable>
         <template #default="scope">
           <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
             {{ stateName(scope.row.dispatched_task_state_id) }}
@@ -97,7 +117,7 @@
       </el-table-column>
 
       <!-- Due Date -->
-      <el-table-column prop="due_date" label="到期时间" width="180" sortable>
+      <el-table-column prop="due_date" label="到期时间" width="150" sortable>
         <template #default="scope">
           <el-tag style="font-weight: bold" :type="remainingTimeTag(scope.row['due_date'])">
             {{ calculateRemainingTime(scope.row['due_date']) }}
@@ -120,7 +140,7 @@
         class="mt-4"
         background
         layout="prev, pager, next, jumper, ->, total"
-        :total="totalFilteredRows()"
+        :total="totalFilteredRows"
         :page-size="pageSize"
         :current-page="currentPage"
         @current-change="handlePageChange"
@@ -169,10 +189,25 @@ export default {
     Search() {
       return Search
     },
+    filteredTasks() {
+      return this.dispatchedTasks.filter((task) => {
+        if (!this.searchInput.trim()) return true;
+
+        const searchTerm = this.searchInput.toLowerCase();
+        return (
+            task.id.toString().includes(searchTerm) ||
+            (task.name && task.name.toLowerCase().includes(searchTerm)) ||
+            task.dispatch_id.toString().includes(searchTerm)
+        );
+      });
+    },
+    totalFilteredRows() {
+      return this.filteredTasks.length;
+    },
     paginatedTasks() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.filteredRows().slice(start, end);
+      return this.filteredTasks.slice(start, end);
     },
   },
   methods: {
@@ -254,26 +289,18 @@ export default {
         return "danger";
       }
     },
+    openTaskLogTab(row){
+      const url = this.$router.resolve({
+        name: "TaskLog",
+        params: {
+          createdBy: row.user_id, // Pass user_id as :createdBy
+          dispatchedTaskId: row.id, // Pass id as :dispatchedTaskId
+        },
+      }).href;
 
-    filteredRows() {
-      // Ensure dispatchedTasks is an array
-      if (!Array.isArray(this.dispatchedTasks)) return [];
-
-      // If no search input, return all rows
-      if (!this.searchInput.trim()) return this.dispatchedTasks;
-
-      // Filter by search input
-      return this.dispatchedTasks.filter((task) =>
-          this.searchInput
-              ? task.dispatch_id.toString().includes(this.searchInput) // Convert to string first
-              : true
-      );
+      // Open the URL in a new tab
+      window.open(url, "_blank");
     },
-    // Dynamic total count for pagination
-    totalFilteredRows() {
-      return this.filteredRows().length;
-    },
-
   },
 };
 </script>

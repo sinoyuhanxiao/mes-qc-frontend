@@ -57,12 +57,12 @@
           @finish="handleCountdownFinish"/>
     </el-form-item>
 
-    <el-form-item label="派发次数上限" v-if="dispatch.dispatch_limit">
-      {{ dispatch.dispatch_limit === -1 ? "无限制" : dispatch.dispatch_limit }}
-    </el-form-item>
-
     <el-form-item label="已执行次数">
       {{ dispatch.executed_count }}
+    </el-form-item>
+
+    <el-form-item label="派发次数上限" v-if="dispatch.dispatch_limit">
+      {{ dispatch.dispatch_limit === -1 ? "无限制" : dispatch.dispatch_limit }}
     </el-form-item>
 
     <el-form-item label="任务时限 (分钟)" v-if="dispatch.due_date_offset_minute">
@@ -73,13 +73,60 @@
       {{ formatDate(dispatch.created_at) }}
     </el-form-item>
 
+    <el-form-item label="创建者" v-if="createdByDetail">
+      <el-tag
+          type="primary"
+          size="small"
+          effect="light"
+      >
+        <el-popover
+            effect="light"
+            trigger="hover"
+            placement="top"
+            width="auto">
+          <template #default>
+            <div>姓名: {{ createdByDetail.name || '无' }}</div>
+            <div>用户名: {{ createdByDetail.username || '无' }}</div>
+            <div>企业微信: {{ createdByDetail.wecom_id || '无' }}</div>
+          </template>
+          <template #reference>
+            {{ createdByDetail.name || '未知创建者' }}
+          </template>
+        </el-popover>
+      </el-tag>
+    </el-form-item>
+
     <el-form-item label="更新时间" v-if="dispatch.updated_at">
       {{ formatDate(dispatch.updated_at) }}
     </el-form-item>
 
+
+    <el-form-item label="更新者" v-if="updatedByDetail">
+      <el-tag
+          type="primary"
+          size="small"
+          effect="light"
+      >
+        <el-popover
+            effect="light"
+            trigger="hover"
+            placement="top"
+            width="auto">
+          <template #default>
+            <div>姓名: {{ updatedByDetail.name || '无' }}</div>
+            <div>用户名: {{ updatedByDetail.username || '无' }}</div>
+            <div>企业微信: {{ updatedByDetail.wecom_id || '无' }}</div>
+          </template>
+          <template #reference>
+            {{ updatedByDetail.name || '未知更新者' }}
+          </template>
+        </el-popover>
+      </el-tag>
+    </el-form-item>
+
     <el-divider>表单</el-divider>
       <el-form-item label="表单">
-      <div v-if="dispatch.dispatch_forms.length > 0" class="form-tags">
+      <div v-if="dispatch.dispatch_forms.length > 0" class="tags">
         <el-tag
             v-for="(formId, index) in dispatch.dispatch_forms"
             :key="formId"
@@ -103,7 +150,7 @@
 
     <el-divider>人员</el-divider>
       <el-form-item label="人员">
-      <div v-if="dispatch.dispatch_users.length > 0" class="user-tags">
+      <div v-if="dispatch.dispatch_users.length > 0" class="tags">
         <el-tag
             v-for="user in dispatch.dispatch_users"
             :key="user.id"
@@ -134,7 +181,7 @@
     <template v-if="showSystemAssociation">
     <el-divider>系统关联</el-divider>
       <el-form-item label="产品" v-if="productDetails.length > 0">
-        <div class="tag-container">
+        <div class="tags">
           <el-tag
             v-for="(product, index) in productDetails"
             :key="product.id"
@@ -176,7 +223,7 @@
       </el-form-item>
 
       <el-form-item label="原料" v-if="rawMaterialDetails.length > 0">
-        <div class="tag-container">
+        <div class="tags">
           <el-tag
               v-for="material in rawMaterialDetails"
               :key="material.id"
@@ -221,7 +268,7 @@
       </el-form-item>
 
       <el-form-item label="生产工单" v-if="productionWorkOrderDetails.length > 0">
-        <div class="tag-container">
+        <div class="tags">
           <el-tag
               v-for="workOrder in productionWorkOrderDetails"
               :key="workOrder.id"
@@ -270,7 +317,7 @@
       </el-form-item>
 
       <el-form-item label="设备" v-if="equipmentDetails.length > 0">
-        <div class="tag-container">
+        <div class="tags">
           <el-tag
               v-for="equipment in equipmentDetails"
               :key="equipment.id"
@@ -312,7 +359,7 @@
       </el-form-item>
 
       <el-form-item label="维护工单" v-if="maintenanceWorkOrderDetails.length > 0">
-        <div class="tag-container">
+        <div class="tags">
           <el-tag
               v-for="workOrder in maintenanceWorkOrderDetails"
               :key="workOrder.id"
@@ -360,7 +407,7 @@
           :dispatched-tasks="dispatchedTasks"
           :form-map="formMap"
           :user-map="userMap"
-          :show-search-box="false"
+          :show-search-box="true"
           v-if="dispatchedTasks.length > 0"/>
 
     <!-- GIF Overlay -->
@@ -394,6 +441,7 @@ import {
   getEquipmentById,
   getMaintenanceWorkOrderById
 } from "@/services/maintenanceService";
+import {getUserById} from "@/services/userService";
 
 export default {
   components: {DispatchedTasksList, DispatchedTasksTable, StatusCircle},
@@ -425,6 +473,8 @@ export default {
       equipmentDetails: [],
       maintenanceWorkOrderDetails: [],
       isGifVisible: false,
+      createdByDetail: null,
+      updatedByDetail: null,
     };
   },
   computed: {
@@ -499,13 +549,28 @@ export default {
       }
       return details
     },
+    async fetchDetail(id, fetchFunction) {
+      let detail = null;
+      if (id) {
+        try {
+          const response = await fetchFunction(id);
+          if (response?.data?.data) {
+            detail = response.data.data;
+          }
+        } catch (error) {
+          console.error(`Failed to fetch details for ID: ${id}`, error);
+        }
+      }
+      return detail
+    },
     async fetchAllDetails() {
       this.productDetails = await this.fetchDetails(this.dispatch.product_ids, getProductById)
       this.rawMaterialDetails = await this.fetchDetails(this.dispatch.raw_material_ids, getRawMaterialById);
       this.productionWorkOrderDetails = await this.fetchDetails(this.dispatch.production_work_order_ids, getProductionWorkOrderById);
       this.equipmentDetails = await this.fetchDetails(this.dispatch.equipment_ids, getEquipmentById);
       this.maintenanceWorkOrderDetails = await this.fetchDetails(this.dispatch.maintenance_work_order_ids, getMaintenanceWorkOrderById);
-
+      this.createdByDetail = await this.fetchDetail(this.dispatch.created_by, getUserById);
+      this.updatedByDetail = await this.fetchDetail(this.dispatch.updated_by, getUserById);
     }
   },
   mounted() {
@@ -530,9 +595,7 @@ export default {
   padding: 10px;
 }
 
-.days-tags,
-.user-tags,
-.form-tags {
+.tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
