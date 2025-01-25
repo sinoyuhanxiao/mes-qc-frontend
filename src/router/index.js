@@ -22,6 +22,7 @@ import FormDataSummary from "@/views/FormDataSummary.vue";
 import InstrumentManagement from "@/views/InstrumentManagement.vue";
 import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
 import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
+import ShiftManagement from "@/views/ShiftManagement.vue";
 
 const routes = [
     {
