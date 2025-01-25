@@ -19,6 +19,7 @@ import OrderManagement from "@/views/OrderManagement.vue";
 import InstrumentManagement from "@/views/InstrumentManagement.vue";
 import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
 import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
+import ShiftManagement from "@/views/ShiftManagement.vue";
 
 const routes = [
     {
@@ -34,6 +35,11 @@ const routes = [
         path: '/user-management',
         name: 'UserManagement',
         component: UserManagement,
+    },
+    {
+        path: '/shift-management',
+        name: 'ShiftManagement',
+        component: ShiftManagement,
     },
     {
         path: '/LoginPage',
