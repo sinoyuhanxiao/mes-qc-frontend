@@ -4,6 +4,8 @@
     <div class="details-header">
       <!-- Action Buttons -->
       <el-button-group>
+        <el-button type="info" @click="$emit('pause')">暂停</el-button>
+        <el-button type="info" @click="$emit('resume')">重启</el-button>
         <el-button type="success" @click="$emit('edit')">编辑</el-button>
         <el-button type="danger" @click="$emit('delete')">删除</el-button>
       </el-button-group>
@@ -37,9 +39,15 @@
     <el-form-item label="停止运行时间" v-if="dispatch.end_time">
       {{ formatDate(dispatch.end_time) }}
     </el-form-item>
-    <!-- Is Schedule -->
+
+    <!-- Updated State Display -->
     <el-form-item label="运行状态">
-      <status-circle :status="convertBooleanToNumber(dispatch.is_active)" />
+      <el-tag
+          :type="getStateTagType(dispatch.state).type"
+          size="medium"
+      >
+        {{ getStateTagType(dispatch.state).label }}
+      </el-tag>
     </el-form-item>
 
     <!-- Next Execution Time -->
@@ -571,7 +579,17 @@ export default {
       this.maintenanceWorkOrderDetails = await this.fetchDetails(this.dispatch.maintenance_work_order_ids, getMaintenanceWorkOrderById);
       this.createdByDetail = await this.fetchDetail(this.dispatch.created_by, getUserById);
       this.updatedByDetail = await this.fetchDetail(this.dispatch.updated_by, getUserById);
-    }
+    },
+    getStateTagType(state) {
+      const stateMap = {
+        1: { label: "运行中", type: "success" },
+        2: { label: "非活跃", type: "info" },
+        3: { label: "已过期", type: "danger" },
+        4: { label: "已达派发上限", type: "warning" },
+        5: { label: "暂停", type: "primary" },
+      };
+      return stateMap[state] || { label: "未知", type: "default" };
+    },
   },
   mounted() {
     this.fetchNextExecutionTime(); // Fetch next execution time on mount

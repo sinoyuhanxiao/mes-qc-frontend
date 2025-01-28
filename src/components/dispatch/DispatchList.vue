@@ -27,10 +27,15 @@
     <!-- ID -->
     <el-table-column prop="id" label="ID" width="65" sortable></el-table-column>
 
-    <!-- Status -->
-    <el-table-column prop="is_active" label="运行状态" width="120" sortable>
+    <!-- Updated Status Column -->
+    <el-table-column prop="state" label="运行状态" width="120" sortable>
       <template #default="scope">
-        <status-circle :status="convertBooleanToNumber(scope.row.is_active)" />
+        <el-tag
+            :type="getStateTagType(scope.row.state).type"
+            size="medium"
+        >
+          {{ getStateTagType(scope.row.state).label }}
+        </el-tag>
       </template>
     </el-table-column>
 
@@ -234,7 +239,17 @@ export default {
       } else {
         return 0;
       }
-    }
+    },
+    getStateTagType(state) {
+      const stateMap = {
+        1: { label: "运行中", type: "success" },
+        2: { label: "非活跃", type: "info" },
+        3: { label: "已过期", type: "danger" },
+        4: { label: "已达派发上限", type: "warning" },
+        5: { label: "暂停", type: "primary" },
+      };
+      return stateMap[state] || { label: "未知", type: "default" };
+    },
   },
 };
 </script>
