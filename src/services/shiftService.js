@@ -33,7 +33,7 @@ export const createShift = (shiftData, createdBy) => {
  * Update an existing shift.
  * @param {number} id - The ID of the shift to update.
  * @param {Object} shiftData - The updated data for the shift.
- * @param {number} updatedBy - The ID of the user updating the shift.
+ * @param updatedBy
  * @returns {Promise} API response with the updated shift details.
  */
 export const updateShift = (id, shiftData, updatedBy) => {

@@ -31,7 +31,7 @@
         </el-tooltip>
 
         <!-- Add Button -->
-        <el-button type="primary" :icon="Plus" @click="showAddDialog">+ New</el-button>
+        <el-button type="primary" @click="showAddDialog">+ New</el-button>
       </div>
     </div>
 
@@ -56,19 +56,19 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Shift Leader" prop="leaderId" width="180" sortable>
+        <el-table-column label="Shift Leader" prop="leader_id" width="180" sortable>
           <template #default="scope">
-            <span>{{ scope.row.leader.name }}</span>
+            <span>{{ scope.row.leader?.name || " - " }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Start Time" prop="startTime" width="180" sortable>
+        <el-table-column label="Start Time" prop="start_time" width="180" sortable>
           <template #default="scope">
             <span>{{ formatTime(scope.row.start_time) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="End Time" prop="endTime" width="180" sortable>
+        <el-table-column label="End Time" prop="end_time" width="180" sortable>
           <template #default="scope">
             <span>{{ formatTime(scope.row.end_time) }}</span>
           </template>
@@ -127,7 +127,7 @@
 
         <el-table-column label="Operations" align="right" header-align="right" width="230" fixed="right">
           <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEdit(scope.$index, scope.row)">View</el-button>
+            <el-button size="small" type="primary">View</el-button>
             <el-button size="small" @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
             <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
           </template>
@@ -160,11 +160,11 @@
             <el-input v-model="newShift.type" />
           </el-form-item>
 
-          <el-form-item label="Leader" prop="leaderId">
+          <el-form-item label="Leader" prop="leader_id">
             <el-select
-                v-model="newShift.leaderId"
+                v-model="newShift.leader_id"
                 filterable
-                placeholder="Select"
+                placeholder="Select Shift Leader"
                 style="width: 480px"
             >
               <el-option
@@ -176,12 +176,18 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Start Time" prop="startTime">
-            <el-time-picker v-model="newShift.startTime" placeholder="Select Start Time" />
+          <el-form-item label="Start Time" prop="start_time">
+            <el-time-picker
+                v-model="newShift.start_time"
+                placeholder="Select Start Time"
+            />
           </el-form-item>
 
-          <el-form-item label="End Time" prop="endTime">
-            <el-time-picker v-model="newShift.endTime" placeholder="Select End Time" />
+          <el-form-item label="End Time" prop="end_time">
+            <el-time-picker
+                v-model="newShift.end_time"
+                placeholder="Select End Time"
+            />
           </el-form-item>
 
           <el-form-item label="Description" prop="description">
@@ -206,7 +212,7 @@
     </el-dialog>
 
     <!-- Edit Shift Dialog -->
-    <el-dialog title="Edit Shift" v-model="editDialogVisible" width="50%" @keyup.enter.native="handleEditConfirm">
+    <el-dialog title="Edit Shift" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
       <div class="popup-container">
         <el-form ref="editShiftForm" :model="editShift" :rules="rules" label-width="140px">
           <el-form-item label="Name" prop="name">
@@ -217,13 +223,8 @@
             <el-input v-model="editShift.type" />
           </el-form-item>
 
-          <el-form-item label="Leader" prop="leaderId">
-            <el-select
-                v-model="editShift.leaderId"
-                filterable
-                placeholder="Select"
-                style="width: 480px"
-            >
+          <el-form-item label="Leader" prop="leader_id">
+            <el-select v-model="editShift.leader_id" filterable placeholder="Select Leader" style="width: 480px">
               <el-option
                   v-for="user in userOptions"
                   :key="user.id"
@@ -233,12 +234,18 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Start Time" prop="startTime">
-            <el-time-picker v-model="editShift.startTime" placeholder="Select Start Time" />
+          <el-form-item label="Start Time" prop="start_time">
+            <el-time-picker
+                v-model="editShift.start_time"
+                placeholder="Select Start Time"
+            />
           </el-form-item>
 
-          <el-form-item label="End Time" prop="endTime">
-            <el-time-picker v-model="editShift.endTime" placeholder="Select End Time" />
+          <el-form-item label="End Time" prop="end_time">
+            <el-time-picker
+                v-model="editShift.end_time"
+                placeholder="Select End Time"
+            />
           </el-form-item>
 
           <el-form-item label="Description" prop="description">
@@ -266,6 +273,9 @@
 
 <script>
 import { Search, Plus, QuestionFilled, RefreshRight } from "@element-plus/icons-vue";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import {
   getAllShifts,
   createShift,
@@ -276,6 +286,9 @@ import {
 } from "@/services/shiftService.js";
 import {formatDate} from "@/utils/task-center/dateFormatUtils";
 import {fetchUsers} from "@/services/userService";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default {
   name: "ShiftManagement",
@@ -299,28 +312,28 @@ export default {
       newShift: {
         name: "",
         type: "",
-        leaderId: null,
-        startTime: "",
-        endTime: "",
+        leader_id: null,
+        start_time: "", // Formatted value for the backend
+        end_time: "",
         description: "",
-        status: 1, // Default active
+        status: 1, // Default null
       },
       editShift: {
         id: null,
         name: "",
         type: "",
-        leaderId: null,
-        startTime: "",
-        endTime: "",
+        leader_id: null,
+        start_time: "",
+        end_time: "",
         description: "",
-        status: null,
+        status: 1,
       },
       rules: {
         name: [{ required: true, message: "Name is required", trigger: "blur" }],
         type: [{ required: true, message: "Type is required", trigger: "blur" }],
-        leaderId: [{ required: true, message: "Leader ID is required", trigger: "blur" }],
-        startTime: [{ required: true, message: "Start Time is required", trigger: "blur" }],
-        endTime: [{ required: true, message: "End Time is required", trigger: "blur" }],
+        leader_id: [{ required: true, message: "Leader ID is required", trigger: "blur" }],
+        start_time: [{ required: true, message: "Start Time is required", trigger: "blur" }],
+        end_time: [{ required: true, message: "End Time is required", trigger: "blur" }],
       },
     };
   },
@@ -348,33 +361,75 @@ export default {
   },
   methods: {
     formatDate,
+    toOffsetTime(rawTime) {
+      if (!rawTime) return null;
+
+      try {
+        const validOffsetTimePattern = /^\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/;
+        const validRawTimePattern = /^[A-Za-z]{3} [A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2} GMT[+-]\d{4} \([\w\s]+\)$/;
+
+        // If already in the desired format, return it directly
+        if (validOffsetTimePattern.test(rawTime)) {
+          return rawTime;
+        }
+
+        // If in raw valid format, parse and retain timezone
+        if (validRawTimePattern.test(rawTime)) {
+          const date = dayjs(rawTime).tz(dayjs.tz.guess()); // Parse with user's local timezone
+          return date.format("HH:mm:ssZ");
+        }
+
+        // If ISO 8601 format, convert to desired offset time
+        if (dayjs(rawTime, dayjs.ISO_8601, true).isValid()) {
+          const date = dayjs(rawTime);
+          return date.format("HH:mm:ssZ");
+        }
+
+        console.error(`Unsupported time format: ${rawTime}`);
+        return null;
+      } catch (error) {
+        console.error(`Error formatting time: ${rawTime}`, error);
+        return null;
+      }
+    },
     formatTime(time) {
       if (!time) return '-'; // Handle null or undefined values
       const date = new Date(`1970-01-01T${time}`);
-      return date.toLocaleTimeString('en-US', { hour12: false }); // Format to HH:mm:ss
+      return date.toLocaleTimeString('en-US', {hour12: false}); // Format to HH:mm:ss
+    },
+    closeEditDialog() {
+      // Reset the editShift object to prevent data conflicts
+      this.editShift = {
+        id: null,
+        name: "",
+        type: "",
+        leader_id: null,
+        start_time: null,
+        end_time: null,
+        description: "",
+        status: null,
+      };
+      this.editDialogVisible = false; // Close the dialog
     },
     async fetchUserOptions() {
       try {
-        const response = await fetchUsers(); // Fetch users using userService.js
-        if (response.data && response.data.status === '200') {
-          // Map the user data to the options structure
-          this.userOptions = response.data.data.map(user => ({
-            id: user.id, // Use user ID as key
-            name: user.name, // Display name in the dropdown
+        const response = await fetchUsers(); // Fetch users from the backend
+        if (response.data && response.data.status === "200") {
+          this.userOptions = response.data.data.map((user) => ({
+            id: user.id, // Use user ID for value
+            name: user.name, // Use user name for display
           }));
         } else {
-          this.userOptions = [];
+          this.userOptions = []; // Fallback if no data is returned
         }
       } catch (error) {
-        console.error('Error fetching user options:', error);
+        console.error("Error fetching user options:", error);
         this.userOptions = [];
       }
     },
     async fetchShiftData() {
       try {
         const response = await getAllShifts(); // API call
-        console.log("All shifts data: ");
-        console.log(response);
         if (response.data.status === '200') {
           this.tableData = response.data.data || []; // Assign data
           this.filteredData = [...this.tableData]; // Initialize filtered data
@@ -396,8 +451,8 @@ export default {
         );
       });
     },
-    handleSortChange({ prop, order }) {
-      this.sortSettings = { prop, order };
+    handleSortChange({prop, order}) {
+      this.sortSettings = {prop, order};
     },
     handleSizeChange(size) {
       this.pageSize = size;
@@ -409,12 +464,17 @@ export default {
       this.$refs.addShiftForm.validate(async (valid) => {
         if (valid) {
           try {
-            // Include the createdBy ID dynamically
             const createdBy = this.$store.getters.getUser.id;
+            // Avoid modifying reactive properties repeatedly
+            const startTime = this.toOffsetTime(this.newShift.start_time);
+            const endTime = this.toOffsetTime(this.newShift.end_time);
 
-            // Call the API with the createdBy query parameter
-            await createShift(this.newShift, createdBy);
+            const payload = { ...this.newShift, start_time: startTime, end_time: endTime };
 
+            await createShift(payload, createdBy);
+
+            await this.$nextTick(() => this.resetNewShiftForm());
+            // Force reset after successful addition
             this.addDialogVisible = false;
             await this.fetchShiftData();
             this.$message.success("Shift added successfully");
@@ -426,9 +486,17 @@ export default {
     },
     async handleEditConfirm() {
       try {
-        await updateShift(this.editShift.id, this.editShift);
+        const payload = {...this.editShift}; // 浅拷贝原始对象
+        delete payload.leader; // 去掉 `leader` 键值对
+
+        // Format start_time and end_time
+        payload.start_time = this.toOffsetTime(payload.start_time);
+        payload.end_time = this.toOffsetTime(payload.end_time);
+
+        console.log("Updating shift:", payload)
+        await updateShift(payload.id, payload, this.$store.getters.getUser.id);
         this.editDialogVisible = false;
-        this.fetchShiftData();
+        await this.fetchShiftData();
         this.$message.success("Shift updated successfully");
       } catch (error) {
         console.error("Error updating shift:", error);
@@ -437,11 +505,11 @@ export default {
     async handleStatusChange(id, status) {
       try {
         if (status === 1) {
-          await activateShift(id);
+          await activateShift(id, this.$store.getters.getUser.id);
         } else {
-          await deactivateShift(id);
+          await deactivateShift(id, this.$store.getters.getUser.id);
         }
-        this.fetchShiftData();
+        await this.fetchShiftData();
         this.$message.success("Status updated successfully");
       } catch (error) {
         console.error("Error updating status:", error);
@@ -457,27 +525,66 @@ export default {
       }
     },
     handleEdit(index, row) {
-      this.editShift = { ...row };
-      this.editDialogVisible = true;
-      this.fetchUserOptions(); // Fetch the user list for the dropdown
+      // Close the dialog first
+      this.editDialogVisible = false;
+
+      console.log("handleEdit's row: ")
+      console.log(row)
+      // Wait for the next DOM update to reopen the dialog
+      this.$nextTick(() => {
+        // Map all relevant fields from the selected row to editShift
+        this.editShift = {
+          id: row.id || null,
+          name: row.name || "",
+          type: row.type || "",
+          leader_id: row.leader?.id || null, // Map leader_id from row.leader
+          start_time: row.start_time
+              ? new Date(`1970-01-01T${row.start_time}`)
+              : null, // Ensure start_time is handled
+          end_time: row.end_time
+              ? new Date(`1970-01-01T${row.end_time}`)
+              : null, // Ensure end_time is handled
+          description: row.description || "",
+          status: row.status
+        };
+
+        // Fetch user options for the dropdown
+        this.fetchUserOptions();
+
+        // Reopen the dialog
+        this.editDialogVisible = true;
+      });
     },
     showAddDialog() {
-      this.resetNewShiftForm(); // Reset the form
+      console.log("showAddDialog's newShift: ")
+      console.log(this.newShift)
       this.fetchUserOptions(); // Fetch the user list
       this.addDialogVisible = true; // Open the dialog
+      // this.$nextTick(() => {
+      //   this.resetNewShiftForm(); // Reset the form after rendering : has bug but I do not know why
+      // });
     },
     resetNewShiftForm() {
       this.newShift = {
         name: "",
         type: "",
-        leaderId: null,
-        startTime: "",
-        endTime: "",
-        description: "",
+        leader_id: null,
+        start_time: null,
+        end_time: null, // Ensure end_time is reset to null
+        description: "", // Ensure description is reset to empty string
         status: 1,
       };
     },
-  },
+    },
+  watch: {
+    addDialogVisible(newVal) {
+      if (!newVal) {
+        // this.$nextTick(() => {
+        //   this.resetNewShiftForm(); // Reset form after dialog closes
+        // });
+      }
+    },
+  }
 };
 </script>
 
