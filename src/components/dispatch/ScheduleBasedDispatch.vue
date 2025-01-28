@@ -326,7 +326,6 @@ export default {
     chineseSchedule() {
       if (!this.dispatchForm.cronExpression) return "无效的 Cron 表达式";
       try {
-        // return parseCronExpressionToChinese(this.dispatchForm.cronExpression);
         return humanizeCronInChinese(this.dispatchForm.cronExpression);
       } catch {
         return "无法解析 Cron 表达式";

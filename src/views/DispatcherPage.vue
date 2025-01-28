@@ -47,9 +47,9 @@
         </el-button>
 
         <!-- View Dispatch Status Button -->
-        <el-button type="info" @click="openViewDispatchStatusDialog">
-          查看派发状态
-        </el-button>
+<!--        <el-button type="info" @click="openViewDispatchStatusDialog">-->
+<!--          查看派发状态-->
+<!--        </el-button>-->
 
         <!-- Delete Button -->
         <el-button
@@ -124,10 +124,12 @@
     </el-main>
 
     <!-- Dispatch Details Dialog -->
+    <!-- Prevent closing on clicking outside -->
     <el-dialog
         title="派发详情"
         v-model="isDetailsDialogVisible"
         width="50%"
+        :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
     >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentDispatch">
@@ -136,6 +138,8 @@
             :form-map="formMap"
             :user-map="userMap"
             :dispatched-tasks="getDispatchedTasksById(currentDispatch.id)"
+            @pause="handlePauseDispatch"
+            @resume="handleResumeDispatch"
             @edit="enableEditMode"
             @delete="confirmDeleteDispatch"
         />
@@ -203,7 +207,9 @@ import {
   getAllDispatches,
   updateDispatch,
   getAllDispatchedTasks,
-  getScheduledTasks, createManualDispatch
+  getScheduledTasks,
+  createManualDispatch,
+  pauseDispatch, resumeDispatch,
 } from "@/services/dispatchService";
 import {generateFormMap} from "@/utils/dispatch-utils";
 import {Search, RefreshRight} from "@element-plus/icons-vue";
@@ -274,6 +280,8 @@ export default {
     };
   },
   methods: {
+    pauseDispatch,
+    resumeDispatch,
     // Polling Logic
     startPolling() {
       this.pollingInterval = setInterval(async () => {
@@ -501,6 +509,12 @@ export default {
         // Commented temporally
         // this.$message.error("删除派发失败，请重试。");
       }
+    },
+    async handlePauseDispatch() {
+      await this.pauseDispatch(this.currentDispatch.id, this.$store.getters.getUser.id);
+    },
+    async handleResumeDispatch() {
+      await this.resumeDispatch(this.currentDispatch.id, this.$store.getters.getUser.id);
     },
     async confirmDeleteSelectedRows() {
       if (this.selectedRows.length === 0) {

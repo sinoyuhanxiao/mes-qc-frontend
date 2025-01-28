@@ -42,5 +42,16 @@ export const deleteDispatch = (id) => {
     return api.delete(`${BASE_URL}/${id}`);
 }
 
+export const resumeDispatch = (id, userId) => {
+    return api.put(`${BASE_URL}/${id}/resume`, null, {
+        params: {id, userId}
+    });
+}
+export const pauseDispatch = (id, userId) => {
+    return api.put(`${BASE_URL}/${id}/pause`, null, {
+        params: {id, userId}
+    });
+}
+
 
 

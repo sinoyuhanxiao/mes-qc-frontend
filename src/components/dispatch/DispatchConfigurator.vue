@@ -24,6 +24,18 @@
             @on-submit="handleManualSubmit"
             @on-cancel="handleCancel"/>
       </el-tab-pane>
+
+      <!-- Schedule-Based Dispatch 2.0 -->
+
+      <el-tab-pane
+          label="质检任务单"
+          name="schedule2"
+          v-if="!currentDispatch || currentDispatch.type === 'SCHEDULED'">
+        <schedule-based-dispatch2
+            :current-dispatch="currentDispatch"
+            @on-submit="handleSubmit"
+            @on-cancel="handleCancel"/>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -32,11 +44,12 @@
 <script>
 import ManualBasedDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
 import ScheduleBasedDispatch from "@/components/dispatch/ScheduleBasedDispatch.vue";
-
+import ScheduleBasedDispatch2 from "@/components/dispatch/ScheduleBasedDispatch2.vue";
 
 export default {
   components: {
     ScheduleBasedDispatch,
+    ScheduleBasedDispatch2,
     ManualBasedDispatch,
   },
   props: {
