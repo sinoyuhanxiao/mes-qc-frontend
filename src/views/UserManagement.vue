@@ -36,93 +36,127 @@
     </div>
 
     <!-- Table -->
-    <el-table :data="paginatedUsers" style="width: 100%" @sort-change="handleSortChange">
-      <el-table-column label="ID" width="100" prop="id" sortable>
-        <template #default="scope">
-          <span>{{ scope.row.id }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Name" prop="name" width="180" sortable>
-        <template #default="scope">
-          <el-popover trigger="hover" placement="top">
-            <template #default>
-              <p>Name: {{ scope.row.name }}</p>
-              <p>WeCom ID: {{ scope.row.wecom_id }}</p>
-              <p>Role: {{ getRoleName(scope.row.role_id) }}</p>
-            </template>
-            <template #reference>
-              <el-tag size="medium">{{ scope.row.name }}</el-tag>
-            </template>
-          </el-popover>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Username" prop="username" sortable>
-        <template #default="scope">
-          <span>{{ scope.row.username ?? '-' }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Email" prop="email" width="220px" sortable>
-        <template #default="scope">
-          <span>{{ scope.row.email ?? '-' }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Phone Number" prop="phone_number" width="180px" sortable >
-        <template #default="scope">
-          <span>{{ scope.row.phone_number ?? '-' }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="WeCom ID" prop="wecom_id" sortable>
-        <template #default="scope">
-          <span>{{ scope.row.wecom_id }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="Role" prop="role_id" sortable>
-        <template #default="scope">
-          <el-tag
-              :type="scope.row.role_id === 1 ? 'warning' : 'success'"
-              size="medium"
-              style="font-weight:bold"
-          >
-            {{ getRoleName(scope.row.role_id) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column
-          label="Status" prop="status" width="120px" sortable
-      >
-        <template #header>
-          <span>
-            Status
-            <el-tooltip content="If inactive, the user won't be able to use this account" placement="top">
-              <el-icon><QuestionFilled /></el-icon>
-            </el-tooltip>
-          </span>
-          </template>
+    <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
+      <el-table v-loading="loading" :data="paginatedUsers" style="width: 100%" @sort-change="handleSortChange">
+        <el-table-column label="ID" width="100" prop="id" sortable>
           <template #default="scope">
-            <el-switch
-                v-model="scope.row.status"
-                :active-value="1"
-                :inactive-value="0"
-                @change="handleStatusChange(scope.row.id, scope.row.status)"
-            />
-        </template>
-      </el-table-column>
+            <span>{{ scope.row.id }}</span>
+          </template>
+        </el-table-column>
 
+        <el-table-column label="Name" prop="name" width="180" sortable>
+          <template #default="scope">
+            <el-popover trigger="hover" placement="top">
+              <template #default>
+                <p>Name: {{ scope.row.name }}</p>
+                <p>WeCom ID: {{ scope.row.wecom_id }}</p>
+                <p>Role: {{ getRoleName(scope.row.role_id) }}</p>
+              </template>
+              <template #reference>
+                <el-tag size="medium">{{ scope.row.name }}</el-tag>
+              </template>
+            </el-popover>
+          </template>
+        </el-table-column>
 
-      <el-table-column label="Operations" align="right" header-align="right">
-        <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        <el-table-column label="Username" prop="username" width="180" sortable>
+          <template #default="scope">
+            <span>{{ scope.row.username ?? '-' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Assigned Shifts" prop="shifts" width="280">
+          <template #default="scope">
+            <div>
+              <el-tag
+                  v-for="(shift, index) in scope.row.shifts"
+                  :key="index"
+                  size="small"
+                  style="margin-right: 5px;"
+              >
+                <el-popover trigger="hover" placement="top">
+                  <template #default>
+                    <p>ID: {{ shift.id }}</p>
+                    <p>Shift Name: {{ shift.shift_name }}</p>
+                    <p>Leader: {{ shift.leader_name }}</p>
+                  </template>
+                  <template #reference>
+                    {{ shift.shift_name }}
+                  </template>
+                </el-popover>
+              </el-tag>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="WeCom ID" prop="wecom_id" width="180" sortable>
+          <template #default="scope">
+            <span>{{ scope.row.wecom_id }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Role" prop="role_id" width="130" sortable>
+          <template #default="scope">
+            <el-tag
+                :type="scope.row.role_id === 1 ? 'warning' : 'success'"
+                size="medium"
+                style="font-weight:bold"
+            >
+              {{ getRoleName(scope.row.role_id) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+            label="Status" prop="status" width="140" sortable
+        >
+          <template #header>
+            <span>
+              Status
+              <el-tooltip content="If inactive, the user won't be able to use this account" placement="top">
+                <el-icon><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </span>
+            </template>
+            <template #default="scope">
+              <el-switch
+                  v-model="scope.row.status"
+                  :active-value="1"
+                  :inactive-value="0"
+                  @change="handleStatusChange(scope.row.id, scope.row.status)"
+              />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Email" prop="email" width="220px" sortable>
+          <template #default="scope">
+            <span>{{ scope.row.email ?? '-' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="Phone Number" prop="phone_number" width="180px" sortable >
+          <template #default="scope">
+            <span>{{ scope.row.phone_number ?? '-' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+            label="Operations"
+            align="right"
+            header-align="right"
+            width="150"
+            fixed="right"
+        >
+          <template #default="scope">
+<!--            <el-button size="small" class="custom-assign-button" @click="">-->
+<!--              Assign-->
+<!--            </el-button>-->
+            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <el-pagination
         v-if="filteredData.length > 15"
@@ -220,6 +254,34 @@
             <el-input v-model="editUser.phone_number" />
           </el-form-item>
 
+          <el-form-item label="Assigned Shifts" prop="assignedShifts">
+            <el-select
+                v-model="editUser.assignedShifts"
+                multiple
+                filterable
+                placeholder="Select Assigned Shifts"
+                style="width: 100%;"
+            >
+              <el-option
+                  v-for="shift in shiftsOptions"
+                  :key="shift.value"
+                  :label="shift.label"
+                  :value="shift.id"
+              >
+                <span style="float: left">{{ shift.label }}</span>
+                <span
+                    style="
+                      float: right;
+                      color: var(--el-text-color-secondary);
+                      font-size: 13px;
+                    "
+                >
+                  {{ "班长: " + shift.value }}
+                </span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="Status" prop="status">
             <el-select v-model="editUser.status" placeholder="Select Status">
               <el-option label="Active" :value="1" />
@@ -263,6 +325,8 @@ import {
   updateUser,
   deleteUser,
 } from '@/services/userService.js';
+import {getAllShifts} from "@/services/shiftService";
+import {assignUserToShifts, removeUserFromAllShifts} from "@/services/shiftUserService";
 
 export default {
   name: 'UserManagement',
@@ -274,7 +338,9 @@ export default {
   },
   data() {
     return {
+      shiftsOptions: [],
       tableData: [], // Original data
+      loading: false, // Loading state for the table
       filteredData: [], // Filtered data for display
       currentPage: 1, // Current page number
       pageSize: 15, // Number of items per page
@@ -300,7 +366,8 @@ export default {
         username: '',
         email: '',
         phone_number: '',
-        status: null
+        status: null,
+        assignedShifts: [], // Array to hold selected shifts
       },
       changePassword: false, // Checkbox state for edit dialog
       newPassword: '', // New password input
@@ -347,8 +414,21 @@ export default {
       }
     };
   },
+  watch: {
+    // Watch for changes in assignedShifts and log its content
+    "editUser.assignedShifts": {
+      handler(newValue, oldValue) {
+        console.log("Assigned Shifts changed:", {
+          newValue,
+          oldValue,
+        });
+      },
+      deep: true, // Ensures nested changes are tracked
+    },
+  },
   created() {
     this.fetchUserData();
+    this.fetchShiftOptions();
   },
   computed: {
     paginatedUsers() {
@@ -377,9 +457,12 @@ export default {
       this.sortSettings = { prop, order };
     },
     async fetchUserData() {
+      this.loading = true;
       try {
         const response = await fetchUsers();
         if (response.data.status === '200') {
+          console.log("all user data")
+          console.log(response.data.data)
           const sortedData = response.data.data.sort((a, b) => a.id - b.id); // Sort by ID
           this.tableData = sortedData;
 
@@ -392,6 +475,25 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchShiftOptions() {
+      try {
+        const response = await getAllShifts();
+        if (response.data.status === "200") {
+          this.shiftsOptions = response.data.data.map(shift => ({
+            value: shift.leader?.name || "-", // Shift Name
+            label: shift.name, // Shift Leader Name
+            id: shift.id
+          }));
+        } else {
+          this.shiftsOptions = [];
+        }
+      } catch (error) {
+        console.error("Error fetching shifts:", error);
+        this.shiftsOptions = [];
       }
     },
     async handleStatusChange(userId, newStatus) {
@@ -505,8 +607,25 @@ export default {
             }
 
             await updateUser(this.editUser.id, payload);
+            // Update the shifts for the user
+            try {
+              // Remove the user from all current shifts
+              await removeUserFromAllShifts(this.editUser.id);
+
+              // Assign the user to the selected shifts
+              console.log("assignedShifts: ")
+              console.log(this.editUser.assignedShifts)
+              if (this.editUser.assignedShifts && this.editUser.assignedShifts.length > 0) {
+                await assignUserToShifts(this.editUser.id, this.editUser.assignedShifts);
+              }
+
+              this.$message.success("Shifts updated successfully");
+            } catch (shiftError) {
+              console.error("Error updating shifts:", shiftError);
+              this.$message.error("Failed to update shifts");
+            }
             this.editDialogVisible = false;
-            this.fetchUserData();
+            await this.fetchUserData();
             this.$message.success("User updated successfully");
           } catch (error) {
             console.error("Error editing user:", error);
@@ -518,6 +637,7 @@ export default {
       });
     },
     handleEdit(index, row) {
+      console.log(row.shifts)
       this.editUser = {
         id: row.id,
         name: row.name,
@@ -527,6 +647,9 @@ export default {
         email: row.email,
         phone_number: row.phone_number,
         status: row.status,
+        assignedShifts: row.shifts
+            ? row.shifts.map(shift => shift.id) // Only map shift.id
+            : [],
       };
       this.changePassword = false; // Reset checkbox
       this.newPassword = ''; // Reset password fields
@@ -553,7 +676,7 @@ export default {
                 // If confirmed, call delete API
                 await deleteUser(row.id);
                 this.$message.success("Your account has been deleted successfully");
-                this.fetchUserData(); // Refresh the table data
+                await this.fetchUserData(); // Refresh the table data
                 // handle logout or session cleanup: optional for now, give the user chance to wrap up
               })
               .catch(() => {
@@ -656,4 +779,22 @@ export default {
     color: #004085; /* Darker primary-like color for the refresh icon */
   }
 
+  .tableContainer {
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    max-width: 100%; /* Prevent table from overflowing */
+    white-space: nowrap; /* Prevent column content from wrapping */
+  }
+
+  .custom-assign-button {
+    background-color: rgba(0, 133, 164, 0.66);
+    color: white;
+    border-color: rgba(0, 133, 164, 0.88);
+  }
+
+  .custom-assign-button:hover {
+    background-color: rgba(0, 111, 134, 0.33); /* Slightly darker shade for hover */
+    border-color: rgba(0, 111, 134, 0.33);
+  }
 </style>
