@@ -198,6 +198,34 @@
             <el-input v-model="newUser.phone_number" />
           </el-form-item>
 
+          <el-form-item label="Assigned Shifts" prop="assignedShifts">
+            <el-select
+                v-model="newUser.assignedShifts"
+                multiple
+                filterable
+                placeholder="Select Assigned Shifts"
+                style="width: 100%;"
+            >
+              <el-option
+                  v-for="shift in shiftsOptions"
+                  :key="shift.id"
+                  :label="shift.label"
+                  :value="shift.id"
+              >
+                <span style="float: left">{{ shift.label }}</span>
+                <span
+                    style="
+                        float: right;
+                        color: var(--el-text-color-secondary);
+                        font-size: 13px;
+                     "
+                >
+                    {{ "班长: " + shift.value }}
+                </span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="Status" prop="status">
             <el-select v-model="newUser.status" placeholder="Select Status">
               <el-option label="Active" :value="1" />
@@ -357,6 +385,7 @@ export default {
         phone_number: '',
         status: 1, // Default to Active
         password: '',
+        assignedShifts: []
       },
       editUser: {
         id: null,
@@ -573,7 +602,13 @@ export default {
           password: encryptedPassword,
         };
 
-        await addUser(payload);
+        const addUserResponse = await addUser(payload);
+        // Assign the created user to the selected shifts
+        const createdUserId = addUserResponse.data.data.id;
+        if (this.newUser.assignedShifts && this.newUser.assignedShifts.length > 0) {
+          await assignUserToShifts(createdUserId, this.newUser.assignedShifts);
+        }
+
         this.addDialogVisible = false;
         await this.fetchUserData();
         this.$message.success('User added successfully');
