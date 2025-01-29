@@ -36,7 +36,7 @@
     </div>
 
     <!-- Table -->
-    <div style="overflow-x: auto; max-width: 100%; max-height: 500px;">
+    <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
       <el-table :data="paginatedShifts" style="width: 100%" @sort-change="handleSortChange">
         <el-table-column label="ID" width="100" prop="id" sortable>
           <template #default="scope">
@@ -603,5 +603,21 @@ export default {
   border-color: #66b5ff;
   transform: rotate(360deg);
   transition: transform 0.3s ease-in-out, background-color 0.2s ease;
+}
+
+/* Make the outer container span the full height of the viewport */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full viewport height */
+}
+
+/* Set the table container to use the remaining height */
+.tableContainer {
+  flex-grow: 1; /* Fill available space */
+  overflow-y: auto; /* Enable vertical scrolling */
+  max-height: calc(100vh - 160px); /* Adjust for header/footer heights */
+  display: flex;
+  flex-direction: column;
 }
 </style>
