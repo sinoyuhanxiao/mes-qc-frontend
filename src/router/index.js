@@ -15,6 +15,7 @@ import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
 import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
+import OrderManagement from "@/views/OrderManagement.vue";
 
 const routes = [
     {
@@ -44,7 +45,7 @@ const routes = [
     {
         path: '/task-assignment',
         name: 'TaskAssignment',
-        component: DispatcherPage
+        component: OrderManagement,
     },
     {
         path: '/current-tasks',

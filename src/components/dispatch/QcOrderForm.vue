@@ -11,25 +11,6 @@
       <el-input v-model="qcOrderForm.name" placeholder="请输入质检订单名称" />
     </el-form-item>
 
-    <!-- Remark -->
-    <el-form-item label="备注" prop="remark">
-      <el-input
-          type="textarea"
-          v-model="qcOrderForm.remark"
-          placeholder="请输入备注"
-      />
-    </el-form-item>
-
-    <!-- Dispatch Limit -->
-    <el-form-item label="派发次数上限 (-1 为无限制)" required prop="dispatchLimit">
-      <el-input-number v-model="qcOrderForm.dispatchLimit" :min="-1" />
-    </el-form-item>
-
-    <!-- Due Date Offset -->
-    <el-form-item label="任务时限(分钟)" required prop="dueDateOffsetMinute">
-      <el-input-number v-model="qcOrderForm.dueDateOffsetMinute" :min="0" />
-    </el-form-item>
-
     <!-- Order-Level User/Form Option -->
     <el-divider>全局选项</el-divider>
     <el-form-item label="应用人员到所有派发" prop="applyUserToAll">
@@ -37,7 +18,6 @@
           v-model="qcOrderForm.applyUserToAll"
           />
     </el-form-item>
-
     <el-form-item v-if="qcOrderForm.applyUserToAll" label="选择全局人员">
       <el-select
           v-model="qcOrderForm.globalUserIds"
@@ -153,6 +133,35 @@
             />
           </el-form-item>
 
+          <!-- Dispatch Limit -->
+          <el-form-item
+              label="派发次数上限"
+              required
+              :prop="'dispatches.' + index + '.dispatchLimit'">
+            <el-radio-group
+                v-model="dispatch.isUnlimited"
+                @change="updateDispatchLimit(index)">
+              <el-radio :label="true">无限制</el-radio>
+              <el-radio :label="false">限制</el-radio>
+            </el-radio-group>
+            <el-input-number
+                v-if="!dispatch.isUnlimited"
+                v-model="dispatch.dispatchLimit"
+                :min="1"
+                style="margin-left: 10px;"
+                placeholder="请输入限制次数" />
+          </el-form-item>
+
+          <!-- Due Date Offset -->
+          <el-form-item
+              label="任务时限(分钟)"
+              required
+              :prop="'dispatches.' + index + '.dueDateOffsetMinute'">
+            <el-input-number
+                v-model="dispatch.dueDateOffsetMinute"
+                :min="0" />
+          </el-form-item>
+
           <!-- User Selection -->
           <el-form-item
               v-if="!qcOrderForm.applyUserToAll"
@@ -230,7 +239,9 @@
           </el-form-item>
 
           <!-- Instrument Selection -->
-          <el-form-item label="选择仪器" :prop="'dispatches.' + index + '.instrument'">
+          <el-form-item
+              label="选择仪器"
+              :prop="'dispatches.' + index + '.instrument'">
             <el-select
                 v-model="dispatch.instrument"
                 placeholder="请选择仪器"
@@ -244,6 +255,18 @@
                   :value="instrument.id"
               />
             </el-select>
+          </el-form-item>
+
+          <!-- Remark -->
+          <el-form-item
+              label="备注"
+              prop="remark">
+            <el-input
+                type="textarea"
+                v-model="dispatch.remark"
+                placeholder="请输入备注"
+                :prop="'dispatches.' + index + '.remark'"
+            />
           </el-form-item>
         </div>
       </el-card>
@@ -297,10 +320,17 @@
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import { CronElementPlus } from "@vue-js-cron/element-plus";
 import { fetchUsers } from "@/services/userService";
-import {humanizeCronInChinese} from "cron-chinese";
+import { createQcOrder } from "@/services/qcOrderService";
+import { humanizeCronInChinese } from "cron-chinese";
 
 export default {
   components: { DispatchFormTreeSelect, CronElementPlus },
+  props: {
+    currentOrder: {
+      type: Object,
+      required: true,
+    }
+  },
   data() {
     return {
       dateFormat: "YYYY-MM-DD HH:mm:ss",
@@ -312,11 +342,12 @@ export default {
         dispatchLimit: -1,
         dueDateOffsetMinute: 60,
         applyUserToAll: false,
-        globalUserIds: [], // New field for global user selection
+        globalUserIds: [], // global user selection
         applyFormToAll: false,
-        globalFormIds: [], // New field for global form selection
+        globalFormIds: [], // global form selection
         dispatches: [],
       },
+      originalQcOrderForm: null, // Store the original order for comparison
       validationRules: {
         name: [{required: true, message: "请输入质检订单名称", trigger: "blur"}],
         remark: [{required: false, message: "请输入备注", trigger: "blur"}],
@@ -339,23 +370,23 @@ export default {
           {required: true, message: "请选择执行时间", trigger: "change"},
         ],
       },
-      userOptions: [],
-      isLoadingUser: false,
+      userOptions: [],  // Stores user data fetch from backend
+      isLoadingUser: false, // State to indicate if system is currently loading user
       instrumentOptions: [
         { id: "inst1", name: "仪器 1" },
         { id: "inst2", name: "仪器 2" },
         { id: "inst3", name: "仪器 3" },
-      ],
+      ],  // Dummy data, temporary placeholder
       samplingLocationOptions: [
         { id: "loc1", name: "位置 1" },
         { id: "loc2", name: "位置 2" },
         { id: "loc3", name: "位置 3" },
-      ],
+      ], // Dummy data, temporary placeholder
       testingSubjectOptions: [
         { id: "ts1", name: "检测项目 1" },
         { id: "ts2", name: "检测项目 2" },
         { id: "ts3", name: "检测项目 3" },
-      ],
+      ], // Dummy data, temporary placeholder
     };
   },
   watch: {
@@ -387,11 +418,27 @@ export default {
         });
       }
     },
+    currentOrder: {
+      immediate: true,
+      handler(newOrder) {
+        if (newOrder) {
+          // Deep clone to avoid reference issues
+          this.qcOrderForm = JSON.parse(JSON.stringify(newOrder));
+          this.originalQcOrderForm = JSON.parse(JSON.stringify(newOrder));
+        }
+      },
+    },
+  },
+  computed: {
+    isFormModified() {
+      return JSON.stringify(this.qcOrderForm) !== JSON.stringify(this.originalQcOrderForm);
+    },
   },
   methods: {
     addDispatch() {
       const newDispatch = {
         id: Date.now(),
+        name: `Dispatch-${Date.now()}`,
         scheduleType: "CRON",
         cronExpression: "* * * * *",
         executionDate: null,
@@ -406,8 +453,18 @@ export default {
         samplingLocation: null,
         testingSubject: [],
         collapsed: false,
+        isUnlimited: true,
+        dispatchLimit: -1,
+        dueDateOffsetMinute: 60,
+        remark: "",
       };
       this.qcOrderForm.dispatches.push(newDispatch);
+    },
+    updateDispatchLimit(index) {
+      const dispatch = this.qcOrderForm.dispatches[index];
+      if (dispatch.isUnlimited) {
+        dispatch.dispatchLimit = -1;
+      }
     },
     removeDispatch(index) {
       this.qcOrderForm.dispatches.splice(index, 1);
@@ -435,26 +492,49 @@ export default {
       this.qcOrderForm.dispatches[index].formIds = forms.map((form) => form.id);
     },
     submitForm() {
-      this.$refs.formRef.validate((valid) => {
+      this.$refs.formRef.validate(async (valid) => {
         if (valid) {
           console.log("Submitted Form Data:", this.qcOrderForm);
-          // Submit logic here
+          try {
+            // Prepare the request payload
+            const payload = {
+              name: this.qcOrderForm.name,
+              dispatchRequestList: this.qcOrderForm.dispatches.map((dispatch) => ({
+                name: dispatch.name || `Dispatch-${dispatch.id}`, // Fallback for name
+                type: dispatch.scheduleType === "CRON" ? "SCHEDULED" : "MANUAL",
+                remark: dispatch.remark || null,
+                cronExpression: dispatch.cronExpression || null,
+                startTime: dispatch.dateRange?.[0] || null,
+                endTime: dispatch.dateRange?.[1] || null,
+                dispatchLimit: dispatch.dispatchLimit,
+                dueDateOffsetMinute: dispatch.dueDateOffsetMinute,
+                formIds: dispatch.formIds || [],
+                userIds: dispatch.userIds || [],
+                productIds: dispatch.productIds || [],
+                rawMaterialIds: dispatch.rawMaterialIds || [],
+                productionWorkOrderIds: dispatch.productionWorkOrderIds || [],
+                equipmentIds: dispatch.equipmentIds || [],
+                maintenanceWorkOrderIds: dispatch.maintenanceWorkOrderIds || [],
+              })),
+            };
+
+            console.log("Submitting Payload:", payload);
+
+            const userId = this.$store.getters.getUser.id;
+            const response = await createQcOrder(payload, userId);
+
+            // Handle success
+            this.$message.success("QC Order created successfully!");
+            // this.$emit("order-created", response.data); // Emit success event to parent
+          } catch (error) {
+            console.error("Error creating QC Order:", error);
+            this.$message.error("Failed to create QC Order. Please try again.");
+          }
         }
       });
     },
     resetForm() {
-      this.qcOrderForm = {
-        name: "",
-        remark: "",
-        dateRange: [],
-        dispatchLimit: -1,
-        dueDateOffsetMinute: 60,
-        applyUserToAll: false,
-        globalUserIds: [],
-        applyFormToAll: false,
-        globalFormIds: [],
-        dispatches: [],
-      };
+      this.qcOrderForm = this.transformOrderData(this.currentOrder || {})
     },
     // Format a date in '2025/1/16 00:00:00' format
     formatDate(date) {
@@ -494,8 +574,20 @@ export default {
         return "无法解析 Cron 表达式";
       }
     },
-  },
-};
+    transformOrderData(data) {
+      return {
+        name: data.name || "",
+        remark: data.name || "",
+        dateRange: data.dateRange || [],
+        dispatchLimit: data.dispatchLimit || -1,
+        dueDateOffsetMinute: data.dueDateOffsetMinute || 0,
+        dispatches: data.dispatches || [],
+      };
+    },
+  }
+}
+
+
 </script>
 
 <style scoped>
