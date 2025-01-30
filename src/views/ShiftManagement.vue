@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loadingUsers" >
     <!-- Toolbar with Search Bar and Add Button -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -127,9 +127,9 @@
 
         <el-table-column label="Operations" align="right" header-align="right" width="230" fixed="right">
           <template #default="scope">
-            <el-button size="small" type="primary">View</el-button>
-            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
+            <el-button size="small" type="primary" @click="openShiftUsersDialog(scope.row)">查看成员</el-button>
+            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -147,6 +147,56 @@
         :total="filteredData.length"
         :hide-on-single-page="true"
     />
+
+    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName} - 成员列表`" width="800">
+      <!-- Filter Bar -->
+      <el-input
+          v-model="searchUserQuery"
+          placeholder="Search Members"
+          clearable
+          @input="filterShiftUsers"
+          style="margin-bottom: 10px; width: 300px;"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+
+      <!-- Table with Sorting -->
+      <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
+        <el-table-column prop="id" label="User ID" width="100" sortable />
+        <el-table-column prop="name" label="Name" width="180" sortable />
+        <el-table-column prop="role_id" label="Role" width="150" sortable>
+          <template #default="scope">
+            <el-tag :type="scope.row.role_id === 1 ? 'warning' : 'success'">
+              {{ getRoleName(scope.row.role_id) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="wecom_id" label="WeCom ID" width="180" sortable />
+        <el-table-column prop="username" label="Username" width="180" sortable />
+        <el-table-column prop="email" label="Email" width="220" sortable />
+        <el-table-column prop="phone_number" label="Phone Number" width="180" sortable>
+          <template #default="scope">
+            <span>{{ scope.row.phone_number || '-' }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- Pagination -->
+      <el-pagination
+          style="margin-top: 10px"
+          @size-change="handleUserSizeChange"
+          @current-change="handleUserPageChange"
+          :current-page="userCurrentPage"
+          :page-size="userPageSize"
+          :page-sizes="[10, 20, 30, 50]"
+          layout="total, sizes, prev, pager, next"
+          :total="filteredShiftUsers.length"
+          :hide-on-single-page="true"
+      />
+    </el-dialog>
+
 
     <!-- Add Shift Dialog -->
     <el-dialog title="Add Shift" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
@@ -188,6 +238,23 @@
                 v-model="newShift.end_time"
                 placeholder="Select End Time"
             />
+          </el-form-item>
+
+          <el-form-item label="Members" prop="selectedUsers">
+            <el-select
+                v-model="newUser.selectedUsers"
+                multiple
+                filterable
+                placeholder="Select Members"
+                style="width: 100%;"
+            >
+              <el-option
+                  v-for="user in userOptions"
+                  :key="user.id"
+                  :label="user.name"
+                  :value="user.id"
+              />
+            </el-select>
           </el-form-item>
 
           <el-form-item label="Description" prop="description">
@@ -248,6 +315,23 @@
             />
           </el-form-item>
 
+          <el-form-item label="Members" prop="assignedUsers">
+            <el-select
+                v-model="editUser.assignedUsers"
+                multiple
+                filterable
+                placeholder="Select Users"
+                style="width: 100%;"
+            >
+              <el-option
+                  v-for="user in userOptions"
+                  :key="user.id"
+                  :label="user.name"
+                  :value="user.id"
+              />
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="Description" prop="description">
             <el-input type="textarea" v-model="editShift.description" />
           </el-form-item>
@@ -273,6 +357,7 @@
 
 <script>
 import { Search, Plus, QuestionFilled, RefreshRight } from "@element-plus/icons-vue";
+import {assignUsersToShift, removeShiftFromAllUsers} from '@/services/shiftUserService';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -286,6 +371,7 @@ import {
 } from "@/services/shiftService.js";
 import {formatDate} from "@/utils/task-center/dateFormatUtils";
 import {fetchUsers} from "@/services/userService";
+import {getUsersForShift} from "@/services/shiftUserService";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -300,6 +386,11 @@ export default {
   },
   data() {
     return {
+      searchUserQuery: "", // Search input value for users
+      userCurrentPage: 1, // Current page for members
+      userPageSize: 10, // Page size for members
+      filteredShiftUsers: [], // Filtered users for pagination
+      userSortSettings: { prop: "", order: "" }, // Sort settings
       tableData: [], // Original data
       filteredData: [], // Filtered data for display
       userOptions: [], // Dropdown options for users
@@ -308,7 +399,11 @@ export default {
       searchQuery: "", // Search input value
       addDialogVisible: false, // Add dialog visibility
       editDialogVisible: false, // Edit dialog visibility
+      shiftUsers: [], // Stores users assigned to the shift
+      dialogTableVisible: false, // Controls the visibility of the table dialog
+      loadingUsers: false, // Loading state for the user list
       sortSettings: { prop: "", order: "" },
+      selectedShiftName: "", // store the selected shift for showing users
       newShift: {
         name: "",
         type: "",
@@ -328,6 +423,12 @@ export default {
         description: "",
         status: 1,
       },
+      editUser: { // representing edit members
+        assignedUsers: []
+      },
+      newUser: { // representing add new members
+        selectedUsers: [],
+      },
       rules: {
         name: [{ required: true, message: "Name is required", trigger: "blur" }],
         type: [{ required: true, message: "Type is required", trigger: "blur" }],
@@ -339,8 +440,21 @@ export default {
   },
   created() {
     this.fetchShiftData();
+    this.fetchUserOptions();
   },
   computed: {
+    paginatedShiftUsers() {
+      const sortedData = [...this.filteredShiftUsers].sort((a, b) => {
+        const { prop, order } = this.userSortSettings;
+        if (!prop || !order) return 0;
+        const valueA = a[prop];
+        const valueB = b[prop];
+        return order === "ascending" ? (valueA > valueB ? 1 : -1) : (valueA < valueB ? 1 : -1);
+      });
+
+      const start = (this.userCurrentPage - 1) * this.userPageSize;
+      return sortedData.slice(start, start + this.userPageSize);
+    },
     paginatedShifts() {
       const sortedData = [...this.filteredData].sort((a, b) => {
         const { prop, order } = this.sortSettings;
@@ -360,6 +474,21 @@ export default {
     },
   },
   methods: {
+    filterShiftUsers() {
+      const searchText = this.searchUserQuery.toLowerCase();
+      this.filteredShiftUsers = this.shiftUsers.filter(user =>
+          Object.values(user).some(value => String(value).toLowerCase().includes(searchText))
+      );
+    },
+    handleUserSizeChange(size) {
+      this.userPageSize = size;
+    },
+    handleUserPageChange(page) {
+      this.userCurrentPage = page;
+    },
+    handleUserSortChange({ prop, order }) {
+      this.userSortSettings = { prop, order };
+    },
     formatDate,
     toOffsetTime(rawTime) {
       if (!rawTime) return null;
@@ -397,6 +526,32 @@ export default {
       const date = new Date(`1970-01-01T${time}`);
       return date.toLocaleTimeString('en-US', {hour12: false}); // Format to HH:mm:ss
     },
+    async openShiftUsersDialog(shift) {
+      this.dialogTableVisible = true;
+      this.loadingUsers = true;
+      this.selectedShiftName = shift.name;
+
+      try {
+        const response = await getUsersForShift(shift.id);
+        if (response.data.status === "200") {
+          this.shiftUsers = response.data.data;
+          this.filteredShiftUsers = [...this.shiftUsers];
+        } else {
+          this.shiftUsers = [];
+          this.filteredShiftUsers = [];
+        }
+      } catch (error) {
+        console.error("Error fetching users for shift:", error);
+        this.shiftUsers = [];
+        this.filteredShiftUsers = [];
+      } finally {
+        this.loadingUsers = false;
+      }
+    },
+
+    getRoleName(roleId) {
+      return roleId === 1 ? "管理员" : "质检人员";
+    },
     closeEditDialog() {
       // Reset the editShift object to prevent data conflicts
       this.editShift = {
@@ -425,6 +580,18 @@ export default {
       } catch (error) {
         console.error("Error fetching user options:", error);
         this.userOptions = [];
+      }
+    },
+    async updateUsersForShift(shiftId) {
+      try {
+        await removeShiftFromAllUsers(shiftId); // Remove all users from shift
+        if (this.editUser.assignedUsers.length > 0) {
+          await assignUsersToShift(shiftId, this.editUser.assignedUsers);
+        }
+        this.$message.success('Users updated successfully');
+      } catch (error) {
+        console.error('Error updating users for shift:', error);
+        this.$message.error('Failed to update users');
       }
     },
     async fetchShiftData() {
@@ -470,9 +637,15 @@ export default {
             const endTime = this.toOffsetTime(this.newShift.end_time);
 
             const payload = { ...this.newShift, start_time: startTime, end_time: endTime };
+            console.log("Creating shift:", payload)
+            const response = await createShift(payload, createdBy);
+            const shiftId = response.data.data.id;
+            console.log("Shift created:", response.data.data)
+            if (this.newUser.selectedUsers.length > 0) {
+              await assignUsersToShift(shiftId, this.newUser.selectedUsers);
+            }
 
-            await createShift(payload, createdBy);
-
+            this.$message.success("Shift created and users assigned successfully");
             await this.$nextTick(() => this.resetNewShiftForm());
             // Force reset after successful addition
             this.addDialogVisible = false;
@@ -480,6 +653,7 @@ export default {
             this.$message.success("Shift added successfully");
           } catch (error) {
             console.error("Error adding shift:", error);
+            this.$message.error("Failed to create shift or assign users");
           }
         }
       });
@@ -495,6 +669,8 @@ export default {
 
         console.log("Updating shift:", payload)
         await updateShift(payload.id, payload, this.$store.getters.getUser.id);
+        // deal with shift members update
+        await this.updateUsersForShift(payload.id)
         this.editDialogVisible = false;
         await this.fetchShiftData();
         this.$message.success("Shift updated successfully");
@@ -517,21 +693,34 @@ export default {
     },
     async handleDelete(index, row) {
       try {
-        await deleteShift(row.id);
-        this.fetchShiftData();
-        this.$message.success("Shift deleted successfully");
+        this.$confirm(
+            `Are you sure you want to delete the shift "${row.name}" and disconnect all its relationships with members?`,
+            'Delete Confirmation',
+            {
+              confirmButtonText: 'Yes',
+              cancelButtonText: 'No',
+              type: 'warning',
+            }
+        ).then(async () => {
+          await deleteShift(row.id);
+          await removeShiftFromAllUsers(row.id);
+          await this.fetchShiftData();
+          this.$message.success('Shift deleted successfully');
+        }).catch(() => {
+          this.$message.info('Shift deletion canceled');
+        });
       } catch (error) {
-        console.error("Error deleting shift:", error);
+        console.error('Error deleting shift:', error);
+        this.$message.error('Failed to delete the shift');
       }
     },
     handleEdit(index, row) {
       // Close the dialog first
       this.editDialogVisible = false;
+      this.loadingUsers = true;
 
-      console.log("handleEdit's row: ")
-      console.log(row)
       // Wait for the next DOM update to reopen the dialog
-      this.$nextTick(() => {
+      this.$nextTick(async () => {
         // Map all relevant fields from the selected row to editShift
         this.editShift = {
           id: row.id || null,
@@ -547,12 +736,14 @@ export default {
           description: row.description || "",
           status: row.status
         };
-
+        this.editUser.assignedUsers = (await getUsersForShift(row.id)).data.data.map(user => user.id);
         // Fetch user options for the dropdown
-        this.fetchUserOptions();
+        await this.fetchUserOptions();
 
         // Reopen the dialog
         this.editDialogVisible = true;
+
+        this.loadingUsers = false; // Ensure loading state is cleared
       });
     },
     showAddDialog() {
@@ -584,6 +775,11 @@ export default {
         // });
       }
     },
+    dialogTableVisible(newVal) {
+      if (!newVal) {
+        this.searchUserQuery = ""; // Clear the search query when closing the dialog
+      }
+    }
   }
 };
 </script>

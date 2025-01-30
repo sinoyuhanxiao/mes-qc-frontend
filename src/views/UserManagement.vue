@@ -73,6 +73,7 @@
                   :key="index"
                   size="small"
                   style="margin-right: 5px;"
+                  round
               >
                 <el-popover trigger="hover" placement="top">
                   <template #default>
@@ -699,7 +700,7 @@ export default {
         try {
           // Show self-deletion confirmation dialog
           await this.$confirm(
-              `You are deleting your own account. Are you sure you want to proceed?`,
+              `You are deleting your own account and your associated shifts. Are you sure you want to proceed?`,
               "Self Deletion Confirmation",
               {
                 confirmButtonText: "Yes",
@@ -728,7 +729,7 @@ export default {
       // Regular deletion for other users
       try {
         this.$confirm(
-            `Are you sure you want to delete the user "${row.name}"?`,
+            `Are you sure you want to delete the user "${row.name}" as well as the associated shifts?`,
             "Delete Confirmation",
             {
               confirmButtonText: "Yes",
@@ -739,8 +740,9 @@ export default {
             .then(async () => {
               // If confirmed, call delete API
               await deleteUser(row.id);
+              await removeUserFromAllShifts(row.id);
               this.$message.success("User deleted successfully");
-              this.fetchUserData(); // Refresh the table data
+              await this.fetchUserData(); // Refresh the table data
             })
             .catch(() => {
               this.$message.info("Deletion canceled");

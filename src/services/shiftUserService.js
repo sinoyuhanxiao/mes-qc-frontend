@@ -54,6 +54,15 @@ export const removeUsersFromShift = (shiftId, userIds) => {
 };
 
 /**
+ * Remove all users from a specific shift.
+ * @param {number} shiftId - The ID of the shift.
+ * @returns {Promise} API response with success or failure status.
+ */
+export const removeShiftFromAllUsers = (shiftId) => {
+    return api.delete(`${BASE_URL}/shifts/${shiftId}/users/all`);
+};
+
+/**
  * Retrieve all shifts assigned to a specific user.
  * @param {number} userId - The ID of the user.
  * @returns {Promise} API response with the list of shifts.
