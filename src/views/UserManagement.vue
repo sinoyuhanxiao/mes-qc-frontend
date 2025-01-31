@@ -3,10 +3,10 @@
     <!-- Toolbar with Search Bar and Add Button -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>用户管理</h2>
+        <h2>{{ translate('userManagement.title') }}</h2>
         <el-input
             v-model="searchQuery"
-            placeholder="搜索关键字"
+            :placeholder="translate('userManagement.searchPlaceholder')"
             clearable
             @input="filterTable"
             style="width: 300px; margin-left: 20px"
@@ -19,7 +19,7 @@
 
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
-        <el-tooltip content="Refresh User table" placement="top">
+        <el-tooltip :content="translate('userManagement.refreshTooltip')" placement="top">
           <el-button
               class="refresh-button"
               type="primary"
@@ -31,26 +31,26 @@
         </el-tooltip>
 
         <!-- Add Button -->
-        <el-button type="primary" :icon="Plus" @click="showAddDialog">+ New</el-button>
+        <el-button type="primary" @click="showAddDialog">{{ translate('userManagement.addButton') }}</el-button>
       </div>
     </div>
 
     <!-- Table -->
     <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
       <el-table v-loading="loading" :data="paginatedUsers" style="width: 100%" @sort-change="handleSortChange">
-        <el-table-column label="ID" width="100" prop="id" sortable>
+        <el-table-column :label="translate('userManagement.table.id')" width="100" prop="id" sortable>
           <template #default="scope">
             <span>{{ scope.row.id }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Name" prop="name" width="180" sortable>
+        <el-table-column :label="translate('userManagement.table.name')" prop="name" width="180" sortable>
           <template #default="scope">
             <el-popover trigger="hover" placement="top">
               <template #default>
-                <p>Name: {{ scope.row.name }}</p>
-                <p>WeCom ID: {{ scope.row.wecom_id }}</p>
-                <p>Role: {{ getRoleName(scope.row.role_id) }}</p>
+                <p>{{ translate('userManagement.table.name') }}: {{ scope.row.name }}</p>
+                <p>{{ translate('userManagement.table.wecomId') }}: {{ scope.row.wecom_id }}</p>
+                <p>{{ translate('userManagement.table.role') }}: {{ getRoleName(scope.row.role_id) }}</p>
               </template>
               <template #reference>
                 <el-tag size="medium">{{ scope.row.name }}</el-tag>
@@ -59,13 +59,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Username" prop="username" width="180" sortable>
+        <el-table-column :label="translate('userManagement.table.username')" prop="username" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.username ?? '-' }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Assigned Shifts" prop="shifts" width="280">
+        <el-table-column :label="translate('userManagement.table.shifts')" prop="shifts" width="280">
           <template #default="scope">
             <div>
               <el-tag
@@ -78,8 +78,8 @@
                 <el-popover trigger="hover" placement="top">
                   <template #default>
                     <p>ID: {{ shift.id }}</p>
-                    <p>Shift Name: {{ shift.shift_name }}</p>
-                    <p>Leader: {{ shift.leader_name }}</p>
+                    <p>{{ translate('userManagement.table.shifts') }}: {{ shift.shift_name }}</p>
+                    <p>{{ translate('userManagement.table.leader') }}: {{ shift.leader_name }}</p>
                   </template>
                   <template #reference>
                     {{ shift.shift_name }}
@@ -90,13 +90,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="WeCom ID" prop="wecom_id" width="180" sortable>
+        <el-table-column :label="translate('userManagement.table.wecomId')" prop="wecom_id" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.wecom_id }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Role" prop="role_id" width="130" sortable>
+        <el-table-column :label="translate('userManagement.table.role')" prop="role_id" width="150" sortable>
           <template #default="scope">
             <el-tag
                 :type="scope.row.role_id === 1 ? 'warning' : 'success'"
@@ -109,12 +109,12 @@
         </el-table-column>
 
         <el-table-column
-            label="Status" prop="status" width="140" sortable
+            :label="translate('userManagement.table.status')" prop="status" width="140" sortable
         >
           <template #header>
             <span>
-              Status
-              <el-tooltip content="If inactive, the user won't be able to use this account" placement="top">
+              {{ translate('userManagement.table.status') }}
+              <el-tooltip :content="translate('userManagement.table.statusTooltip')" placement="top">
                 <el-icon><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
@@ -129,31 +129,31 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Email" prop="email" width="220px" sortable>
+        <el-table-column :label="translate('userManagement.table.email')" prop="email" width="220px" sortable>
           <template #default="scope">
             <span>{{ scope.row.email ?? '-' }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Phone Number" prop="phone_number" width="180px" sortable >
+        <el-table-column :label="translate('userManagement.table.phoneNumber')" prop="phone_number" width="180px" sortable >
           <template #default="scope">
             <span>{{ scope.row.phone_number ?? '-' }}</span>
           </template>
         </el-table-column>
 
         <el-table-column
-            label="Operations"
+            :label="translate('userManagement.table.actions')"
             align="right"
             header-align="right"
-            width="150"
+            width="180"
             fixed="right"
         >
           <template #default="scope">
 <!--            <el-button size="small" class="custom-assign-button" @click="">-->
 <!--              Assign-->
 <!--            </el-button>-->
-            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">Edit</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">Delete</el-button>
+            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate("userManagement.edit") }}</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate("userManagement.delete") }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -170,41 +170,60 @@
         layout="total, sizes, prev, pager, next"
         :total="filteredData.length"
         :hide-on-single-page="true"
-    />
+    >
+      <!-- Translate the Total -->
+      <template #total>
+        {{ translate('pagination.total', { total: filteredData.length }) }}
+      </template>
+
+      <!-- Translate the /page -->
+      <template #sizes>
+        <span>{{ translate('pagination.perPage') }}</span>
+        <el-select v-model="pageSize" placeholder="Select">
+          <el-option
+              v-for="size in [15, 30, 45, 60]"
+              :key="size"
+              :label="`${size} ${translate('pagination.perPage')}`"
+              :value="size"
+          />
+        </el-select>
+      </template>
+    </el-pagination>
+
 
     <!-- Add User Dialog -->
-    <el-dialog title="Add User" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddUser">
+    <el-dialog :title="translate('userManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddUser">
       <div class="popup-container">
         <el-form ref="addUserForm" :model="newUser" :rules="rules" label-width="140px">
-          <el-form-item label="Name" prop="name">
+          <el-form-item :label="translate('userManagement.table.name')" prop="name">
             <el-input v-model="newUser.name" />
           </el-form-item>
 
-          <el-form-item label="Role" prop="role">
-            <el-select v-model="newUser.role" placeholder="Select Role">
-              <el-option label="管理员" value="管理员" />
-              <el-option label="质检人员" value="质检人员" />
+          <el-form-item :label="translate('userManagement.table.role')" prop="role">
+            <el-select v-model="newUser.role" :placeholder="translate('userManagement.role.selectRowPlaceHolder')">
+              <el-option :label="translate('userManagement.role.admin')" value="管理员" />
+              <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="WeChat ID" prop="wecomId">
+          <el-form-item :label="translate('userManagement.addDialog.wecomId')" prop="wecomId">
             <el-input v-model="newUser.wecomId" />
           </el-form-item>
 
-          <el-form-item label="Email" prop="email">
+          <el-form-item :label="translate('userManagement.addDialog.email')" prop="email">
             <el-input v-model="newUser.email" />
           </el-form-item>
 
-          <el-form-item label="Phone Number">
+          <el-form-item :label="translate('userManagement.addDialog.phoneNumber')">
             <el-input v-model="newUser.phone_number" />
           </el-form-item>
 
-          <el-form-item label="Assigned Shifts" prop="assignedShifts">
+          <el-form-item :label="translate('userManagement.addDialog.assignedShifts')" prop="assignedShifts">
             <el-select
                 v-model="newUser.assignedShifts"
                 multiple
                 filterable
-                placeholder="Select Assigned Shifts"
+                :placeholder="translate('userManagement.addDialog.assignedShiftPlaceHolder')"
                 style="width: 100%;"
             >
               <el-option
@@ -221,24 +240,24 @@
                         font-size: 13px;
                      "
                 >
-                    {{ "班长: " + shift.value }}
+                    {{ translate('userManagement.table.leader') + ": " + shift.value }}
                 </span>
               </el-option>
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Status" prop="status">
-            <el-select v-model="newUser.status" placeholder="Select Status">
-              <el-option label="Active" :value="1" />
-              <el-option label="Inactive" :value="0" />
+          <el-form-item :label="translate('userManagement.addDialog.status')" prop="status">
+            <el-select v-model="newUser.status" :placeholder="translate('userManagement.addDialog.status')">
+              <el-option :label="translate('userManagement.status.active')" :value="1" />
+              <el-option :label="translate('userManagement.status.inactive')" :value="0" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Username" prop="username">
+          <el-form-item :label="translate('userManagement.addDialog.username')" prop="username">
             <el-input v-model="newUser.username" />
           </el-form-item>
 
-          <el-form-item label="Password" prop="password">
+          <el-form-item :label="translate('userManagement.addDialog.password')" prop="password">
             <el-input v-model="newUser.password" type="password" show-password />
           </el-form-item>
         </el-form>
@@ -246,49 +265,49 @@
 
       <template #footer>
         <div class="popup-container">
-          <el-button @click="addDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="validateAndAddUser">Confirm</el-button>
+          <el-button @click="addDialogVisible = false">{{ translate('userManagement.cancel') }}</el-button>
+          <el-button type="primary" @click="validateAndAddUser">{{ translate('userManagement.confirm') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- Edit User Dialog -->
-    <el-dialog title="Edit User" v-model="editDialogVisible" width="50%" @keyup.enter.native="handleEditConfirm">
+    <el-dialog :title="translate('userManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @keyup.enter.native="handleEditConfirm">
       <div class="popup-container">
         <el-form ref="editUserForm" :model="editUser" :rules="rules" label-width="140px">
-          <el-form-item label="Name" prop="name">
+          <el-form-item :label="translate('userManagement.editDialog.name')" prop="name">
             <el-input v-model="editUser.name" />
           </el-form-item>
 
-          <el-form-item label="Role" prop="role">
-            <el-select v-model="editUser.role" placeholder="Select Role">
-              <el-option label="管理员" value="管理员" />
-              <el-option label="质检人员" value="质检人员" />
+          <el-form-item :label="translate('userManagement.editDialog.role')" prop="role">
+            <el-select v-model="editUser.role" :placeholder="translate('userManagement.editDialog.role')">
+              <el-option :label="translate('userManagement.role.admin')" value="管理员" />
+              <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="WeCom ID" prop="wecomId">
+          <el-form-item :label="translate('userManagement.editDialog.wecomId')" prop="wecomId">
             <el-input v-model="editUser.wecomId" />
           </el-form-item>
 
-          <el-form-item label="Username" prop="username">
+          <el-form-item :label="translate('userManagement.editDialog.username')" prop="username">
             <el-input v-model="editUser.username" />
           </el-form-item>
 
-          <el-form-item label="Email">
+          <el-form-item :label="translate('userManagement.editDialog.email')" prop="email">
             <el-input v-model="editUser.email" />
           </el-form-item>
 
-          <el-form-item label="Phone Number">
+          <el-form-item :label="translate('userManagement.editDialog.phoneNumber')" prop="phone_number">
             <el-input v-model="editUser.phone_number" />
           </el-form-item>
 
-          <el-form-item label="Assigned Shifts" prop="assignedShifts">
+          <el-form-item :label="translate('userManagement.editDialog.assignedShifts')" prop="assignedShifts">
             <el-select
                 v-model="editUser.assignedShifts"
                 multiple
                 filterable
-                placeholder="Select Assigned Shifts"
+                :placeholder="translate('userManagement.editDialog.assignedShifts')"
                 style="width: 100%;"
             >
               <el-option
@@ -300,35 +319,35 @@
                 <span style="float: left">{{ shift.label }}</span>
                 <span
                     style="
-                      float: right;
-                      color: var(--el-text-color-secondary);
-                      font-size: 13px;
-                    "
+                  float: right;
+                  color: var(--el-text-color-secondary);
+                  font-size: 13px;
+                "
                 >
-                  {{ "班长: " + shift.value }}
-                </span>
+              {{ translate('userManagement.table.leader') + ": " + shift.value }}
+            </span>
               </el-option>
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Status" prop="status">
-            <el-select v-model="editUser.status" placeholder="Select Status">
-              <el-option label="Active" :value="1" />
-              <el-option label="Inactive" :value="0" />
+          <el-form-item :label="translate('userManagement.editDialog.status')" prop="status">
+            <el-select v-model="editUser.status" :placeholder="translate('userManagement.editDialog.status')">
+              <el-option :label="translate('userManagement.status.active')" :value="1" />
+              <el-option :label="translate('userManagement.status.inactive')" :value="0" />
             </el-select>
           </el-form-item>
 
           <!-- Change Password Checkbox -->
           <el-form-item>
-            <el-checkbox v-model="changePassword">Change Password</el-checkbox>
+            <el-checkbox v-model="changePassword">{{ translate('userManagement.editDialog.changePassword') }}</el-checkbox>
           </el-form-item>
 
           <!-- Password Fields -->
-          <el-form-item v-if="changePassword" label="New Password" prop="newPassword">
+          <el-form-item v-if="changePassword" :label="translate('userManagement.editDialog.newPassword')" prop="newPassword">
             <el-input v-model="newPassword" type="password" show-password />
           </el-form-item>
 
-          <el-form-item v-if="changePassword" label="Confirm Password" prop="confirmPassword">
+          <el-form-item v-if="changePassword" :label="translate('userManagement.editDialog.confirmPassword')" prop="confirmPassword">
             <el-input v-model="confirmPassword" type="password" show-password />
           </el-form-item>
 
@@ -337,8 +356,8 @@
 
       <template #footer>
         <div class="popup-container">
-          <el-button @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="handleEditConfirm">Confirm</el-button>
+          <el-button @click="editDialogVisible = false">{{ translate('userManagement.editDialog.cancelButton') }}</el-button>
+          <el-button type="primary" @click="handleEditConfirm">{{ translate('userManagement.editDialog.confirmButton') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -348,6 +367,7 @@
 
 <script>
 import { Search, Plus, QuestionFilled, RefreshRight } from '@element-plus/icons-vue';
+import { translate } from "@/utils/i18n";
 import {
   fetchUsers,
   addUser,
@@ -482,6 +502,7 @@ export default {
     },
   },
   methods: {
+    translate,
     handleSortChange({ prop, order }) {
       // Update the sorting settings
       this.sortSettings = { prop, order };
@@ -572,12 +593,12 @@ export default {
     },
     getRoleName(roleId) {
       if (roleId === 1) {
-        return '管理员';
+        return translate("userManagement.role.admin");
       }
       if (roleId === 2) {
-        return '质检人员';
+        return translate("userManagement.role.qcWorker");
       }
-      return '未知角色';
+      return translate("userManagement.role.unknown");
     },
     validateAndAddUser() {
       this.$refs.addUserForm.validate(async (valid) => {
@@ -622,7 +643,7 @@ export default {
       this.$refs.editUserForm.validate(async (valid) => {
         if (valid) {
           try {
-            const roleId = this.editUser.role === '管理员' ? 1 : 2;
+            const roleId = this.editUser.role === '管理员' ? 1 : 2; // This 管理员 should not be modified since it now acts as an value, should be modified later
             const payload = {
               name: this.editUser.name,
               role_id: roleId,

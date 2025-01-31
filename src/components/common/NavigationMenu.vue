@@ -11,7 +11,7 @@
       <!-- 管理员和质检人员共享的菜单 -->
       <el-menu-item index="/">
         <el-icon><HomeFilled /></el-icon>
-        <span>首页</span>
+        <span>{{ translate('navigationMenu.home') }}</span>
       </el-menu-item>
 
       <!-- 仅管理员可见的菜单 -->
@@ -19,41 +19,41 @@
         <el-sub-menu index="2">
           <template #title>
             <el-icon><Setting /></el-icon>
-            <span>系统管理</span>
+            <span>{{ translate('navigationMenu.systemManagement') }}</span>
           </template>
           <el-menu-item index="/user-management">
             <el-icon><User /></el-icon>
-            <span>用户管理</span>
+            <span>{{ translate('navigationMenu.userManagement') }}</span>
           </el-menu-item>
           <el-menu-item index="/shift-management">
             <el-icon><User /></el-icon>
-            <span>班组管理</span>
+            <span>{{ translate('navigationMenu.shiftManagement') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="3">
           <template #title>
             <el-icon><List /></el-icon>
-            <span>质量管理</span>
+            <span>{{ translate('navigationMenu.qualityManagement') }}</span>
           </template>
           <el-menu-item index="/quality-form-management">
             <el-icon><Document /></el-icon>
-            <span>表单管理</span>
+            <span>{{ translate('navigationMenu.formManagement') }}</span>
           </el-menu-item>
           <el-menu-item index="/form-designer">
             <el-icon><Edit /></el-icon>
-            <span>表单设计</span>
+            <span>{{ translate('navigationMenu.formDesigner') }}</span>
           </el-menu-item>
           <el-menu-item index="/task-assignment">
             <el-icon><Files /></el-icon>
-            <span>任务派发</span>
+            <span>{{ translate('navigationMenu.dispatchManagement') }}</span>
           </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="4">
           <template #title>
             <el-icon><DataAnalysis /></el-icon>
-            <span>数据汇总</span>
+            <span>{{ translate('navigationMenu.dataSummary') }}</span>
           </template>
         </el-sub-menu>
       </template>
@@ -62,31 +62,31 @@
       <el-sub-menu index="5">
         <template #title>
           <el-icon><Collection /></el-icon>
-          <span>任务中心</span>
+          <span>{{ translate('navigationMenu.taskCenter') }}</span>
         </template>
         <el-menu-item index="/task-center-dashboard">
           <el-icon><DataAnalysis /></el-icon>
-          <span>任务看板</span>
+          <span>{{ translate('navigationMenu.taskDashboard') }}</span>
         </el-menu-item>
         <el-menu-item index="/current-tasks">
           <el-icon><Document /></el-icon>
-          <span>今日任务</span>
+          <span>{{ translate('navigationMenu.todayTasks') }}</span>
         </el-menu-item>
         <el-menu-item index="/future-tasks">
           <el-icon><List /></el-icon>
-          <span>未来任务</span>
+          <span>{{ translate('navigationMenu.futureTasks') }}</span>
         </el-menu-item>
         <el-menu-item index="/history-tasks">
           <el-icon><Files /></el-icon>
-          <span>历史任务</span>
+          <span>{{ translate('navigationMenu.historyTasks') }}</span>
         </el-menu-item>
         <el-menu-item index="/overdue-tasks">
           <el-icon><Warning /></el-icon>
-          <span>逾期任务</span>
+          <span>{{ translate('navigationMenu.overdueTasks') }}</span>
         </el-menu-item>
         <el-menu-item index="/task-calendar">
           <el-icon><Calendar /></el-icon>
-          <span>任务日历</span>
+          <span>{{ translate('navigationMenu.taskCalendar') }}</span>
         </el-menu-item>
       </el-sub-menu>
     </div>
@@ -126,6 +126,7 @@ import {
   Calendar, Warning
 } from '@element-plus/icons-vue';
 import { mapGetters, mapActions } from 'vuex';
+import { translate } from "@/utils/i18n";
 
 export default {
   components: {
@@ -158,6 +159,9 @@ export default {
       this.logoutUser(); // Clear user information from Vuex
       this.$router.push('/LoginPage'); // Redirect to the login page
     },
+    translate(key) {
+      return translate(key);
+    }
   },
 };
 </script>
