@@ -789,21 +789,17 @@ export default {
     filterTable() {
       const searchText = this.searchQuery.toLowerCase();
       this.filteredData = this.tableData.filter((item) => {
-        return Object.keys(item).some((key) => {
-          // Apply transformations or computed values for specific columns
-          let value;
-          switch (key) {
-            case 'role_id': // Use role name instead of raw role_id
-              value = this.getRoleName(item[key]);
-              break;
-            case 'status': // Map status to "Active" or "Inactive"
-              value = item[key] === 1 ? '已激活' : '未激活';
-              break;
-            default: // Use raw value for other fields
-              value = item[key];
-          }
-          return value && String(value).toLowerCase().includes(searchText);
-        });
+        return (
+            (item.id && String(item.id).toLowerCase().includes(searchText)) || // 过滤 ID
+            (item.name && item.name.toLowerCase().includes(searchText)) || // 过滤 名称
+            (item.username && item.username.toLowerCase().includes(searchText)) || // 过滤 用户名
+            (item.wecom_id && item.wecom_id.toLowerCase().includes(searchText)) || // 过滤 企业微信 ID
+            (item.email && item.email.toLowerCase().includes(searchText)) || // 过滤 Email
+            (item.phone_number && item.phone_number.toLowerCase().includes(searchText)) || // 过滤 电话号码
+            (item.role_id && this.getRoleName(item.role_id).toLowerCase().includes(searchText)) || // 过滤 角色
+            (item.status !== undefined && (item.status === 1 ? "已激活" : "未激活").includes(searchText)) || // 过滤 状态
+            (item.shifts && item.shifts.some(shift => shift.shift_name.toLowerCase().includes(searchText))) // 过滤 所属班组
+        );
       });
     },
     handleSizeChange(size) {
