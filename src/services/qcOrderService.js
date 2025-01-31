@@ -47,6 +47,6 @@ export const getAllQcOrders = () => {
 /**
  * Delete a QC Order by ID.
  */
-export const deleteQcOrder = (orderId) => {
-    return api.delete(`${BASE_URL}/${orderId}`);
+export const deleteQcOrder = (orderId, userId) => {
+    return api.delete(`${BASE_URL}/${orderId}/${userId}`);
 };

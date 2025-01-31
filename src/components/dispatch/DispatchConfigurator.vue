@@ -3,37 +3,24 @@
     <el-tabs
         v-model="activeTab"
         @tab-click="handleTabClick">
-      <!-- Schedule-Based Dispatch -->
+      <!-- QC Order Form -->
       <el-tab-pane
-          label="计划派发"
-          name="schedule"
-          v-if="!currentDispatch || currentDispatch.type === 'SCHEDULED'">
-        <schedule-based-dispatch
-          :current-dispatch="currentDispatch"
-          @on-submit="handleSubmit"
-          @on-cancel="handleCancel"/>
-      </el-tab-pane>
-
-      <!-- Manual Dispatch -->
-      <el-tab-pane
-          label="快速派发"
-          name="manual"
-          v-if="!currentDispatch || currentDispatch.type === 'MANUAL'">
-        <manual-based-dispatch
-            :current-dispatch="currentDispatch"
-            @on-submit="handleManualSubmit"
+          label="定时质检工单"
+          name="QcOrderForm">
+        <qc-order-form
+            :current-order="currentOrder"
+            @on-submit="handleSubmit"
             @on-cancel="handleCancel"/>
       </el-tab-pane>
 
-      <!-- Schedule-Based Dispatch 2.0 -->
-
+      <!-- Quick Dispatch -->
       <el-tab-pane
-          label="质检任务单"
-          name="QcOrderForm"
-          v-if="!currentDispatch || currentDispatch.type === 'SCHEDULED'">
-        <qc-order-form
-            :current-dispatch="currentDispatch"
-            @on-submit="handleSubmit"
+          label="一次性质检工单"
+          name="QuickDispatch"
+          v-if="!currentOrder">
+        <manual-based-dispatch
+            :current-dispatch="currentOrder"
+            @on-submit="handleManualSubmit"
             @on-cancel="handleCancel"/>
       </el-tab-pane>
     </el-tabs>
@@ -43,39 +30,27 @@
 
 <script>
 import ManualBasedDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
-import ScheduleBasedDispatch from "@/components/dispatch/ScheduleBasedDispatch.vue";
 import QcOrderForm from "@/components/dispatch/QcOrderForm.vue";
 
 export default {
   components: {
-    ScheduleBasedDispatch,
     QcOrderForm,
     ManualBasedDispatch,
   },
   props: {
-    currentDispatch: {
+    currentOrder: {
       type: Object,
-      required: false, // Expect this prop to always be provided
+      required: true,
     },
   },
   data() {
     return {
-      activeTab: "manual", // Default tab
+      activeTab: "QcOrderForm", // Default tab
     };
-  },
-  watch: {
-    currentDispatch: {
-      immediate: true,
-      handler() {
-        this.activeTab = this.determineDefaultTab();
-      },
-    },
   },
   methods: {
     handleSubmit(data) {
       this.$emit("on-submit", data);
-      console.log('payload in DispatchConfigurator component')
-      console.log(data)
     },
     handleManualSubmit(data) {
       this.$emit("on-manual-submit", data);
@@ -86,10 +61,6 @@ export default {
     },
     handleTabClick(tab) {
       this.activeTab = tab.name; // Update activeTab when the user clicks a tab
-    },
-    determineDefaultTab() {
-      if (!this.currentDispatch) return "schedule"; // Default to manual for new dispatches
-      return this.currentDispatch.type === "SCHEDULED" ? "schedule" : "manual";
     },
   },
 };

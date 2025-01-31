@@ -7,8 +7,13 @@
       label-width="200px"
   >
     <!-- QC Order Name -->
-    <el-form-item label="质检订单名称" required prop="name">
-      <el-input v-model="qcOrderForm.name" placeholder="请输入质检订单名称" />
+    <el-form-item label="工单名称" required prop="name">
+      <el-input v-model="qcOrderForm.name" placeholder="请输入质检工单名称" />
+    </el-form-item>
+
+    <!-- Description -->
+    <el-form-item label="工单备注">
+      <el-input type="textarea" v-model="qcOrderForm.description" placeholder="请输入备注"></el-input>
     </el-form-item>
 
     <!-- Order-Level User/Form Option -->
@@ -51,45 +56,61 @@
     </el-form-item>
 
     <!-- Dispatch List -->
-    <el-divider>派发列表</el-divider>
+    <el-divider>任务列表</el-divider>
     <div
         v-for="(dispatch, index) in qcOrderForm.dispatches"
         :key="dispatch.id"
         class="dispatch-block"
     >
-      <el-card :header="'派发 ' + (index + 1)" shadow="always">
+      <el-card :header="'任务 ' + (index + 1)" shadow="always">
+        <!-- Collapse Dispatch -->
         <div
-            style="display: flex; justify-content: space-between; align-items: center;"
+            style="display: flex;
+            justify-content: space-between;
+             align-items: center;"
         >
           <el-button
               type="text"
               @click="toggleCollapse(index)"
-              :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'"
-          >
+              :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
             {{ dispatch.collapsed ? '展开' : '收起' }}
           </el-button>
           <!-- Remove Dispatch -->
-          <el-button type="danger" plain @click="removeDispatch(index)"
-          >删除派发</el-button
-          >
+          <el-button
+              type="danger"
+              plain
+              @click="removeDispatch(index)">
+            删除任务
+          </el-button>
         </div>
         <div v-show="!dispatch.collapsed">
+          <!-- Name -->
+          <el-form-item
+              label="任务名称">
+            <el-input
+                type="text"
+                v-model="dispatch.name"
+                placeholder="请输入任务名称"
+                :prop="'dispatches.' + index + '.name'"
+            />
+          </el-form-item>
+
           <!-- Schedule Type -->
           <el-form-item
-              label="派发计划类型"
+              label="任务计划类型"
               required
-              :prop="'dispatches.' + index + '.scheduleType'"
+              :prop="'dispatches.' + index + '.type'"
           >
-            <el-radio-group v-model="dispatch.scheduleType">
-              <el-radio label="CRON">周期计划</el-radio>
-              <el-radio label="ONCE">单次计划</el-radio>
+            <el-radio-group v-model="dispatch.type">
+              <el-radio label="regular">周期计划</el-radio>
+              <el-radio label="custom">单次计划</el-radio>
             </el-radio-group>
           </el-form-item>
 
           <!-- Cron Expression -->
           <el-form-item
-              v-if="dispatch.scheduleType === 'CRON'"
-              label="执行周期"
+              v-if="dispatch.type === 'regular'"
+              label="执行计划"
               required
               :prop="'dispatches.' + index + '.cronExpression'"
           >
@@ -102,8 +123,9 @@
 
           <!-- Start/End Time for CRON -->
           <el-form-item
-              v-if="dispatch.scheduleType === 'CRON'"
-              label="运行时间"
+              v-if="dispatch.type === 'regular'"
+              label="执行周期"
+              required
               :prop="'dispatches.' + index + '.dateRange'"
           >
             <el-date-picker
@@ -122,10 +144,10 @@
               v-else
               label="执行时间"
               required
-              :prop="'dispatches.' + index + '.executionDate'"
+              :prop="'dispatches.' + index + '.customTime'"
           >
             <el-date-picker
-                v-model="dispatch.executionDate"
+                v-model="dispatch.customTime"
                 type="datetime"
                 placeholder="选择执行时间"
                 :format="dateFormat"
@@ -135,6 +157,7 @@
 
           <!-- Dispatch Limit -->
           <el-form-item
+              v-if="dispatch.type === 'regular'"
               label="派发次数上限"
               required
               :prop="'dispatches.' + index + '.dispatchLimit'">
@@ -154,7 +177,7 @@
 
           <!-- Due Date Offset -->
           <el-form-item
-              label="任务时限(分钟)"
+              label="派发任务时限(分钟)"
               required
               :prop="'dispatches.' + index + '.dueDateOffsetMinute'">
             <el-input-number
@@ -162,55 +185,19 @@
                 :min="0" />
           </el-form-item>
 
-          <!-- User Selection -->
-          <el-form-item
-              v-if="!qcOrderForm.applyUserToAll"
-              label="选择人员"
-              :prop="'dispatches.' + index + '.userIds'"
-          >
-            <el-select
-                v-model="dispatch.userIds"
-                multiple
-                filterable
-                placeholder="请选择人员"
-                :loading="isLoadingUser"
-                @focus="loadUserOptions"
-            >
-              <el-option
-                  v-for="user in userOptions"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-              />
-            </el-select>
-          </el-form-item>
-
-          <!-- Form Tree -->
-          <el-form-item
-              v-if="!qcOrderForm.applyFormToAll"
-              label="选择表单"
-              :prop="'dispatches.' + index + '.formIds'"
-          >
-            <DispatchFormTreeSelect
-                :selected-form-ids="dispatch.formIds"
-                @update-selected-forms="(forms) =>
-                handleSelectedForms(forms, index)"
-            />
-          </el-form-item>
-
           <!-- Test Subject Selection -->
           <el-form-item
-              label="选择检测项目"
-              :prop="'dispatches.' + index + '.testingSubject'"
+              label="检测项目"
+              :prop="'dispatches.' + index + '.testSubjectIds'"
           >
             <el-select
-                v-model="dispatch.testingSubject"
+                v-model="dispatch.testSubjectIds"
                 placeholder="请选择检测项目"
                 multiple
                 filterable
             >
               <el-option
-                  v-for="subject in testingSubjectOptions"
+                  v-for="subject in testSubjectOptions"
                   :key="subject.id"
                   :label="subject.name"
                   :value="subject.id"
@@ -220,11 +207,11 @@
 
           <!-- Sampling Location Selection -->
           <el-form-item
-              label="选择采样位置"
-              :prop="'dispatches.' + index + '.samplingLocation'"
+              label="采样位置"
+              :prop="'dispatches.' + index + '.samplingLocationIds'"
           >
             <el-select
-                v-model="dispatch.samplingLocation"
+                v-model="dispatch.samplingLocationIds"
                 placeholder="请选择采样位置"
                 multiple
                 filterable
@@ -240,10 +227,10 @@
 
           <!-- Instrument Selection -->
           <el-form-item
-              label="选择仪器"
-              :prop="'dispatches.' + index + '.instrument'">
+              label="仪器"
+              :prop="'dispatches.' + index + '.instrumentIds'">
             <el-select
-                v-model="dispatch.instrument"
+                v-model="dispatch.instrumentIds"
                 placeholder="请选择仪器"
                 multiple
                 filterable
@@ -257,50 +244,154 @@
             </el-select>
           </el-form-item>
 
-          <!-- Remark -->
+          <!-- Description -->
           <el-form-item
-              label="备注"
-              prop="remark">
+              label="任务备注"
+              prop="description">
             <el-input
                 type="textarea"
-                v-model="dispatch.remark"
+                v-model="dispatch.description"
                 placeholder="请输入备注"
-                :prop="'dispatches.' + index + '.remark'"
+                :prop="'dispatches.' + index + '.description'"
             />
+          </el-form-item>
+
+          <!-- User Selection -->
+          <el-form-item
+              v-if="!qcOrderForm.applyUserToAll"
+              label="人员"
+              :prop="'dispatches.' + index + '.userIds'">
+            <el-select
+                v-model="dispatch.userIds"
+                multiple
+                filterable
+                placeholder="请选择人员">
+              <el-option
+                  v-for="user in userOptions"
+                  :key="user.id"
+                  :label="user.name"
+                  :value="user.id"
+              />
+            </el-select>
+          </el-form-item>
+
+          <!-- Form Tree -->
+          <el-form-item
+              v-if="!qcOrderForm.applyFormToAll"
+              label="表单"
+              :prop="'dispatches.' + index + '.formIds'"
+          >
+            <DispatchFormTreeSelect
+                :selected-form-ids="dispatch.formIds"
+                @update-selected-forms="(forms) =>
+                handleSelectedForms(forms, index)"
+            />
+          </el-form-item>
+
+          <el-divider>生产模块关联</el-divider>
+          <!-- Product Selection -->
+          <el-form-item label="产品">
+            <el-select v-model="dispatch.productIds"
+                       multiple
+                       filterable
+                       placeholder="请选择产品">
+              <el-option v-for="product in productOptions"
+                         :key="product.id"
+                         :label="product.name"
+                         :value="product.id" />
+            </el-select>
+          </el-form-item>
+
+          <!-- Production Work Order Selection -->
+          <el-form-item label="生产工单">
+            <el-select v-model="dispatch.productionWorkOrderIds"
+                       multiple
+                       filterable
+                       placeholder="请选择生产工单">
+              <el-option v-for="workOrder in productionWorkOrderOptions"
+                         :key="workOrder.id"
+                         :label="workOrder.name"
+                         :value="workOrder.id" />
+            </el-select>
+          </el-form-item>
+
+          <!-- Raw Material Selection -->
+          <el-form-item label="原料">
+            <el-select v-model="dispatch.rawMaterialIds"
+                       multiple filterable
+                       placeholder="请选择原料">
+              <el-option v-for="material in rawMaterialOptions"
+                         :key="material.id"
+                         :label="material.name"
+                         :value="material.id" />
+            </el-select>
+          </el-form-item>
+
+          <el-divider>维护模块关联</el-divider>
+          <!-- Maintenance Work Order Selection -->
+          <el-form-item label="维护工单">
+            <el-select v-model="dispatch.maintenanceWorkOrderIds"
+                       multiple
+                       filterable
+                       placeholder="请选择维护工单">
+              <el-option v-for="workOrder in maintenanceWorkOrderOptions"
+                         :key="workOrder.id"
+                         :label="workOrder.name"
+                         :value="workOrder.id" />
+            </el-select>
+          </el-form-item>
+
+          <!-- Equipment Selection -->
+          <el-form-item label="设备">
+            <el-select v-model="dispatch.equipmentIds"
+                       multiple
+                       filterable
+                       placeholder="请选择设备">
+              <el-option v-for="equipment in equipmentOptions"
+                         :key="equipment.id"
+                         :label="equipment.name"
+                         :value="equipment.id" />
+            </el-select>
           </el-form-item>
         </div>
       </el-card>
     </div>
 
     <!-- Add Dispatch -->
-    <el-button type="primary" plain @click="addDispatch">新增派发</el-button>
+    <el-button type="primary" plain @click="addDispatch">新增计划任务</el-button>
 
     <!-- Schedule Summary -->
     <el-card class="mt-4" shadow="always">
-      <h4>订单预览</h4>
-      <p><strong>订单名称:</strong> {{ qcOrderForm.name }}</p>
-      <p><strong>备注:</strong> {{ qcOrderForm.remark || "无" }}</p>
-      <p>
-        <strong>派发次数上限:</strong>
-        {{ qcOrderForm.dispatchLimit === -1 ? "无限制" : qcOrderForm.dispatchLimit }}
-      </p>
-      <p><strong>任务时限:</strong> {{ qcOrderForm.dueDateOffsetMinute }} 分钟</p>
-      <p><strong>派发总数:</strong> {{ qcOrderForm.dispatches.length }}</p>
+      <h4>工单预览</h4>
+      <p><strong>名称:</strong> {{ qcOrderForm.name }}</p>
+      <p><strong>备注:</strong> {{ qcOrderForm.description || "无" }}</p>
+      <p><strong>任务总数:</strong> {{ qcOrderForm.dispatches.length }}</p>
       <div v-for="(dispatch, index) in qcOrderForm.dispatches" :key="dispatch.id" class="dispatch-preview">
-        <h5>派发 {{ index + 1 }}</h5>
+        <h5>任务 {{ index + 1 }}</h5>
         <ul class="dispatch-details">
-          <li>派发计划类型: <strong>{{ dispatch.scheduleType === 'CRON' ? '周期计划' : '单次计划' }}</strong></li>
-          <li v-if="dispatch.scheduleType === 'CRON'">
-            执行周期: <strong>{{ formatCronExpression(dispatch.cronExpression) }}</strong>
+          <li>任务类型: <strong>{{ dispatch.type === 'regular' ? '周期计划' : '单次计划' }}</strong></li>
+          <li v-if="dispatch.type === 'regular'">
+            执行计划: <strong>{{ formatCronExpression(dispatch.cronExpression) }}</strong>
           </li>
-          <li v-if="dispatch.scheduleType === 'CRON'">
-            运行时间: <strong>{{ formatDateRange(dispatch.dateRange) }}</strong>
+          <li v-if="dispatch.type === 'regular'">
+            执行周期: <strong>{{ formatDateRange(dispatch.dateRange) }}</strong>
           </li>
           <li v-else>
-            执行时间: <strong>{{ formatDate(dispatch.executionDate) }}</strong>
+            执行时间: <strong>{{ formatDate(dispatch.customTime) }}</strong>
           </li>
-          <li>人员: <strong>{{ formatUsers(dispatch.userIds) }}</strong></li>
-          <li>表单: <strong>{{ formatForms(dispatch.formIds) }}</strong></li>
+          <li>
+            <strong>派发次数上限:</strong>
+            {{ dispatch.dispatchLimit === -1 ? "无限制" : dispatch.dispatchLimit }}
+          </li>
+          <li>
+            <strong>派发任务时限:</strong> {{ dispatch.dueDateOffsetMinute }} 分钟
+          </li>
+          <li>
+            人员: <strong>{{ formatUsers(dispatch.userIds) }}</strong>
+          </li>
+          <li>
+            表单: <strong>{{ formatForms(dispatch.formIds) }}</strong>
+          </li>
         </ul>
       </div>
     </el-card>
@@ -315,13 +406,15 @@
 </template>
 
 
-
 <script>
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import { CronElementPlus } from "@vue-js-cron/element-plus";
 import { fetchUsers } from "@/services/userService";
 import { createQcOrder } from "@/services/qcOrderService";
 import { humanizeCronInChinese } from "cron-chinese";
+import {normalizeCronExpression} from "@/utils/dispatch-utils";
+import {getAllProductionWorkOrders, getAllProducts, getAllRawMaterials} from "@/services/productionService";
+import {getAllEquipments, getAllMaintenanceWorkOrders} from "@/services/maintenanceService";
 
 export default {
   components: { DispatchFormTreeSelect, CronElementPlus },
@@ -337,10 +430,7 @@ export default {
       valueFormat: "YYYY-MM-DDTHH:mm:ssZ",
       qcOrderForm: {
         name: "",
-        remark: "",
-        dateRange: [],
-        dispatchLimit: -1,
-        dueDateOffsetMinute: 60,
+        description: "",
         applyUserToAll: false,
         globalUserIds: [], // global user selection
         applyFormToAll: false,
@@ -349,44 +439,47 @@ export default {
       },
       originalQcOrderForm: null, // Store the original order for comparison
       validationRules: {
-        name: [{required: true, message: "请输入质检订单名称", trigger: "blur"}],
-        remark: [{required: false, message: "请输入备注", trigger: "blur"}],
-        dateRange: [
+        name: [{required: true, message: "请输入质检工单名称", trigger: "blur"}],
+        "dispatches.*.dateRange": [
           {required: true, message: "请选择派发运行时间", trigger: "change"},
         ],
         dispatchLimit: [
           {required: true, message: "请输入派发次数上限", trigger: "change"},
         ],
         dueDateOffsetMinute: [
-          {required: true, message: "请输入任务时限", trigger: "change"},
+          {required: true, message: "请输入派发任务时限", trigger: "change"},
         ],
-        "dispatches.*.scheduleType": [
-          {required: true, message: "请选择派发计划类型", trigger: "change"},
+        "dispatches.*.type": [
+          {required: true, message: "请选择任务类型", trigger: "change"},
         ],
         "dispatches.*.cronExpression": [
-          {required: true, message: "请输入有效的 CRON 表达式", trigger: "blur"},
+          {required: true, message: "请输入有效的执行计划", trigger: "blur"},
         ],
-        "dispatches.*.executionDate": [
+        "dispatches.*.customTime": [
           {required: true, message: "请选择执行时间", trigger: "change"},
         ],
       },
       userOptions: [],  // Stores user data fetch from backend
-      isLoadingUser: false, // State to indicate if system is currently loading user
       instrumentOptions: [
-        { id: "inst1", name: "仪器 1" },
-        { id: "inst2", name: "仪器 2" },
-        { id: "inst3", name: "仪器 3" },
+        { id: "1", name: "仪器 1" },
+        { id: "2", name: "仪器 2" },
+        { id: "3", name: "仪器 3" },
       ],  // Dummy data, temporary placeholder
       samplingLocationOptions: [
-        { id: "loc1", name: "位置 1" },
-        { id: "loc2", name: "位置 2" },
-        { id: "loc3", name: "位置 3" },
+        { id: "4", name: "位置 4" },
+        { id: "5", name: "位置 5" },
+        { id: "6", name: "位置 6" },
       ], // Dummy data, temporary placeholder
-      testingSubjectOptions: [
-        { id: "ts1", name: "检测项目 1" },
-        { id: "ts2", name: "检测项目 2" },
-        { id: "ts3", name: "检测项目 3" },
+      testSubjectOptions: [
+        { id: "7", name: "检测项目 7" },
+        { id: "8", name: "检测项目 8" },
+        { id: "9", name: "检测项目 9" },
       ], // Dummy data, temporary placeholder
+      productOptions: [],
+      rawMaterialOptions: [],
+      productionWorkOrderOptions: [],
+      equipmentOptions: [],
+      maintenanceWorkOrderOptions: [],
     };
   },
   watch: {
@@ -437,11 +530,11 @@ export default {
   methods: {
     addDispatch() {
       const newDispatch = {
-        id: Date.now(),
-        name: `Dispatch-${Date.now()}`,
-        scheduleType: "CRON",
+        name: "",
+        description: "",
+        type: "regular",
         cronExpression: "* * * * *",
-        executionDate: null,
+        customTime: null,
         dateRange: [],
         userIds: this.qcOrderForm.applyUserToAll
             ? [...this.qcOrderForm.globalUserIds]
@@ -449,14 +542,18 @@ export default {
         formIds: this.qcOrderForm.applyFormToAll
             ? [...this.qcOrderForm.globalFormIds]
             : [],
-        instrument: null, // New instrument field
-        samplingLocation: null,
-        testingSubject: [],
+        samplingLocationIds: [],
+        testSubjectIds: [],
+        instrumentIds: [],
+        maintenanceWorkOrderIds: [],
+        equipmentIds: [],
+        productionWorkOrderIds: [],
+        rawMaterialIds: [],
+        productIds: [],
         collapsed: false,
         isUnlimited: true,
         dispatchLimit: -1,
         dueDateOffsetMinute: 60,
-        remark: "",
       };
       this.qcOrderForm.dispatches.push(newDispatch);
     },
@@ -473,59 +570,30 @@ export default {
       this.qcOrderForm.dispatches[index].collapsed =
           !this.qcOrderForm.dispatches[index].collapsed;
     },
-    async loadUserOptions() {
-      if (this.isLoadingUser || this.userOptions.length > 0) return;
-      this.isLoadingUser = true;
-      try {
-        const response = await fetchUsers();
-        this.userOptions = response.data.data.map((user) => ({
-          id: user.id,
-          name: user.name,
-        }));
-      } catch (error) {
-        console.error("Error loading user options:", error);
-      } finally {
-        this.isLoadingUser = false;
-      }
-    },
+    // Update data from dispatch form tree select
     handleSelectedForms(forms, index) {
       this.qcOrderForm.dispatches[index].formIds = forms.map((form) => form.id);
     },
     submitForm() {
       this.$refs.formRef.validate(async (valid) => {
         if (valid) {
-          console.log("Submitted Form Data:", this.qcOrderForm);
           try {
             // Prepare the request payload
             const payload = {
               name: this.qcOrderForm.name,
-              dispatchRequestList: this.qcOrderForm.dispatches.map((dispatch) => ({
-                name: dispatch.name || `Dispatch-${dispatch.id}`, // Fallback for name
-                type: dispatch.scheduleType === "CRON" ? "SCHEDULED" : "MANUAL",
-                remark: dispatch.remark || null,
-                cronExpression: dispatch.cronExpression || null,
-                startTime: dispatch.dateRange?.[0] || null,
-                endTime: dispatch.dateRange?.[1] || null,
-                dispatchLimit: dispatch.dispatchLimit,
-                dueDateOffsetMinute: dispatch.dueDateOffsetMinute,
-                formIds: dispatch.formIds || [],
-                userIds: dispatch.userIds || [],
-                productIds: dispatch.productIds || [],
-                rawMaterialIds: dispatch.rawMaterialIds || [],
-                productionWorkOrderIds: dispatch.productionWorkOrderIds || [],
-                equipmentIds: dispatch.equipmentIds || [],
-                maintenanceWorkOrderIds: dispatch.maintenanceWorkOrderIds || [],
-              })),
+              description: this.qcOrderForm.description,
+              dispatchRequestList: this.qcOrderForm.dispatches.map((dispatch) =>
+                  (this.transformOrderData(dispatch))),
             };
 
-            console.log("Submitting Payload:", payload);
-
+            console.log("Submitting Payload:");
+            console.log(payload);
             const userId = this.$store.getters.getUser.id;
             const response = await createQcOrder(payload, userId);
 
             // Handle success
             this.$message.success("QC Order created successfully!");
-            // this.$emit("order-created", response.data); // Emit success event to parent
+            this.$emit("order-created"); // Emit success event to parent
           } catch (error) {
             console.error("Error creating QC Order:", error);
             this.$message.error("Failed to create QC Order. Please try again.");
@@ -536,7 +604,7 @@ export default {
     resetForm() {
       this.qcOrderForm = this.transformOrderData(this.currentOrder || {})
     },
-    // Format a date in '2025/1/16 00:00:00' format
+    // Format a date in '2025/1/16 00:00:00' format (Order summary helper)
     formatDate(date) {
       if (!date) return "无";
       return new Date(date).toLocaleString("zh-CN", {
@@ -548,24 +616,24 @@ export default {
         second: "2-digit",
       });
     },
-    // Format a date range
+    // Format a date range (Order summary helper)
     formatDateRange(range) {
       if (!Array.isArray(range) || range.length !== 2) return "无";
       return `${this.formatDate(range[0])} 至 ${this.formatDate(range[1])}`;
     },
-    // Format user list
+    // Format user list (Order summary helper)
     formatUsers(userIds) {
       if (!userIds.length) return "无";
       return userIds
           .map((id) => this.userOptions.find((user) => user.id === id)?.name || "未知用户")
           .join(", ");
     },
-    // Format form list
+    // Format form list (Order summary helper)
     formatForms(formIds) {
       if (!formIds.length) return "无";
       return formIds.join(", ");
     },
-    // Format cron expression to Chinese
+    // Format cron expression to Chinese (Order summary helper)
     formatCronExpression(cron) {
       if (!cron) return "无效的 Cron 表达式";
       try {
@@ -574,16 +642,119 @@ export default {
         return "无法解析 Cron 表达式";
       }
     },
+    // Transform order data to match order backend api request
     transformOrderData(data) {
       return {
-        name: data.name || "",
-        remark: data.name || "",
-        dateRange: data.dateRange || [],
-        dispatchLimit: data.dispatchLimit || -1,
-        dueDateOffsetMinute: data.dueDateOffsetMinute || 0,
-        dispatches: data.dispatches || [],
+        type: data.type,
+        name: data.name || null, // Fallback for name
+        description: data.description || null,
+        startTime: data.dateRange?.[0] || null,
+        endTime: data.dateRange?.[1] || null,
+        cronExpression: normalizeCronExpression(data.cronExpression) || null,
+        dispatchLimit: data.dispatchLimit,
+        customTime: data.customTime || null,
+        dueDateOffsetMinute: data.dueDateOffsetMinute,
+        userIds: data.userIds || [],
+        formIds: data.formIds || [],
+        productIds: data.productIds || [],
+        rawMaterialIds: data.rawMaterialIds || [],
+        productionWorkOrderIds: data.productionWorkOrderIds || [],
+        equipmentIds: data.equipmentIds || [],
+        maintenanceWorkOrderIds: data.maintenanceWorkOrderIds || [],
+        samplingLocationIds: data.samplingLocationIds || [],
+        instrumentIds: data.instrumentIds || [],
+        testSubjectIds: data.testSubjectIds || [],
       };
     },
+    async loadUserOptions() {
+      try {
+        const response = await fetchUsers();
+        const users = response.data?.data || [];
+        this.userOptions = users.map((user) => ({
+          id: user.id,
+          name: user.name,
+        }));
+      } catch (error) {
+        console.error("Failed to load user options:", error);
+      }
+    },
+    async loadProductOptions() {
+      try {
+        const response = await getAllProducts();
+        const products = response.data?.data || [];
+        this.productOptions = products.map((product) => ({
+          id : product.id,
+          name: product.name,
+        }));
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      }
+    },
+    async loadRawMaterialOptions() {
+      try {
+        const response = await getAllRawMaterials();
+        const rawMaterials = response.data?.data || [];
+        this.rawMaterialOptions = rawMaterials.map((material) => ({
+          id: material.id,
+          name: material.name,
+        }));
+      } catch (error) {
+        console.error("Failed to load raw materials:", error);
+      }
+    },
+    async loadProductionWorkOrderOptions() {
+      try {
+        const response = await getAllProductionWorkOrders();
+        const workOrders = response.data?.data || [];
+        this.productionWorkOrderOptions = workOrders.map((workOrder) => ({
+          id: workOrder.id,
+          name: `${workOrder.name} (${workOrder.code})`,
+        }));
+      } catch (error) {
+        console.error("Failed to load production work orders:", error);
+      }
+    },
+    async loadEquipmentOptions() {
+      try {
+        const response = await getAllEquipments();
+        const equipments = response.data?.data || [];
+        this.equipmentOptions = equipments.map((equipment) => ({
+          id: equipment.id,
+          name: `${equipment.name} (${equipment.code})`,
+        }));
+      } catch (error) {
+        console.error("Failed to load equipments:", error);
+      }
+    },
+    async loadMaintenanceWorkOrderOptions() {
+      try {
+        const response = await getAllMaintenanceWorkOrders();
+
+        // Extract the data array from the response
+        const workOrders = response.data?.data || [];
+
+        // Map the work orders into options for the dropdown
+        this.maintenanceWorkOrderOptions = workOrders.map((workOrder) => ({
+          id: workOrder.id,        // Use `id` as the value
+          name: `${workOrder.name} (${workOrder.code})`, // Combine `name` and `code` for clarity
+        }));
+      } catch (error) {
+        console.error("Failed to load maintenance work orders:", error);
+      }
+    },
+    async loadAllOptions() {
+      await Promise.all([
+        this.loadProductOptions(),
+        this.loadRawMaterialOptions(),
+        this.loadProductionWorkOrderOptions(),
+        this.loadEquipmentOptions(),
+        this.loadMaintenanceWorkOrderOptions(),
+        this.loadUserOptions(),
+      ]);
+    },
+  },
+  mounted() {
+    this.loadAllOptions()
   }
 }
 
