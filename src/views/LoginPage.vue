@@ -41,6 +41,8 @@
             </el-tooltip>
           </el-form-item>
 
+          <!-- Hidden div for test automation -->
+          <div id="captcha-value" style="display: none;">{{ identifyCode }}</div>
 
           <!-- Remember Me Checkbox -->
           <el-form-item>

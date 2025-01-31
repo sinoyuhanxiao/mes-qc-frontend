@@ -23,7 +23,7 @@
                icon-class="el-icon-arrow-right" @node-click="onNodeTreeClick"></el-tree>
     </el-drawer>
 
-    <div class="right-toolbar" :style="{width: toolbarWidth + 'px'}">
+    <div class="right-toolbar" :style="{ width: newToolBarWidth }">
       <div class="right-toolbar-con">
         <el-button v-if="showToolButton('saveFormButton')" link type="primary" @click="showSaveDialog">
           <svg-icon icon-class="el-file-upload-field" />{{i18nt('designer.toolbar.saveQcForm')}}</el-button>
@@ -255,6 +255,7 @@
         designerConfig: this.getDesignerConfig(),
 
         toolbarWidth: 460,
+        newToolBarWidth: 460,
         saveDialogVisible: false,
         showPreviewDialogFlag: false,
         showImportJsonDialogFlag: false,
@@ -350,6 +351,10 @@
 
     },
     mounted() {
+      this.updateToolBarWidth(); // Set initial value
+      window.addEventListener('resize', this.updateToolBarWidth); // Detect window resizes
+      this.screenMediaQuery = window.matchMedia('(max-width: 1440px)');
+      this.screenMediaQuery.addEventListener('change', this.updateToolBarWidth); // Detect monitor changes
       let maxTBWidth = this.designerConfig.toolbarMaxWidth || 460
       let minTBWidth = this.designerConfig.toolbarMinWidth || 300
       let newTBWidth = window.innerWidth - 260 - 300 - 320 - 80
@@ -361,7 +366,16 @@
         })
       })
     },
+    beforeDestroy() {
+      window.removeEventListener('resize', this.updateToolBarWidth); // Remove event listener
+      this.screenMediaQuery.removeEventListener('change', this.updateToolBarWidth); // Cleanup
+    },
     methods: {
+      updateToolBarWidth() {
+        const screenWidth = window.screen.width;
+        console.log('screenWidth', screenWidth)
+        this.newToolBarWidth = screenWidth <= 1600 ? '230px' : '460px';
+      },
       showToolButton(configName) {
         if (this.designerConfig[configName] === undefined) {
           return true

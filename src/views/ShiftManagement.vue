@@ -3,10 +3,10 @@
     <!-- Toolbar with Search Bar and Add Button -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>班组管理</h2>
+        <h2>{{ translate("shiftManagement.title") }}</h2>
         <el-input
             v-model="searchQuery"
-            placeholder="Search Shifts"
+            :placeholder="translate('shiftManagement.searchPlaceholder')"
             clearable
             @input="filterTable"
             style="width: 300px; margin-left: 20px"
@@ -19,7 +19,7 @@
 
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
-        <el-tooltip content="Refresh Shift table" placement="top">
+        <el-tooltip :content="translate('shiftManagement.refreshTooltip')" placement="top">
           <el-button
               class="refresh-button"
               type="primary"
@@ -31,7 +31,7 @@
         </el-tooltip>
 
         <!-- Add Button -->
-        <el-button type="primary" @click="showAddDialog">+ New</el-button>
+        <el-button type="primary" @click="showAddDialog">{{ translate("shiftManagement.addButton") }}</el-button>
       </div>
     </div>
 
@@ -44,43 +44,43 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Name" prop="name" width="180" sortable>
+        <el-table-column :label="translate('shiftManagement.table.name')" prop="name" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.name }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Type" prop="type" width="180" sortable>
+        <el-table-column :label="translate('shiftManagement.table.type')" prop="type" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.type }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Shift Leader" prop="leader_id" width="180" sortable>
+        <el-table-column :label="translate('shiftManagement.table.leader')" prop="leader_id" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.leader?.name || " - " }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="Start Time" prop="start_time" width="180" sortable>
+        <el-table-column :label="translate('shiftManagement.table.startTime')" prop="start_time" width="180" sortable>
           <template #default="scope">
             <span>{{ formatTime(scope.row.start_time) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="End Time" prop="end_time" width="180" sortable>
+        <el-table-column :label="translate('shiftManagement.table.endTime')" prop="end_time" width="180" sortable>
           <template #default="scope">
             <span>{{ formatTime(scope.row.end_time) }}</span>
           </template>
         </el-table-column>
 
         <el-table-column
-            label="Status" prop="status" width="180" sortable
+            :label="translate('shiftManagement.table.status')" prop="status" width="180" sortable
         >
           <template #header>
             <span>
-              Status
-              <el-tooltip content="Active/Inactive status of the shift" placement="top">
+              {{ translate('shiftManagement.table.status') }}
+              <el-tooltip :content="translate('shiftManagement.table.statusTooltip')" placement="top">
                 <el-icon><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
@@ -95,7 +95,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="Description" prop="description" width="360" sortable>
+        <el-table-column :label="translate('shiftManagement.table.description')" prop="description" width="360" sortable>
           <template #default="scope">
             <span>{{ scope.row.description }}</span>
           </template>
@@ -107,7 +107,7 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-        <el-table-column label="Created At" prop="created_at" width="180" sortable>
+        <el-table-column :label="translate('shiftManagement.table.createdAt')" prop="created_at" width="180" sortable>
           <template #default="scope">
             <span>{{ formatDate(scope.row.created_at) }}</span>
           </template>
@@ -125,11 +125,11 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-        <el-table-column label="Operations" align="right" header-align="right" width="230" fixed="right">
+        <el-table-column :title="translate('shiftManagement.table.actions')" align="right" header-align="right" width="230" fixed="right">
           <template #default="scope">
-            <el-button size="small" type="primary" @click="openShiftUsersDialog(scope.row)">查看成员</el-button>
-            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+            <el-button size="small" type="primary" @click="openShiftUsersDialog(scope.row)">{{ translate('shiftManagement.table.viewMembers') }}</el-button>
+            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate('shiftManagement.edit') }}</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate('shiftManagement.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -199,22 +199,22 @@
 
 
     <!-- Add Shift Dialog -->
-    <el-dialog title="Add Shift" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
+    <el-dialog :title="translate('shiftManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
       <div class="popup-container">
         <el-form ref="addShiftForm" :model="newShift" :rules="rules" label-width="140px">
-          <el-form-item label="Name" prop="name">
+          <el-form-item :label="translate('shiftManagement.addDialog.name')" prop="name">
             <el-input v-model="newShift.name" />
           </el-form-item>
 
-          <el-form-item label="Type" prop="type">
+          <el-form-item :label="translate('shiftManagement.addDialog.type')" prop="type">
             <el-input v-model="newShift.type" />
           </el-form-item>
 
-          <el-form-item label="Leader" prop="leader_id">
+          <el-form-item :label="translate('shiftManagement.addDialog.leader')" prop="leader_id">
             <el-select
                 v-model="newShift.leader_id"
                 filterable
-                placeholder="Select Shift Leader"
+                :placeholder="translate('shiftManagement.addDialog.selectLeaderPlaceholder')"
                 style="width: 480px"
             >
               <el-option
@@ -226,26 +226,26 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Start Time" prop="start_time">
+          <el-form-item :label="translate('shiftManagement.addDialog.startTime')" prop="start_time">
             <el-time-picker
                 v-model="newShift.start_time"
-                placeholder="Select Start Time"
+                :placeholder="translate('shiftManagement.addDialog.startTime')"
             />
           </el-form-item>
 
-          <el-form-item label="End Time" prop="end_time">
+          <el-form-item :label="translate('shiftManagement.addDialog.endTime')" prop="end_time">
             <el-time-picker
                 v-model="newShift.end_time"
-                placeholder="Select End Time"
+                :placeholder="translate('shiftManagement.addDialog.endTime')"
             />
           </el-form-item>
 
-          <el-form-item label="Members" prop="selectedUsers">
+          <el-form-item :label="translate('shiftManagement.addDialog.members')" prop="selectedUsers">
             <el-select
                 v-model="newUser.selectedUsers"
                 multiple
                 filterable
-                placeholder="Select Members"
+                :placeholder="translate('shiftManagement.addDialog.selectMembers')"
                 style="width: 100%;"
             >
               <el-option
@@ -257,14 +257,14 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Description" prop="description">
+          <el-form-item :label="translate('shiftManagement.addDialog.description')" prop="description">
             <el-input type="textarea" v-model="newShift.description" />
           </el-form-item>
 
-          <el-form-item label="Status" prop="status">
-            <el-select v-model="newShift.status" placeholder="Select Status">
-              <el-option label="Active" :value="1" />
-              <el-option label="Inactive" :value="0" />
+          <el-form-item :label="translate('shiftManagement.addDialog.status')" prop="status">
+            <el-select v-model="newShift.status" :placeholder="translate('shiftManagement.addDialog.selectStatus')">
+              <el-option :label="translate('shiftManagement.status.active')" :value="1" />
+              <el-option :label="translate('shiftManagement.status.inactive')" :value="0" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -272,26 +272,26 @@
 
       <template #footer>
         <div class="popup-container">
-          <el-button @click="addDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="validateAndAddShift">Confirm</el-button>
+          <el-button @click="addDialogVisible = false">{{ translate('shiftManagement.addDialog.cancelButton') }}</el-button>
+          <el-button type="primary" @click="validateAndAddShift">{{ translate('shiftManagement.addDialog.confirmButton') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- Edit Shift Dialog -->
-    <el-dialog title="Edit Shift" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
+    <el-dialog :title="translate('shiftManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
       <div class="popup-container">
         <el-form ref="editShiftForm" :model="editShift" :rules="rules" label-width="140px">
-          <el-form-item label="Name" prop="name">
+          <el-form-item :label="translate('shiftManagement.editDialog.name')" prop="name">
             <el-input v-model="editShift.name" />
           </el-form-item>
 
-          <el-form-item label="Type" prop="type">
+          <el-form-item :label="translate('shiftManagement.editDialog.type')" prop="type">
             <el-input v-model="editShift.type" />
           </el-form-item>
 
-          <el-form-item label="Leader" prop="leader_id">
-            <el-select v-model="editShift.leader_id" filterable placeholder="Select Leader" style="width: 480px">
+          <el-form-item :label="translate('shiftManagement.editDialog.leader')" prop="leader_id">
+            <el-select v-model="editShift.leader_id" filterable :placeholder="translate('shiftManagement.editDialog.selectLeaderPlaceholder')" style="width: 480px">
               <el-option
                   v-for="user in userOptions"
                   :key="user.id"
@@ -301,26 +301,26 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Start Time" prop="start_time">
+          <el-form-item :label="translate('shiftManagement.editDialog.startTime')" prop="start_time">
             <el-time-picker
                 v-model="editShift.start_time"
-                placeholder="Select Start Time"
+                :placeholder="translate('shiftManagement.editDialog.startTime')"
             />
           </el-form-item>
 
-          <el-form-item label="End Time" prop="end_time">
+          <el-form-item :label="translate('shiftManagement.editDialog.endTime')" prop="end_time">
             <el-time-picker
                 v-model="editShift.end_time"
-                placeholder="Select End Time"
+                :placeholder="translate('shiftManagement.editDialog.endTime')"
             />
           </el-form-item>
 
-          <el-form-item label="Members" prop="assignedUsers">
+          <el-form-item :label="translate('shiftManagement.editDialog.members')" prop="assignedUsers">
             <el-select
                 v-model="editUser.assignedUsers"
                 multiple
                 filterable
-                placeholder="Select Users"
+                :placeholder="translate('shiftManagement.editDialog.selectMembersPlaceholder')"
                 style="width: 100%;"
             >
               <el-option
@@ -332,14 +332,14 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="Description" prop="description">
+          <el-form-item :label="translate('shiftManagement.editDialog.description')" prop="description">
             <el-input type="textarea" v-model="editShift.description" />
           </el-form-item>
 
-          <el-form-item label="Status" prop="status">
-            <el-select v-model="editShift.status" placeholder="Select Status">
-              <el-option label="Active" :value="1" />
-              <el-option label="Inactive" :value="0" />
+          <el-form-item :label="translate('shiftManagement.editDialog.status')" prop="status">
+            <el-select v-model="editShift.status" :placeholder="translate('shiftManagement.editDialog.selectStatusPlaceholder')">
+              <el-option :label="translate('shiftManagement.status.active')" :value="1" />
+              <el-option :label="translate('shiftManagement.status.inactive')" :value="0" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -347,8 +347,8 @@
 
       <template #footer>
         <div class="popup-container">
-          <el-button @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="handleEditConfirm">Confirm</el-button>
+          <el-button @click="editDialogVisible = false">{{ translate('shiftManagement.editDialog.cancelButton') }}</el-button>
+          <el-button type="primary" @click="handleEditConfirm">{{ translate('shiftManagement.editDialog.confirmButton') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -372,6 +372,7 @@ import {
 import {formatDate} from "@/utils/task-center/dateFormatUtils";
 import {fetchUsers} from "@/services/userService";
 import {getUsersForShift} from "@/services/shiftUserService";
+import {translate} from "@/utils/i18n";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -430,11 +431,11 @@ export default {
         selectedUsers: [],
       },
       rules: {
-        name: [{ required: true, message: "Name is required", trigger: "blur" }],
-        type: [{ required: true, message: "Type is required", trigger: "blur" }],
-        leader_id: [{ required: true, message: "Leader ID is required", trigger: "blur" }],
-        start_time: [{ required: true, message: "Start Time is required", trigger: "blur" }],
-        end_time: [{ required: true, message: "End Time is required", trigger: "blur" }],
+        name: [{ required: true, message: translate("shiftManagement.validation.nameRequired"), trigger: "blur" }],
+        type: [{ required: true, message: translate("shiftManagement.validation.typeRequired"), trigger: "blur" }],
+        leader_id: [{ required: true, message: translate("shiftManagement.validation.leaderRequired"), trigger: "blur" }],
+        start_time: [{ required: true, message: translate("shiftManagement.validation.startTimeRequired"), trigger: "blur" }],
+        end_time: [{ required: true, message: translate("shiftManagement.validation.endTimeRequired"), trigger: "blur" }],
       },
     };
   },
@@ -474,6 +475,7 @@ export default {
     },
   },
   methods: {
+    translate,
     filterShiftUsers() {
       const searchText = this.searchUserQuery.toLowerCase();
       this.filteredShiftUsers = this.shiftUsers.filter(user =>
@@ -612,11 +614,15 @@ export default {
     },
     filterTable() {
       const searchText = this.searchQuery.toLowerCase();
-      this.filteredData = this.tableData.filter((item) => {
-        return Object.values(item).some((value) =>
-            String(value).toLowerCase().includes(searchText)
-        );
-      });
+      this.filteredData = this.tableData.filter((item) =>
+          (item.id && String(item.id).toLowerCase().includes(searchText)) || // 过滤 ID
+          (item.leader?.name && item.leader.name.toLowerCase().includes(searchText)) || // 过滤 负责人名字
+          (item.name && item.name.toLowerCase().includes(searchText)) || // 过滤 班次名称
+          (item.type && item.type.toLowerCase().includes(searchText)) || // 过滤 班次类型
+          (item.start_time && this.formatTime(item.start_time).includes(searchText)) || // 过滤 开始时间
+          (item.end_time && this.formatTime(item.end_time).includes(searchText)) || // 过滤 结束时间
+          (item.description && item.description.toLowerCase().includes(searchText)) // 过滤 描述
+      );
     },
     handleSortChange({prop, order}) {
       this.sortSettings = {prop, order};
