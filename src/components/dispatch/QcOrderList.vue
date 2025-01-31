@@ -10,7 +10,7 @@
     <el-table-column type="selection" width="55"></el-table-column>
 
     <!-- QC Order Name -->
-    <el-table-column prop="name" label="QC 订单名称" width="200" sortable>
+    <el-table-column prop="name" label="QC 工单名称" width="200" sortable>
       <template #default="scope">
         <span class="clickable-name" @click="clickedNameColumn(scope.row)">
           {{ scope.row.name }}
@@ -19,10 +19,10 @@
     </el-table-column>
 
     <!-- Order ID -->
-    <el-table-column prop="order_id" label="订单 ID" width="65" sortable></el-table-column>
+    <el-table-column prop="order_id" label="工单 ID" width="65" sortable></el-table-column>
 
     <!-- Order State -->
-    <el-table-column prop="state" label="订单状态" width="120" sortable>
+    <el-table-column prop="state" label="工单状态" width="120" sortable>
       <template #default="scope">
         <el-tag :type="getStateTagType(scope.row.state).type" size="medium">
           {{ getStateTagType(scope.row.state).label }}
@@ -37,6 +37,13 @@
       </template>
     </el-table-column>
 
+    <!-- Updated At -->
+    <el-table-column prop="updated_at" label="更新时间" width="180" sortable>
+      <template #default="scope">
+        <time-slot :value="scope.row.updated_at" />
+      </template>
+    </el-table-column>
+
     <!-- Dispatch Count -->
     <el-table-column prop="dispatches.length" label="派发数量" width="120" sortable>
       <template #default="scope">
@@ -44,13 +51,6 @@
       </template>
     </el-table-column>
 
-    <!-- Actions -->
-    <el-table-column label="操作" width="180">
-      <template #default="scope">
-        <el-button size="small" type="primary" @click="editOrder(scope.row)">编辑</el-button>
-        <el-button size="small" type="danger" @click="deleteOrder(scope.row.order_id)">删除</el-button>
-      </template>
-    </el-table-column>
   </el-table>
 </template>
 

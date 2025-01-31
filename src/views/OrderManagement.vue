@@ -3,7 +3,7 @@
     <!-- Top Section -->
     <div class="top-section">
       <div class="top-left">
-        <h2>QC 订单管理</h2>
+        <h2>任务派发管理</h2>
         <el-input
             v-model="searchInput"
             placeholder="输入名称或ID搜索"
@@ -37,7 +37,7 @@
 
         <!-- New QC Order Button -->
         <el-button type="primary" @click="handleNewQcOrderButtonClick">
-          新增QC订单
+          新增QC工单
         </el-button>
 
         <!-- Delete Button -->
@@ -76,7 +76,7 @@
 
     <!-- QC Order Details Dialog -->
     <el-dialog
-        title="QC 订单详情"
+        title="工單详情"
         v-model="isDetailsDialogVisible"
         width="50%"
         :close-on-click-modal="false"
@@ -123,7 +123,7 @@ export default {
       currentOrder: null,
       selectedRows: [],
       searchInput: "",
-      qcOrderList: [], // List of QC orders
+      qcOrderList: [],
       currentPage: 1,
       pageSize: 10,
     };
@@ -133,9 +133,11 @@ export default {
       return this.filterAndSortList(
           this.qcOrderList,
           (order) =>
-              (!this.searchInput ||
+              (
+                  (order.status === 1) &&
+                  (!this.searchInput ||
                   this.matchesSearch(order.name, this.searchInput) ||
-                  this.matchesSearch(order.order_id, this.searchInput)),
+                  this.matchesSearch(order.order_id, this.searchInput))),
           ["created_at", "updated_at"]
       );
     },
@@ -151,7 +153,7 @@ export default {
         const response = await getAllQcOrders();
         this.qcOrderList = response.data.data;
       } catch (error) {
-        this.$message.error("无法加载QC订单列表，请重试。");
+        this.$message.error("无法加载QC工单列表，请重试。");
       }
     },
     handleNewQcOrderButtonClick() {
@@ -170,14 +172,14 @@ export default {
     },
     async confirmDeleteOrder(orderId) {
       try {
-        await this.$confirm("确认删除QC订单吗？", "提示", {
+        await this.$confirm("确认删除工单吗？", "提示", {
           confirmButtonText: "确定",
           cancelButtonText: "取消",
           type: "warning",
         });
 
         await deleteQcOrder(orderId);
-        this.$message.success("QC订单已删除！");
+        this.$message.success("工单已删除！");
         await this.loadAllQcOrders();
       } catch (error) {
         this.$message.error("删除失败，请重试。");
@@ -185,11 +187,11 @@ export default {
     },
     confirmDeleteSelectedRows() {
       if (this.selectedRows.length === 0) {
-        this.$message.warning("请选择至少一个QC订单进行删除！");
+        this.$message.warning("请选择至少一个工单进行删除！");
         return;
       }
 
-      this.$confirm("确认删除选中的QC订单吗？", "提示", {
+      this.$confirm("确认删除选中的工单吗？", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
@@ -197,7 +199,7 @@ export default {
           .then(async () => {
             const idsToDelete = this.selectedRows.map((row) => row.order_id);
             await Promise.all(idsToDelete.map((id) => deleteQcOrder(id)));
-            this.$message.success("选中的QC订单已删除！");
+            this.$message.success("选中的工单已删除！");
             await this.loadAllQcOrders();
             this.selectedRows = [];
           })

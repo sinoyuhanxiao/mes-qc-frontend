@@ -147,7 +147,7 @@
 
       <template v-else-if="isDetailsDialogVisible && isEditMode">
         <dispatch-configurator
-             :current-dispatch="currentDispatch"
+             :current-order="currentDispatch"
              :is-edit-mode="isEditMode"
              @on-submit="handleDispatchSubmit"
              @on-cancel="handleCancelDispatchForm"
