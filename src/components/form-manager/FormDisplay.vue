@@ -200,7 +200,7 @@ watch(enable_form, (newVal) => {
 });
 
 const audio = new Audio(soundEffect);
-audio.play();
+// audio.play();
 
 //
 // watch(

@@ -15,6 +15,7 @@ import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
 import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
+import ShiftManagement from "@/views/ShiftManagement.vue";
 
 const routes = [
     {
@@ -30,6 +31,11 @@ const routes = [
         path: '/user-management',
         name: 'UserManagement',
         component: UserManagement,
+    },
+    {
+        path: '/shift-management',
+        name: 'ShiftManagement',
+        component: ShiftManagement,
     },
     {
         path: '/LoginPage',

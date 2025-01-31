@@ -5,15 +5,20 @@
     <div :class="['content', { 'full-width': !showNavBar }]">
       <router-view></router-view>
     </div>
+    <div class="floating-language-switch">
+      <LanguageSwitch />
+    </div>
   </div>
 </template>
 
 <script>
 import NavigationMenu from '@/components/common/NavigationMenu.vue';
+import LanguageSwitch from "@/components/lang/LanguageSwitch.vue";
 
 export default {
   name: 'App',
   components: {
+    LanguageSwitch,
     NavigationMenu,
   },
   computed: {
@@ -46,5 +51,12 @@ export default {
 .full-width {
   width: 100%;
   padding: 0;
+}
+
+.floating-language-switch {
+  position: fixed;
+  bottom: 20px; /* 距离底部 */
+  right: 20px; /* 距离右侧 */
+  z-index: 1000; /* 确保层级在最上方 */
 }
 </style>
