@@ -41,10 +41,10 @@ export function formatDate(dateString) {
 // Formats the schedule type into human-readable Chinese text
 export function formatScheduleType(type) {
     switch (type) {
-        case "SCHEDULED":
-            return "计划派发";
-        case "MANUAL":
-            return "快速派发";
+        case "regular":
+            return "周期计划";
+        case "custom":
+            return "单次计划";
         default:
             return "未知";
     }

@@ -24,7 +24,7 @@
     <!-- Order State -->
     <el-table-column prop="state" label="工单状态" width="120" sortable>
       <template #default="scope">
-        <el-tag :type="getStateTagType(scope.row.state).type" size="medium">
+        <el-tag :type="getStateTagType(scope.row.state).type" size="small">
           {{ getStateTagType(scope.row.state).label }}
         </el-tag>
       </template>
@@ -45,7 +45,7 @@
     </el-table-column>
 
     <!-- Dispatch Count -->
-    <el-table-column prop="dispatches.length" label="派发数量" width="120" sortable>
+    <el-table-column prop="dispatches.length" label="任务数量" width="120" sortable>
       <template #default="scope">
         {{ scope.row.dispatches.length }}
       </template>

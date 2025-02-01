@@ -69,6 +69,7 @@
             justify-content: space-between;
              align-items: center;"
         >
+          <!-- Expand Arrow -->
           <el-button
               type="text"
               @click="toggleCollapse(index)"
@@ -95,9 +96,23 @@
             />
           </el-form-item>
 
+          <!-- Description -->
+          <el-form-item
+              label="任务备注"
+              prop="description">
+            <el-input
+                type="textarea"
+                v-model="dispatch.description"
+                placeholder="请输入备注"
+                :prop="'dispatches.' + index + '.description'"
+            />
+          </el-form-item>
+
+          <el-divider>时间调度</el-divider>
+
           <!-- Schedule Type -->
           <el-form-item
-              label="任务计划类型"
+              label="任务类型"
               required
               :prop="'dispatches.' + index + '.type'"
           >
@@ -175,6 +190,7 @@
                 placeholder="请输入限制次数" />
           </el-form-item>
 
+          <el-divider>质检任务配置</el-divider>
           <!-- Due Date Offset -->
           <el-form-item
               label="派发任务时限(分钟)"
@@ -244,23 +260,12 @@
             </el-select>
           </el-form-item>
 
-          <!-- Description -->
-          <el-form-item
-              label="任务备注"
-              prop="description">
-            <el-input
-                type="textarea"
-                v-model="dispatch.description"
-                placeholder="请输入备注"
-                :prop="'dispatches.' + index + '.description'"
-            />
-          </el-form-item>
-
           <!-- User Selection -->
           <el-form-item
               v-if="!qcOrderForm.applyUserToAll"
-              label="人员"
-              :prop="'dispatches.' + index + '.userIds'">
+              label="检测人员"
+              :prop="'dispatches.' + index + '.userIds'"
+              required>
             <el-select
                 v-model="dispatch.userIds"
                 multiple
@@ -278,8 +283,9 @@
           <!-- Form Tree -->
           <el-form-item
               v-if="!qcOrderForm.applyFormToAll"
-              label="表单"
+              label="质检表单"
               :prop="'dispatches.' + index + '.formIds'"
+              required
           >
             <DispatchFormTreeSelect
                 :selected-form-ids="dispatch.formIds"
@@ -289,6 +295,7 @@
           </el-form-item>
 
           <el-divider>生产模块关联</el-divider>
+
           <!-- Product Selection -->
           <el-form-item label="产品">
             <el-select v-model="dispatch.productIds"
@@ -364,7 +371,7 @@
     <el-card class="mt-4" shadow="always">
       <h4>工单预览</h4>
       <p><strong>名称:</strong> {{ qcOrderForm.name }}</p>
-      <p><strong>备注:</strong> {{ qcOrderForm.description || "无" }}</p>
+      <p><strong>工单备注:</strong> {{ qcOrderForm.description || "无" }}</p>
       <p><strong>任务总数:</strong> {{ qcOrderForm.dispatches.length }}</p>
       <div v-for="(dispatch, index) in qcOrderForm.dispatches" :key="dispatch.id" class="dispatch-preview">
         <h5>任务 {{ index + 1 }}</h5>
@@ -380,11 +387,11 @@
             执行时间: <strong>{{ formatDate(dispatch.customTime) }}</strong>
           </li>
           <li>
-            <strong>派发次数上限:</strong>
-            {{ dispatch.dispatchLimit === -1 ? "无限制" : dispatch.dispatchLimit }}
+            派发次数上限:
+            <strong>{{ dispatch.dispatchLimit === -1 ? "无限制" : dispatch.dispatchLimit }}</strong>
           </li>
           <li>
-            <strong>派发任务时限:</strong> {{ dispatch.dueDateOffsetMinute }} 分钟
+            派发任务时限: <strong> { dispatch.dueDateOffsetMinute }} 分钟 </strong>
           </li>
           <li>
             人员: <strong>{{ formatUsers(dispatch.userIds) }}</strong>
@@ -593,7 +600,7 @@ export default {
 
             // Handle success
             this.$message.success("QC Order created successfully!");
-            this.$emit("order-created"); // Emit success event to parent
+            this.$emit("on-create"); // Emit success event to parent
           } catch (error) {
             console.error("Error creating QC Order:", error);
             this.$message.error("Failed to create QC Order. Please try again.");

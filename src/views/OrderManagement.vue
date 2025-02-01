@@ -40,6 +40,11 @@
           新增QC工单
         </el-button>
 
+        <!-- View All Tasks Button -->
+        <el-button type="info" @click="openViewDispatchedTestsDialog">
+          查看全部派发任务
+        </el-button>
+
         <!-- Delete Button -->
         <el-button
             v-if="selectedRows.length > 0"
@@ -81,10 +86,18 @@
         width="50%"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
+        @resume="handleResumeDispatch"
+        @pause="handlePauseDispatch"
+        @edit="handleEditQcOrder"
+        @delete="handleDeleteQcOrder"
+
     >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
             :order="currentOrder"
+            :user-map="userMap"
+            :form-map="formMap"
+            :dispatched-tasks-map="dispatchedTaskMap"
         />
       </template>
 
@@ -97,19 +110,40 @@
         />
       </template>
     </el-dialog>
+
+    <!-- Dispatched Tasks Dialog -->
+    <el-dialog
+        title="已派发任務"
+        v-model="isDispatchedTestsDialogVisible"
+        width="70%"
+        @close="closeViewDispatchedTestsDialog"
+    >
+      <DispatchedTasksList
+          :dispatched-tasks="filteredAndSortedDispatchedTaskList"
+          :form-map="formMap"
+          :user-map="userMap"
+          :show-search-box="true"
+      />
+    </el-dialog>
   </el-container>
 </template>
 
 <script>
 
-import { getAllQcOrders, deleteQcOrder } from "@/services/qcOrderService";
+import {getAllQcOrders, deleteQcOrder, resumeDispatch, pauseDispatch} from "@/services/qcOrderService";
 import { Search, RefreshRight } from "@element-plus/icons-vue";
 import QcOrderList from "@/components/dispatch/QcOrderList.vue";
 import QcOrderDetails from "@/components/dispatch/QcOrderDetails.vue";
 import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
+import {fetchFormNodes} from "@/services/formNodeService";
+import {generateFormMap} from "@/utils/dispatch-utils";
+import {fetchUsers} from "@/services/userService";
+import {getAllDispatchedTasks} from "@/services/dispatchService";
+import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 
 export default {
   components: {
+    DispatchedTasksList,
     DispatchConfigurator,
     QcOrderList,
     QcOrderDetails,
@@ -119,6 +153,7 @@ export default {
   data() {
     return {
       isDetailsDialogVisible: false,
+      isDispatchedTestsDialogVisible: false,
       isEditMode: false,
       currentOrder: null,
       selectedRows: [],
@@ -126,6 +161,9 @@ export default {
       qcOrderList: [],
       currentPage: 1,
       pageSize: 10,
+      formMap: {},
+      userMap: {},
+      dispatchedTasks: [],
     };
   },
   computed: {
@@ -141,11 +179,25 @@ export default {
           ["created_at", "updated_at"]
       );
     },
+    filteredAndSortedDispatchedTaskList() {
+      return this.filterAndSortList(
+          this.dispatchedTasks,
+          (task) =>
+              task.status !== 0,
+          ["updated_at","created_at"]);
+    },
     paginatedQcOrderList() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
       return this.filteredAndSortedQcOrderList.slice(start, end);
     },
+    dispatchedTaskMap() {
+      const map = {};
+      this.currentOrder.dispatches.forEach(dispatch => {
+        map[dispatch.id] = this.dispatchedTasks.filter(task => task.dispatch_id === dispatch.id);
+      });
+      return map;
+    }
   },
   methods: {
     async loadAllQcOrders() {
@@ -177,8 +229,8 @@ export default {
           cancelButtonText: "取消",
           type: "warning",
         });
-
-        await deleteQcOrder(orderId);
+        const userId = this.$store.getters.getUser.id;
+        const response = await deleteQcOrder(orderId, userId);
         this.$message.success("工单已删除！");
         await this.loadAllQcOrders();
       } catch (error) {
@@ -197,14 +249,15 @@ export default {
         type: "warning",
       })
           .then(async () => {
+            const userId = this.$store.getters.getUser.id;
             const idsToDelete = this.selectedRows.map((row) => row.order_id);
-            await Promise.all(idsToDelete.map((id) => deleteQcOrder(id)));
+            await Promise.all(idsToDelete.map((id) => deleteQcOrder(id, userId)));
             this.$message.success("选中的工单已删除！");
             await this.loadAllQcOrders();
             this.selectedRows = [];
           })
-          .catch(() => {
-            this.$message.info("取消删除操作。");
+          .catch((error) => {
+            this.$message.error("删除失败，请重试。");
           });
     },
     closeAndResetDetailsDialog() {
@@ -222,6 +275,20 @@ export default {
     handlePageChange(newPage) {
       this.currentPage = newPage;
     },
+    async handleResumeDispatch(dispatchId) {
+      const userId = this.$store.getters.getUser.id;
+      await resumeDispatch(this.currentOrder.order_id, dispatchId, userId);
+    },
+    async handlePauseDispatch(dispatchId) {
+      const userId = this.$store.getters.getUser.id;
+      await pauseDispatch(this.currentOrder.order_id, dispatchId, userId);
+    },
+    handleEditQcOrder() {
+
+    },
+    handleDeleteQcOrder() {
+
+    },
     filterAndSortList(list, filterFn, sortFields) {
       const filtered = list.filter(filterFn);
       return filtered.sort((a, b) => {
@@ -238,9 +305,82 @@ export default {
       if (!value || !searchInput) return false;
       return value.toString().toLowerCase().includes(searchInput.toLowerCase());
     },
+    async loadAllData() {
+      try {
+        await Promise.all([
+          this.loadAllQcOrders(),
+          this.loadDispatchedTasks(),
+          this.loadFormNodes(),
+          this.loadUserMap(),
+        ]);
+      } catch (error) {
+        console.error("Failed to load data during polling:", error);
+      }
+    },
+    async loadFormNodes() {
+      try {
+        const response = await fetchFormNodes();
+        const updatedFormMap = generateFormMap(response.data);
+
+        if (JSON.stringify(this.formMap) !== JSON.stringify(updatedFormMap)) {
+          // this.$notify({
+          //   title: "表单列表更新",
+          //   message: "表单列表已更新。",
+          //   type: "success",
+          // });
+          this.formMap = updatedFormMap;
+        }
+      } catch (error) {
+        this.$message.error("无法加载表单，请重试。");
+      }
+    },
+    async loadUserMap() {
+      try {
+        const response = await fetchUsers();
+        const updatedUserMap = response.data.data.reduce((map, user) => {
+          map[user.id] = user;
+          return map;
+        }, {});
+
+        if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
+          // this.$notify({
+          //   title: "人员列表更新",
+          //   message: "人员列表已更新。",
+          //   type: "success",
+          // });
+          this.userMap = updatedUserMap;
+        }
+      } catch (error) {
+        this.$message.error("无法加载人员信息，请重试。");
+      }
+    },
+    async loadDispatchedTasks() {
+      try {
+        const response = await getAllDispatchedTasks();
+        const updatedTasks = response.data.data;
+
+        if (JSON.stringify(this.dispatchedTasks) !== JSON.stringify(updatedTasks)) {
+          // this.$notify({
+          //   title: "任务列表更新",
+          //   message: "任务列表已更新。",
+          //   type: "success",
+          // });
+          this.dispatchedTasks = updatedTasks;
+        }
+      } catch (error) {
+        this.$message.error("无法加载任务列表，请重试。");
+      }
+    },
+    openViewDispatchedTestsDialog() {
+      this.isDispatchedTestsDialogVisible = true;
+      this.loadDispatchedTasks();
+    },
+    closeViewDispatchedTestsDialog() {
+      this.isDispatchedTestsDialogVisible = false;
+    },
   },
   mounted() {
-    this.loadAllQcOrders();
+    this.loadAllData();
   },
 };
 </script>
