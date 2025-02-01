@@ -5,7 +5,7 @@
     <el-input
         v-model="searchInput"
         style="width: 240px; margin: 10px;"
-        placeholder="输入派发ID搜索"
+        placeholder="输入计划任务ID搜索"
         clearable
         :prefix-icon="Search"
         v-if="showSearchBox"
@@ -35,10 +35,10 @@
       <el-table-column prop="id" label="ID" width="90" sortable></el-table-column>
 
       <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="派发ID" width="90" sortable></el-table-column>
+      <el-table-column prop="dispatch_id" label="计划任务ID" width="90" sortable></el-table-column>
 
       <!-- Name -->
-      <el-table-column prop="name" label="派发名称" width="150" sortable>
+      <el-table-column prop="name" label="计划任务名称" width="150" sortable>
         <template #default="scope">
           {{ scope.row.name || "-" }}
         </template>
@@ -74,7 +74,7 @@
       </el-table-column>
 
       <!-- Form -->
-      <el-table-column prop="qc_form_tree_node_id" label="表单" width="200">
+      <el-table-column prop="qc_form_tree_node_id" label="质检表单" width="200">
         <template #default="scope">
           <el-tag
               v-if="getFormById(scope.row.qc_form_tree_node_id)"
@@ -90,7 +90,7 @@
             >
               <template #default>
                 <div>ID: {{ scope.row.qc_form_tree_node_id }}</div>
-                <div>表单名: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
+                <div>质检表单名: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
               </template>
               <template #reference>
                 {{ getFormById(scope.row.qc_form_tree_node_id) }}
@@ -101,7 +101,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="120" sortable>
+      <el-table-column prop="dispatched_task_state_id" label="派发任务状态" width="120" sortable>
         <template #default="scope">
           <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
             {{ stateName(scope.row.dispatched_task_state_id) }}

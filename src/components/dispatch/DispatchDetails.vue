@@ -108,7 +108,6 @@
       {{ formatDate(dispatch.updated_at) }}
     </el-form-item>
 
-
     <el-form-item label="更新者" v-if="updatedByDetail">
       <el-tag
           type="primary"
