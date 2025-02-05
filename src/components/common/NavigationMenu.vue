@@ -44,6 +44,10 @@
             <el-icon><Files /></el-icon>
             <span>任务派发</span>
           </el-menu-item>
+          <el-menu-item index="/instrument-management">
+            <el-icon><Files /></el-icon>
+            <span>儀器管理</span>
+          </el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="4">

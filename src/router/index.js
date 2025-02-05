@@ -16,6 +16,7 @@ import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
 import OrderManagement from "@/views/OrderManagement.vue";
+import InstrumentManagement from "@/views/InstrumentManagement.vue";
 
 const routes = [
     {
@@ -93,6 +94,11 @@ const routes = [
         name: 'TaskLog',
         component: QcTaskSubmissionLogs,
         props: true, // Pass route params as props to the component
+    },
+    {
+        path: '/instrument-management',
+        name: 'InstrumentManagement',
+        component: InstrumentManagement,
     },
 ];
 

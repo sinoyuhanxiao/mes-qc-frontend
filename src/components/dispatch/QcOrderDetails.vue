@@ -19,6 +19,10 @@
       {{ order.order_id }}
     </el-form-item>
 
+    <el-form-item label="任务备注" v-if="order.description">
+      {{ order.description }}
+    </el-form-item>
+
     <el-form-item label="状态">
       <el-tag
           :type="getStateTagType(order.state).type"
@@ -80,7 +84,7 @@
             {{ dispatch.id }}
           </el-form-item>
 
-          <el-form-item label="备注" v-if="dispatch.description">
+          <el-form-item label="任务备注" v-if="dispatch.description">
             {{ dispatch.description }}
           </el-form-item>
 
