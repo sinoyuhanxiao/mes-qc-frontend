@@ -19,6 +19,7 @@ import OrderManagement from "@/views/OrderManagement.vue";
 import ShiftManagement from "@/views/ShiftManagement.vue";
 import ReportManagement from "@/views/ReportManagement.vue";
 import FormDataSummary from "@/views/FormDataSummary.vue";
+import InstrumentManagement from "@/views/InstrumentManagement.vue";
 
 const routes = [
     {
@@ -111,6 +112,11 @@ const routes = [
         name: 'TaskLog',
         component: QcTaskSubmissionLogs,
         props: true, // Pass route params as props to the component
+    },
+    {
+        path: '/instrument-management',
+        name: 'InstrumentManagement',
+        component: InstrumentManagement,
     },
 ];
 
