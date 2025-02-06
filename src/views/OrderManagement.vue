@@ -86,18 +86,17 @@
         width="50%"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
-        @resume="handleResumeDispatch"
-        @pause="handlePauseDispatch"
-        @edit="handleEditQcOrder"
-        @delete="handleDeleteQcOrder"
-
     >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
-            :order="currentOrder"
+            :currentOrder="currentOrder"
             :user-map="userMap"
             :form-map="formMap"
             :dispatched-tasks-map="dispatchedTaskMap"
+            @on-resume="handleResumeDispatch"
+            @on-pause="handlePauseDispatch"
+            @on-edit="handleEditQcOrder"
+            @on-delete="handleDeleteQcOrder"
         />
       </template>
 
@@ -105,6 +104,7 @@
         <dispatch-configurator
             :current-order="currentOrder"
             :is-edit-mode="isEditMode"
+            :form-map="formMap"
             @on-submit="handleOrderSubmit"
             @on-cancel="closeAndResetDetailsDialog"
         />
@@ -130,7 +130,14 @@
 
 <script>
 
-import {getAllQcOrders, deleteQcOrder, resumeDispatch, pauseDispatch} from "@/services/qcOrderService";
+import {
+  getAllQcOrders,
+  deleteQcOrder,
+  resumeDispatch,
+  pauseDispatch,
+  createQcOrder,
+  updateQcOrder
+} from "@/services/qcOrderService";
 import { Search, RefreshRight } from "@element-plus/icons-vue";
 import QcOrderList from "@/components/dispatch/QcOrderList.vue";
 import QcOrderDetails from "@/components/dispatch/QcOrderDetails.vue";
@@ -219,8 +226,31 @@ export default {
       this.isDetailsDialogVisible = true;
     },
     async handleOrderSubmit(order) {
-      await this.loadAllQcOrders();
-      this.closeAndResetDetailsDialog();
+      console.log('handleOrderSubmit')
+      try {
+        const userId = this.$store.getters.getUser.id;
+        let response = null;
+        if (this.currentOrder && this.currentOrder.order_id != null) {
+          // update call
+          console.log("update order");
+          console.log(order);
+          response = await updateQcOrder(order, userId);
+        } else {
+          // create call
+          console.log("create order");
+          console.log(order);
+          response = await createQcOrder(order, userId);
+        }
+        if (response && response.status === 200) {
+          this.$message.success("工单已删除！");
+        }
+
+          await this.loadAllQcOrders();
+          this.closeAndResetDetailsDialog();
+      } catch (error) {
+        console.error("Error creating QC Order:", error);
+        this.$message.error("Failed to create QC Order. Please try again.");
+      }
     },
     async confirmDeleteOrder(orderId) {
       try {
@@ -261,6 +291,7 @@ export default {
           });
     },
     closeAndResetDetailsDialog() {
+      console.log('closeAndResetDetailsDialog')
       this.currentOrder = null;
       this.isEditMode = false;
       this.isDetailsDialogVisible = false;
@@ -276,18 +307,23 @@ export default {
       this.currentPage = newPage;
     },
     async handleResumeDispatch(dispatchId) {
+      console.log('handleResumeDispatch');
       const userId = this.$store.getters.getUser.id;
       await resumeDispatch(this.currentOrder.order_id, dispatchId, userId);
     },
     async handlePauseDispatch(dispatchId) {
+      console.log('handlePauseDispatch');
       const userId = this.$store.getters.getUser.id;
       await pauseDispatch(this.currentOrder.order_id, dispatchId, userId);
     },
     handleEditQcOrder() {
-
+      console.log('handleEditQcOrder');
+      if (this.currentOrder && this.currentOrder.order_id != null) {
+        this.isEditMode = true;
+      }
     },
     handleDeleteQcOrder() {
-
+      console.log('handleDeleteQcOrder');
     },
     filterAndSortList(list, filterFn, sortFields) {
       const filtered = list.filter(filterFn);
