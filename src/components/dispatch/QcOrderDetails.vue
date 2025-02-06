@@ -4,45 +4,45 @@
     <div class="details-header">
       <!-- Action Buttons -->
       <el-button-group>
-        <el-button type="success" @click="$emit('edit')">编辑</el-button>
-        <el-button type="danger" @click="$emit('delete')">删除</el-button>
+        <el-button type="success" @click="$emit('on-edit')">编辑</el-button>
+        <el-button type="danger" @click="$emit('on-delete')">删除</el-button>
       </el-button-group>
     </div>
 
     <el-divider>QC 工单详情</el-divider>
 
     <el-form-item label="工单名称">
-      {{ order.name }}
+      {{ currentOrder.name }}
     </el-form-item>
 
     <el-form-item label="工单ID">
-      {{ order.order_id }}
+      {{ currentOrder.order_id }}
     </el-form-item>
 
-    <el-form-item label="任务备注" v-if="order.description">
-      {{ order.description }}
+    <el-form-item label="任务备注" v-if="currentOrder.description">
+      {{ currentOrder.description }}
     </el-form-item>
 
     <el-form-item label="状态">
       <el-tag
-          :type="getStateTagType(order.state).type"
+          :type="getStateTagType(currentOrder.state).type"
           size="small"
       >
-        {{ getStateTagType(order.state).label }}
+        {{ getStateTagType(currentOrder.state).label }}
       </el-tag>
     </el-form-item>
 
-    <el-form-item label="创建时间" v-if="order.created_at">
-      {{ formatDate(order.created_at) }}
+    <el-form-item label="创建时间" v-if="currentOrder.created_at">
+      {{ formatDate(currentOrder.created_at) }}
     </el-form-item>
 
-    <UserReference type="创建者" :userId="order.created_by" />
+    <UserReference type="创建者" :userId="currentOrder.created_by" />
 
-    <el-form-item label="更新时间" v-if="order.updated_at">
-      {{ formatDate(order.updated_at) }}
+    <el-form-item label="更新时间" v-if="currentOrder.updated_at">
+      {{ formatDate(currentOrder.updated_at) }}
     </el-form-item>
 
-    <UserReference type="更新者" :userId="order.updated_by" />
+    <UserReference type="更新者" :userId="currentOrder.updated_by" />
 
     <el-divider>任务列表</el-divider>
     <div v-if="dispatches.length > 0">
@@ -67,13 +67,13 @@
           <el-button
               v-if="dispatch.state === 1"
               type="info"
-              @click="$emit('pause', dispatch.id)">
+              @click="handlePauseOrderDispatch(currentOrder.id, dispatch.id)">
             暂停
           </el-button>
           <el-button
               v-if="dispatch.state === 5"
               type="info"
-              @click="$emit('resume', dispatch.id)">
+              @click="handleResumeOrderDispatch(currentOrder.id, dispatch.id)">
             重启
           </el-button>
         </div>
@@ -481,7 +481,7 @@ import {getDispatchNextExecutionTime} from "@/services/dispatchService";
 export default {
   components: {UserReference, DispatchedTasksList},
   props: {
-    order: {
+    currentOrder: {
       type: Object,
       required: true,
     },
@@ -536,18 +536,18 @@ export default {
       }
     },
     async fetchCreatedByDetail() {
-      if (this.order.created_by) {
+      if (this.currentOrder.created_by) {
         try {
-          this.createdByDetail = this.fetchUserHelper(this.order.created_by);
+          this.createdByDetail = this.fetchUserHelper(this.currentOrder.created_by);
         } catch (error) {
           console.error("Failed to fetch created by details:", error);
         }
       }
     },
     async fetchUpdatedByDetail() {
-      if (this.order.updated_by) {
+      if (this.currentOrder.updated_by) {
         try {
-          this.updatedByDetail = this.fetchUserHelper(this.order.updated_by);
+          this.updatedByDetail = this.fetchUserHelper(this.currentOrder.updated_by);
         } catch (error) {
           console.error("Failed to fetch updated by details:", error);
         }
@@ -584,7 +584,7 @@ export default {
       return details;
     },
     async loadDispatchDetails() {
-      this.dispatches = this.order.dispatches.map(dispatch => ({
+      this.dispatches = this.currentOrder.dispatches.map(dispatch => ({
         ...dispatch,
         productDetails: [],
         rawMaterialDetails: [],
@@ -628,6 +628,12 @@ export default {
     toggleCollapse(index) {
       this.dispatches[index].collapsed =
           !this.dispatches[index].collapsed;
+    },
+    handlePauseOrderDispatch(orderId, dispatchId) {
+      this.emit("on-pause-order-dispatch", orderId, dispatchId);
+    },
+    handleResumeOrderDispatch(orderId, dispatchId) {
+      this.emit("on-resume-order-dispatch", orderId, dispatchId);
     },
   },
   mounted() {

@@ -16,44 +16,44 @@
       <el-input type="textarea" v-model="qcOrderForm.description" placeholder="请输入备注"></el-input>
     </el-form-item>
 
-    <!-- Order-Level User/Form Option -->
-    <el-divider>全局选项</el-divider>
-    <el-form-item label="应用人员到所有派发" prop="applyUserToAll">
-      <el-switch
-          v-model="qcOrderForm.applyUserToAll"
-          />
-    </el-form-item>
-    <el-form-item v-if="qcOrderForm.applyUserToAll" label="选择全局人员">
-      <el-select
-          v-model="qcOrderForm.globalUserIds"
-          multiple
-          filterable
-          placeholder="请选择人员"
-          :loading="isLoadingUser"
-          @focus="loadUserOptions"
-      >
-        <el-option
-            v-for="user in userOptions"
-            :key="user.id"
-            :label="user.name"
-            :value="user.id"
-        />
-      </el-select>
-    </el-form-item>
+<!--    &lt;!&ndash; Order-Level User/Form Option &ndash;&gt;-->
+<!--    <el-divider>全局选项</el-divider>-->
+<!--    <el-form-item label="应用人员到所有派发" prop="applyUserToAll">-->
+<!--      <el-switch-->
+<!--          v-model="qcOrderForm.applyUserToAll"-->
+<!--          />-->
+<!--    </el-form-item>-->
+<!--    <el-form-item v-if="qcOrderForm.applyUserToAll" label="选择全局人员">-->
+<!--      <el-select-->
+<!--          v-model="qcOrderForm.globalUserIds"-->
+<!--          multiple-->
+<!--          filterable-->
+<!--          placeholder="请选择人员"-->
+<!--          :loading="isLoadingUser"-->
+<!--          @focus="loadUserOptions"-->
+<!--      >-->
+<!--        <el-option-->
+<!--            v-for="user in userOptions"-->
+<!--            :key="user.id"-->
+<!--            :label="user.name"-->
+<!--            :value="user.id"-->
+<!--        />-->
+<!--      </el-select>-->
+<!--    </el-form-item>-->
 
-    <el-form-item label="应用表单到所有派发" prop="applyFormToAll">
-      <el-switch
-          v-model="qcOrderForm.applyFormToAll"
-          />
-    </el-form-item>
-    <el-form-item v-if="qcOrderForm.applyFormToAll" label="选择全局表单">
-      <DispatchFormTreeSelect
-          :selected-form-ids="qcOrderForm.globalFormIds"
-          @update-selected-forms="(forms) => {
-          qcOrderForm.globalFormIds = forms.map((form) => form.id);
-        }"
-      />
-    </el-form-item>
+<!--    <el-form-item label="应用表单到所有派发" prop="applyFormToAll">-->
+<!--      <el-switch-->
+<!--          v-model="qcOrderForm.applyFormToAll"-->
+<!--          />-->
+<!--    </el-form-item>-->
+<!--    <el-form-item v-if="qcOrderForm.applyFormToAll" label="选择全局表单">-->
+<!--      <DispatchFormTreeSelect-->
+<!--          :selected-form-ids="qcOrderForm.globalFormIds"-->
+<!--          @update-selected-forms="(forms) => {-->
+<!--          qcOrderForm.globalFormIds = forms.map((form) => form.id);-->
+<!--        }"-->
+<!--      />-->
+<!--    </el-form-item>-->
 
     <!-- Dispatch List -->
     <el-divider>任务列表</el-divider>
@@ -391,7 +391,8 @@
             <strong>{{ dispatch.dispatchLimit === -1 ? "无限制" : dispatch.dispatchLimit }}</strong>
           </li>
           <li>
-            派发任务时限: <strong> { dispatch.dueDateOffsetMinute }} 分钟 </strong>
+            派发任务时限:
+            <strong> {{ dispatch.dueDateOffsetMinute }} 分钟 </strong>
           </li>
           <li>
             人员: <strong>{{ formatUsers(dispatch.userIds) }}</strong>
@@ -428,6 +429,10 @@ export default {
   props: {
     currentOrder: {
       type: Object,
+      required: true,
+    },
+    formMap: {
+      type: Array,
       required: true,
     }
   },
@@ -593,14 +598,9 @@ export default {
                   (this.transformOrderData(dispatch))),
             };
 
-            console.log("Submitting Payload:");
-            console.log(payload);
-            const userId = this.$store.getters.getUser.id;
-            const response = await createQcOrder(payload, userId);
-
             // Handle success
             this.$message.success("QC Order created successfully!");
-            this.$emit("on-create"); // Emit success event to parent
+            this.$emit("on-submit", payload); // Emit success event to parent
           } catch (error) {
             console.error("Error creating QC Order:", error);
             this.$message.error("Failed to create QC Order. Please try again.");
@@ -638,7 +638,10 @@ export default {
     // Format form list (Order summary helper)
     formatForms(formIds) {
       if (!formIds.length) return "无";
-      return formIds.join(", ");
+
+      const formNames = formIds.map(id => this.formMap[id] ||  `未知表单 (${id})`)
+
+      return formNames.join(", ");
     },
     // Format cron expression to Chinese (Order summary helper)
     formatCronExpression(cron) {
@@ -652,8 +655,9 @@ export default {
     // Transform order data to match order backend api request
     transformOrderData(data) {
       return {
+        id: data.id || null,
         type: data.type,
-        name: data.name || null, // Fallback for name
+        name: data.name || null, // Fallback for  name
         description: data.description || null,
         startTime: data.dateRange?.[0] || null,
         endTime: data.dateRange?.[1] || null,
