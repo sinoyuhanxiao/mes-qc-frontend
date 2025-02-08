@@ -35,3 +35,29 @@ export const getMyDocument = (submissionId, qcFormTemplateId, createdBy) => {
         params: { submissionId, qcFormTemplateId, createdBy },
     });
 };
+
+/**
+ * Get all documents by qcFormTemplateId and createdBy.
+ * @param {Long} qcFormTemplateId - The QC Form Template ID.
+ * @param {Integer} createdBy - The user who created the documents.
+ * @returns {Promise} API response containing the documents.
+ */
+export const getDocumentsForUser = (qcFormTemplateId, createdBy) => {
+    return api.get(`${BASE_URL}/documents_for_user`, {
+        params: { qcFormTemplateId, createdBy },
+    });
+};
+
+/**
+ * Export all documents by qcFormTemplateId and createdBy to Excel.
+ * @param {Long} qcFormTemplateId - The QC Form Template ID.
+ * @param {Integer} createdBy - The user who created the documents.
+ * @returns {Promise} API response containing the Excel file as a blob.
+ */
+export const exportDocumentsToExcel = (qcFormTemplateId, createdBy) => {
+    return api.get(`${BASE_URL}/excel_documents_for_user`, {
+        params: { qcFormTemplateId, createdBy },
+        responseType: 'blob', // Ensures the response is treated as a file
+    });
+};
+

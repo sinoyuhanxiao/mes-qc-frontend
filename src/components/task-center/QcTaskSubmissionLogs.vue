@@ -9,6 +9,7 @@
             <el-button
                 class="refresh-button"
                 type="primary"
+                style="margin-top: 0"
                 circle
                 @click="refreshTable"
             >
@@ -18,17 +19,32 @@
         </div>
 
         <!-- Right Section: Search Input -->
-        <el-input
-            v-model="searchTerm"
-            placeholder="Search by ID or Submission ID"
-            clearable
-            style="width: 300px;"
-            @input="applyFilter"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- make this button vertically align center -->
+          <el-tooltip>
+            <el-button
+                type="primary"
+                style="margin-top: 0"
+                @click="downloadExcel"
+            >
+              <el-icon><Download /></el-icon>
+            </el-button>
+            <template #content>
+              <span>下载你的质检提交记录</span>
+            </template>
+          </el-tooltip>
+          <el-input
+              v-model="searchTerm"
+              placeholder="Search by ID or Submission ID"
+              clearable
+              style="width: 300px;"
+              @input="applyFilter"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
       </div>
     </el-header>
     <el-main>
@@ -98,19 +114,24 @@
         </el-form>
       </el-col>
     </el-row>
+    <template #footer>
+      <!-- add a download button to download this record in pdf -->
+      <el-button type="primary" style="margin-right: 10px" @click="downloadPdf">导出</el-button>
+    </template>
   </el-dialog>
 
 </template>
 
 <script>
-import { RefreshRight, Search } from "@element-plus/icons-vue";
-import {getAllTaskLogs, getMyDocument} from "@/services/qcTaskSubmissionLogsService"; // Import the backend service
+import {Download, RefreshRight, Search} from "@element-plus/icons-vue";
+import {exportDocumentsToExcel, getAllTaskLogs, getMyDocument} from "@/services/qcTaskSubmissionLogsService"; // Import the backend service
 import { formatDate } from "@/utils/task-center/dateFormatUtils";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
 
 export default {
   name: "QcTaskSubmissionLogs",
   components: {
+    Download,
     TaskDetail,
     RefreshRight,
     Search,
@@ -165,6 +186,7 @@ export default {
       },
       currentPage: 1,
       pageSize: 20,
+      qc_form_template_id: null,
     };
   },
   computed: {
@@ -192,6 +214,8 @@ export default {
     async fetchTableData() {
       try {
         const response = await getAllTaskLogs(this.createdBy, this.dispatchedTaskId);
+        // get the qc_form_template_id from the first row of the response
+        this.qc_form_template_id = response.data[0].qc_form_template_id;
         // Map response to the fields used in the table
         this.tableData = response.data.map((log) => ({
           id: log.id,
@@ -206,6 +230,47 @@ export default {
         this.filteredData = [...this.tableData]; // Apply the fetched data to filteredData
       } catch (err) {
         console.error("Error fetching task logs:", err);
+      }
+    },
+    async downloadExcel() {
+      // This will call the excel_documents_for_user endpoint by providing qcFormTemplateId and user id.
+      this.isLoading = true; // Set loading indicator
+      try {
+        console.log("Downloading Excel...");
+        console.log("qc_form_template_id: ", this.qc_form_template_id);
+        console.log("user id: ", this.$store.getters.getUser.id);
+        const response = await exportDocumentsToExcel(
+            this.qc_form_template_id,
+            this.$store.getters.getUser.id
+        );
+
+        const excelData = response.data;
+        const blob = new Blob([excelData], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        // change the name to task_logs_currentdatetime
+        const currentDateTime = new Date().toISOString().replace(/[-:.]/g, '');
+        const fileName = `task_logs_${currentDateTime}.xlsx`;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up the DOM
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        // Show success message
+        this.$message.success("Excel downloaded successfully!");
+      } catch (err) {
+        console.error("Error downloading Excel:", err);
+        // Show error message
+        this.$message.error("Failed to download Excel. Please try again.");
+      } finally {
+        this.isLoading = false; // Reset loading indicator
       }
     },
     refreshTable() {
