@@ -20,6 +20,8 @@ import ShiftManagement from "@/views/ShiftManagement.vue";
 import ReportManagement from "@/views/ReportManagement.vue";
 import FormDataSummary from "@/views/FormDataSummary.vue";
 import InstrumentManagement from "@/views/InstrumentManagement.vue";
+import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
+import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
 
 const routes = [
     {
@@ -117,6 +119,16 @@ const routes = [
         path: '/instrument-management',
         name: 'InstrumentManagement',
         component: InstrumentManagement,
+    },
+    {
+        path: '/sampling-location-management',
+        name: 'SamplingLocationManagement',
+        component: SamplingLocationManagement,
+    },
+    {
+        path: '/test-subject-management',
+        name: 'TestSubjectManagement',
+        component: TestSubjectManagement,
     },
 ];
 

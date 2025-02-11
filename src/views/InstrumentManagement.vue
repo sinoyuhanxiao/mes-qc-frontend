@@ -120,14 +120,13 @@ export default {
     },
     async submitForm(updatedInstrument) {
       try {
-        console.log(updatedInstrument)
         if (this.isEditMode) {
-          await updateInstrument(updatedInstrument.id, updatedInstrument, 1);
+          await updateInstrument(updatedInstrument.id, updatedInstrument);
         } else {
-          await createInstrument(updatedInstrument, 1);
+          await createInstrument(updatedInstrument);
         }
         this.dialogVisible = false;
-        this.loadInstruments();
+        await this.loadInstruments();
       } catch (error) {
         console.error("Error saving instrument:", error);
       }
@@ -140,7 +139,7 @@ export default {
           type: "warning",
         });
         await deleteInstrument(id, 1);
-        this.loadInstruments();
+        await this.loadInstruments();
       } catch (error) {
         console.error("Error deleting instrument:", error);
       }
@@ -163,7 +162,7 @@ export default {
 
 .search-bar {
   width: 300px;
-  margin-bottom: 10px;
+  margin-left: 20px;
 }
 
 .pagination {

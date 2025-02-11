@@ -10,12 +10,12 @@ export const getInstrumentById = (id) => {
     return api.get(`${BASE_URL}/${id}`);
 };
 
-export const createInstrument = (data, userId) => {
-    return api.post(`${BASE_URL}/${userId}`, data);
+export const createInstrument = (data) => {
+    return api.post(`${BASE_URL}`, data);
 };
 
-export const updateInstrument = (id, data, userId) => {
-    return api.put(`${BASE_URL}/${id}/${userId}`, data);
+export const updateInstrument = (id, data) => {
+    return api.put(`${BASE_URL}/${id}`, data);
 };
 
 export const deleteInstrument = (id, userId) => {
