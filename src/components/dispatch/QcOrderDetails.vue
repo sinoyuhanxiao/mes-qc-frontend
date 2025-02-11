@@ -4,26 +4,33 @@
     <div class="details-header">
       <!-- Action Buttons -->
       <el-button-group>
-        <el-button type="success" @click="$emit('on-edit')">编辑</el-button>
-        <el-button type="danger" @click="$emit('on-delete')">删除</el-button>
+        <el-button type="success" @click="handleEditOrder">编辑</el-button>
+        <el-button type="danger" @click="handleDeleteOrder">删除</el-button>
       </el-button-group>
     </div>
 
     <el-divider>QC 工单详情</el-divider>
 
-    <el-form-item label="工单名称">
+    <el-form-item
+        label="工单名称"
+        class="wrap-text">
       {{ currentOrder.name }}
     </el-form-item>
 
-    <el-form-item label="工单ID">
-      {{ currentOrder.order_id }}
+    <el-form-item
+        label="工单ID">
+      {{ currentOrder.id }}
     </el-form-item>
 
-    <el-form-item label="任务备注" v-if="currentOrder.description">
+    <el-form-item
+        label="任务备注"
+        class="wrap-text"
+        v-if="currentOrder.description">
       {{ currentOrder.description }}
     </el-form-item>
 
-    <el-form-item label="状态">
+    <el-form-item
+        label="状态">
       <el-tag
           :type="getStateTagType(currentOrder.state).type"
           size="small"
@@ -32,17 +39,29 @@
       </el-tag>
     </el-form-item>
 
-    <el-form-item label="创建时间" v-if="currentOrder.created_at">
+    <el-form-item
+        label="创建时间"
+        v-if="currentOrder.created_at">
       {{ formatDate(currentOrder.created_at) }}
     </el-form-item>
 
-    <UserReference type="创建者" :userId="currentOrder.created_by" />
+    <el-form-item
+        label="创建者"
+        v-if="currentOrder.created_by">
+      <UserReference :userId="currentOrder.created_by" />
+    </el-form-item>
 
-    <el-form-item label="更新时间" v-if="currentOrder.updated_at">
+    <el-form-item
+        label="更新时间"
+        v-if="currentOrder.updated_at">
       {{ formatDate(currentOrder.updated_at) }}
     </el-form-item>
 
-    <UserReference type="更新者" :userId="currentOrder.updated_by" />
+    <el-form-item
+        label="更新者"
+        v-if="currentOrder.updated_by">
+      <UserReference :userId="currentOrder.updated_by" />
+    </el-form-item>
 
     <el-divider>任务列表</el-divider>
     <div v-if="dispatches.length > 0">
@@ -67,28 +86,38 @@
           <el-button
               v-if="dispatch.state === 1"
               type="info"
-              @click="handlePauseOrderDispatch(currentOrder.id, dispatch.id)">
+              @click="handlePauseOrderDispatch(dispatch.id)">
             暂停
           </el-button>
           <el-button
               v-if="dispatch.state === 5"
               type="info"
-              @click="handleResumeOrderDispatch(currentOrder.id, dispatch.id)">
+              @click="handleResumeOrderDispatch(dispatch.id)">
             重启
           </el-button>
         </div>
         <div v-show="!dispatch.collapsed">
-          <h4>任务: {{ dispatch.name }}</h4>
+          <el-form-item
+              label="任务名称"
+              class="wrap-text"
+              v-if="dispatch.name">
+            {{ dispatch.name }}
+          </el-form-item>
 
-          <el-form-item label="任务ID">
+          <el-form-item
+              label="任务ID">
             {{ dispatch.id }}
           </el-form-item>
 
-          <el-form-item label="任务备注" v-if="dispatch.description">
+          <el-form-item
+              label="任务备注"
+              class="wrap-text"
+              v-if="dispatch.description">
             {{ dispatch.description }}
           </el-form-item>
 
-          <el-form-item label="任务状态">
+          <el-form-item
+              label="任务状态">
             <el-tag
                 :type="getStateTagType(dispatch.state).type"
                 size="small"
@@ -131,40 +160,122 @@
             {{ dispatch.executed_count }}
           </el-form-item>
 
+          <UserReference type="创建者" :userId="dispatch.created_by" />
+
+          <el-form-item label="创建时间" v-if="dispatch.created_at">
+            {{ formatDate(dispatch.created_at) }}
+          </el-form-item>
+
+          <UserReference type="更新者" :userId="dispatch.updated_by" />
+
+          <el-form-item label="更新时间" v-if="dispatch.updated_at">
+            {{ formatDate(dispatch.updated_at) }}
+          </el-form-item>
+
           <el-divider>质检任务配置</el-divider>
 
           <el-form-item label="派发任务时限 (分钟)">
             {{ dispatch.due_date_offset_minute }}
           </el-form-item>
 
-          <el-form-item label="检测项目" v-if="dispatch.test_subject_ids.length > 0">
+          <el-form-item label="检测项目" v-if="dispatch.testSubjectDetails.length > 0">
             <div class="tags">
-              <el-tag v-for="id in dispatch.test_subject_ids" :key="id" type="info" size="small">
-                {{ findTestSubjectName(id) }}
+              <el-tag v-for="testSubject in dispatch.testSubjectDetails"
+                      :key="testSubject.id"
+                      type="info"
+                      size="small">
+                <el-popover
+                    effect="light"
+                    trigger="hover"
+                    placement="top"
+                    width="auto">
+                  <template #default>
+                    <div>ID: {{ testSubject.id }}</div>
+                    <div v-if="testSubject.description">备注: {{ testSubject.description }}</div>
+                    <div v-if="testSubject.status">状态: {{ testSubject.status }}</div>
+                    <div v-if="testSubject.created_by">创建者: {{ testSubject.created_by }}</div>
+                    <div v-if="testSubject.created_at">创建时间: {{ formatDate(testSubject.created_at) }}</div>
+                    <div v-if="testSubject.updated_by">更新者: {{ testSubject.updated_by }}</div>
+                    <div v-if="testSubject.updated_at">更新时间: {{ formatDate(testSubject.updated_at) }}</div>
+
+                  </template>
+                  <template #reference>
+                    {{ testSubject.name }}
+                  </template>
+                </el-popover>
               </el-tag>
             </div>
           </el-form-item>
 
-          <el-form-item label="采样位置" v-if="dispatch.sampling_location_ids.length > 0">
+          <el-form-item label="采样位置" v-if="dispatch.samplingLocationDetails.length > 0">
             <div class="tags">
-              <el-tag v-for="id in dispatch.sampling_location_ids" :key="id" type="info" size="small">
-                {{ findSamplingLocationName(id) }}
+              <el-tag v-for="samplingLocation in dispatch.samplingLocationDetails"
+                      :key="samplingLocation.id"
+                      type="info"
+                      size="small"
+                      effect="light">
+                <el-popover
+                    effect="light"
+                    trigger="hover"
+                    placement="top"
+                    width="auto">
+                  <template #default>
+                    <div>ID: {{ samplingLocation.id }}</div>
+                    <div v-if="samplingLocation.description">备注: {{ samplingLocation.description }}</div>
+                    <div v-if="samplingLocation.status">状态: {{ samplingLocation.status }}</div>
+                    <div v-if="samplingLocation.created_by">创建者: {{ samplingLocation.created_by }}</div>
+                    <div v-if="samplingLocation.created_at">创建时间: {{ formatDate(samplingLocation.created_at) }}</div>
+                    <div v-if="samplingLocation.updated_by">更新者: {{ samplingLocation.updated_by }}</div>
+                    <div v-if="samplingLocation.updated_at">更新时间: {{ formatDate(samplingLocation.updated_at) }}</div>
+
+                  </template>
+                  <template #reference>
+                    {{ samplingLocation.name }}
+                  </template>
+                </el-popover>
               </el-tag>
             </div>
           </el-form-item>
 
-          <el-form-item label="仪器" v-if="dispatch.instrument_ids.length > 0">
-            <div class="tags">
-              <el-tag v-for="id in dispatch.instrument_ids" :key="id" type="info" size="small">
-                {{ findInstrumentName(id) }}
-              </el-tag>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="检测人员" v-if="dispatch.dispatch_users.length > 0">
+          <el-form-item label="仪器" v-if="dispatch.instrumentDetails.length > 0">
             <div class="tags">
               <el-tag
-                  v-for="user in dispatch.dispatch_users"
+                  v-for="instrument in dispatch.instrumentDetails"
+                  :key="instrument.id"
+                  type="info"
+                  size="small"
+                  effect="light"
+              >
+                <el-popover
+                    effect="light"
+                    trigger="hover"
+                    placement="top"
+                    width="auto">
+                  <template #default>
+                    <div>ID: {{ instrument.id }}</div>
+                    <div v-if="instrument.description">备注: {{ instrument.description}}</div>
+                    <div v-if="instrument.model_number">型号: {{ instrument.model_number }}</div>
+                    <div v-if="instrument.manufacturer">制造商: {{ instrument.manufacturer }}</div>
+                    <div v-if="instrument.type">仪器类型: {{ instrument.type }}</div>
+                    <div v-if="instrument.status">状态: {{ instrument.status }}</div>
+                    <div v-if="instrument.created_by">创建者: {{ instrument.created_by }}</div>
+                    <div v-if="instrument.created_at">创建时间: {{ formatDate(instrument.created_at) }}</div>
+                    <div v-if="instrument.updated_by">更新者: {{ instrument.updated_by }}</div>
+                    <div v-if="instrument.updated_at">更新时间: {{ formatDate(instrument.updated_at) }}</div>
+
+                  </template>
+                  <template #reference>
+                    {{ instrument.name }}
+                  </template>
+                </el-popover>
+              </el-tag>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="检测人员" v-if="dispatch.userDetails.length > 0">
+            <div class="tags">
+              <el-tag
+                  v-for="user in dispatch.userDetails"
                   :key="user.id"
                   type="primary"
                   size="small"
@@ -178,7 +289,12 @@
                   <template #default>
                     <div>姓名: {{ user.name }}</div>
                     <div>用户名: {{ user.username }}</div>
+                    <div>角色: {{ user.wecom_id }}</div>
                     <div>企业微信: {{ user.wecom_id }}</div>
+                    <div>信箱: {{ user.wecom_id }}</div>
+                    <div>电话: {{ user.wecom_id }}</div>
+                    <div>班组: TODO </div>
+
                   </template>
                   <template #reference>
                     {{ user.name }}
@@ -188,10 +304,10 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="质检表单" v-if="dispatch.dispatch_forms.length > 0">
+          <el-form-item label="质检表单" v-if="dispatch.form_ids.length > 0">
             <div class="tags">
               <el-tag
-                  v-for="(formId) in dispatch.dispatch_forms"
+                  v-for="(formId) in dispatch.form_ids"
                   :key="formId"
                   type="success"
                   size="small"
@@ -435,18 +551,6 @@
             </div>
           </el-form-item>
 
-          <UserReference type="创建者" :userId="dispatch.created_by" />
-
-          <el-form-item label="创建时间" v-if="dispatch.created_at">
-            {{ formatDate(dispatch.created_at) }}
-          </el-form-item>
-
-          <UserReference type="更新者" :userId="dispatch.updated_by" />
-
-          <el-form-item label="更新时间" v-if="dispatch.updated_at">
-            {{ formatDate(dispatch.updated_at) }}
-          </el-form-item>
-
           <el-divider>已派发任务</el-divider>
           <!-- Dispatched Tasks Table -->
           <DispatchedTasksList
@@ -476,7 +580,10 @@ import {getEquipmentById, getMaintenanceWorkOrderById} from "@/services/maintena
 import UserReference from "@/components/dispatch/UserReference.vue";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 
-import {getDispatchNextExecutionTime} from "@/services/dispatchService";
+import {getDispatchNextExecutionTime, pauseDispatch, resumeDispatch} from "@/services/dispatchService";
+import {getTestSubjectById} from "@/services/testSubjectService";
+import {getSamplingLocationById} from "@/services/samplingLocationService";
+import {getInstrumentById} from "@/services/instrumentService";
 
 export default {
   components: {UserReference, DispatchedTasksList},
@@ -503,21 +610,6 @@ export default {
       dispatches: [],
       createdByDetail: null,
       updatedByDetail: null,
-      instrumentOptions: [
-        { id: "1", name: "仪器 1" },
-        { id: "2", name: "仪器 2" },
-        { id: "3", name: "仪器 3" },
-      ],  // Dummy data, temporary placeholder
-      samplingLocationOptions: [
-        { id: "4", name: "位置 4" },
-        { id: "5", name: "位置 5" },
-        { id: "6", name: "位置 6" },
-      ], // Dummy data, temporary placeholder
-      testSubjectOptions: [
-        { id: "7", name: "检测项目 7" },
-        { id: "8", name: "检测项目 8" },
-        { id: "9", name: "检测项目 9" },
-      ], // Dummy data, temporary placeholder
     };
   },
   methods: {
@@ -563,29 +655,28 @@ export default {
       };
       return stateMap[state] || { label: "未知", type: "default" };
     },
-    findInstrumentName(id) {
-      const instrument = this.instrumentOptions.find(inst => inst.id === id);
-      return instrument ? instrument.name : `未知仪器 (${id})`;
-    },
-    findTestSubjectName(id) {
-      const testSubject = this.testSubjectOptions.find(inst => inst.id === id);
-      return testSubject ? testSubject.name : `未知检测项目 (${id})`;
-    },
-    findSamplingLocationName(id) {
-      const samplingLocation = this.samplingLocationOptions.find(inst => inst.id === id);
-      return samplingLocation ? samplingLocation.name : `未知采样位置 (${id})`;
-    },
     async fetchDetails(ids, fetchFunction) {
       const details = [];
       for (const id of ids || []) {
-        const response = await fetchFunction(id);
-        if (response?.data?.data) details.push(response.data.data);
+        try {
+          console.log(`Fetching detail for ID: ${id}`);
+          const response = await fetchFunction(id);
+          if (response?.data?.data) details.push(response.data.data);
+        } catch (e) {
+          console.error(`Failed to fetch detail for ID: ${id}`, e);
+        }
       }
       return details;
     },
     async loadDispatchDetails() {
       this.dispatches = this.currentOrder.dispatches.map(dispatch => ({
         ...dispatch,
+        createdByDetail:null,
+        updatedByDetail:null,
+        userDetails:[],
+        testSubjectDetails:[],
+        samplingLocationDetails:[],
+        instrumentDetails:[],
         productDetails: [],
         rawMaterialDetails: [],
         maintenanceWorkOrderDetails: [],
@@ -596,12 +687,23 @@ export default {
       }));
 
       for (let dispatch of this.dispatches) {
-        dispatch.productDetails = await this.fetchDetails(dispatch.product_ids, getProductById);
-        dispatch.rawMaterialDetails = await this.fetchDetails(dispatch.raw_material_ids, getRawMaterialById);
-        dispatch.productionWorkOrderDetails = await this.fetchDetails(dispatch.production_work_order_ids, getProductionWorkOrderById);
-        dispatch.equipmentDetails = await this.fetchDetails(dispatch.equipment_ids, getEquipmentById);
-        dispatch.maintenanceWorkOrderDetails = await this.fetchDetails(dispatch.maintenance_work_order_ids, getMaintenanceWorkOrderById);
-        await this.fetchNextExecutionTime(dispatch);
+        try {
+          console.log(`Fetching details for dispatch ID: ${dispatch.id}`);
+          dispatch.createdByDetail = await this.fetchUserHelper(dispatch.created_by);
+          dispatch.updatedByDetail = await this.fetchUserHelper(dispatch.updated_by);
+          dispatch.productDetails = await this.fetchDetails(dispatch.product_ids, getProductById);
+          dispatch.rawMaterialDetails = await this.fetchDetails(dispatch.raw_material_ids, getRawMaterialById);
+          dispatch.productionWorkOrderDetails = await this.fetchDetails(dispatch.production_work_order_ids, getProductionWorkOrderById);
+          dispatch.equipmentDetails = await this.fetchDetails(dispatch.equipment_ids, getEquipmentById);
+          dispatch.maintenanceWorkOrderDetails = await this.fetchDetails(dispatch.maintenance_work_order_ids, getMaintenanceWorkOrderById);
+          dispatch.userDetails = await this.fetchDetails(dispatch.user_ids, getUserById);
+          dispatch.testSubjectDetails = await this.fetchDetails(dispatch.test_subject_ids, getTestSubjectById);
+          dispatch.samplingLocationDetails = await this.fetchDetails(dispatch.sampling_location_ids, getSamplingLocationById);
+          dispatch.instrumentDetails = await this.fetchDetails(dispatch.instrument_ids, getInstrumentById);
+          await this.fetchNextExecutionTime(dispatch);
+        } catch (e) {
+          console.error(`Error fetching details for dispatch ID: ${dispatch.id}`, e);
+        }
       }
     },
     getFormById(id) {
@@ -619,7 +721,6 @@ export default {
         dispatch.nextExecutionTime = null;
       }
     },
-
     handleCountdownFinish(dispatch) {
       setTimeout(() => {
         this.fetchNextExecutionTime(dispatch);
@@ -629,12 +730,56 @@ export default {
       this.dispatches[index].collapsed =
           !this.dispatches[index].collapsed;
     },
-    handlePauseOrderDispatch(orderId, dispatchId) {
-      this.emit("on-pause-order-dispatch", orderId, dispatchId);
+    async handlePauseOrderDispatch(dispatchId) {
+      try {
+        await this.$confirm("确定暂停任务吗？", "提示", { type: "warning" });
+
+        const userId = this.$store.getters.getUser.id;
+        const response = await pauseDispatch(dispatchId, userId);
+
+        if (response && response.status === 200) {
+          this.$message.success("任务已暂停");
+          this.$emit("refresh-order"); // ✅ Refresh only if successful
+        } else {
+          this.$message.error("暂停任务失败，请重试！");
+        }
+      } catch (e) {
+        console.log("Pause action canceled or failed.");
+      }
     },
-    handleResumeOrderDispatch(orderId, dispatchId) {
-      this.emit("on-resume-order-dispatch", orderId, dispatchId);
+    async handleResumeOrderDispatch(dispatchId) {
+      try {
+        await this.$confirm("确定重启任务吗？", "提示", { type: "warning" });
+
+        const userId = this.$store.getters.getUser.id;
+        const response = await resumeDispatch(dispatchId, userId);
+
+        if (response && response.status === 200) {
+          this.$message.success("任务已重启");
+          this.$emit("refresh-order"); // ✅ Refresh only if successful
+        } else {
+          this.$message.error("重启任务失败，请重试！");
+        }
+      } catch (e) {
+        console.log("Resume action canceled or failed.");
+      }
     },
+    async handleEditOrder(){
+      await this.$confirm("确定编辑工單吗？ 將會暫停工單內所有运行中任務.", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      });
+      this.$emit('on-edit');
+    },
+    async handleDeleteOrder(){
+      await this.$confirm("确定删除工單吗？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      });
+      this.$emit('on-delete');
+    }
   },
   mounted() {
     // fetch order createdBy/updatedBy
@@ -667,5 +812,12 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.wrap-text {
+  display: block;
+  word-break: break-word; /* Ensures text breaks and wraps */
+  white-space: normal; /* Allows text to wrap normally */
+  overflow-wrap: break-word; /* Ensures long words break correctly */
 }
 </style>
