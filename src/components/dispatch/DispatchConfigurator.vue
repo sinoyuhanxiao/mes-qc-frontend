@@ -8,10 +8,12 @@
           label="定时质检工单"
           name="QcOrderForm">
         <qc-order-form
-            :current-order="normalizedOrderData"
+            :key="resetKey"
+            :current-order="qcOrderForm"
             :form-map="formMap"
             @on-submit="handleSubmit"
-            @on-cancel="handleCancel"/>
+            @on-cancel="handleCancel"
+            @reset-form="handleReset"/>
       </el-tab-pane>
 
       <!-- Quick Dispatch -->
@@ -55,6 +57,8 @@ export default {
   data() {
     return {
       activeTab: "QcOrderForm", // Default tab
+      resetKey: 0, // Force re-render of QcOrderForm
+      qcOrderForm: {},
     };
   },
   methods: {
@@ -71,56 +75,85 @@ export default {
     handleTabClick(tab) {
       this.activeTab = tab.name; // Update activeTab when the user clicks a tab
     },
-  },
-  computed: {
-    normalizedOrderData() {
-      if (!this.isEditMode || !this.currentOrder) {
+    handleReset() {
+      console.log("Handling reset in DispatchConfigurator");
+      this.qcOrderForm = this.getNormalizedOrderData(this.currentOrder);
+      this.resetKey++; // Force re-render of QcOrderForm
+    },
+    getNormalizedOrderData(order) {
+      if (!this.isEditMode || !order) {
         // If creating a new QC order, return a blank form structure
         return {
+          id: null,
           name: "",
           description: "",
-          dispatches: [],
+          state: 1,
+          created_at: null,
+          created_by: null,
+          updated_at: null,
+          updated_by: null,
+          status: 1,
           applyUserToAll: false,
           globalUserIds: [], // global user selection
           applyFormToAll: false,
-          globalFormIds: [],
+          globalFormIds: [], // global form selection
+          dispatches: [],
         };
       }
 
       // Transform API response into the expected request format
       return {
-        name: this.currentOrder.name,
-        description: this.currentOrder.description,
-        dispatches: this.currentOrder.dispatches.map(dispatch => ({
-          id: dispatch.id,
+        id: order.id || null,
+        name: order.name || null,
+        description: order.description || null,
+        state: order.state || null,
+        status: order.status || null,
+        created_at: order.created_at || null,
+        created_by: order.created_by || null,
+        updated_at: order.updated_at || null,
+        updated_by: order.updated_by || null,
+        dispatches: order.dispatches.map(dispatch => ({
+          id: dispatch.id || null,
           type: dispatch.type === "regular" ? "regular" : "custom",
-          name: dispatch.name,
-          description: dispatch.description,
-          startTime: dispatch.start_time || null,
-          endTime: dispatch.end_time || null,
-          cronExpression: dispatch.cron_expression || null,
-          dispatchLimit: dispatch.dispatch_limit,
-          customTime: dispatch.custom_time || null,
-          dueDateOffsetMinute: dispatch.due_date_offset_minute || null,
-          dateRange:[dispatch.start_time, dispatch.end_time],
-          // Convert user objects to just their IDs
-          userIds: dispatch.dispatch_users ? dispatch.dispatch_users.map(user => user.id) : [],
-
-          // Keep form IDs directly
-          formIds: dispatch.dispatch_forms || [],
-
-          // Convert arrays to match request format
-          productIds: dispatch.product_ids || [],
-          rawMaterialIds: dispatch.raw_material_ids || [],
-          productionWorkOrderIds: dispatch.production_work_order_ids || [],
-          equipmentIds: dispatch.equipment_ids || [],
-          maintenanceWorkOrderIds: dispatch.maintenance_work_order_ids || [],
-          samplingLocationIds: dispatch.sampling_location_ids || [],
-          instrumentIds: dispatch.instrument_ids || [],
-          testSubjectIds: dispatch.test_subject_ids || [],
+          name: dispatch.name || null,
+          description: dispatch.description || null,
+          start_time: dispatch.start_time || null,
+          end_time: dispatch.end_time || null,
+          cron_expression: dispatch.cron_expression || null,
+          dispatch_limit: dispatch.dispatch_limit || null,
+          custom_time: dispatch.custom_time || null,
+          due_date_offset_minute: dispatch.due_date_offset_minute || null,
+          date_range: [dispatch.start_time, dispatch.end_time] || [],
+          user_ids: dispatch.user_ids || [],
+          form_ids: dispatch.form_ids || [],
+          product_ids: dispatch.product_ids || [],
+          raw_material_ids: dispatch.raw_material_ids || [],
+          production_work_order_ids: dispatch.production_work_order_ids || [],
+          equipment_ids: dispatch.equipment_ids || [],
+          maintenance_work_order_ids: dispatch.maintenance_work_order_ids || [],
+          sampling_location_ids: dispatch.sampling_location_ids || [],
+          instrument_ids: dispatch.instrument_ids || [],
+          test_subject_ids: dispatch.test_subject_ids || [],
+          executed_count: dispatch.executed_count,
+          state: dispatch.state || 1,
+          status: dispatch.status || 1,
+          created_at: dispatch.created_at || null,
+          created_by: dispatch.created_by || null,
+          updated_at: dispatch.updated_at || null,
+          updated_by: dispatch.updated_by || null,
         })),
       };
     }
-  }
+
+  },
+  watch: {
+    // Watch for changes in currentOrder and update qcOrderForm
+    currentOrder: {
+      immediate: true,
+      handler(newOrder) {
+        this.qcOrderForm = this.getNormalizedOrderData(newOrder);
+      },
+    }
+  },
 };
 </script>

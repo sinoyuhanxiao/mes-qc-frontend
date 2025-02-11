@@ -60,6 +60,8 @@
     <el-main class="table-section">
       <QcOrderList
           :qc-order-list="filteredAndSortedQcOrderList"
+          :form-map="formMap"
+          :user-map="userMap"
           @order-clicked="handleOrderClicked"
           @selection-change="updateSelectedRows"
       />
@@ -83,20 +85,21 @@
     <el-dialog
         title="工單详情"
         v-model="isDetailsDialogVisible"
-        width="50%"
+        width="70%"
+        top="5vh"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
     >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
+            :key="refreshKey"
             :currentOrder="currentOrder"
             :user-map="userMap"
             :form-map="formMap"
             :dispatched-tasks-map="dispatchedTaskMap"
-            @on-resume="handleResumeDispatch"
-            @on-pause="handlePauseDispatch"
             @on-edit="handleEditQcOrder"
             @on-delete="handleDeleteQcOrder"
+            @refresh-order="refreshCurrentOrder(currentOrder.id)"
         />
       </template>
 
@@ -133,10 +136,8 @@
 import {
   getAllQcOrders,
   deleteQcOrder,
-  resumeDispatch,
-  pauseDispatch,
   createQcOrder,
-  updateQcOrder
+  updateQcOrder, getQcOrderById
 } from "@/services/qcOrderService";
 import { Search, RefreshRight } from "@element-plus/icons-vue";
 import QcOrderList from "@/components/dispatch/QcOrderList.vue";
@@ -145,7 +146,7 @@ import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue
 import {fetchFormNodes} from "@/services/formNodeService";
 import {generateFormMap} from "@/utils/dispatch-utils";
 import {fetchUsers} from "@/services/userService";
-import {getAllDispatchedTasks} from "@/services/dispatchService";
+import {getAllDispatchedTasks, pauseDispatch, resumeDispatch} from "@/services/dispatchService";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 
 export default {
@@ -159,6 +160,7 @@ export default {
   },
   data() {
     return {
+      refreshKey: 0,
       isDetailsDialogVisible: false,
       isDispatchedTestsDialogVisible: false,
       isEditMode: false,
@@ -168,8 +170,8 @@ export default {
       qcOrderList: [],
       currentPage: 1,
       pageSize: 10,
-      formMap: {},
-      userMap: {},
+      formMap: [],
+      userMap: [],
       dispatchedTasks: [],
     };
   },
@@ -182,7 +184,7 @@ export default {
                   (order.status === 1) &&
                   (!this.searchInput ||
                   this.matchesSearch(order.name, this.searchInput) ||
-                  this.matchesSearch(order.order_id, this.searchInput))),
+                  this.matchesSearch(order.id, this.searchInput))),
           ["created_at", "updated_at"]
       );
     },
@@ -230,7 +232,7 @@ export default {
       try {
         const userId = this.$store.getters.getUser.id;
         let response = null;
-        if (this.currentOrder && this.currentOrder.order_id != null) {
+        if (this.currentOrder && this.currentOrder.id != null) {
           // update call
           console.log("update order");
           console.log(order);
@@ -280,7 +282,7 @@ export default {
       })
           .then(async () => {
             const userId = this.$store.getters.getUser.id;
-            const idsToDelete = this.selectedRows.map((row) => row.order_id);
+            const idsToDelete = this.selectedRows.map((row) => row.id);
             await Promise.all(idsToDelete.map((id) => deleteQcOrder(id, userId)));
             this.$message.success("选中的工单已删除！");
             await this.loadAllQcOrders();
@@ -307,23 +309,66 @@ export default {
       this.currentPage = newPage;
     },
     async handleResumeDispatch(dispatchId) {
-      console.log('handleResumeDispatch');
+      console.log('handleResumeDispatch for dispatch id:', dispatchId);
       const userId = this.$store.getters.getUser.id;
-      await resumeDispatch(this.currentOrder.order_id, dispatchId, userId);
+      await resumeDispatch(dispatchId, userId);
     },
     async handlePauseDispatch(dispatchId) {
-      console.log('handlePauseDispatch');
+      console.log("Pausing dispatch for dispatch id:", dispatchId);
       const userId = this.$store.getters.getUser.id;
-      await pauseDispatch(this.currentOrder.order_id, dispatchId, userId);
+
+      try {
+        await pauseDispatch(dispatchId, userId);
+
+        // ✅ Instead of refreshing everything, update only `currentOrder`
+        if (this.currentOrder) {
+          await this.refreshCurrentOrder(this.currentOrder.id);
+        }
+      } catch (error) {
+        console.error("Error pausing dispatch:", error);
+        this.$message.error("暂停派发失败，请重试！");
+      }
     },
     handleEditQcOrder() {
       console.log('handleEditQcOrder');
-      if (this.currentOrder && this.currentOrder.order_id != null) {
+      if (this.currentOrder && this.currentOrder.id != null) {
         this.isEditMode = true;
+        console.log('set edit mode to true')
       }
     },
-    handleDeleteQcOrder() {
-      console.log('handleDeleteQcOrder');
+    async handleDeleteQcOrder() {
+      try {
+        console.log('handleDeleteQcOrder');
+        const response = await deleteQcOrder(this.currentOrder.id, this.$store.getters.getUser.id);
+        if (response && response.status === 200) {
+          this.$message.success("选中的工单已删除");
+          await this.loadAllQcOrders();
+          this.isDetailsDialogVisible = false;
+        }
+      } catch (e) {
+        console.log("Delete action canceled or failed.");
+      }
+    },
+    async refreshCurrentOrder(id) {
+      if (!id) return;
+
+      try {
+        const response = await getQcOrderById(id);
+        const updatedOrder = response.data?.data;
+        this.refreshKey++;
+
+        if (updatedOrder) {
+          this.currentOrder = { ...updatedOrder };
+
+          const orderIndex = this.qcOrderList.findIndex(order => order.id === updatedOrder.id);
+          if (orderIndex !== -1) {
+            this.qcOrderList.splice(orderIndex, 1, updatedOrder);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to refresh current order:", error);
+        this.$message.error("无法更新工单信息，请重试！");
+      }
     },
     filterAndSortList(list, filterFn, sortFields) {
       const filtered = list.filter(filterFn);
@@ -359,11 +404,6 @@ export default {
         const updatedFormMap = generateFormMap(response.data);
 
         if (JSON.stringify(this.formMap) !== JSON.stringify(updatedFormMap)) {
-          // this.$notify({
-          //   title: "表单列表更新",
-          //   message: "表单列表已更新。",
-          //   type: "success",
-          // });
           this.formMap = updatedFormMap;
         }
       } catch (error) {

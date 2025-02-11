@@ -1,5 +1,4 @@
 <template>
-  <el-form-item :label="`${type}`" v-if="userDetail">
     <el-tag type="primary" size="small" effect="light">
       <el-popover effect="light" trigger="hover" placement="top" width="auto">
         <template #default>
@@ -12,11 +11,10 @@
           <div><strong>电话:</strong> {{ userDetail.phone_number || "无" }}</div>
         </template>
         <template #reference>
-          {{ userDetail.name || `未知${type}` }}
+          {{ userDetail.name || "未知" }}
         </template>
       </el-popover>
     </el-tag>
-  </el-form-item>
 </template>
 
 <script>
@@ -24,10 +22,6 @@ import { getUserById } from "@/services/userService";
 
 export default {
   props: {
-    type: {
-      type: String,
-      required: true, // "创建者" or "更新者"
-    },
     userId: {
       type: Number,
       required: true,
@@ -35,7 +29,7 @@ export default {
   },
   data() {
     return {
-      userDetail: null,
+      userDetail: {},
     };
   },
   methods: {
@@ -43,11 +37,11 @@ export default {
       if (!this.userId) return;
       try {
         const response = await getUserById(this.userId);
-        if (response?.data?.data) {
-          this.userDetail = response.data.data;
-        }
+        this.userDetail = response?.data?.data || {};  // Ensure it always has an object
+
       } catch (error) {
-        console.error(`Failed to fetch ${this.type} details for ID: ${this.userId}`, error);
+        console.error(`Failed to fetch details for ID: ${this.userId}`, error);
+        this.userDetail = {};  // Set to an empty object instead of null
       }
     },
     getRoleName(roleId) {

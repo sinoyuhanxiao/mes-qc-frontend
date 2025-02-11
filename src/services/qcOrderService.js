@@ -5,36 +5,22 @@ const BASE_URL = '/qc-order';
 /**
  * Create a new QC Order with its Dispatches.
  */
-export const createQcOrder = (data, userId) => {
-    return api.post(`${BASE_URL}/${userId}`, data);
+export const createQcOrder = (data) => {
+    return api.post(`${BASE_URL}`, data);
 }
 
 /**
  * Update an existing QC Order.
  */
-export const updateQcOrder = (orderId, data, userId) => {
-    return api.put(`${BASE_URL}/${orderId}/${userId}`, data);
-};
-
-/**
- * Pause a Dispatch within a QC Order.
- */
-export const pauseDispatch = (orderId, dispatchId, userId) => {
-    return api.put(`${BASE_URL}/${orderId}/dispatch/${dispatchId}/pause/${userId}`);
-};
-
-/**
- * Resume a paused Dispatch within a QC Order.
- */
-export const resumeDispatch = (orderId, dispatchId, userId) => {
-    return api.put(`${BASE_URL}/${orderId}/dispatch/${dispatchId}/resume/${userId}`);
+export const updateQcOrder = (id, data) => {
+    return api.put(`${BASE_URL}/${id}`, data);
 };
 
 /**
  * Retrieve a QC Order by ID.
  */
-export const getQcOrderById = (orderId) => {
-    return api.get(`${BASE_URL}/${orderId}`);
+export const getQcOrderById = (id) => {
+    return api.get(`${BASE_URL}/${id}`);
 };
 
 /**
@@ -47,6 +33,6 @@ export const getAllQcOrders = () => {
 /**
  * Delete a QC Order by ID.
  */
-export const deleteQcOrder = (orderId, userId) => {
-    return api.delete(`${BASE_URL}/${orderId}/${userId}`);
+export const deleteQcOrder = (id, userId) => {
+    return api.delete(`${BASE_URL}/${id}/${userId}`);
 };
