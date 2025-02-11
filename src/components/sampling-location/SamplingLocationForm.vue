@@ -1,28 +1,13 @@
 <template>
-  <el-form :model="instrument" ref="instrumentFormRef" label-width="120px" :rules="validationRules">
+  <el-form :model="location" ref="locationFormRef" label-width="120px" :rules="validationRules">
     <!-- Name (Required) -->
     <el-form-item label="名称" prop="name">
-      <el-input v-model="instrument.name" placeholder="输入仪器名称" />
-    </el-form-item>
-
-    <!-- Type (Optional) -->
-    <el-form-item label="类型">
-      <el-input v-model="instrument.type" placeholder="输入仪器类型" />
-    </el-form-item>
-
-    <!-- Manufacturer (Optional) -->
-    <el-form-item label="制造商">
-      <el-input v-model="instrument.manufacturer" placeholder="输入制造商" />
-    </el-form-item>
-
-    <!-- Model Number (Optional) -->
-    <el-form-item label="型号">
-      <el-input v-model="instrument.modelNumber" placeholder="输入仪器型号" />
+      <el-input v-model="location.name" placeholder="输入采样点名称" />
     </el-form-item>
 
     <!-- Description (Optional) -->
     <el-form-item label="描述">
-      <el-input type="textarea" v-model="instrument.description" placeholder="输入仪器描述" />
+      <el-input type="textarea" v-model="location.description" placeholder="输入采样点描述" />
     </el-form-item>
 
     <!-- Buttons -->
@@ -36,7 +21,7 @@
 <script>
 export default {
   props: {
-    instrument: {
+    location: {
       type: Object,
       required: true,
     },
@@ -48,15 +33,15 @@ export default {
   data() {
     return {
       validationRules: {
-        name: [{ required: true, message: "请输入仪器名称", trigger: "blur" }],
+        name: [{ required: true, message: "请输入采样点名称", trigger: "blur" }],
       },
     };
   },
   methods: {
     validateAndSubmit() {
-      this.$refs.instrumentFormRef.validate((valid) => {
+      this.$refs.locationFormRef.validate((valid) => {
         if (valid) {
-          const payload = {...this.instrument};
+          const payload = {...this.location};
           if (payload.id == null) {
             payload.created_by = this.$store.getters.getUser.id;
             payload.created_at = new Date().toISOString();

@@ -17,6 +17,8 @@ import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
 import OrderManagement from "@/views/OrderManagement.vue";
 import InstrumentManagement from "@/views/InstrumentManagement.vue";
+import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
+import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
 
 const routes = [
     {
@@ -99,6 +101,16 @@ const routes = [
         path: '/instrument-management',
         name: 'InstrumentManagement',
         component: InstrumentManagement,
+    },
+    {
+        path: '/sampling-location-management',
+        name: 'SamplingLocationManagement',
+        component: SamplingLocationManagement,
+    },
+    {
+        path: '/test-subject-management',
+        name: 'TestSubjectManagement',
+        component: TestSubjectManagement,
     },
 ];
 
