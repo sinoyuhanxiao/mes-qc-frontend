@@ -152,7 +152,7 @@
              @on-submit="handleDispatchSubmit"
              @on-cancel="handleCancelDispatchForm"
              @on-manual-submit="handleManualDispatchSubmit"
-        />
+             form-map="formMap"/>
 
       </template>
 
@@ -208,7 +208,6 @@ import {
   updateDispatch,
   getAllDispatchedTasks,
   getScheduledTasks,
-  createManualDispatch,
   pauseDispatch, resumeDispatch,
 } from "@/services/dispatchService";
 import {generateFormMap} from "@/utils/dispatch-utils";
@@ -274,7 +273,7 @@ export default {
       selectedRows: [],
       searchInput: "",
       formMap: {},
-      userMap: {},
+      userMap: [],
       currentPage: 1,
       pageSize: 10,
     };
