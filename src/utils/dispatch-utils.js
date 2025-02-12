@@ -169,3 +169,27 @@ export function calculateRemainingTime(date) {
         return `${seconds} 秒`;
     }
 }
+
+export function getQcOrderStateTagData(state) {
+    const stateMap = {
+        1: { label: "活跃(有运行中的任务)", type: "success" },
+        2: { label: "非活跃(无运行中的任务)", type: "info" },
+        3: { label: "所有任务已过期", type: "danger" },
+        4: { label: "所有任务达上限", type: "warning" },
+        5: { label: "所有任务已暂停", type: "primary" },
+        6: { label: "无效(有任务失效)", type: "danger" },
+    };
+    return stateMap[state] || { label: "未知", type: "default" };
+}
+
+export function getDispatchStateTagData(state) {
+    const stateMap = {
+        1: { label: "运行中", type: "success" },
+        2: { label: "非活跃", type: "info" },
+        3: { label: "已过期", type: "danger" },
+        4: { label: "已达派发上限", type: "warning" },
+        5: { label: "暂停", type: "primary" },
+        6: { label: "失效", type: "danger" },
+    };
+    return stateMap[state] || { label: "未知", type: "default" };
+}

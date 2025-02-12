@@ -32,10 +32,10 @@
     <el-form-item
         label="状态">
       <el-tag
-          :type="getStateTagType(currentOrder.state).type"
+          :type="getQcOrderStateTagData(currentOrder.state).type"
           size="small"
       >
-        {{ getStateTagType(currentOrder.state).label }}
+        {{ getQcOrderStateTagData(currentOrder.state).label }}
       </el-tag>
     </el-form-item>
 
@@ -119,10 +119,10 @@
           <el-form-item
               label="任务状态">
             <el-tag
-                :type="getStateTagType(dispatch.state).type"
+                :type="getDispatchStateTagData(dispatch.state).type"
                 size="small"
             >
-              {{ getStateTagType(dispatch.state).label }}
+              {{ getDispatchStateTagData(dispatch.state).label }}
             </el-tag>
           </el-form-item>
 
@@ -160,13 +160,18 @@
             {{ dispatch.executed_count }}
           </el-form-item>
 
-          <UserReference type="创建者" :userId="dispatch.created_by" />
+          <el-form-item label="创建者">
+            <UserReference type="创建者" :userId="dispatch.created_by" />
+          </el-form-item>
+
 
           <el-form-item label="创建时间" v-if="dispatch.created_at">
             {{ formatDate(dispatch.created_at) }}
           </el-form-item>
 
-          <UserReference type="更新者" :userId="dispatch.updated_by" />
+          <el-form-item label="更新者">
+            <UserReference type="更新者" :userId="dispatch.updated_by" />
+          </el-form-item>
 
           <el-form-item label="更新时间" v-if="dispatch.updated_at">
             {{ formatDate(dispatch.updated_at) }}
@@ -571,7 +576,10 @@
 import {
   formatDate,
   formatScheduleType,
-  unnormalizeCronExpression
+  unnormalizeCronExpression,
+  getQcOrderStateTagData,
+  getDispatchStateTagData
+
 } from "@/utils/dispatch-utils";
 import { humanizeCronInChinese } from "cron-chinese";
 import { getUserById } from "@/services/userService";
@@ -613,6 +621,8 @@ export default {
     };
   },
   methods: {
+    getDispatchStateTagData,
+    getQcOrderStateTagData,
     humanizeCronInChinese,
     formatDate,
     formatScheduleType,
@@ -644,16 +654,6 @@ export default {
           console.error("Failed to fetch updated by details:", error);
         }
       }
-    },
-    getStateTagType(state) {
-      const stateMap = {
-        1: { label: "运行中", type: "success" },
-        2: { label: "停止", type: "info" },
-        3: { label: "已过期", type: "danger" },
-        4: { label: "已达派发上限", type: "warning" },
-        5: { label: "暂停", type: "primary" },
-      };
-      return stateMap[state] || { label: "未知", type: "default" };
     },
     async fetchDetails(ids, fetchFunction) {
       const details = [];
@@ -724,7 +724,7 @@ export default {
     handleCountdownFinish(dispatch) {
       setTimeout(() => {
         this.fetchNextExecutionTime(dispatch);
-      }, 1000); // Refresh next execution time after 1 second
+      }, 2000); // Refresh next execution time after 2 second
     },
     toggleCollapse(index) {
       this.dispatches[index].collapsed =
