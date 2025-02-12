@@ -14,7 +14,6 @@
     <!-- Table -->
     <el-table
         :data="paginatedTasks"
-        border
         style="width: 100%"
         :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
     >

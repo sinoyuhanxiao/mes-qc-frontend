@@ -1,8 +1,8 @@
 <template>
-  <el-container class="dispatcher-page">
+  <el-container style="display: flex; flex-direction: column; height: 100vh; max-width: 100%; overflow: hidden;">
     <!-- Top Section -->
-    <div class="top-section">
-      <div class="top-left">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+      <div style="display: flex; align-items: center;">
         <h2>任务派发管理</h2>
         <el-input
             v-model="searchInput"
@@ -20,7 +20,7 @@
         </el-input>
       </div>
 
-      <div class="top-right">
+      <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
         <el-tooltip content="刷新列表" placement="top">
           <el-button
@@ -57,7 +57,7 @@
     </div>
 
     <!-- QC Order Table -->
-    <el-main class="table-section">
+    <el-main style="flex: 1; padding: 20px;">
       <QcOrderList
           :qc-order-list="filteredAndSortedQcOrderList"
           :form-map="formMap"
@@ -462,33 +462,5 @@ export default {
 </script>
 
 <style scoped>
-.dispatcher-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 100%;
-  overflow: hidden;
-}
 
-.top-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-}
-
-.top-left {
-  display: flex;
-  align-items: center;
-}
-
-.top-right {
-  display: flex;
-  gap: 10px;
-}
-
-.table-section {
-  flex: 1;
-  padding: 20px;
-}
 </style>
