@@ -572,21 +572,27 @@ export default {
               dispatches: this.qcOrderForm.dispatches.map((dispatch) =>
                   (this.transformDispatchData(dispatch))),
             };
+            let message;
 
             if (payload.id == null) {
               payload.created_by = this.$store.getters.getUser.id;
               payload.created_at = new Date().toISOString();
+              message = "确定提交工单吗?";
             } else {
               payload.updated_by = this.$store.getters.getUser.id;
               payload.updated_at = new Date().toISOString();
+              message = "确定提交已编辑工单吗? 将取消工单目前所有未开始的已派发任务,并按照新设置重新开始派发.";
             }
 
-            // Handle success
-            this.$message.success("QC Order created successfully!");
+            await this.$confirm(message, "提示", {
+              confirmButtonText: "确定",
+              cancelButtonText: "取消",
+              type: "warning",
+            });
+
             this.$emit("on-submit", payload); // Emit success event to parent
           } catch (error) {
             console.error("Error creating QC Order:", error);
-            this.$message.error("Failed to create QC Order. Please try again.");
           }
         }
       });
@@ -670,7 +676,9 @@ export default {
       try {
         const response = await fetchUsers();
         const users = response.data?.data || [];
-        this.userOptions = users.map((user) => ({
+        this.userOptions = users
+            .filter(user => user.status !== 0)
+            .map((user) => ({
           id: user.id,
           name: user.name,
         }));

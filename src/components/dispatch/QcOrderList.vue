@@ -28,10 +28,10 @@
     <el-table-column prop="id" label="工单 ID" width="100" sortable></el-table-column>
 
     <!-- Order State -->
-    <el-table-column prop="state" label="工单状态" width="120" sortable>
+    <el-table-column prop="state" label="工单状态" width="170" sortable>
       <template #default="scope">
-        <el-tag :type="getStateTagType(scope.row.state).type" size="small" >
-          {{ getStateTagType(scope.row.state).label }}
+        <el-tag :type="getQcOrderStateTagData(scope.row.state).type" size="small" >
+          {{ getQcOrderStateTagData(scope.row.state).label }}
         </el-tag>
       </template>
     </el-table-column>
@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { formatDate } from "@/utils/dispatch-utils";
+import { formatDate, getQcOrderStateTagData } from "@/utils/dispatch-utils";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
 import UserReference from "@/components/dispatch/UserReference.vue";
 
@@ -128,6 +128,7 @@ export default {
     }
   },
   methods: {
+    getQcOrderStateTagData,
     clickedNameColumn(row) {
       console.log("Clicked Order:", row);
       this.$emit("order-clicked", row);
@@ -135,16 +136,6 @@ export default {
     onSelectionChange(selected) {
       console.log("Selection changed:", selected);
       this.$emit("selection-change", selected);
-    },
-    getStateTagType(state) {
-      const stateMap = {
-        1: { label: "运行中", type: "success" },
-        2: { label: "非活跃", type: "info" },
-        3: { label: "已过期", type: "danger" },
-        4: { label: "已达派发上限", type: "warning" },
-        5: { label: "暂停", type: "primary" },
-      };
-      return stateMap[state] || { label: "未知", type: "default" };
     },
     formatDate(date) {
       return formatDate(date);

@@ -137,7 +137,8 @@ import {
   getAllQcOrders,
   deleteQcOrder,
   createQcOrder,
-  updateQcOrder, getQcOrderById
+  updateQcOrder,
+  getQcOrderById
 } from "@/services/qcOrderService";
 import { Search, RefreshRight } from "@element-plus/icons-vue";
 import QcOrderList from "@/components/dispatch/QcOrderList.vue";
@@ -230,21 +231,20 @@ export default {
     async handleOrderSubmit(order) {
       console.log('handleOrderSubmit')
       try {
-        const userId = this.$store.getters.getUser.id;
         let response = null;
         if (this.currentOrder && this.currentOrder.id != null) {
           // update call
           console.log("update order");
           console.log(order);
-          response = await updateQcOrder(order, userId);
+          response = await updateQcOrder(this.currentOrder.id, order);
         } else {
           // create call
           console.log("create order");
           console.log(order);
-          response = await createQcOrder(order, userId);
+          response = await createQcOrder(order);
         }
         if (response && response.status === 200) {
-          this.$message.success("工单已删除！");
+          this.$message.success("工单已创建！");
         }
 
           await this.loadAllQcOrders();
