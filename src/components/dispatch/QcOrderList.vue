@@ -2,7 +2,6 @@
   <el-table
       ref="qcOrderTable"
       :data="qcOrderList"
-      border
       style="width: 100%"
       @selection-change="onSelectionChange"
   >
