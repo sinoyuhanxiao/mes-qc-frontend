@@ -1,5 +1,5 @@
 <template>
-  <div class="dispatch-configurator">
+  <div>
     <el-tabs
         v-model="activeTab"
         @tab-click="handleTabClick">

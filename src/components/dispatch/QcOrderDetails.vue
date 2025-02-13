@@ -1,7 +1,7 @@
 <template>
-  <el-form label-position="left" label-width="140px" class="order-details">
-
-    <div class="details-header">
+  <div style="overflow-y: hidden">
+    <el-form label-position="left" label-width="140px" style="padding: 10px; max-height: 75vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: flex-end;">
       <!-- Action Buttons -->
       <el-button-group>
         <el-button type="success" @click="handleEditOrder">编辑</el-button>
@@ -68,7 +68,7 @@
       <el-card
           v-for="(dispatch, index) in dispatches"
           :key="dispatch.id"
-          class="dispatch-block"
+          style="margin-bottom: 20px;"
       >
         <div
             style="display: flex;
@@ -570,6 +570,7 @@
     <div v-else>- 无任务 -</div>
 
   </el-form>
+  </div>
 </template>
 
 <script>
@@ -788,25 +789,11 @@ export default {
 
     // fetch each dispatch's data under order
     this.loadDispatchDetails();
-
-
   }
 };
 </script>
 
 <style scoped>
-.order-details {
-  padding: 10px;
-}
-
-.dispatch-block {
-  margin-bottom: 20px;
-}
-
-.details-header {
-  display: flex;
-  justify-content: flex-end;
-}
 
 .tags {
   display: flex;
