@@ -295,8 +295,8 @@
               >
                 <DispatchFormTreeSelect
                     :selected-form-ids="dispatch.form_ids"
-                    @update-selected-forms="(forms) =>
-                    handleSelectedForms(forms, index)"
+                    @update-selected-forms="(forms) => handleSelectedForms(forms, index)"
+                    @on-node-clicked="handleFormNodeClicked"
                 />
               </el-form-item>
 
@@ -399,9 +399,7 @@
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import { CronElementPlus } from "@vue-js-cron/element-plus";
 import { fetchUsers } from "@/services/userService";
-import { createQcOrder } from "@/services/qcOrderService";
-import { humanizeCronInChinese } from "cron-chinese";
-import {normalizeCronExpression} from "@/utils/dispatch-utils";
+import {normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
 import {getAllProductionWorkOrders, getAllProducts, getAllRawMaterials} from "@/services/productionService";
 import {getAllEquipments, getAllMaintenanceWorkOrders} from "@/services/maintenanceService";
 import {getAllInstruments} from "@/services/instrumentService";
@@ -417,7 +415,7 @@ export default {
       required: true,
     },
     formMap: {
-      type: Array,
+      type: Object,
       required: true,
     }
   },
@@ -803,6 +801,11 @@ export default {
         this.loadTestSubjectOptions(),
       ]);
     },
+    openFormPreviewWindow,
+    async handleFormNodeClicked(formTemplateId) {
+      console.log("qc order form a node is clicked: " + formTemplateId);
+      await openFormPreviewWindow(formTemplateId, this)
+    }
   },
   mounted() {
     this.loadAllOptions()

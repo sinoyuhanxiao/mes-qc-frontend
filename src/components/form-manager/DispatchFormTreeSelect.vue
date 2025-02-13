@@ -17,6 +17,7 @@
         :props="defaultProps"
         :filter-node-method="filterNode"
         @check-change="handleCheckChange"
+        @node-click="handleNodeClicked"
         show-checkbox
     >
       <template #default="{ node, data }">
@@ -70,7 +71,7 @@ const props = defineProps({
     default: () => [],
   },
 });
-const emit = defineEmits(['update-selected-forms']);
+const emit = defineEmits(['update-selected-forms','on-node-clicked']);
 const filterText = ref('')
 const treeRef = ref<InstanceType<typeof ElTree>>()
 const data = ref<Tree[]>([])
@@ -151,9 +152,13 @@ const handleCheckChange = () => {
         label: node.label,
       })); // Extract IDs
   emit('update-selected-forms', selectedForms); // Emit IDs to parent
-
 };
 
+const handleNodeClicked = (nodeData) => {
+  if(nodeData.nodeType == 'document' && nodeData.id) {
+    emit("on-node-clicked", nodeData.id);
+  }
+};
 
 
 </script>
