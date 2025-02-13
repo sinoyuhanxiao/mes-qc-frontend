@@ -43,14 +43,14 @@ export default {
   props: {
     currentOrder: {
       type: Object,
-      required: true,
+      required: false,
     },
     isEditMode: {
       type: Boolean,
       default: false,
     },
     formMap: {
-      type: Array,
+      type: Object,
       required:true,
     }
   },
