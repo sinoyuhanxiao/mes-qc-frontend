@@ -1,4 +1,6 @@
 import dayjs from "dayjs";
+import * as formNodeService from "@/services/formNodeService";
+import {Base64} from "js-base64";
 
 
 // Extracts time in HH:mm format from different time structures
@@ -192,4 +194,35 @@ export function getDispatchStateTagData(state) {
         6: { label: "失效", type: "danger" },
     };
     return stateMap[state] || { label: "未知", type: "default" };
+}
+
+export async function openFormPreviewWindow(nodeId, vueInstance) {
+    try {        // Fetch the qc form template id asynchronously
+        const response = await formNodeService.fetchFormNodesById(nodeId);
+        const qcFormTemplateId = response.data?.qcFormTemplateId;
+
+        if (!qcFormTemplateId) {
+            console.error("Failed to fetch qcFormTemplateId for nodeId:", nodeId);
+            vueInstance.$message.error("无法加载表单模板，请重试。");
+            return;
+        }
+
+        // Encode query parameters into a Base64 string
+        // const queryParams = { usable: taskUsable, switchDisplayed: false };
+        const queryParams = {usable: false, switchDisplayed: false, dispatchedTaskId: null};
+
+        // Construct the URL
+        const newTabUrl = vueInstance.$router.resolve({
+            name: 'FormDisplay',
+            params: {qcFormTemplateId}, // Path parameter
+            query: queryParams, // Encoded query
+        }).href;
+
+
+        // Open the URL in a new tab
+        window.open(newTabUrl, '_blank');
+    } catch (error) {
+        console.error("Error fetching qcFormTemplateId for nodeId:", nodeId, error);
+        vueInstance.$message.error("加载表单模板时出错，请稍后重试。");
+    }
 }
