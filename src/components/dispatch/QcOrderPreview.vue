@@ -52,11 +52,11 @@ export default {
       required: true
     },
     formMap: {
-      type:Array,
+      type: Object,
       required:true,
     },
     userMap: {
-      type:Array,
+      type: Object,
       required:true,
     }
   },

@@ -24,7 +24,7 @@ export default {
   props: {
     userId: {
       type: Number,
-      required: true,
+      required: false,
     },
   },
   data() {

@@ -161,7 +161,7 @@
           </el-form-item>
 
           <el-form-item label="创建者">
-            <UserReference type="创建者" :userId="dispatch.created_by" />
+            <UserReference :userId="dispatch.created_by" />
           </el-form-item>
 
 
@@ -170,7 +170,7 @@
           </el-form-item>
 
           <el-form-item label="更新者">
-            <UserReference type="更新者" :userId="dispatch.updated_by" />
+            <UserReference :userId="dispatch.updated_by" />
           </el-form-item>
 
           <el-form-item label="更新时间" v-if="dispatch.updated_at">
@@ -660,7 +660,6 @@ export default {
       const details = [];
       for (const id of ids || []) {
         try {
-          console.log(`Fetching detail for ID: ${id}`);
           const response = await fetchFunction(id);
           if (response?.data?.data) details.push(response.data.data);
         } catch (e) {
