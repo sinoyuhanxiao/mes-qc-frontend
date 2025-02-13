@@ -1,12 +1,12 @@
 <template>
-  <el-container style="display: flex; flex-direction: column; height: 100vh; max-width: 100%; overflow: hidden;">
+  <el-container style="display: flex; flex-direction: column; height: 90vh; max-width: 100%; overflow: hidden;">
     <!-- Top Section -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center;">
         <h2>任务派发管理</h2>
         <el-input
             v-model="searchInput"
-            placeholder="输入名称或ID搜索"
+            placeholder="搜索关键字"
             clearable
             style="width: 300px; margin-left: 20px"
         >
@@ -57,39 +57,27 @@
     </div>
 
     <!-- QC Order Table -->
-    <el-main style="flex: 1; padding: 20px;">
+    <el-main style="padding: 0;">
       <QcOrderList
-          :qc-order-list="filteredAndSortedQcOrderList"
+          :qc-order-list="qcOrders"
           :form-map="formMap"
           :user-map="userMap"
+          :search-input="searchInput"
           @order-clicked="handleOrderClicked"
           @selection-change="updateSelectedRows"
-      />
 
-      <!-- Pagination -->
-      <el-pagination
-          v-if="filteredAndSortedQcOrderList.length > 0"
-          style="margin-top: 16px; text-align: right;"
-          background
-          layout="total, sizes, prev, pager, next"
-          :total="filteredAndSortedQcOrderList.length"
-          :page-sizes="[10, 20, 50, 100]"
-          :page-size="pageSize"
-          :current-page="currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
       />
     </el-main>
 
-    <!-- QC Order Details Dialog -->
+    <!-- Dialog (QC Order Detail/Dispatch Configurator(Qc Order Form/Quick Dispatch Form)) -->
     <el-dialog
         title="工單详情"
         v-model="isDetailsDialogVisible"
-        width="70%"
+        width="80%"
         top="5vh"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
-    >
+        style="max-width: 1200px; max-height: 90vh; overflow: hidden;">
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
             :key="refreshKey"
@@ -104,13 +92,15 @@
       </template>
 
       <template v-else-if="isDetailsDialogVisible && isEditMode">
-        <dispatch-configurator
-            :current-order="currentOrder"
-            :is-edit-mode="isEditMode"
-            :form-map="formMap"
-            @on-submit="handleOrderSubmit"
-            @on-cancel="closeAndResetDetailsDialog"
-        />
+        <div style="max-height: 80vh;  overflow-y: hidden; padding: 10px;">
+          <dispatch-configurator
+              :current-order="currentOrder"
+              :is-edit-mode="isEditMode"
+              :form-map="formMap"
+              @on-submit="handleOrderSubmit"
+              @on-cancel="closeAndResetDetailsDialog"
+          />
+        </div>
       </template>
     </el-dialog>
 
@@ -145,10 +135,11 @@ import QcOrderList from "@/components/dispatch/QcOrderList.vue";
 import QcOrderDetails from "@/components/dispatch/QcOrderDetails.vue";
 import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
 import {fetchFormNodes} from "@/services/formNodeService";
-import {generateFormMap} from "@/utils/dispatch-utils";
+import {generateFormMap, getQcOrderStateTagData} from "@/utils/dispatch-utils";
 import {fetchUsers} from "@/services/userService";
 import {getAllDispatchedTasks, pauseDispatch, resumeDispatch} from "@/services/dispatchService";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
+import qcOrderList from "@/components/dispatch/QcOrderList.vue";
 
 export default {
   components: {
@@ -168,38 +159,19 @@ export default {
       currentOrder: null,
       selectedRows: [],
       searchInput: "",
-      qcOrderList: [],
-      currentPage: 1,
-      pageSize: 10,
       formMap: [],
       userMap: [],
       dispatchedTasks: [],
+      qcOrders: [],
     };
   },
   computed: {
-    filteredAndSortedQcOrderList() {
-      return this.filterAndSortList(
-          this.qcOrderList,
-          (order) =>
-              (
-                  (order.status === 1) &&
-                  (!this.searchInput ||
-                  this.matchesSearch(order.name, this.searchInput) ||
-                  this.matchesSearch(order.id, this.searchInput))),
-          ["created_at", "updated_at"]
-      );
-    },
     filteredAndSortedDispatchedTaskList() {
       return this.filterAndSortList(
           this.dispatchedTasks,
           (task) =>
               task.status !== 0,
           ["updated_at","created_at"]);
-    },
-    paginatedQcOrderList() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      return this.filteredAndSortedQcOrderList.slice(start, end);
     },
     dispatchedTaskMap() {
       const map = {};
@@ -213,7 +185,11 @@ export default {
     async loadAllQcOrders() {
       try {
         const response = await getAllQcOrders();
-        this.qcOrderList = response.data.data;
+        if (response && response.status === 200) {
+          this.qcOrders = response.data.data;
+        } else {
+          this.qcOrders = [];
+        }
       } catch (error) {
         this.$message.error("无法加载QC工单列表，请重试。");
       }
@@ -254,27 +230,11 @@ export default {
         this.$message.error("Failed to create QC Order. Please try again.");
       }
     },
-    async confirmDeleteOrder(orderId) {
-      try {
-        await this.$confirm("确认删除工单吗？", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        });
-        const userId = this.$store.getters.getUser.id;
-        const response = await deleteQcOrder(orderId, userId);
-        this.$message.success("工单已删除！");
-        await this.loadAllQcOrders();
-      } catch (error) {
-        this.$message.error("删除失败，请重试。");
-      }
-    },
     confirmDeleteSelectedRows() {
       if (this.selectedRows.length === 0) {
         this.$message.warning("请选择至少一个工单进行删除！");
         return;
       }
-
       this.$confirm("确认删除选中的工单吗？", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
@@ -290,6 +250,7 @@ export default {
           })
           .catch((error) => {
             this.$message.error("删除失败，请重试。");
+            console.log(error);
           });
     },
     closeAndResetDetailsDialog() {
@@ -300,34 +261,6 @@ export default {
     },
     updateSelectedRows(selected) {
       this.selectedRows = selected;
-    },
-    handleSizeChange(newSize) {
-      this.pageSize = newSize;
-      this.currentPage = 1; // Reset to the first page on size change
-    },
-    handlePageChange(newPage) {
-      this.currentPage = newPage;
-    },
-    async handleResumeDispatch(dispatchId) {
-      console.log('handleResumeDispatch for dispatch id:', dispatchId);
-      const userId = this.$store.getters.getUser.id;
-      await resumeDispatch(dispatchId, userId);
-    },
-    async handlePauseDispatch(dispatchId) {
-      console.log("Pausing dispatch for dispatch id:", dispatchId);
-      const userId = this.$store.getters.getUser.id;
-
-      try {
-        await pauseDispatch(dispatchId, userId);
-
-        // ✅ Instead of refreshing everything, update only `currentOrder`
-        if (this.currentOrder) {
-          await this.refreshCurrentOrder(this.currentOrder.id);
-        }
-      } catch (error) {
-        console.error("Error pausing dispatch:", error);
-        this.$message.error("暂停派发失败，请重试！");
-      }
     },
     handleEditQcOrder() {
       console.log('handleEditQcOrder');
@@ -360,9 +293,9 @@ export default {
         if (updatedOrder) {
           this.currentOrder = { ...updatedOrder };
 
-          const orderIndex = this.qcOrderList.findIndex(order => order.id === updatedOrder.id);
+          const orderIndex = this.originalQcOrders.findIndex(order => order.id === updatedOrder.id);
           if (orderIndex !== -1) {
-            this.qcOrderList.splice(orderIndex, 1, updatedOrder);
+            this.originalQcOrders.splice(orderIndex, 1, updatedOrder);
           }
         }
       } catch (error) {
@@ -381,10 +314,6 @@ export default {
             .find((date) => !isNaN(date));
         return dateB - dateA;
       });
-    },
-    matchesSearch(value, searchInput) {
-      if (!value || !searchInput) return false;
-      return value.toString().toLowerCase().includes(searchInput.toLowerCase());
     },
     async loadAllData() {
       try {
@@ -462,5 +391,20 @@ export default {
 </script>
 
 <style scoped>
+.refresh-button {
+  background-color: #80cfff; /* Slightly lighter shade of primary color */
+  border-color: #80cfff; /* Match lighter background */
+}
+
+.refresh-button:hover {
+  background-color: #66b5ff; /* Slightly darker hover effect */
+  border-color: #66b5ff;
+  transform: rotate(360deg); /* Rotate on hover */
+  transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
+}
+
+.refresh-button el-icon {
+  color: #004085; /* Darker primary-like color for the refresh icon */
+}
 
 </style>

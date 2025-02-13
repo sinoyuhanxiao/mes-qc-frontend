@@ -1,7 +1,7 @@
 <template>
-  <el-container class="qc-order-container">
+  <el-container style="display: flex; height: 100%; overflow-y: hidden;">
     <!-- Left Section - QcOrderForm -->
-    <el-main class="qc-order-form">
+    <el-main style="flex: 7; padding: 20px; overflow-y: auto; max-height: 75vh">
       <el-form
           :model="qcOrderForm"
           :rules="validationRules"
@@ -63,14 +63,14 @@
         <div
             v-for="(dispatch, index) in qcOrderForm.dispatches"
             :key="dispatch.id"
-            class="dispatch-block"
+            style="margin-bottom: 20px;"
         >
           <el-card shadow="always">
             <!-- Custom Header Slot -->
             <template #header>
-              <div class="task-card-header">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;">
                 <span>任务 {{ index + 1 }}</span>
-                <div class="task-card-actions">
+                <div style="display: flex; gap: 8px;">
                   <!-- Expand Button -->
                   <el-button
                       type="text"
@@ -78,14 +78,18 @@
                       :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
                     {{ dispatch.collapsed ? '展开' : '收起' }}
                   </el-button>
-
                   <!-- Remove Dispatch Button -->
-                  <el-button type="danger" plain @click="removeDispatch(index)">删除任务</el-button>
+                  <el-button
+                      type="danger"
+                      plain
+                      @click="removeDispatch(index)">
+                    删除任务
+                  </el-button>
                 </div>
               </div>
             </template>
 
-
+            <!-- Dispatch Form-->
             <div v-show="!dispatch.collapsed">
               <!-- Name -->
               <el-form-item
@@ -380,8 +384,8 @@
   </el-form>
     </el-main>
     <!-- Right Section - Preview -->
-    <el-aside class="qc-order-preview">
-     <qc-order-preview
+    <el-aside style="flex: 3; padding: 20px; max-height: 75vh; background: #f9f9f9; overflow-y: auto;">
+      <qc-order-preview
         :qc-order-form = "qcOrderForm"
         :form-map="formMap"
         :user-map="userOptions"
@@ -809,46 +813,5 @@ export default {
 </script>
 
 <style scoped>
-.dispatch-block {
-  margin-bottom: 20px;
-}
 
-.qc-order-container {
-  display: flex;
-  height: 100%;
-}
-
-.qc-order-form {
-  flex: 7;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.qc-order-preview {
-  flex: 3;
-  padding: 20px;
-  background: #f9f9f9;
-  border-left: 1px solid #ddd;
-  overflow-y: auto;
-}
-
-/* Task Card Header */
-.task-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 8px 12px;
-}
-
-/* Buttons on the right side of the header */
-.task-card-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.dispatch-details li {
-  margin-bottom: 8px; /* Add spacing between items */
-}
 </style>
