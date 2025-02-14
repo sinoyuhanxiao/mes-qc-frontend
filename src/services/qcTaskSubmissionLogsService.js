@@ -61,3 +61,18 @@ export const exportDocumentsToExcel = (qcFormTemplateId, createdBy) => {
     });
 };
 
+/**
+ * Export a MongoDB document to PDF.
+ * @param {String} submissionId - The MongoDB document's ObjectId.
+ * @param {Long} qcFormTemplateId - The QC Form Template ID.
+ * @param {Integer} createdBy - The user who created the form.
+ * @returns {Promise} API response containing the PDF file as a blob.
+ */
+export const exportDocumentToPDF = (submissionId, qcFormTemplateId, createdBy) => {
+    return api.get(`${BASE_URL}/document_pdf`, {
+        params: { submissionId, qcFormTemplateId, createdBy },
+        responseType: 'blob', // Ensures the response is treated as a file
+    });
+};
+
+

@@ -124,7 +124,12 @@
 
 <script>
 import {Download, RefreshRight, Search} from "@element-plus/icons-vue";
-import {exportDocumentsToExcel, getAllTaskLogs, getMyDocument} from "@/services/qcTaskSubmissionLogsService"; // Import the backend service
+import {
+  exportDocumentsToExcel,
+  exportDocumentToPDF,
+  getAllTaskLogs,
+  getMyDocument
+} from "@/services/qcTaskSubmissionLogsService"; // Import the backend service
 import { formatDate } from "@/utils/task-center/dateFormatUtils";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
 
@@ -149,6 +154,10 @@ export default {
   data() {
     return {
       title: "质检任务提交记录",
+      selectedIds: {
+        qc_form_template_id: null,
+        submission_id: null
+      },
       searchTerm: "",
       tableData: [], // Backend data
       filteredData: [],
@@ -288,10 +297,35 @@ export default {
       try {
         const response = await getMyDocument(row.submission_id, row.qc_form_template_id, row.created_by);
         this.selectedDetails = response.data; // Populate the details
-        console.log("selectedDetails: ", this.selectedDetails);
+        this.selectedIds.qc_form_template_id = row.qc_form_template_id
+        this.selectedIds.submission_id = row.submission_id
         this.dialogVisible = true; // Show the dialog
       } catch (err) {
         console.error("Error fetching document details:", err);
+      }
+    },
+    async downloadPdf() {
+      try {
+        const response = await exportDocumentToPDF(
+            this.selectedIds.submission_id,
+            this.selectedIds.qc_form_template_id,
+            this.$store.getters.getUser.id
+        );
+
+        const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `task_submission_${this.selectedDetails.submission_id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        this.$message.success("PDF 下载成功!");
+      } catch (err) {
+        console.error("Error downloading PDF:", err);
+        this.$message.error("PDF 下载失败，请重试!");
       }
     },
     // Close the details dialog

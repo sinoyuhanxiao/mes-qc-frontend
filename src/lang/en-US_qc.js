@@ -111,6 +111,7 @@ export default {
         historyTasks: "History Tasks",
         overdueTasks: "Overdue Tasks",
         taskCalendar: "Task Calendar",
+        formDataSummary: "Form Data Summary",
         logout: "Logout",
         userRole: "User Role",
         username: "Username"

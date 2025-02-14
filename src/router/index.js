@@ -17,6 +17,7 @@ import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
 import ShiftManagement from "@/views/ShiftManagement.vue";
 import ReportManagement from "@/views/ReportManagement.vue";
+import FormDataSummary from "@/views/FormDataSummary.vue";
 
 const routes = [
     {
@@ -47,6 +48,11 @@ const routes = [
         path: '/quality-form-management',
         name: 'QualityFormManagement',
         component: QualityFormManagement
+    },
+    {
+        path: '/form-data-summary',
+        name: 'FormDataSummary',
+        component: FormDataSummary
     },
     {
         path: '/task-assignment',
