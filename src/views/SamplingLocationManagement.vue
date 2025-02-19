@@ -1,15 +1,15 @@
 <template>
-  <el-container class="sampling-location-page">
-    <div class="top-section">
+  <el-container style="display: flex; flex-direction: column; height: 100vh; max-width: 100%; overflow: hidden;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
       <!-- Top Section -->
-      <div class="top-left">
+      <div style="display: flex; align-items: center;">
         <h2>采样点管理</h2>
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
             placeholder="搜索采样点名称"
             clearable
-            class="search-bar"
+            style="width: 300px; margin-left: 20px;"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
@@ -17,14 +17,14 @@
         </el-input>
       </div>
 
-      <div class="top-right">
+      <div style="display: flex; gap: 10px;">
         <el-button type="primary" @click="openDialog()">
           新增采样点
         </el-button>
       </div>
     </div>
 
-    <el-main class="table-section">
+    <el-main style="flex: 1; padding: 0; margin-top: 20px;">
       <!-- Sampling Location List -->
       <SamplingLocationList
           :locations="filteredLocations"
@@ -34,7 +34,7 @@
 
       <!-- Pagination -->
       <el-pagination
-          class="pagination"
+          style="margin-top: 16px; text-align: center;"
           background
           layout="prev, pager, next"
           :total="filteredLocations.length"
@@ -149,43 +149,5 @@ export default {
 </script>
 
 <style scoped>
-.sampling-location-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 100%;
-  overflow: hidden;
-}
 
-.search-bar {
-  width: 300px;
-  margin-left: 20px;
-}
-
-.pagination {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.top-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-}
-
-.top-left {
-  display: flex;
-  align-items: center;
-}
-
-.top-right {
-  display: flex;
-  gap: 10px;
-}
-
-.table-section {
-  flex: 1;
-  padding: 20px;
-}
 </style>
