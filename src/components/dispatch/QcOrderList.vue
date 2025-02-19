@@ -5,6 +5,7 @@
       style="width: 100%;"
       @selection-change="onSelectionChange"
       @sort-change="handleSortChange"
+      :default-sort="{ prop: 'id', order: 'descending' }"
   >
     <!-- Row Selection -->
     <el-table-column type="selection" width="55"></el-table-column>
@@ -113,7 +114,6 @@
       :current-page="currentPage"
       @size-change="handleSizeChange"
       @current-change="handlePageChange"
-      :hide-on-single-page="true"
   />
 </template>
 
@@ -134,7 +134,7 @@ export default {
       filteredQcOrders: [],
       sortSettings: {prop: '', order: ''}, // store sorting column and order
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 15,
     }
   },
   props: {

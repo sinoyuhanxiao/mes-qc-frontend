@@ -63,7 +63,7 @@
       <UserReference :userId="currentOrder.updated_by" />
     </el-form-item>
 
-    <el-divider>任务列表</el-divider>
+    <el-divider>派发计划列表</el-divider>
     <div v-if="dispatches.length > 0">
       <el-card
           v-for="(dispatch, index) in dispatches"
@@ -72,8 +72,7 @@
       >
         <div
             style="display: flex;
-            justify-content: space-between;
-             align-items: center;"
+            justify-content: flex-end;"
         >
           <!-- Expand Arrow -->
           <el-button
@@ -98,26 +97,26 @@
         </div>
         <div v-show="!dispatch.collapsed">
           <el-form-item
-              label="任务名称"
+              label="名称"
               class="wrap-text"
               v-if="dispatch.name">
             {{ dispatch.name }}
           </el-form-item>
 
           <el-form-item
-              label="任务ID">
+              label="ID">
             {{ dispatch.id }}
           </el-form-item>
 
           <el-form-item
-              label="任务备注"
+              label="备注"
               class="wrap-text"
               v-if="dispatch.description">
             {{ dispatch.description }}
           </el-form-item>
 
           <el-form-item
-              label="任务状态">
+              label="状态">
             <el-tag
                 :type="getDispatchStateTagData(dispatch.state).type"
                 size="small"
@@ -128,7 +127,7 @@
 
           <el-divider>时间调度</el-divider>
 
-          <el-form-item label="任务计划类型">
+          <el-form-item label="类型">
             {{ formatScheduleType(dispatch.type) }}
           </el-form-item>
 
@@ -152,7 +151,7 @@
             {{ formatDate(dispatch.custom_time) }}
           </el-form-item>
 
-          <el-form-item label="下次派发时间" v-if="dispatch.nextExecutionTime">
+          <el-form-item label="下次派发时间" v-if="dispatch.nextExecutionTime && dispatch.type === 'regular'">
             <el-countdown :value="dispatch.nextExecutionTime" format="HH:mm:ss" @finish="handleCountdownFinish(dispatch)"/>
           </el-form-item>
 
@@ -485,8 +484,8 @@
                     placement="top"
                     width="300px">
                   <template #default>
-                    <!-- Equipment Details -->
 
+                    <!-- Equipment Details -->
                     <div><strong>ID:</strong> {{ equipment.id }}</div>
                     <div><strong>代码:</strong> {{ equipment.code }}</div>
                     <div><strong>PLC:</strong> {{ equipment.plc }}</div>
@@ -556,18 +555,19 @@
             </div>
           </el-form-item>
 
-          <el-divider>已派发任务</el-divider>
+          <el-divider>已派发质检任务</el-divider>
           <!-- Dispatched Tasks Table -->
           <DispatchedTasksList
-              :dispatched-tasks="dispatchedTasksMap[dispatch.id] || []"
+              :dispatch-id="dispatch.id"
               :form-map="formMap"
               :user-map="userMap"
-              :show-search-box="false"
+              :show-search-box="true"
+              :key="refreshKey"
           />
         </div>
       </el-card>
     </div>
-    <div v-else>- 无任务 -</div>
+    <div v-else>- 无派发任务 -</div>
 
   </el-form>
   </div>
@@ -609,13 +609,10 @@ export default {
       type: Object,
       required: true,
     },
-    dispatchedTasksMap: {
-      type: Object,
-      required: true,
-    }
   },
   data() {
     return {
+      refreshKey: 0,
       dispatches: [],
       createdByDetail: null,
       updatedByDetail: null,
@@ -722,8 +719,11 @@ export default {
       }
     },
     handleCountdownFinish(dispatch) {
+      console.log("reach countdown")
       setTimeout(() => {
         this.fetchNextExecutionTime(dispatch);
+        this.refreshKey++;
+        console.log("fetch next execution time now")
       }, 2000); // Refresh next execution time after 2 second
     },
     toggleCollapse(index) {
@@ -765,7 +765,7 @@ export default {
       }
     },
     async handleEditOrder(){
-      await this.$confirm("确定编辑工單吗？ 將會暫停工單內所有运行中任務.", "提示", {
+      await this.$confirm("确定编辑工單吗？", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
