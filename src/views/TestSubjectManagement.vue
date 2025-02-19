@@ -171,7 +171,6 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
 }
 
 .top-left {
@@ -186,6 +185,7 @@ export default {
 
 .table-section {
   flex: 1;
-  padding: 20px;
+  padding: 0;
+  margin-top: 20px;
 }
 </style>
