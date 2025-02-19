@@ -5,10 +5,11 @@
     <el-input
         v-model="searchInput"
         style="width: 240px; margin: 10px;"
-        placeholder="输入计划任务ID搜索"
+        placeholder="输入关键字搜索"
         clearable
         :prefix-icon="Search"
         v-if="showSearchBox"
+        @input="handleSearch"
     />
 
     <!-- Table -->
@@ -16,6 +17,7 @@
         :data="paginatedTasks"
         style="width: 100%"
         :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
+        @sort-change="handleSortChange"
     >
       <!-- 查看提交记录 -->
       <el-table-column label="操作" width="150">
@@ -34,10 +36,10 @@
       <el-table-column prop="id" label="ID" width="90" sortable></el-table-column>
 
       <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="计划任务ID" width="90" sortable></el-table-column>
+      <el-table-column prop="dispatch_id" label="派发计划ID" width="90" sortable></el-table-column>
 
       <!-- Name -->
-      <el-table-column prop="name" label="计划任务名称" width="150" sortable>
+      <el-table-column prop="name" label="任务名称" width="150" sortable>
         <template #default="scope">
           {{ scope.row.name || "-" }}
         </template>
@@ -100,7 +102,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="dispatched_task_state_id" label="派发任务状态" width="120" sortable>
+      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="120" sortable>
         <template #default="scope">
           <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
             {{ stateName(scope.row.dispatched_task_state_id) }}
@@ -109,7 +111,7 @@
       </el-table-column>
 
       <!-- Dispatch Time -->
-      <el-table-column prop="dispatch_time" label="推送时间" width="180" sortable>
+      <el-table-column prop="dispatch_time" label="派发时间" width="180" sortable>
         <template #default="scope">
           {{ formatDate(scope.row.dispatch_time) }}
         </template>
@@ -136,13 +138,17 @@
 
     <!-- Pagination -->
     <el-pagination
-        class="mt-4"
+        v-if="tasks.length > 0"
+        style="margin-top: 16px; text-align: right;"
         background
-        layout="prev, pager, next, jumper, ->, total"
-        :total="totalFilteredRows"
+        layout="sizes, prev, pager, next, jumper, ->, total"
+        :total="totalTasks"
         :page-size="pageSize"
+        :page-sizes="[15, 30, 45, 60]"
         :current-page="currentPage"
+        @size-change="handleSizeChange"
         @current-change="handlePageChange"
+
     />
   </div>
 </template>
@@ -150,13 +156,14 @@
 <script>
 import dayjs from "dayjs";
 import {Search} from "@element-plus/icons-vue";
+import { getAllDispatchedTasks, getAllDispatchedTasksByDispatchId } from "@/services/taskCenterService"
+
 
 export default {
-  name: "DispatchedTasksTable",
   props: {
-    dispatchedTasks: {
-      type: Array,
-      required: true,
+    dispatchId: {
+      type: Number,
+      required: false,
     },
     formMap: {
       type: Object,
@@ -174,8 +181,12 @@ export default {
   data() {
     return {
       currentPage: 1,
-      pageSize: 10, // Number of rows per page
+      pageSize: 15, // Number of rows per page
       searchInput: "",
+      tasks: [],
+      totalTasks: 0,
+      sortField: "dispatch_time",
+      sortOrder: "desc",
     };
   },
   watch: {
@@ -183,13 +194,28 @@ export default {
     searchInput() {
       this.currentPage = 1;
     },
+    dispatchId: {
+      immediate: true,
+      handler() {
+        this.fetchTasks();
+      },
+    },
+    refreshKey: {
+      immediate: false,
+      handler() {
+        this.fetchTasks();
+      },
+    },
   },
   computed: {
     Search() {
       return Search
     },
+    paginatedTasks() {
+      return this.tasks;
+    },
     filteredTasks() {
-      return this.dispatchedTasks.filter((task) => {
+      return this.tasks.filter((task) => {
         if (!this.searchInput.trim()) return true;
 
         const searchTerm = this.searchInput.toLowerCase();
@@ -199,14 +225,6 @@ export default {
             task.dispatch_id.toString().includes(searchTerm)
         );
       });
-    },
-    totalFilteredRows() {
-      return this.filteredTasks.length;
-    },
-    paginatedTasks() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      return this.filteredTasks.slice(start, end);
     },
   },
   methods: {
@@ -227,8 +245,19 @@ export default {
     getUserById(userId) {
       return this.userMap[userId] || null;
     },
-    handlePageChange(page) {
-      this.currentPage = page;
+    handleSortChange({ prop, order }) {
+      this.sortField = prop || "dispatch_time";
+      this.sortOrder = order === "ascending" ? "asc" : "desc";
+      this.fetchTasks();
+    },
+    handlePageChange(newPage) {
+      this.currentPage = newPage;
+      this.fetchTasks();
+    },
+    handleSizeChange(newSize) {
+      this.pageSize = newSize;
+      this.currentPage = 1;
+      this.fetchTasks();
     },
     stateTagType(stateId) {
       const stateMap = {
@@ -300,6 +329,31 @@ export default {
       // Open the URL in a new tab
       window.open(url, "_blank");
     },
+    async fetchTasks() {
+      try {
+        const sortParam = `${this.sortField},${this.sortOrder}`;
+        let response;
+        if (this.dispatchId) {
+          response = await getAllDispatchedTasksByDispatchId(this.dispatchId, this.currentPage, this.pageSize, sortParam, this.searchInput);
+        } else {
+          response = await getAllDispatchedTasks(this.currentPage, this.pageSize, sortParam, this.searchInput);
+        }
+
+        if (response && response.status === 200) {
+          console.log(response);
+          this.tasks = response.data.data.content;
+          this.totalTasks = response.data.data.totalElements;
+        }
+      } catch (error) {
+        console.error("Error fetching dispatched tasks:", error);
+      }
+    },
+    handleSearch() {
+      this.fetchTasks();
+    },
+  },
+  mounted() {
+    this.fetchTasks();
   },
 };
 </script>

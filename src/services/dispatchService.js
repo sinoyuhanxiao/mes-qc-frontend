@@ -6,10 +6,6 @@ export const getAllDispatches = () => {
     return api.get(BASE_URL);
 }
 
-export const getAllDispatchedTasks = () => {
-    return api.get(`${BASE_URL}/dispatched-tasks`);
-}
-
 export const getScheduledTasks = () => {
     return api.get(`${BASE_URL}/scheduled-tasks`);
 }
@@ -41,6 +37,7 @@ export const deleteDispatch = (id, userId) => {
 export const resumeDispatch = (id, userId) => {
     return api.put(`${BASE_URL}/resume/${id}/${userId}`);
 }
+
 export const pauseDispatch = (id, userId) => {
     return api.put(`${BASE_URL}/pause/${id}/${userId}`);
 }

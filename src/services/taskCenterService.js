@@ -87,3 +87,45 @@ export const fetchTaskById = (id) => {
 export const deleteDispatchedTask = (id) => {
     return api.delete(`${BASE_URL}/delete/${id}`);
 };
+
+/**
+ * Get paginated dispatched tasks with optional search filtering.
+ * @param {number} page - The page number (default: 1). Adjusted for Spring Boot (0-based index).
+ * @param {number} pageSize - The number of tasks per page (default: 50).
+ * @param {string} sort - Sorting criteria, e.g., "dispatch_time,desc" (default: "dispatch_time,desc").
+ * @param {string} [search] - Optional search query to filter results.
+ * @returns {Promise} API response with the paginated dispatched tasks.
+ */
+export const getAllDispatchedTasks = (page = 1, pageSize = 50, sort = "dispatch_time,desc", search = "") => {
+    return api.get(`${BASE_URL}`, {
+        params: {
+            page: page - 1, // Adjusting for Spring Boot's 0-based pagination
+            size: pageSize,
+            sort: sort,
+            ...(search && { search }) // Include search only if provided
+        }
+    });
+};
+
+/**
+ * Get paginated dispatched tasks filtered by dispatch ID with optional search filtering.
+ * @param {number} dispatchId - The ID of the dispatch.
+ * @param {number} page - The page number (default: 1).
+ * @param {number} pageSize - The number of tasks per page (default: 50).
+ * @param {string} sort - Sorting criteria, e.g., "dispatch_time,desc" (default: "dispatch_time,desc").
+ * @param {string} [search] - Optional search query to filter results.
+ * @returns {Promise} API response with the filtered paginated dispatched tasks.
+ */
+export const getAllDispatchedTasksByDispatchId = (dispatchId, page = 1, pageSize = 50, sort = "dispatch_time,desc", search = "") => {
+    return api.get(`${BASE_URL}/by-dispatch`, {
+        params: {
+            dispatchId: dispatchId,
+            page: page - 1, // Adjusting for Spring Boot's 0-based pagination
+            size: pageSize,
+            sort: sort,
+            ...(search && { search }) // Include search only if provided
+        }
+    });
+};
+
+
