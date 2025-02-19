@@ -28,11 +28,12 @@ export const getAllTaskLogs = (createdBy, dispatchedTaskId) => {
  * @param {String} submissionId - The MongoDB document's ObjectId.
  * @param {String} qcFormTemplateId - The form template ID.
  * @param {Integer} createdBy - The user who created the form.
+ * @param inputCollectionName
  * @returns {Promise} API response containing the MongoDB document data.
  */
-export const getMyDocument = (submissionId, qcFormTemplateId, createdBy) => {
+export const getMyDocument = (submissionId, qcFormTemplateId, createdBy, inputCollectionName) => {
     return api.get(`${BASE_URL}/document`, {
-        params: { submissionId, qcFormTemplateId, createdBy },
+        params: { submissionId, qcFormTemplateId, createdBy, inputCollectionName },
     });
 };
 
@@ -66,11 +67,12 @@ export const exportDocumentsToExcel = (qcFormTemplateId, createdBy) => {
  * @param {String} submissionId - The MongoDB document's ObjectId.
  * @param {Long} qcFormTemplateId - The QC Form Template ID.
  * @param {Integer} createdBy - The user who created the form.
+ * @param inputCollectionName
  * @returns {Promise} API response containing the PDF file as a blob.
  */
-export const exportDocumentToPDF = (submissionId, qcFormTemplateId, createdBy) => {
+export const exportDocumentToPDF = (submissionId, qcFormTemplateId, createdBy, inputCollectionName) => {
     return api.get(`${BASE_URL}/document_pdf`, {
-        params: { submissionId, qcFormTemplateId, createdBy },
+        params: { submissionId, qcFormTemplateId, createdBy, inputCollectionName },
         responseType: 'blob', // Ensures the response is treated as a file
     });
 };

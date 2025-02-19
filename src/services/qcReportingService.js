@@ -24,3 +24,19 @@ export const extractWidgetDataWithCounts = (formTemplateId) => {
         headers: { 'Content-Type': 'application/json' }
     });
 };
+
+/**
+ * Fetch QC records within a given date range, with optional pagination.
+ * @param {Long} formTemplateId - The Form Template ID.
+ * @param {String} startDateTime - The start date-time in "YYYY-MM-DD HH:mm:ss" format.
+ * @param {String} endDateTime - The end date-time in "YYYY-MM-DD HH:mm:ss" format.
+ * @param {Number} [page=0] - The page number for pagination (optional).
+ * @param {Number} [size=10] - The number of records per page (optional).
+ * @returns {Promise} API response containing the QC records.
+ */
+export const fetchQcRecords = (formTemplateId, startDateTime, endDateTime, page = 0, size = 1000) => {
+    return api.get(`${BASE_URL}/qc-records`, {
+        params: { formTemplateId, startDateTime, endDateTime, page, size },
+        headers: { 'Content-Type': 'application/json' }
+    });
+};

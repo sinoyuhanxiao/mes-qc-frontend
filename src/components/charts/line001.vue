@@ -65,7 +65,7 @@ export default {
         },
         series: [
           {
-            name: "Blue Line",
+            name: "",
             type: "line",
             data: this.chartData,
             markPoint: {

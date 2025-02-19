@@ -156,7 +156,8 @@ export default {
       title: "质检任务提交记录",
       selectedIds: {
         qc_form_template_id: null,
-        submission_id: null
+        submission_id: null,
+        inputCollectionName: null
       },
       searchTerm: "",
       tableData: [], // Backend data
@@ -295,10 +296,21 @@ export default {
     },
     async viewDetails(row) {
       try {
-        const response = await getMyDocument(row.submission_id, row.qc_form_template_id, row.created_by);
+        // Extract year and month from row.created_at
+        const createdAt = new Date(row.created_at);
+        const yearMonth = createdAt.getFullYear().toString() +
+            (createdAt.getMonth() + 1).toString().padStart(2, "0");
+
+        // Generate inputCollectionName dynamically
+        const inputCollectionName = `form_template_${row.qc_form_template_id}_${yearMonth}`;
+
+        // Fetch document details using the dynamically created collection name
+        const response = await getMyDocument(row.submission_id, row.qc_form_template_id, row.created_by, inputCollectionName);
+
         this.selectedDetails = response.data; // Populate the details
         this.selectedIds.qc_form_template_id = row.qc_form_template_id
         this.selectedIds.submission_id = row.submission_id
+        this.selectedIds.inputCollectionName = inputCollectionName
         this.dialogVisible = true; // Show the dialog
       } catch (err) {
         console.error("Error fetching document details:", err);
@@ -309,7 +321,8 @@ export default {
         const response = await exportDocumentToPDF(
             this.selectedIds.submission_id,
             this.selectedIds.qc_form_template_id,
-            this.$store.getters.getUser.id
+            this.$store.getters.getUser.id,
+            this.selectedIds.inputCollectionName
         );
 
         const pdfBlob = new Blob([response.data], { type: "application/pdf" });
