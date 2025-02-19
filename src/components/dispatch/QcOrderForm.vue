@@ -59,7 +59,7 @@
     <!--    </el-form-item>-->
 
         <!-- Dispatch List -->
-        <el-divider>任务列表</el-divider>
+        <el-divider>派发计划列表</el-divider>
         <div
             v-for="(dispatch, index) in qcOrderForm.dispatches"
             :key="dispatch.id"
@@ -69,7 +69,7 @@
             <!-- Custom Header Slot -->
             <template #header>
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;">
-                <span>任务 {{ index + 1 }}</span>
+                <span>派发计划 {{ index + 1 }}</span>
                 <div style="display: flex; gap: 8px;">
                   <!-- Expand Button -->
                   <el-button
@@ -83,7 +83,7 @@
                       type="danger"
                       plain
                       @click="removeDispatch(index)">
-                    删除任务
+                    删除派发计划
                   </el-button>
                 </div>
               </div>
@@ -93,7 +93,7 @@
             <div v-show="!dispatch.collapsed">
               <!-- Name -->
               <el-form-item
-                  label="任务名称">
+                  label="名称">
                 <el-input
                     type="text"
                     v-model="dispatch.name"
@@ -104,7 +104,7 @@
 
               <!-- Description -->
               <el-form-item
-                  label="任务备注"
+                  label="备注"
                   prop="description">
                 <el-input
                     type="textarea"
@@ -118,7 +118,7 @@
 
               <!-- Schedule Type -->
               <el-form-item
-                  label="任务类型"
+                  label="类型"
                   required
                   :prop="'dispatches.' + index + '.type'"
               >
@@ -157,6 +157,7 @@
                     end-placeholder="停止时间"
                     :format="dateFormat"
                     :value-format="valueFormat"
+                    :disabled-date="disablePastDates"
                 />
               </el-form-item>
 
@@ -173,6 +174,7 @@
                     placeholder="选择执行时间"
                     :format="dateFormat"
                     :value-format="valueFormat"
+                    :disabled-date="disablePastDates"
                 />
               </el-form-item>
 
@@ -372,7 +374,7 @@
         </div>
 
         <!-- Add Dispatch -->
-        <el-button type="primary" plain @click="addDispatch">新增计划任务</el-button>
+        <el-button type="primary" plain @click="addDispatch">新增派发计划</el-button>
 
         <!-- Submit -->
         <el-form-item>
@@ -505,6 +507,9 @@ export default {
     },
   },
   methods: {
+    disablePastDates(date) {
+      return date.getTime() < Date.now() - 86400000; // Disable dates before today
+    },
     addDispatch() {
       const newDispatch = {
         id: null,
@@ -596,6 +601,11 @@ export default {
           } catch (error) {
             console.error("Error creating QC Order:", error);
           }
+        } else {
+          await this.$confirm("请填写所有必填字段后再提交。", "提示", {
+            confirmButtonText: "确定",
+            type: "error",
+          });
         }
       });
     },
@@ -623,7 +633,7 @@ export default {
         description: data.description || null,
         start_time: data.date_range?.[0] || null,
         end_time: data.date_range?.[1] || null,
-        cron_expression: normalizeCronExpression(data.cron_expression) || null,
+        cron_expression: data.cron_expression? normalizeCronExpression(data.cron_expression) : null,
         dispatch_limit: data.dispatch_limit,
         custom_time: data.custom_time || null,
         due_date_offset_minute: data.due_date_offset_minute,

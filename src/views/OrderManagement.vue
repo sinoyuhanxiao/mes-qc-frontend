@@ -27,7 +27,7 @@
               class="refresh-button"
               type="primary"
               circle
-              @click="loadAllQcOrders"
+              @click="handleRefreshButton"
           >
             <el-icon style="color: #004085;">
               <RefreshRight />
@@ -57,7 +57,7 @@
     </div>
 
     <!-- QC Order Table -->
-    <el-main style="padding: 0;">
+    <el-main style="padding: 0;   margin-top: 20px;">
       <QcOrderList
           :qc-order-list="qcOrders"
           :form-map="formMap"
@@ -84,7 +84,6 @@
             :currentOrder="currentOrder"
             :user-map="userMap"
             :form-map="formMap"
-            :dispatched-tasks-map="dispatchedTaskMap"
             @on-edit="handleEditQcOrder"
             @on-delete="handleDeleteQcOrder"
             @refresh-order="refreshCurrentOrder(currentOrder.id)"
@@ -112,11 +111,11 @@
         @close="closeViewDispatchedTestsDialog"
     >
       <DispatchedTasksList
-          :dispatched-tasks="filteredAndSortedDispatchedTaskList"
           :form-map="formMap"
           :user-map="userMap"
           :show-search-box="true"
-      />
+          :key="refreshKey"/>
+
     </el-dialog>
   </el-container>
 </template>
@@ -135,11 +134,9 @@ import QcOrderList from "@/components/dispatch/QcOrderList.vue";
 import QcOrderDetails from "@/components/dispatch/QcOrderDetails.vue";
 import DispatchConfigurator from "@/components/dispatch/DispatchConfigurator.vue";
 import {fetchFormNodes} from "@/services/formNodeService";
-import {generateFormMap, getQcOrderStateTagData} from "@/utils/dispatch-utils";
+import {generateFormMap} from "@/utils/dispatch-utils";
 import {fetchUsers} from "@/services/userService";
-import {getAllDispatchedTasks, pauseDispatch, resumeDispatch} from "@/services/dispatchService";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
-import qcOrderList from "@/components/dispatch/QcOrderList.vue";
 
 export default {
   components: {
@@ -161,25 +158,10 @@ export default {
       searchInput: "",
       formMap: [],
       userMap: [],
-      dispatchedTasks: [],
       qcOrders: [],
     };
   },
   computed: {
-    filteredAndSortedDispatchedTaskList() {
-      return this.filterAndSortList(
-          this.dispatchedTasks,
-          (task) =>
-              task.status !== 0,
-          ["updated_at","created_at"]);
-    },
-    dispatchedTaskMap() {
-      const map = {};
-      this.currentOrder.dispatches.forEach(dispatch => {
-        map[dispatch.id] = this.dispatchedTasks.filter(task => task.dispatch_id === dispatch.id);
-      });
-      return map;
-    }
   },
   methods: {
     async loadAllQcOrders() {
@@ -319,10 +301,10 @@ export default {
       try {
         await Promise.all([
           this.loadAllQcOrders(),
-          this.loadDispatchedTasks(),
           this.loadFormNodes(),
           this.loadUserMap(),
         ]);
+
       } catch (error) {
         console.error("Failed to load data during polling:", error);
       }
@@ -359,29 +341,19 @@ export default {
         this.$message.error("无法加载人员信息，请重试。");
       }
     },
-    async loadDispatchedTasks() {
-      try {
-        const response = await getAllDispatchedTasks();
-        const updatedTasks = response.data.data;
-
-        if (JSON.stringify(this.dispatchedTasks) !== JSON.stringify(updatedTasks)) {
-          // this.$notify({
-          //   title: "任务列表更新",
-          //   message: "任务列表已更新。",
-          //   type: "success",
-          // });
-          this.dispatchedTasks = updatedTasks;
-        }
-      } catch (error) {
-        this.$message.error("无法加载任务列表，请重试。");
-      }
-    },
     openViewDispatchedTestsDialog() {
       this.isDispatchedTestsDialogVisible = true;
-      this.loadDispatchedTasks();
     },
     closeViewDispatchedTestsDialog() {
       this.isDispatchedTestsDialogVisible = false;
+    },
+    handleRefreshButton() {
+      this.loadAllData()
+      this.$notify({
+        title: "提示",
+        message: "列表已更新。",
+        type: "success",
+      });
     },
   },
   mounted() {

@@ -2,17 +2,17 @@
   <!-- Schedule Summary -->
   <el-card class="mt-4" shadow="always">
     <h4>工单预览</h4>
-    <p><strong>名称:</strong> {{ qcOrderForm.name }}</p>
+    <p><strong>工单名称:</strong> {{ qcOrderForm.name }}</p>
     <p><strong>工单备注:</strong> {{ qcOrderForm.description || "无" }}</p>
-    <p><strong>任务总数:</strong> {{ qcOrderForm.dispatches?.length }}</p>
+    <p><strong>派发计划总数:</strong> {{ qcOrderForm.dispatches?.length }}</p>
     <div v-for="(dispatch, index) in qcOrderForm.dispatches" :key="dispatch.id" class="dispatch-preview">
-      <h5>任务 {{ index + 1 }}</h5>
+      <h5>派发计划 {{ index + 1 }}</h5>
       <ul class="dispatch-details">
         <li v-if="dispatch.name">
-          任务名称: <strong>{{ dispatch.name }}</strong>
+          名称: <strong>{{ dispatch.name }}</strong>
         </li>
         <li>
-          任务类型: <strong>{{ dispatch.type === 'regular' ? '周期计划' : '单次计划' }}</strong>
+          类型: <strong>{{ dispatch.type === 'regular' ? '周期计划' : '单次计划' }}</strong>
         </li>
         <li v-if="dispatch.type === 'regular'">
           执行计划: <strong>{{ formatCronExpression(dispatch.cron_expression) }}</strong>
