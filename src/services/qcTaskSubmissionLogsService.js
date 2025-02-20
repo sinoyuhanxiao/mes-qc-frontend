@@ -77,4 +77,20 @@ export const exportDocumentToPDF = (submissionId, qcFormTemplateId, createdBy, i
     });
 };
 
+/**
+ * Delete a QC Task Submission Log by submissionId and createdAt.
+ * @param {String} submissionId - The MongoDB document's ObjectId.
+ * @param {Long} qcFormTemplateId - The QC Form Template ID.
+ * @param {String} createdAt - The timestamp when the document was created.
+ * @returns {Promise} API response indicating the deletion status.
+ */
+export const deleteTaskSubmissionLog = (submissionId, qcFormTemplateId, createdAt) => {
+    return api.delete(`${BASE_URL}/${submissionId}`, {
+        params: { qcFormTemplateId, createdAt },
+    });
+};
+
+
+
+
 

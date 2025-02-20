@@ -23,11 +23,11 @@
           <!-- make this button vertically align center -->
           <el-tooltip>
             <el-button
-                type="primary"
+                type="success"
                 style="margin-top: 0"
                 @click="downloadExcel"
             >
-              <el-icon><Download /></el-icon>
+              导出 Excel
             </el-button>
             <template #content>
               <span>下载你的质检提交记录</span>

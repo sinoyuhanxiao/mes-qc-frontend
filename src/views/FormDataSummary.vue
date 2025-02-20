@@ -17,25 +17,27 @@
             end-placeholder="结束日期"
             @change="refreshChartData"
         />
-        <el-button type="primary" @click="openQcRecordsDialog" style="margin-top: 0">查看</el-button>
+        <el-button type="primary" @click="openQcRecordsDialog" style="margin-top: 0">查看质检记录</el-button>
       </div>
 
-      <!-- Loop through all widgets that have chartData and render LineCharts -->
-      <div v-for="widget in lineChartWidgets" :key="widget.name">
-        <LineChart
-            :chartTitle="widget.label"
-            :chartData="widget.chartData"
-            :xaxisData="widget.xaxisData"
-        />
-      </div>
+      <el-skeleton v-if="loadingCharts" :rows="6" animated />
 
-      <!-- Loop through all widgets that have optionItems and create PieCharts -->
-      <div v-for="widget in pieChartWidgets" :key="widget.name">
-        <PieChart
-            :chartTitle="widget.label"
-            :chartData="widget.chartData"
-        />
-      </div>
+      <template v-else>
+        <div v-for="widget in lineChartWidgets" :key="widget.name">
+          <LineChart
+              :chartTitle="widget.label"
+              :chartData="widget.chartData"
+              :xaxisData="widget.xaxisData"
+          />
+        </div>
+
+        <div v-for="widget in pieChartWidgets" :key="widget.name">
+          <PieChart
+              :chartTitle="widget.label"
+              :chartData="widget.chartData"
+          />
+        </div>
+      </template>
     </el-main>
 
     <!-- Full-Screen Dialog for QC Records Table -->
@@ -49,6 +51,8 @@
             clearable
             style="width: 300px; margin-right: 500px"
         />
+
+        <el-button type="success" style="margin-top: 0; margin-right: 20px" @click="exportToExcel">导出 Excel</el-button>
 
         <el-date-picker
             v-model="dateRange"
@@ -83,6 +87,7 @@
         <el-table-column label="操作" fixed="right" width="120">
           <template #default="scope">
             <el-link type="primary" @click="viewDetails(scope.row)">查看</el-link>
+            <el-link type="danger" style="margin-left: 10px" @click="deleteRecord(scope.row)">删除</el-link>
           </template>
         </el-table-column>
       </el-table>
@@ -129,11 +134,13 @@
 </template>
 
 <script>
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import FormTree from '@/components/form-manager/FormTree.vue';
 import PieChart from '@/components/charts/pie001.vue';
 import LineChart from '@/components/charts/line001.vue';
 import { extractWidgetDataWithCounts, fetchQcRecords } from "@/services/qcReportingService";
-import {exportDocumentToPDF, getMyDocument} from "@/services/qcTaskSubmissionLogsService";
+import {deleteTaskSubmissionLog, exportDocumentToPDF, getMyDocument} from "@/services/qcTaskSubmissionLogsService";
 
 export default {
   components: { FormTree, PieChart, LineChart },
@@ -141,6 +148,7 @@ export default {
     return {
       selectedDetails: {},
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
+      loadingCharts: false,
       shortcuts: [
         {
           text: '本周',
@@ -226,6 +234,42 @@ export default {
     }
   },
   methods: {
+    exportToExcel() {
+      if (!this.qcRecords.length) {
+        this.$message.warning("暂无数据可导出");
+        return;
+      }
+
+      // Exclude `_id` and `created_by`
+      const tableData = this.qcRecords.map(record => {
+        const { _id, created_by, ...filteredRecord } = record;
+        return {
+          提交时间: record.created_at || "-",
+          ...filteredRecord
+        };
+      });
+
+      // Extract headers (excluding `_id` and `created_by`)
+      const headers = Object.keys(tableData[0] || {}).map(header =>
+          header === "created_at" ? "提交时间" : header
+      );
+
+      // Convert JSON to Excel format
+      const worksheet = XLSX.utils.json_to_sheet(tableData, {
+        header: headers,
+        skipHeader: false
+      });
+
+      // Create and save workbook
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, this.selectedForm.label + "提交记录");
+
+      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+      saveAs(blob, this.selectedForm.label + "提交记录.xlsx");
+
+      this.$message.success("Excel 导出成功！");
+    },
     formatDate(date) {
       if (!date) return "";
       const d = new Date(date);
@@ -234,6 +278,26 @@ export default {
     },
     handlePageChange(newPage) {
       this.currentPage = newPage;
+    },
+    // Add this method inside the methods section
+    async deleteRecord(row) {
+      try {
+        this.$confirm(`确认删除提交单号 ${row._id} 的记录吗？`, "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        }).then(async () => {
+          await deleteTaskSubmissionLog(row._id, this.selectedForm.qcFormTemplateId, row["提交时间"]);
+
+          this.qcRecords = this.qcRecords.filter(record => record._id !== row._id);
+          this.$message.success("记录删除成功！");
+        }).catch(() => {
+          this.$message.info("删除已取消");
+        });
+      } catch (error) {
+        console.error("Error deleting record:", error);
+        this.$message.error("删除失败，请重试");
+      }
     },
     async viewDetails(row) {
       try {
@@ -331,6 +395,8 @@ export default {
       }
     },
     async fetchChartData(formTemplateId, startDateTime, endDateTime) {
+      this.loadingCharts = true; // Start loading indicator
+
       try {
         // Call extractWidgetDataWithCounts with only formTemplateId
         const countResponse = await extractWidgetDataWithCounts(formTemplateId, startDateTime, endDateTime);
@@ -359,6 +425,8 @@ export default {
 
       } catch (error) {
         console.error('Error fetching chart data:', error);
+      } finally {
+        this.loadingCharts = false; // Stop loading indicator
       }
     },
     async fetchQcRecordsData(formTemplateId, startDateTime, endDateTime) {

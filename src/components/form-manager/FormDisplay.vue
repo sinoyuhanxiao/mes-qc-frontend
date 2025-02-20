@@ -18,7 +18,9 @@
     <el-scrollbar :height="scrollBarHeight" width="100%">
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
       <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">提交</el-button>
-      <el-button type="warning" v-if="props.usable || enable_form" @click="clearForm">重置表单</el-button>
+      <el-button type="warning" v-if="props.usable || enable_form" @click="showClearConfirmation = true">
+        重置表单
+      </el-button>
       <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
       <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
     </el-scrollbar>
@@ -62,6 +64,19 @@
     <template #footer>
       <el-button @click="cancelReset">否</el-button>
       <el-button type="primary" @click="confirmReset">是</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog
+      v-model="showClearConfirmation"
+      title="确认重置表单"
+      width="30%"
+      :before-close="cancelClear"
+  >
+    <span>您确定要重置表单吗？重置后，所有已填写的内容将被清空！</span>
+    <template #footer>
+      <el-button @click="cancelClear">取消</el-button>
+      <el-button type="warning" @click="confirmClear">确认</el-button>
     </template>
   </el-dialog>
 
@@ -114,10 +129,22 @@ let vFormRef = ref(null)
 const showQuickDispatch = ref(false);
 const showConfirmation = ref(false);
 const showResetConfirmation = ref(false);
-
+const showClearConfirmation = ref(false);
 const switchDisplayed = ref(
     !route.params.qcFormTemplateId
 );
+
+const cancelClear = () => {
+  showClearConfirmation.value = false; // Cancel reset
+};
+
+const confirmClear = () => {
+  showClearConfirmation.value = false; // Close the confirmation dialog
+  if (vFormRef.value) {
+    vFormRef.value.resetForm(); // Actually reset the form
+    ElMessage.success("表单已清空！");
+  }
+};
 
 const clearForm = () => {
   if (vFormRef.value) {

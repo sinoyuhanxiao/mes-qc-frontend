@@ -73,6 +73,7 @@
                   @click="handleFormNameClick(scope.row[key], scope.row)"
               >
                 {{ getFormNameById(scope.row[key]) || '未知表单' }}
+                 <span v-if="isTaskUsable(scope.row.due_date, scope.row.dispatched_task_state_id)"> (任务可做)</span>
               </span>
             </span>
             <span v-else-if="key === 'dispatched_task_state_id'">
