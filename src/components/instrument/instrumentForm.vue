@@ -57,6 +57,7 @@ export default {
       this.$refs.instrumentFormRef.validate((valid) => {
         if (valid) {
           const payload = {...this.instrument};
+          payload.status = 1;
           if (payload.id == null) {
             payload.created_by = this.$store.getters.getUser.id;
             payload.created_at = new Date().toISOString();
@@ -65,6 +66,7 @@ export default {
             payload.updated_at = new Date().toISOString();
           }
           this.$emit("submit", payload);
+          console.log(payload);
         } else {
           console.error("Form validation failed!");
         }

@@ -42,6 +42,7 @@ export default {
       this.$refs.locationFormRef.validate((valid) => {
         if (valid) {
           const payload = {...this.location};
+          payload.status = 1;
           if (payload.id == null) {
             payload.created_by = this.$store.getters.getUser.id;
             payload.created_at = new Date().toISOString();

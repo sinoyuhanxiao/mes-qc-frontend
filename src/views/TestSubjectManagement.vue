@@ -7,7 +7,7 @@
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
-            placeholder="搜索检测项目名称"
+            placeholder="搜索关键字"
             clearable
             class="search-bar"
         >
@@ -18,6 +18,20 @@
       </div>
 
       <div class="top-right">
+        <!-- Refresh Button -->
+        <el-tooltip content="刷新列表" placement="top">
+          <el-button
+              class="refresh-button"
+              type="primary"
+              circle
+              @click="handleRefreshButton"
+          >
+            <el-icon style="color: #004085;">
+              <RefreshRight />
+            </el-icon>
+          </el-button>
+        </el-tooltip>
+
         <el-button type="primary" @click="openDialog()">
           新增检测项目
         </el-button>
@@ -27,18 +41,10 @@
     <el-main class="table-section">
       <!-- Test Subject List -->
       <TestSubjectList
-          :testSubjects="filteredTestSubjects"
+          :testSubjects="testSubjects"
           @edit-test-subject="openDialog"
           @delete-test-subject="confirmDelete"
-      />
-
-      <!-- Pagination -->
-      <el-pagination
-          class="pagination"
-          background
-          layout="prev, pager, next"
-          :total="filteredTestSubjects.length"
-          :page-size="10"
+          :search-input="searchQuery"
       />
     </el-main>
 
@@ -66,12 +72,13 @@ import {
   updateTestSubject,
   deleteTestSubject
 } from "@/services/testSubjectService";
-import { Search } from "@element-plus/icons-vue";
+import {RefreshRight, Search} from "@element-plus/icons-vue";
 import TestSubjectList from "@/components/test-subject/TestSubjectList.vue";
 import TestSubjectForm from "@/components/test-subject/TestSubjectForm.vue";
+import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 
 export default {
-  components: { Search, TestSubjectList, TestSubjectForm },
+  components: {RefreshRight, SamplingLocationList, Search, TestSubjectList, TestSubjectForm },
   data() {
     return {
       testSubjects: [],
@@ -84,14 +91,6 @@ export default {
         description: "",
       },
     };
-  },
-  computed: {
-    filteredTestSubjects() {
-      if (!this.searchQuery) return this.testSubjects;
-      return this.testSubjects.filter((subject) =>
-          subject.name.includes(this.searchQuery)
-      );
-    },
   },
   methods: {
     async loadTestSubjects() {
@@ -141,6 +140,15 @@ export default {
         console.error("Error deleting test subject:", error);
       }
     },
+    async handleRefreshButton() {
+      this.searchQuery = "";
+      await this.loadTestSubjects()
+      this.$notify({
+        title: "提示",
+        message: "列表已更新。",
+        type: "success",
+      });
+    },
   },
   mounted() {
     this.loadTestSubjects();
@@ -187,5 +195,21 @@ export default {
   flex: 1;
   padding: 0;
   margin-top: 20px;
+}
+
+.refresh-button {
+  background-color: #80cfff; /* Slightly lighter shade of primary color */
+  border-color: #80cfff; /* Match lighter background */
+}
+
+.refresh-button:hover {
+  background-color: #66b5ff; /* Slightly darker hover effect */
+  border-color: #66b5ff;
+  transform: rotate(360deg); /* Rotate on hover */
+  transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
+}
+
+.refresh-button el-icon {
+  color: #004085; /* Darker primary-like color for the refresh icon */
 }
 </style>

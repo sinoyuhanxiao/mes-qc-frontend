@@ -7,7 +7,7 @@
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
-            placeholder="搜索采样点名称"
+            placeholder="搜索关键字"
             clearable
             style="width: 300px; margin-left: 20px;"
         >
@@ -18,7 +18,24 @@
       </div>
 
       <div style="display: flex; gap: 10px;">
-        <el-button type="primary" @click="openDialog()">
+        <!-- Refresh Button -->
+        <el-tooltip content="刷新列表" placement="top">
+          <el-button
+              class="refresh-button"
+              type="primary"
+              circle
+              @click="handleRefreshButton"
+          >
+            <el-icon style="color: #004085;">
+              <RefreshRight />
+            </el-icon>
+          </el-button>
+        </el-tooltip>
+
+        <el-button
+            type="primary"
+            @click="openDialog()"
+        >
           新增采样点
         </el-button>
       </div>
@@ -27,18 +44,10 @@
     <el-main style="flex: 1; padding: 0; margin-top: 20px;">
       <!-- Sampling Location List -->
       <SamplingLocationList
-          :locations="filteredLocations"
+          :locations="locations"
           @edit-location="openDialog"
           @delete-location="confirmDelete"
-      />
-
-      <!-- Pagination -->
-      <el-pagination
-          style="margin-top: 16px; text-align: center;"
-          background
-          layout="prev, pager, next"
-          :total="filteredLocations.length"
-          :page-size="10"
+          :search-input="searchQuery"
       />
     </el-main>
 
@@ -66,12 +75,13 @@ import {
   updateSamplingLocation,
   deleteSamplingLocation
 } from "@/services/samplingLocationService";
-import { Search } from "@element-plus/icons-vue";
+import {RefreshRight, Search} from "@element-plus/icons-vue";
 import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 import SamplingLocationForm from "@/components/sampling-location/SamplingLocationForm.vue";
+import samplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 
 export default {
-  components: { Search, SamplingLocationList, SamplingLocationForm },
+  components: { RefreshRight, Search, SamplingLocationList, SamplingLocationForm },
   data() {
     return {
       locations: [],
@@ -84,14 +94,6 @@ export default {
         description: "",
       },
     };
-  },
-  computed: {
-    filteredLocations() {
-      if (!this.searchQuery) return this.locations;
-      return this.locations.filter((location) =>
-          location.name.includes(this.searchQuery)
-      );
-    },
   },
   methods: {
     async loadLocations() {
@@ -123,7 +125,8 @@ export default {
           await createSamplingLocation(updatedLocation, 1);
         }
         this.dialogVisible = false;
-        this.loadLocations();
+        await this.loadLocations();
+        this.refreshKey++;
       } catch (error) {
         console.error("Error saving sampling location:", error);
       }
@@ -136,10 +139,19 @@ export default {
           type: "warning",
         });
         await deleteSamplingLocation(id, 1);
-        this.loadLocations();
+        await this.loadLocations();
       } catch (error) {
         console.error("Error deleting sampling location:", error);
       }
+    },
+    async handleRefreshButton() {
+      this.searchQuery = "";
+      await this.loadLocations()
+      this.$notify({
+        title: "提示",
+        message: "列表已更新。",
+        type: "success",
+      });
     },
   },
   mounted() {
@@ -149,5 +161,21 @@ export default {
 </script>
 
 <style scoped>
+
+.refresh-button {
+  background-color: #80cfff; /* Slightly lighter shade of primary color */
+  border-color: #80cfff; /* Match lighter background */
+}
+
+.refresh-button:hover {
+  background-color: #66b5ff; /* Slightly darker hover effect */
+  border-color: #66b5ff;
+  transform: rotate(360deg); /* Rotate on hover */
+  transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
+}
+
+.refresh-button el-icon {
+  color: #004085; /* Darker primary-like color for the refresh icon */
+}
 
 </style>
