@@ -55,6 +55,10 @@
             <el-icon><DataAnalysis /></el-icon>
             <span>{{ translate('navigationMenu.dataSummary') }}</span>
           </template>
+          <el-menu-item index="/form-data-summary">
+            <el-icon><Document /></el-icon>
+            <span>{{ translate('navigationMenu.formDataSummary') }}</span>
+          </el-menu-item>
         </el-sub-menu>
       </template>
 

@@ -5,7 +5,7 @@
         <el-statistic :value="myTodayTasksValue">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              My today's tasks
+              我的今日任务
               <el-tooltip
                   effect="dark"
                   content="The number of tasks already scheduled for you today."
@@ -36,7 +36,7 @@
         <el-statistic :value="myFutureTasksValue">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              My future tasks
+              我的未来任务
               <el-tooltip
                   effect="dark"
                   content="The number of tasks already scheduled for you in the future."
@@ -67,7 +67,7 @@
         <el-statistic :value="myCompletedTasksValue" title="New transactions today">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              My completed tasks
+              我已完成的任务
             </div>
           </template>
         </el-statistic>
@@ -94,7 +94,7 @@
         <el-statistic :value="myOverdueTasksValue" title="New transactions today">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              My overdue Tasks
+              我的过期任务
             </div>
           </template>
         </el-statistic>

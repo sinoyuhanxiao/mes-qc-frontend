@@ -23,26 +23,30 @@ export default {
       taskDescription: "",
       selectedPersonnel: [], // Stores selected personnel IDs
       selectedTimes: [],
-      personnelOptions: [
-        { value: 1, label: "人员1" },
-        { value: 2, label: "人员2" },
-        { value: 3, label: "人员3" },
-      ],
-      dateTimeSelections: [ // index 0 is dispatch_time. index 1 is due_date
-      ]
-      };
+      personnelOptions: [], // Initially empty, so no default users
+      isLoadingPersonnel: false, // Add loading state
+      dateTimeSelections: []
+    };
   },
   methods: {
     async loadPersonnelOptions() {
+      if (this.isLoadingPersonnel) return;
+
+      // Clear old options and show loading state
+      this.personnelOptions = [];
+      this.isLoadingPersonnel = true;
+
       try {
         const response = await fetchUsers();
         this.personnelOptions = response.data.data.map((user) => ({
-          value: user.id, // Store the user ID
-          label: user.name, // Display the user name
+          value: user.id,
+          label: user.name,
         }));
       } catch (error) {
         console.error("Error fetching users:", error);
         this.$message.error("无法加载人员列表，请稍后重试。");
+      } finally {
+        this.isLoadingPersonnel = false;
       }
     },
     addDateTime() {
@@ -126,7 +130,15 @@ export default {
 
     <!-- Select Personnel -->
     <el-form-item label="选择人员" required>
-      <el-select v-model="selectedPersonnel" filterable multiple placeholder="请选择人员">
+      <el-select
+          v-model="selectedPersonnel"
+          filterable
+          multiple
+          placeholder="请选择人员"
+          :loading="isLoadingPersonnel"
+          @focus="loadPersonnelOptions"
+      >
+        <el-option v-if="isLoadingPersonnel" disabled label="加载中..." />
         <el-option
             v-for="option in personnelOptions"
             :key="option.value"

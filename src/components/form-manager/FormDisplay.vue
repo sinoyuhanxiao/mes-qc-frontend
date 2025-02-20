@@ -17,7 +17,10 @@
     </div>
     <el-scrollbar :height="scrollBarHeight" width="100%">
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
-      <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">Submit</el-button>
+      <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">提交</el-button>
+      <el-button type="warning" v-if="props.usable || enable_form" @click="showClearConfirmation = true">
+        重置表单
+      </el-button>
       <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
       <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
     </el-scrollbar>
@@ -36,6 +39,45 @@
         @close="showQuickDispatch = false"
         @dispatch="handleDispatch"
     />
+  </el-dialog>
+
+  <el-dialog
+      v-model="showConfirmation"
+      title="确认提交"
+      width="30%"
+      :before-close="cancelSubmission"
+  >
+    <span>您确定要提交此表单吗？</span>
+    <template #footer>
+      <el-button @click="cancelSubmission">取消</el-button>
+      <el-button type="primary" @click="confirmSubmission">确认</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog
+      v-model="showResetConfirmation"
+      title="表单提交成功"
+      width="30%"
+      :before-close="cancelReset"
+  >
+    <span>您的表单已成功提交。是否需要重置表单？</span>
+    <template #footer>
+      <el-button @click="cancelReset">否</el-button>
+      <el-button type="primary" @click="confirmReset">是</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog
+      v-model="showClearConfirmation"
+      title="确认重置表单"
+      width="30%"
+      :before-close="cancelClear"
+  >
+    <span>您确定要重置表单吗？重置后，所有已填写的内容将被清空！</span>
+    <template #footer>
+      <el-button @click="cancelClear">取消</el-button>
+      <el-button type="warning" @click="confirmClear">确认</el-button>
+    </template>
   </el-dialog>
 
 </template>
@@ -85,10 +127,31 @@ const formTitle = ref(''); // Store form title
 const enable_form = ref(false)
 let vFormRef = ref(null)
 const showQuickDispatch = ref(false);
-
+const showConfirmation = ref(false);
+const showResetConfirmation = ref(false);
+const showClearConfirmation = ref(false);
 const switchDisplayed = ref(
     !route.params.qcFormTemplateId
 );
+
+const cancelClear = () => {
+  showClearConfirmation.value = false; // Cancel reset
+};
+
+const confirmClear = () => {
+  showClearConfirmation.value = false; // Close the confirmation dialog
+  if (vFormRef.value) {
+    vFormRef.value.resetForm(); // Actually reset the form
+    ElMessage.success("表单已清空！");
+  }
+};
+
+const clearForm = () => {
+  if (vFormRef.value) {
+    vFormRef.value.resetForm(); // 调用 VFormRender 内部的 resetForm 方法
+    ElMessage.success("表单已清空！");
+  }
+};
 
 const previewState = ref(true)
 let formId = null
@@ -117,51 +180,68 @@ const handleDispatch = (data) => {
   // Add your API call or logic to handle the dispatched data
 };
 
+const submitForm = () => {
+  showConfirmation.value = true; // Show confirmation popup before submitting
+};
+
+const cancelSubmission = () => {
+  showConfirmation.value = false; // Close the popup without doing anything
+};
+
 const handleQuickDispatch = () => {
   console.log("Opening QuickDispatch dialog...");
   showQuickDispatch.value = true;
 };
 
-const submitForm = () => {
+const confirmSubmission = async () => {
+  showConfirmation.value = false; // Close the first popup before proceeding
+
   formId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
   let now = new Date();
   let year = now.getFullYear();
-  let month = String(now.getMonth() + 1).padStart(2, '0'); // Ensure month is always two digits
-  let collectionName = `form_template_${formId}_${year}${month}`; // Dynamic collection name
+  let month = String(now.getMonth() + 1).padStart(2, '0');
+  let collectionName = `form_template_${formId}_${year}${month}`;
 
-  vFormRef.value.getFormData().then(async (formData) => {
-    try {
-      const response = await insertFormData(userId, collectionName, formData); // Use service function
-      // step 1 get the object id of the insertFormData's returned object id
-      console.log(response.data.object_id)
-      const dispatchedTaskId = props.dispatchedTaskId || null;
-      console.log(dispatchedTaskId)
-      // Step 2: Insert the form into PostgreSQL log
-      const logResponse = await insertTaskSubmissionLog({
-        submission_id: response.data.object_id, // Map the MongoDB object_id to submissionId
-        reviewed_at: null, // Set default value or use actual data
-        reviewed_by: null, // Set default value or use actual data
-        dispatched_task_id: dispatchedTaskId, // Retrieve taskId from formData if available
-        qc_form_template_id: props.qcFormTemplateId, // Retrieve formId from formData if available
-        created_by: userId, // User who submitted the form
-        status: 1 // Set a default status, e.g., 1 for active
-      });
-      console.log("logResponse")
-      console.log(logResponse)
-      if (response.status === 200) {
-        ElMessage.success(response.data);
-      } else {
-        ElMessage.error('Failed to insert form data!');
-      }
-    } catch (err) {
-      console.error('Error inserting form data:', err);
-      ElMessage.error('Error inserting form data!');
+  try {
+    const formData = await vFormRef.value.getFormData();
+
+    // Insert into MongoDB
+    const response = await insertFormData(userId, collectionName, formData);
+    console.log(response.data.object_id);
+
+    const dispatchedTaskId = props.dispatchedTaskId || null;
+
+    // Insert into PostgreSQL log
+    const logResponse = await insertTaskSubmissionLog({
+      submission_id: response.data.object_id,
+      reviewed_at: null,
+      reviewed_by: null,
+      dispatched_task_id: dispatchedTaskId,
+      qc_form_template_id: props.qcFormTemplateId,
+      created_by: userId,
+      status: 1
+    });
+
+    if (response.status === 200) {
+      console.log(response.data);
+      ElMessage.success("表单已成功提交！");
+      showResetConfirmation.value = true; // Show second popup after success
+    } else {
+      ElMessage.error('Failed to insert form data!');
     }
-  }).catch((error) => {
-    ElMessage.error(error); // Form validation failed
-  });
-}
+  } catch (error) {
+    ElMessage.error('Error inserting form data!');
+  }
+};
 
+const cancelReset = () => {
+  showResetConfirmation.value = false; // Close the second popup without clearing form
+};
+
+const confirmReset = () => {
+  showResetConfirmation.value = false; // Close the second popup
+  vFormRef.value.resetForm(); // Reset the form
+};
 
 // Watch the qcFormTemplateId in the passed currentForm
 watch(
