@@ -6,8 +6,18 @@
 
     <el-main width="75%" style="max-height: 100vh; overflow-y: auto;">
       <div v-if="selectedForm" class="form-header">
-        <h1>{{ selectedForm.label }} 汇总</h1>
-        <el-button type="primary" @click="openQcRecordsDialog">查看提交记录</el-button>
+        <h1 style="width: 200px">{{ selectedForm.label }} 汇总</h1>
+        <el-date-picker
+            style="width: 320px; margin-left: 150px; margin-right: 20px"
+            v-model="dateRange"
+            type="datetimerange"
+            :shortcuts="shortcuts"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            @change="refreshChartData"
+        />
+        <el-button type="primary" @click="openQcRecordsDialog" style="margin-top: 0">查看</el-button>
       </div>
 
       <!-- Loop through all widgets that have chartData and render LineCharts -->
@@ -54,7 +64,7 @@
       <el-table
           v-if="qcRecords.length > 0"
           v-loading="loadingQcRecords"
-          :data="filteredQcRecords"
+          :data="paginatedQcRecords"
           border
           style="width: 100%; white-space: nowrap;"
           :scroll-x="true"
@@ -64,9 +74,9 @@
             v-if="header !== 'created_by'"
             :key="index"
             :prop="header"
-            :label="header"
+            :label="header === '_id' ? '提交单号' : header"
             sortable
-            :width="150"
+            :width="header === '_id' ? 300 : header === '提交时间' ? 200 : 150"
         />
 
         <!-- Fixed 操作 column on the right -->
@@ -76,6 +86,15 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+          v-if="qcRecords.length > 0"
+          v-model:currentPage="currentPage"
+          :page-size="pageSize"
+          layout="prev, pager, next"
+          :total="filteredQcRecords.length"
+          @current-change="handlePageChange"
+      />
 
       <p v-else class="empty-message">暂无数据</p> <!-- If empty, show message -->
       <template #footer>
@@ -94,7 +113,7 @@
             <el-form-item
                 v-for="(value, key) in columnItems"
                 :key="key"
-                :label="key"
+                :label="key === 'submissionId' ? '提交单号' : key"
             >
               <span>{{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}</span>
             </el-form-item>
@@ -102,7 +121,7 @@
         </el-col>
       </el-row>
       <template #footer>
-        <el-button type="primary" @click="generatePdf(scope.row)">导出</el-button>
+        <el-button type="primary" @click="generatePdf(selectedDetails)">导出</el-button>
       </template>
     </el-dialog>
 
@@ -165,7 +184,9 @@ export default {
       qcRecords: [], // ✅ Ensure this is always an array
       columnHeaders: [], // ✅ Also initialized as an empty array
       loadingQcRecords: false,
-      reorderedColumnHeaders: []
+      reorderedColumnHeaders: [],
+      currentPage: 1,
+      pageSize: 10,
     };
   },
   computed: {
@@ -176,6 +197,11 @@ export default {
               String(value).toLowerCase().includes(this.searchQuery.toLowerCase())
           )
       );
+    },
+    paginatedQcRecords() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.filteredQcRecords.slice(start, end);
     },
     columns() {
       // Filter out _id to avoid displaying it
@@ -193,12 +219,22 @@ export default {
   },
   watch: {
     qcRecordsDialogVisible(newVal) {
-      if (!newVal) {
-        this.dateRange = [this.getStartOfMonth(), this.getEndOfMonth()];
-      }
+      this.refreshChartData();
+      // if (!newVal) {
+      //   this.dateRange = [this.getStartOfMonth(), this.getEndOfMonth()];
+      // }
     }
   },
   methods: {
+    formatDate(date) {
+      if (!date) return "";
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ` +
+          `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+    },
+    handlePageChange(newPage) {
+      this.currentPage = newPage;
+    },
     async viewDetails(row) {
       try {
         // Extract year and month from row.created_at
@@ -212,7 +248,7 @@ export default {
         // Fetch document details using the dynamically created collection name
         const response = await getMyDocument(row._id, this.selectedForm.qcFormTemplateId, row.created_by, inputCollectionName);
 
-        this.selectedDetails = { ...response.data };
+        this.selectedDetails = { ...response.data, "submissionId": row._id };
         console.log("this selectedDetails: ", this.selectedDetails);
 
         this.dialogVisible = true;
@@ -223,6 +259,19 @@ export default {
     closeDetailsDialog() {
       this.dialogVisible = false;
       this.selectedDetails = null;
+    },
+    async refreshChartData() {
+      if (!this.selectedForm || !this.dateRange || this.dateRange.length !== 2) return;
+
+      const formTemplateId = this.selectedForm.qcFormTemplateId;
+      const startDateTime = this.formatDate(this.dateRange[0]);
+      const endDateTime = this.formatDate(this.dateRange[1]);
+
+      // Reset the arrays before fetching new data
+      this.pieChartWidgets = [];
+      this.lineChartWidgets = [];
+
+      await this.fetchChartData(formTemplateId, startDateTime, endDateTime);
     },
     getStartOfMonth() {
       const now = new Date();
@@ -242,24 +291,26 @@ export default {
       this.selectedForm = form;
 
       if (form.qcFormTemplateId) {
-        await this.fetchChartData(form.qcFormTemplateId);
+        await this.fetchChartData(this.selectedForm.qcFormTemplateId, this.formatDate(this.dateRange[0]), this.formatDate(this.dateRange[1]));
       }
     },
-    async generatePdf(row) {
-      // TODO: needs to grab all the necessary info but now the row does not exist
-      try {
-        // Extract year and month from row.created_at
-        const createdAt = new Date(row['提交时间']);
-        const yearMonth = createdAt.getFullYear().toString() +
-            (createdAt.getMonth() + 1).toString().padStart(2, "0");
+    // TODO: generate the pdf
+    async generatePdf(selectedDetails) {
+      if (!selectedDetails || !selectedDetails._id) {
+        this.$message.error("请选择要导出的记录!");
+        return;
+      }
 
-        // Generate inputCollectionName dynamically
+      try {
+        const createdAt = new Date(selectedDetails.created_at);
+        const yearMonth = createdAt.getFullYear().toString() + (createdAt.getMonth() + 1).toString().padStart(2, "0");
+
         const inputCollectionName = `form_template_${this.selectedForm.qcFormTemplateId}_${yearMonth}`;
 
         const response = await exportDocumentToPDF(
-            this.selectedDetails._id,
+            selectedDetails.submissionId,
             this.selectedForm.qcFormTemplateId,
-            this.selectedDetails.created_by,
+            selectedDetails.created_by,
             inputCollectionName
         );
 
@@ -267,7 +318,7 @@ export default {
         const url = window.URL.createObjectURL(pdfBlob);
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `task_submission_${this.selectedDetails._id}.pdf`);
+        link.setAttribute("download", `task_submission_${selectedDetails.submissionId}.pdf`);
         document.body.appendChild(link);
         link.click();
 
@@ -279,12 +330,12 @@ export default {
         this.$message.error("PDF 下载失败，请重试!");
       }
     },
-    async fetchChartData(formTemplateId) {
+    async fetchChartData(formTemplateId, startDateTime, endDateTime) {
       try {
         // Call extractWidgetDataWithCounts with only formTemplateId
-        const countResponse = await extractWidgetDataWithCounts(formTemplateId);
+        const countResponse = await extractWidgetDataWithCounts(formTemplateId, startDateTime, endDateTime);
 
-        // Process PieChart widgets (for option-based items)
+        // Process PieChart widgets (for option-based items
         this.pieChartWidgets = countResponse.data
             .filter(widget => widget.optionItems.length > 0) // Only include widgets with options
             .map(widget => ({
@@ -375,20 +426,33 @@ export default {
       await this.fetchQcRecordsData(formTemplateId, startDateTime, endDateTime);
     },
 
+    // async openQcRecordsDialog() {
+    //   this.qcRecordsDialogVisible = true;
+    //
+    //   const formTemplateId = this.selectedForm ? this.selectedForm.qcFormTemplateId : null;
+    //   const now = new Date();
+    //   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+    //   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    //
+    //   const formatDate = (date) => date.toISOString().slice(0, 19).replace("T", " ");
+    //   const startDateTime = formatDate(startOfMonth);
+    //   const endDateTime = formatDate(endOfMonth);
+    //
+    //   await this.fetchQcRecordsData(formTemplateId, startDateTime, endDateTime);
+    // }
+
     async openQcRecordsDialog() {
       this.qcRecordsDialogVisible = true;
 
       const formTemplateId = this.selectedForm ? this.selectedForm.qcFormTemplateId : null;
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-      const formatDate = (date) => date.toISOString().slice(0, 19).replace("T", " ");
-      const startDateTime = formatDate(startOfMonth);
-      const endDateTime = formatDate(endOfMonth);
+      // Use the same date range selected above the charts
+      const startDateTime = this.formatDate(this.dateRange[0]);
+      const endDateTime = this.formatDate(this.dateRange[1]);
 
       await this.fetchQcRecordsData(formTemplateId, startDateTime, endDateTime);
     }
+
   },
 };
 </script>

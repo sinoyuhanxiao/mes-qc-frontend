@@ -16,11 +16,13 @@ export const extractWidgetData = (jsonInput) => {
 /**
  * Extract widget data along with count statistics.
  * @param {Long} formTemplateId - The Form Template ID.
+ * @param {String} startDateTime
+ * @param {String} endDateTime
  * @returns {Promise} API response containing widget data with counts.
  */
-export const extractWidgetDataWithCounts = (formTemplateId) => {
+export const extractWidgetDataWithCounts = (formTemplateId, startDateTime, endDateTime) => {
     return api.post(`${BASE_URL}/extract-with-counts`, {}, { // Empty request body
-        params: { formTemplateId },
+        params: { formTemplateId, startDateTime, endDateTime},
         headers: { 'Content-Type': 'application/json' }
     });
 };
