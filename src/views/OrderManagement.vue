@@ -1,9 +1,11 @@
 <template>
-  <el-container style="display: flex; flex-direction: column; height: 90vh; max-width: 100%; overflow: hidden;">
+  <el-container style="display: flex; flex-direction: column; height: fit-content; max-width: 100%; max-height: 100vh; overflow-y: hidden;">
     <!-- Top Section -->
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center;">
+        <!-- Title Label -->
         <h2>任务派发管理</h2>
+        <!-- Search Box -->
         <el-input
             v-model="searchInput"
             placeholder="搜索关键字"
@@ -347,8 +349,9 @@ export default {
     closeViewDispatchedTestsDialog() {
       this.isDispatchedTestsDialogVisible = false;
     },
-    handleRefreshButton() {
-      this.loadAllData()
+    async handleRefreshButton() {
+      this.searchQuery = "";
+      await this.loadAllData()
       this.$notify({
         title: "提示",
         message: "列表已更新。",

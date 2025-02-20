@@ -6,6 +6,7 @@
       @selection-change="onSelectionChange"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
+      height="75vh"
   >
     <!-- Row Selection -->
     <el-table-column type="selection" width="55"></el-table-column>
@@ -38,7 +39,7 @@
     </el-table-column>
 
     <!-- Assigned User -->
-    <el-table-column prop="assignedUsersCount" label="分配用户" width="200" sortable>
+    <el-table-column prop="assignedUsersCount" label="分配用户" width="200" >
       <template #default="scope">
         <div >
           <el-tag
@@ -59,7 +60,7 @@
     </el-table-column>
 
     <!-- Assigned Form -->
-    <el-table-column prop="assignedFormsCount" label="分配表单" width="200" sortable>
+    <el-table-column prop="assignedFormsCount" label="分配表单" width="200" >
       <template #default="scope">
         <div>
           <el-tag
@@ -79,6 +80,22 @@
       </template>
     </el-table-column>
 
+    <el-table-column prop="dispatch_ids" label="派发计划ID" width="250" >
+      <template #default="scope">
+        <div v-if="scope.row.dispatches.length > 0">
+          <el-tag
+              v-for="dispatch in scope.row.dispatches"
+              :key="dispatch.id"
+              type="info"
+              size="small"
+              style=" margin-right: 4px; margin-bottom: 4px;"
+          >
+            {{ dispatch.id }}
+          </el-tag>
+        </div>
+        <span v-else>-</span> <!-- Show dash when no dispatches -->
+      </template>
+    </el-table-column>
 
     <!-- Dispatch Count -->
     <el-table-column prop="dispatches.length" label="任务数量" width="120" sortable>
@@ -178,6 +195,37 @@ export default {
           .map(id => ({id, name: this.userMap[id]?.name?.trim() || `用户${id}`}))
           .filter(user => user.name);  // Remove any invalid entries
     },
+    getUniqueUserIds(o) {
+      if (!o || !Array.isArray(o.dispatches)) return [];
+
+      const uniqueUserIds = new Set();  // Use Set for O(1) lookup & insertion
+
+      for (const dispatch of o.dispatches) {
+        if (Array.isArray(dispatch.user_ids)) {
+          for (const userId of dispatch.user_ids) {
+            uniqueUserIds.add(userId);
+          }
+        }
+      }
+
+      return Array.from(uniqueUserIds);  // Convert Set to Array
+    },
+    getUniqueFormIds(order) {
+      const uniqueFormIds = new Set();
+
+      if (order.dispatches) {
+        for (const dispatch of order.dispatches) {
+          if (dispatch.form_ids) {
+            for (const formId of dispatch.form_ids) {
+              uniqueFormIds.add(formId);
+            }
+          }
+        }
+      }
+
+      return Array.from(uniqueFormIds);
+    },
+
     getAssignedForms(order) {
       if (!order.dispatches) return [];
       // Get unique form IDs from all dispatches
@@ -201,12 +249,19 @@ export default {
             .map(form => form.name.toLowerCase())
             .join(" ");
 
+        // Get dispatch IDs as a single string
+        const dispatchIds = (item.dispatches || [])
+            .map(dispatch => String(dispatch.id))  // Ensure it's a string
+            .join(" ");
+
+
         return (
             (item.id && String(item.id).toLowerCase().includes(searchText)) ||
             (item.name && item.name.toLowerCase().includes(searchText)) ||
             (item.dispatches && item.dispatches.length.toString().toLowerCase().includes(searchText)) ||
             (item.created_at && item.created_at.toString().toLowerCase().includes(searchText)) ||
             (item.created_by && item.created_by.toString().toLowerCase().includes(searchText)) ||
+            (dispatchIds.includes(searchText)) ||
             (stateText.includes(searchText)) || // Search QC Order State
             (assignedUsers.includes(searchText)) || // Search Assigned Users
             (assignedForms.includes(searchText)) // Search Assigned Forms
@@ -226,54 +281,86 @@ export default {
   },
   computed: {
     paginatedQcOrderList() {
-      // Sorting from columns
+      // Sort the filtered data before applying pagination
       const sortedData = [...this.filteredQcOrders].sort((a, b) => {
         const { prop, order } = this.sortSettings;
         let valueA, valueB;
 
         if (!prop || !order) {
-          // if sort setting does not exist, default sort in descending by row's updated_at or if updated_at is null use created_at field
-          valueA = a.updated_at? new Date(a.updated_at) : new Date(a.created_at);
-          valueB = b.updated_at? new Date(b.updated_at) : new Date(b.created_at);
+          // Default sort by `updated_at` (or `created_at` if `updated_at` is null)
+          valueA = a.updated_at ? new Date(a.updated_at) : new Date(a.created_at);
+          valueB = b.updated_at ? new Date(b.updated_at) : new Date(b.created_at);
         } else {
-          // Extract values based on the column being sorted
-          if (prop === "created_at" || prop === "updated_at") {
-            valueA = a[prop] ? new Date(a[prop]) : new Date(0);
-            valueB = b[prop] ? new Date(b[prop]) : new Date(0);
-          } else if (prop === "dispatches.length") {
-            valueA = a.dispatches.length;
-            valueB = b.dispatches.length;
-          }  else if (prop === "assignedUsersCount") {
-            valueA = this.getAssignedUsers(a).length;
-            valueB = this.getAssignedUsers(b).length;
-          } else if (prop === "assignedFormsCount") {
-            valueA = this.getAssignedForms(a).length;
-            valueB = this.getAssignedForms(b).length;
-          } else {
-            valueA = a[prop];
-            valueB = b[prop];
+          switch (prop) {
+            case "created_at":
+            case "updated_at":
+              valueA = a[prop] ? new Date(a[prop]) : new Date(0);
+              valueB = b[prop] ? new Date(b[prop]) : new Date(0);
+              break;
+
+            case "dispatches.length":
+              valueA = a.dispatches.length;
+              valueB = b.dispatches.length;
+              break;
+
+            case "dispatch_ids":
+              valueA = a.dispatches.length;
+              valueB = b.dispatches.length;
+
+              if (valueA === valueB) {
+                // Extract and sort dispatch IDs
+                const dispatchA = (a.dispatches.map(d => d.id) || []).sort((x, y) => x - y);
+                const dispatchB = (b.dispatches.map(d => d.id) || []).sort((x, y) => x - y);
+
+                for (let i = 0; i < Math.min(dispatchA.length, dispatchB.length); i++) {
+                  if (dispatchA[i] !== dispatchB[i]) {
+                    return order === "ascending" ? dispatchA[i] - dispatchB[i] : dispatchB[i] - dispatchA[i];
+                  }
+                }
+
+                // If all compared elements are equal, compare length
+                return order === "ascending" ? dispatchA.length - dispatchB.length : dispatchB.length - dispatchA.length;
+              }
+              break;
+
+            case "assignedUsersCount":
+              console.log('sorting assigned user count')
+              valueA = this.getUniqueUserIds(a).length;
+              valueB = this.getUniqueUserIds(b).length;
+
+              break;
+
+            case "assignedFormsCount":
+              valueA = this.getUniqueFormIds(a).length;
+              valueB = this.getUniqueFormIds(b).length;
+              break;
+
+            default:
+              valueA = a[prop];
+              valueB = b[prop];
           }
         }
 
-        // Convert undefined or null values to 0 for sorting consistency
+        // Convert null/undefined values to 0 for consistent sorting
         valueA = valueA ?? 0;
         valueB = valueB ?? 0;
 
-        // Fix sorting order logic
-        if (order === "ascending") return valueA - valueB;
-        if (order === "descending") return valueB - valueA;  // Fix for incorrect descending order
+        if (valueA !== valueB) {
+          return order === "ascending" ? valueA - valueB : valueB - valueA;
+        }
 
-        // Tie-breaker: Use created_at for consistent sorting
+        // If values are identical, tie-break using `created_at`
         const tieBreakerA = new Date(a.created_at);
         const tieBreakerB = new Date(b.created_at);
         return tieBreakerA - tieBreakerB;
       });
 
-      // Pagination
+
+      // Apply pagination after sorting
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
       return sortedData.slice(start, end);
-    },
+    }
   },
   watch: {
     // Watch for changes in the qcOrderList prop
