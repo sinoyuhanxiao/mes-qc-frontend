@@ -130,7 +130,6 @@
 
 <script>
 import dayjs from "dayjs";
-import {getAllDispatchedTasks} from "@/services/dispatchService";
 import {fetchFormNodes, fetchFormNodesById} from "@/services/formNodeService";
 import {fetchUsers} from "@/services/userService";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
