@@ -11,7 +11,7 @@
 
     <el-tree
         ref="treeRef"
-        style="max-width: 600px"
+        style="max-height: 300px; /* Set vertical limit */ overflow-y: auto;   /* Enable scrolling */ border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px;"
         :data="data"
         node-key="id"
         :props="defaultProps"
@@ -19,6 +19,7 @@
         @check-change="handleCheckChange"
         @node-click="handleNodeClicked"
         show-checkbox
+        default-expand-all
     >
       <template #default="{ node, data }">
         <div class="custom-tree-node">

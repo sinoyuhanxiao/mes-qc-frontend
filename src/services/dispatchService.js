@@ -42,5 +42,16 @@ export const pauseDispatch = (id, userId) => {
     return api.put(`${BASE_URL}/pause/${id}/${userId}`);
 }
 
+/**
+ * Fetches the human-readable Chinese description of a Spring CRON expression.
+ * @param {string} cronExpression - The CRON expression to parse.
+ * @returns {Promise} - The API response with the parsed CRON description.
+ */
+export const parseCronToChinese = (cronExpression) => {
+    return api.get(`${BASE_URL}/parse-cron`, {
+        params: { cronExpression }
+    });
+};
+
 
 

@@ -36,17 +36,17 @@
       <el-table-column prop="id" label="ID" width="90" sortable></el-table-column>
 
       <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="派发计划ID" width="90" sortable></el-table-column>
+      <el-table-column prop="dispatch_id" label="派发计划ID" width="120" sortable></el-table-column>
 
       <!-- Name -->
-      <el-table-column prop="name" label="任务名称" width="150" sortable>
+      <el-table-column prop="name" label="任务名称" width="150" sortable show-overflow-tooltip>
         <template #default="scope">
           {{ scope.row.name || "-" }}
         </template>
       </el-table-column>
 
       <!-- Personnel -->
-      <el-table-column prop="user_id" label="人员" width="110">
+      <el-table-column prop="user_id" label="人员" width="110" sortable>
         <template #default="scope">
           <el-tag
               v-if="getUserById(scope.row.user_id)"
@@ -75,7 +75,7 @@
       </el-table-column>
 
       <!-- Form -->
-      <el-table-column prop="qc_form_tree_node_id" label="质检表单" width="200">
+      <el-table-column prop="qc_form_tree_node_id" label="质检表单" width="200" sortable>
         <template #default="scope">
           <el-tag
               v-if="getFormById(scope.row.qc_form_tree_node_id)"
@@ -127,7 +127,7 @@
       </el-table-column>
 
       <!-- Notes -->
-      <el-table-column prop="notes" label="备注" width="200">
+      <el-table-column prop="notes" label="备注" width="200" show-overflow-tooltip>
         <template #default="scope">
           {{ scope.row.notes || "-" }}
         </template>

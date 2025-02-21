@@ -39,7 +39,7 @@
     </el-table-column>
 
     <!-- Assigned User -->
-    <el-table-column prop="assignedUsersCount" label="分配用户" width="200" >
+    <el-table-column prop="assignedUsersCount" label="分配用户" width="200">
       <template #default="scope">
         <div >
           <el-tag

@@ -6,7 +6,6 @@ import LoginPage from '@/views/LoginPage.vue';
 import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
-import DispatcherPage from "@/views/DispatcherPage.vue";
 import MyCurrentTask from "@/views/TaskCenter/MyCurrentTask.vue";
 import MyFutureTask from "@/views/TaskCenter/MyFutureTask.vue";
 import MyTodayTask from "@/views/TaskCenter/MyTodayTask.vue";
