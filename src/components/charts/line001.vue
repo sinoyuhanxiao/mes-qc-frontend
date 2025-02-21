@@ -21,13 +21,28 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      chart: null, // Store chart instance here
+    };
+  },
   mounted() {
     this.initChart();
   },
   methods: {
+    /**
+     * Retrieve the chart as a Base64 image
+     */
+    getChartImage() {
+      return this.chart ? this.chart.getDataURL({type: "png", pixelRatio: 2}) : "";
+    },
+
+    /**
+     * Initialize the chart and store the instance
+     */
     initChart() {
       const chartDom = this.$refs.chartContainer;
-      const chartInstance = echarts.init(chartDom);
+      this.chart = echarts.init(chartDom); // Store instance in `this.chart`
 
       const option = {
         title: {
@@ -46,8 +61,8 @@ export default {
             dataZoom: {
               yAxisIndex: "none",
             },
-            dataView: { readOnly: false },
-            magicType: { type: ["line", "bar"] },
+            dataView: {readOnly: false},
+            magicType: {type: ["line", "bar"]},
             restore: {},
             saveAsImage: {},
           },
@@ -70,18 +85,18 @@ export default {
             data: this.chartData,
             markPoint: {
               data: [
-                { type: "max", name: "Max" },
-                { type: "min", name: "Min" },
+                {type: "max", name: "Max"},
+                {type: "min", name: "Min"},
               ],
             },
             markLine: {
-              data: [{ type: "average", name: "Avg" }],
+              data: [{type: "average", name: "Avg"}],
             },
           },
         ],
       };
 
-      chartInstance.setOption(option);
+      this.chart.setOption(option);
     },
   },
 };

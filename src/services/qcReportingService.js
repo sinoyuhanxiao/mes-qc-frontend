@@ -42,3 +42,25 @@ export const fetchQcRecords = (formTemplateId, startDateTime, endDateTime, page 
         headers: { 'Content-Type': 'application/json' }
     });
 };
+
+/**
+ * Generate and download QC report as a PDF.
+ * @param {Object} reportData - The JSON object containing report details.
+ */
+export const generateQcReport = (reportData) => {
+    return api.post(`/generate`, reportData, {
+        responseType: 'blob', // Ensures PDF is treated as binary data
+        headers: { 'Content-Type': 'application/json' }
+    }).then((response) => {
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = 'Quality_Report.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }).catch((error) => {
+        console.error('Error generating QC report:', error);
+    });
+};
+

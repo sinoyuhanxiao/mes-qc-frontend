@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container v-loading="pdfLoading" element-loading-text="正在生成PDF报告..." element-loading-background="rgba(0, 0, 0, 0.4)">
     <el-aside width="25%">
       <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
@@ -17,6 +17,7 @@
             end-placeholder="结束日期"
             @change="refreshChartData"
         />
+        <el-button type="success" style="margin-top: 0;" @click="exportToPdf">生成 PDF</el-button>
         <el-button type="primary" @click="openQcRecordsDialog" style="margin-top: 0">查看质检记录</el-button>
       </div>
 
@@ -25,6 +26,7 @@
       <template v-else>
         <div v-for="widget in lineChartWidgets" :key="widget.name">
           <LineChart
+              ref="lineChartRefs"
               :chartTitle="widget.label"
               :chartData="widget.chartData"
               :xaxisData="widget.xaxisData"
@@ -33,6 +35,7 @@
 
         <div v-for="widget in pieChartWidgets" :key="widget.name">
           <PieChart
+              ref="pieChartRefs"
               :chartTitle="widget.label"
               :chartData="widget.chartData"
           />
@@ -139,13 +142,16 @@ import { saveAs } from "file-saver";
 import FormTree from '@/components/form-manager/FormTree.vue';
 import PieChart from '@/components/charts/pie001.vue';
 import LineChart from '@/components/charts/line001.vue';
-import { extractWidgetDataWithCounts, fetchQcRecords } from "@/services/qcReportingService";
+import {extractWidgetDataWithCounts, fetchQcRecords, generateQcReport} from "@/services/qcReportingService";
 import {deleteTaskSubmissionLog, exportDocumentToPDF, getMyDocument} from "@/services/qcTaskSubmissionLogsService";
 
 export default {
   components: { FormTree, PieChart, LineChart },
   data() {
     return {
+      pdfLoading: false,
+      lineChartRefs: [],
+      pieChartRefs: [],
       selectedDetails: {},
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
       loadingCharts: false,
@@ -234,6 +240,73 @@ export default {
     }
   },
   methods: {
+    async exportToPdf() {
+      if (!this.lineChartWidgets.length && !this.pieChartWidgets.length) {
+        this.$message.warning("暂无图表数据可导出!");
+        return;
+      }
+
+      this.pdfLoading = true;
+
+      // 等待 Vue 渲染完成
+      await this.$nextTick();
+
+      // 获取所有 LineChart 的图片
+      const lineChartImages = this.lineChartWidgets.map((widget, index) => ({
+        name: widget.name,
+        image: this.$refs.lineChartRefs?.[index]?.getChartImage() || "" // 逐个获取
+      }));
+
+      // 获取所有 PieChart 的图片
+      const pieChartImages = this.pieChartWidgets.map((widget, index) => ({
+        name: widget.name,
+        image: this.$refs.pieChartRefs?.[index]?.getChartImage() || "" // 逐个获取
+      }));
+
+      console.log("🖼️ Line Chart Images:", lineChartImages);
+      console.log("🖼️ Pie Chart Images:", pieChartImages);
+
+      // 构造要发送给后端的报告数据
+      const reportData = {
+        startDateTime: this.formatDate(this.dateRange[0]),
+        endDateTime: this.formatDate(this.dateRange[1]),
+        charts: [
+          // 绑定 LineChart 数据
+          ...this.lineChartWidgets.map(widget => ({
+            chartImage: lineChartImages.find(img => img.name === widget.name)?.image || "",
+            chartType: "line",
+            min: Math.min(...widget.chartData),
+            max: Math.max(...widget.chartData),
+            average: (widget.chartData.reduce((sum, val) => sum + val, 0) / widget.chartData.length).toFixed(2),
+            total: widget.chartData.length
+          })),
+          // 绑定 PieChart 数据
+          ...this.pieChartWidgets.map(widget => ({
+            chartImage: pieChartImages.find(img => img.name === widget.name)?.image || "",
+            chartType: "pie",
+            info: widget.chartData.map(item => ({
+              label: item.name,
+              count: item.value,
+              percentage: ((item.value / widget.chartData.reduce((sum, val) => sum + val.value, 0)) * 100).toFixed(2)
+            })),
+            total: widget.chartData.reduce((sum, val) => sum + val.value, 0)
+          }))
+        ]
+      };
+
+      console.log("🚀 发送给后端的报告数据:", reportData);
+
+      // 调用后端 API 生成 PDF
+      try {
+        await generateQcReport(reportData);
+        this.$message.success("PDF 下载成功!");
+      } catch (err) {
+        console.error("❌ 生成 PDF 失败:", err);
+        this.$message.error("PDF 生成失败，请重试!");
+      } finally {
+        this.pdfLoading = false;
+      }
+    },
     exportToExcel() {
       if (!this.qcRecords.length) {
         this.$message.warning("暂无数据可导出");

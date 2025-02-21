@@ -3,23 +3,23 @@
 </template>
 
 <script>
-import * as echarts from 'echarts';
+import * as echarts from "echarts";
 
 export default {
   name: "PieChart",
   props: {
     chartTitle: {
       type: String,
-      default: '质检产品合格率'
+      default: "质检产品合格率",
     },
     chartData: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
-      chartInstance: null
+      chart: null, // Store chart instance here (renamed for consistency)
     };
   },
   mounted() {
@@ -30,72 +30,86 @@ export default {
       deep: true,
       handler() {
         this.updateChart();
-      }
-    }
+      },
+    },
   },
   methods: {
+    /**
+     * Retrieve the chart as a Base64 image
+     */
+    getChartImage() {
+      return this.chart ? this.chart.getDataURL({type: "png", pixelRatio: 2}) : "";
+    },
+
+    /**
+     * Initialize the chart and store the instance
+     */
     initChart() {
-      this.chartInstance = echarts.init(this.$refs.chartContainer);
+      const chartDom = this.$refs.chartContainer;
+      this.chart = echarts.init(chartDom); // Store instance in `this.chart`
       this.updateChart();
     },
+
+    /**
+     * Update the chart with new data
+     */
     updateChart() {
-      if (!this.chartInstance) return;
+      if (!this.chart) return;
 
       const option = {
         title: {
           text: this.chartTitle,
-          left: 'center'
+          left: "center",
         },
         tooltip: {
-          trigger: 'item'
+          trigger: "item",
         },
         legend: {
-          top: '10%',
-          orient: 'vertical',
-          left: 'left'
+          top: "10%",
+          orient: "vertical",
+          left: "left",
         },
         toolbox: {
           show: true,
           feature: {
-            mark: { show: true },
-            dataView: { show: true, readOnly: false },
-            restore: { show: true },
-            saveAsImage: { show: true }
-          }
+            dataView: {show: true, readOnly: false},
+            restore: {show: true},
+            saveAsImage: {show: true},
+          },
         },
         series: [
           {
-            name: '分类',
-            type: 'pie',
-            radius: ['40%', '70%'],
+            name: "分类",
+            type: "pie",
+            radius: ["40%", "70%"],
             avoidLabelOverlap: false,
             itemStyle: {
               borderRadius: 10,
-              borderColor: '#fff',
-              borderWidth: 2
+              borderColor: "#fff",
+              borderWidth: 2,
             },
             label: {
               show: false,
-              position: 'center'
+              position: "center",
             },
             emphasis: {
               label: {
                 show: true,
-                fontSize: 40,
-                fontWeight: 'bold'
-              }
+                fontSize: 20,
+                fontWeight: "bold",
+              },
             },
             labelLine: {
-              show: false
+              show: false,
             },
-            data: this.chartData
-          }
-        ]
+            data: this.chartData,
+          },
+        ],
       };
 
-      this.chartInstance.setOption(option);
-    }
-  }
+      this.chart.setOption(option);
+    },
+  },
 };
 </script>
 
