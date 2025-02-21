@@ -29,9 +29,9 @@
 
       <el-tab-pane
           label="质检任务单"
-          name="schedule2"
+          name="QcOrderForm"
           v-if="!currentDispatch || currentDispatch.type === 'SCHEDULED'">
-        <schedule-based-dispatch2
+        <qc-order-form
             :current-dispatch="currentDispatch"
             @on-submit="handleSubmit"
             @on-cancel="handleCancel"/>
@@ -44,12 +44,12 @@
 <script>
 import ManualBasedDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
 import ScheduleBasedDispatch from "@/components/dispatch/ScheduleBasedDispatch.vue";
-import ScheduleBasedDispatch2 from "@/components/dispatch/ScheduleBasedDispatch2.vue";
+import QcOrderForm from "@/components/dispatch/QcOrderForm.vue";
 
 export default {
   components: {
     ScheduleBasedDispatch,
-    ScheduleBasedDispatch2,
+    QcOrderForm,
     ManualBasedDispatch,
   },
   props: {
