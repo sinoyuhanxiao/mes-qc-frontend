@@ -15,30 +15,17 @@
             @on-cancel="handleCancel"
             @reset-form="handleReset"/>
       </el-tab-pane>
-
-      <!-- Quick Dispatch -->
-      <el-tab-pane
-          label="一次性质检工单"
-          name="QuickDispatch"
-          v-if="!currentOrder">
-        <manual-based-dispatch
-            :current-dispatch="currentOrder"
-            @on-submit="handleManualSubmit"
-            @on-cancel="handleCancel"/>
-      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
 
 <script>
-import ManualBasedDispatch from "@/components/dispatch/ManualBasedDispatch.vue";
 import QcOrderForm from "@/components/dispatch/QcOrderForm.vue";
 
 export default {
   components: {
     QcOrderForm,
-    ManualBasedDispatch,
   },
   props: {
     currentOrder: {
@@ -65,10 +52,6 @@ export default {
     handleSubmit(data) {
       this.$emit("on-submit", data);
     },
-    handleManualSubmit(data) {
-      this.$emit("on-manual-submit", data);
-      console.log(data)
-    },
     handleCancel() {
       this.$emit("on-cancel");
     },
@@ -76,7 +59,6 @@ export default {
       this.activeTab = tab.name; // Update activeTab when the user clicks a tab
     },
     handleReset() {
-      console.log("Handling reset in DispatchConfigurator");
       this.qcOrderForm = this.getNormalizedOrderData(this.currentOrder);
       this.resetKey++; // Force re-render of QcOrderForm
     },
@@ -93,10 +75,6 @@ export default {
           updated_at: null,
           updated_by: null,
           status: 1,
-          applyUserToAll: false,
-          globalUserIds: [], // global user selection
-          applyFormToAll: false,
-          globalFormIds: [], // global form selection
           dispatches: [],
         };
       }
@@ -141,6 +119,8 @@ export default {
           created_by: dispatch.created_by || null,
           updated_at: dispatch.updated_at || null,
           updated_by: dispatch.updated_by || null,
+          dropdownUserIds: dispatch.user_ids || [],
+          shiftTreeUserIds: [],
         })),
       };
     }

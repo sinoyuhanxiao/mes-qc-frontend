@@ -555,7 +555,7 @@
             </div>
           </el-form-item>
 
-          <el-divider>已派发质检任务</el-divider>
+          <el-divider>已派发任务</el-divider>
           <!-- Dispatched Tasks Table -->
           <DispatchedTasksList
               :dispatch-id="dispatch.id"

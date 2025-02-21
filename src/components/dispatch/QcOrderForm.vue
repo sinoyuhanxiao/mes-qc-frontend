@@ -19,45 +19,6 @@
           <el-input type="textarea" v-model="qcOrderForm.description" placeholder="请输入备注"></el-input>
         </el-form-item>
 
-    <!--    &lt;!&ndash; Order-Level User/Form Option &ndash;&gt;-->
-    <!--    <el-divider>全局选项</el-divider>-->
-    <!--    <el-form-item label="应用人员到所有派发" prop="applyUserToAll">-->
-    <!--      <el-switch-->
-    <!--          v-model="qcOrderForm.applyUserToAll"-->
-    <!--          />-->
-    <!--    </el-form-item>-->
-    <!--    <el-form-item v-if="qcOrderForm.applyUserToAll" label="选择全局人员">-->
-    <!--      <el-select-->
-    <!--          v-model="qcOrderForm.globalUserIds"-->
-    <!--          multiple-->
-    <!--          filterable-->
-    <!--          placeholder="请选择人员"-->
-    <!--          :loading="isLoadingUser"-->
-    <!--          @focus="loadUserOptions"-->
-    <!--      >-->
-    <!--        <el-option-->
-    <!--            v-for="user in userOptions"-->
-    <!--            :key="user.id"-->
-    <!--            :label="user.name"-->
-    <!--            :value="user.id"-->
-    <!--        />-->
-    <!--      </el-select>-->
-    <!--    </el-form-item>-->
-
-    <!--    <el-form-item label="应用表单到所有派发" prop="applyFormToAll">-->
-    <!--      <el-switch-->
-    <!--          v-model="qcOrderForm.applyFormToAll"-->
-    <!--          />-->
-    <!--    </el-form-item>-->
-    <!--    <el-form-item v-if="qcOrderForm.applyFormToAll" label="选择全局表单">-->
-    <!--      <DispatchFormTreeSelect-->
-    <!--          :selected-form-ids="qcOrderForm.globalFormIds"-->
-    <!--          @update-selected-forms="(forms) => {-->
-    <!--          qcOrderForm.globalFormIds = forms.map((form) => form.id);-->
-    <!--        }"-->
-    <!--      />-->
-    <!--    </el-form-item>-->
-
         <!-- Dispatch List -->
         <el-divider>派发计划列表</el-divider>
         <div
@@ -270,15 +231,16 @@
 
               <!-- User Selection -->
               <el-form-item
-                  v-if="!qcOrderForm.applyUserToAll"
                   label="检测人员"
                   :prop="'dispatches.' + index + '.user_ids'"
                   required>
                 <el-select
-                    v-model="dispatch.user_ids"
+                    v-model="dispatch.dropdownUserIds"
                     multiple
                     filterable
-                    placeholder="请选择人员">
+                    placeholder="请选择人员"
+                    @change="handleDropdownUserChange($event, index)"
+                >
                   <el-option
                       v-for="user in userOptions"
                       :key="user.id"
@@ -288,9 +250,17 @@
                 </el-select>
               </el-form-item>
 
+              <!-- Shift User Tree Selection -->
+              <el-form-item
+                  :prop="'dispatches.' + index + '.user_ids'"
+              >
+                  <UserShiftTree
+                      @update-selected-users="(users) => handleUserShiftTreeSelection(users, index)"
+                  />
+              </el-form-item>
+
               <!-- Form Tree -->
               <el-form-item
-                  v-if="!qcOrderForm.applyFormToAll"
                   label="质检表单"
                   :prop="'dispatches.' + index + '.form_ids'"
                   required
@@ -396,11 +366,10 @@
   </el-container>
 </template>
 
-
 <script>
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
-import { CronElementPlus } from "@vue-js-cron/element-plus";
-import { fetchUsers } from "@/services/userService";
+import {CronElementPlus} from "@vue-js-cron/element-plus";
+import {fetchUsers} from "@/services/userService";
 import {normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
 import {getAllProductionWorkOrders, getAllProducts, getAllRawMaterials} from "@/services/productionService";
 import {getAllEquipments, getAllMaintenanceWorkOrders} from "@/services/maintenanceService";
@@ -408,9 +377,10 @@ import {getAllInstruments} from "@/services/instrumentService";
 import {getAllTestSubjects} from "@/services/testSubjectService";
 import {getAllSamplingLocations} from "@/services/samplingLocationService";
 import QcOrderPreview from "@/components/dispatch/QcOrderPreview.vue"
+import UserShiftTree from "@/components/dispatch/UserShiftTree.vue";
 
 export default {
-  components: { DispatchFormTreeSelect, CronElementPlus, QcOrderPreview },
+  components: { DispatchFormTreeSelect, UserShiftTree, CronElementPlus, QcOrderPreview },
   props: {
     currentOrder: {
       type: Object,
@@ -423,6 +393,7 @@ export default {
   },
   data() {
     return {
+      isSubmitted: false,
       dateFormat: "YYYY-MM-DD HH:mm:ss",
       valueFormat: "YYYY-MM-DDTHH:mm:ssZ",
       qcOrderForm: null,
@@ -449,6 +420,9 @@ export default {
         "dispatches.*.custom_time": [
           {required: true, message: "请选择执行时间", trigger: "change"},
         ],
+        "dispatches.*.selectedUsers": [
+          { required: true, message: "请至少选择一个人员或班次", trigger: "change" }
+        ]
       },
       userOptions: [],  // Stores user data fetch from backend
       instrumentOptions: [],
@@ -462,34 +436,6 @@ export default {
     };
   },
   watch: {
-    "qcOrderForm.globalUserIds"(newGlobalUserIds) {
-      if (this.qcOrderForm.applyUserToAll) {
-        this.qcOrderForm.dispatches.forEach((dispatch) => {
-          dispatch.user_ids = [...newGlobalUserIds];
-        });
-      }
-    },
-    "qcOrderForm.globalFormIds"(newGlobalFormIds) {
-      if (this.qcOrderForm.applyFormToAll) {
-        this.qcOrderForm.dispatches.forEach((dispatch) => {
-          dispatch.form_ids = [...newGlobalFormIds];
-        });
-      }
-    },
-    "qcOrderForm.applyUserToAll"(apply) {
-      if (apply) {
-        this.qcOrderForm.dispatches.forEach((dispatch) => {
-          dispatch.user_ids = [...this.qcOrderForm.globalUserIds];
-        });
-      }
-    },
-    "qcOrderForm.applyFormToAll"(apply) {
-      if (apply) {
-        this.qcOrderForm.dispatches.forEach((dispatch) => {
-          dispatch.form_ids = [...this.qcOrderForm.globalFormIds];
-        });
-      }
-    },
     currentOrder: {
       immediate: true,
       handler(newOrder) {
@@ -517,7 +463,7 @@ export default {
         name: "",
         description: "",
         state:1,
-        cron_expression: "* * * * *",
+        cron_expression: "* * * * * *",
         start_time: null,
         end_time: null,
         dispatch_limit: -1,
@@ -525,12 +471,8 @@ export default {
         custom_time: null,
         executed_count: 0,
         date_range: [],
-        user_ids: this.qcOrderForm.applyUserToAll
-            ? [...this.qcOrderForm.globalUserIds]
-            : [],
-        form_ids: this.qcOrderForm.applyFormToAll
-            ? [...this.qcOrderForm.globalFormIds]
-            : [],
+        user_ids: [],
+        form_ids: [],
         sampling_location_ids: [],
         test_subject_ids: [],
         instrument_ids: [],
@@ -541,6 +483,8 @@ export default {
         product_ids: [],
         collapsed: false,
         isUnlimited: true,
+        dropdownUserIds: [],
+        shiftTreeUserIds: [],
       };
       this.qcOrderForm.dispatches.push(newDispatch);
     },
@@ -562,6 +506,8 @@ export default {
       this.qcOrderForm.dispatches[index].form_ids = forms.map((form) => form.id);
     },
     submitForm() {
+      this.isSubmitted = true;  // Set before validation to trigger error states
+
       this.$refs.formRef.validate(async (valid) => {
         if (valid) {
           try {
@@ -602,7 +548,7 @@ export default {
             console.error("Error creating QC Order:", error);
           }
         } else {
-          await this.$confirm("请填写所有必填字段后再提交。", "提示", {
+          await this.$alert("请填写所有必填字段后再提交。", "提示", {
             confirmButtonText: "确定",
             type: "error",
           });
@@ -616,6 +562,8 @@ export default {
         type: "warning",
       });
       this.$emit("reset-form");
+      this.isSubmitted = false;  // Reset submission state
+
     },
     // Transform order data to match order backend api request
     transformDispatchData(data) {
@@ -665,24 +613,6 @@ export default {
       }
 
       return payload;
-    },
-    cleanOrderTemplate() {
-      return {
-        id: null,
-        name: "",
-        description: "",
-        state:1,
-        created_at: null,
-        created_by: null,
-        updated_at: null,
-        updated_by: null,
-        status: 1,
-        applyUserToAll: false,
-        globalUserIds: [], // global user selection
-        applyFormToAll: false,
-        globalFormIds: [], // global form selection
-        dispatches: [],
-      }
     },
     async loadUserOptions() {
       try {
@@ -811,10 +741,44 @@ export default {
         this.loadTestSubjectOptions(),
       ]);
     },
-    openFormPreviewWindow,
     async handleFormNodeClicked(formTemplateId) {
       console.log("qc order form a node is clicked: " + formTemplateId);
       await openFormPreviewWindow(formTemplateId, this)
+    },
+    async handleUserShiftTreeSelection(userIdsFromTree, index) {
+      // Retrieve the dispatch object at the given index
+      const dispatch = this.qcOrderForm.dispatches[index];
+
+      if (!dispatch) {
+        console.error("Invalid dispatch index:", index);
+        return;
+      }
+
+      dispatch.shiftTreeUserIds = userIdsFromTree;
+
+      // Merge `dispatch.user_ids` (el-select) and `userIdsFromTree`
+      dispatch.user_ids = [...new Set([...dispatch.dropdownUserIds, ...dispatch.shiftTreeUserIds])]; // OR: Array.from(mergedUserIds);
+    },
+    handleDropdownUserChange(newUserIds, index) {
+      const dispatch = this.qcOrderForm.dispatches[index];
+
+      if (!dispatch) {
+        console.error("Invalid dispatch index:", index);
+        return;
+      }
+
+      // Ensure shiftTreeUserIds exists
+      if (!dispatch.shiftTreeUserIds) {
+        dispatch.shiftTreeUserIds = [];
+      }
+
+      // Merge `dropdownUserIds` (new selection) and `shiftTreeUserIds`
+      const mergedUserIds = new Set([...newUserIds, ...dispatch.shiftTreeUserIds]);
+
+      // Convert Set to Array and update `user_ids`
+      dispatch.user_ids = [...mergedUserIds];
+
+      console.log(`Updated dispatch[${index}].user_ids:`, dispatch.user_ids);
     }
   },
   mounted() {
@@ -826,5 +790,11 @@ export default {
 </script>
 
 <style scoped>
+
+.tree-wrapper-error {
+  border: 1px solid #f56c6c !important; /* Red border for validation */
+  border-radius: 4px;
+  padding: 5px;
+}
 
 </style>
