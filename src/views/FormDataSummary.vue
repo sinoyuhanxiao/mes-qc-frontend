@@ -24,7 +24,7 @@
       <el-skeleton v-if="loadingCharts" :rows="6" animated />
 
       <template v-else>
-        <div v-for="widget in lineChartWidgets" :key="widget.name">
+        <div v-for="widget in lineChartWidgets" :key="widget.name" class="chart-card hover-effect">
           <LineChart
               ref="lineChartRefs"
               :chartTitle="widget.label"
@@ -33,7 +33,7 @@
           />
         </div>
 
-        <div v-for="widget in pieChartWidgets" :key="widget.name">
+        <div v-for="widget in pieChartWidgets" :key="widget.name" class="chart-card hover-effect">
           <PieChart
               ref="pieChartRefs"
               :chartTitle="widget.label"
@@ -200,7 +200,7 @@ export default {
       loadingQcRecords: false,
       reorderedColumnHeaders: [],
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 15,
     };
   },
   computed: {
@@ -268,6 +268,7 @@ export default {
 
       // 构造要发送给后端的报告数据
       const reportData = {
+        qcFormName: this.selectedForm.label,
         startDateTime: this.formatDate(this.dateRange[0]),
         endDateTime: this.formatDate(this.dateRange[1]),
         charts: [
@@ -281,16 +282,20 @@ export default {
             total: widget.chartData.length
           })),
           // 绑定 PieChart 数据
-          ...this.pieChartWidgets.map(widget => ({
-            chartImage: pieChartImages.find(img => img.name === widget.name)?.image || "",
-            chartType: "pie",
-            info: widget.chartData.map(item => ({
-              label: item.name,
-              count: item.value,
-              percentage: ((item.value / widget.chartData.reduce((sum, val) => sum + val.value, 0)) * 100).toFixed(2)
-            })),
-            total: widget.chartData.reduce((sum, val) => sum + val.value, 0)
-          }))
+          ...this.pieChartWidgets.map(widget => {
+            const totalValue = widget.chartData.reduce((sum, val) => sum + val.value, 0); // 计算总值
+
+            return {
+              chartImage: pieChartImages.find(img => img.name === widget.name)?.image || "",
+              chartType: "pie",
+              info: widget.chartData.map(item => ({
+                label: item.name,
+                count: item.value,
+                percentage: totalValue === 0 ? "0.00" : ((item.value / totalValue) * 100).toFixed(2) // 避免除以 0
+              })),
+              total: totalValue
+            };
+          })
         ]
       };
 
@@ -604,6 +609,18 @@ export default {
     display: flex;
     justify-content: space-between; /* Left and Right Alignment */
     align-items: center; /* Vertically Center */
+  }
+
+  .chart-card {
+    margin: 20px 0;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .chart-card.hover-effect:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   }
 
   .el-table {

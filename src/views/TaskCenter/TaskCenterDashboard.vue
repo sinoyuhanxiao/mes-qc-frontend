@@ -2,7 +2,7 @@
 <template>
   <div class="task-center-dashboard">
     <el-row :gutter="20" class="row-bg" justify="space-between">
-      <el-col :span="10"><h1>My Task Dashboard</h1></el-col>
+      <el-col :span="10"><h1>我的任务看板</h1></el-col>
       <el-col :span="3.5" style="align-self: center;">
         <el-button>New</el-button>
         <el-button>Filter</el-button>

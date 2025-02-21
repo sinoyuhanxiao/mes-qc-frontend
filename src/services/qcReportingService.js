@@ -55,7 +55,7 @@ export const generateQcReport = (reportData) => {
         const blob = new Blob([response.data], { type: 'application/pdf' });
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
-        link.download = 'Quality_Report.pdf';
+        link.download = reportData.qcFormName + '质量控制报告.pdf';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

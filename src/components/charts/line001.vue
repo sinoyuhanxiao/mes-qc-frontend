@@ -29,6 +29,16 @@ export default {
   mounted() {
     this.initChart();
   },
+  watch: {
+    chartData: {
+      deep: true,
+      handler() {
+        if (this.chart) {
+          this.chart.setOption({ series: [{ data: this.chartData }] });
+        }
+      }
+    }
+  },
   methods: {
     /**
      * Retrieve the chart as a Base64 image
@@ -62,14 +72,17 @@ export default {
               yAxisIndex: "none",
             },
             dataView: {readOnly: false},
-            magicType: {type: ["line", "bar"]},
+            magicType: {
+              show: true,
+              type: ["line", "bar"]
+            },
             restore: {},
             saveAsImage: {},
           },
         },
         xAxis: {
           type: "category",
-          boundaryGap: false,
+          boundaryGap: true,
           data: this.xaxisData,
         },
         yAxis: {
