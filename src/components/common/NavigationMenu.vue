@@ -18,7 +18,7 @@
       <template v-if="user.role === 1">
         <el-sub-menu index="2">
           <template #title>
-            <el-icon><User /></el-icon>
+            <el-icon><Setting /></el-icon>
             <span>{{ translate('navigationMenu.systemManagement') }}</span>
           </template>
           <el-menu-item index="/user-management">
@@ -28,10 +28,6 @@
           <el-menu-item index="/shift-management">
             <el-icon><User /></el-icon>
             <span>{{ translate('navigationMenu.shiftManagement') }}</span>
-          </el-menu-item>
-          <el-menu-item index="/shift-management">
-            <el-icon><User /></el-icon>
-            <span>班组管理</span>
           </el-menu-item>
         </el-sub-menu>
 
