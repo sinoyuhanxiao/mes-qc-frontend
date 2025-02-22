@@ -267,6 +267,7 @@
               >
                 <DispatchFormTreeSelect
                     :selected-form-ids="dispatch.form_ids"
+                    :has-error="isSubmitted && dispatch.form_ids.length === 0"
                     @update-selected-forms="(forms) => handleSelectedForms(forms, index)"
                     @on-node-clicked="handleFormNodeClicked"
                 />

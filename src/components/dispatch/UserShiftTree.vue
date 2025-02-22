@@ -57,9 +57,9 @@ export default {
           fetchUsers(),
         ]);
 
-        const shifts = shiftsRes.data?.data || [];
+        const shifts = (shiftsRes.data?.data || []).filter(user => user.status !== 0);
         const shiftUserMappings = shiftUserRes.data?.data || [];
-        const users = usersRes.data?.data || [];
+        const users = (usersRes.data?.data || []).filter(user => user.status !== 0);
 
         // Build lookup maps
         const userMap = new Map(users.map(user => [user.id, user]));

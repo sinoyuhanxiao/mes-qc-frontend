@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-tree-container">
+  <div :class="[{ 'error-border': hasError }]">
     <div class="toolbar">
       <el-input
           v-model="filterText"
@@ -70,6 +70,10 @@ const props = defineProps({
   selectedFormIds: {
     type: Array,
     default: () => [],
+  },
+  hasError: {
+    type: Boolean,
+    default: false, // Controls whether to show red overlay
   },
 });
 const emit = defineEmits(['update-selected-forms','on-node-clicked']);
@@ -199,4 +203,9 @@ const handleNodeClicked = (nodeData) => {
   margin-left: 8px;
 }
 
+.error-border {
+  border: 2px solid #f56c6c !important; /* Red validation border */
+  border-radius: 4px;
+  padding: 5px;
+}
 </style>

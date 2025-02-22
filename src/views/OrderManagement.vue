@@ -129,7 +129,8 @@ import {
   deleteQcOrder,
   createQcOrder,
   updateQcOrder,
-  getQcOrderById
+  getQcOrderById,
+  updateQcOrderStates
 } from "@/services/qcOrderService";
 import { Search, RefreshRight } from "@element-plus/icons-vue";
 import QcOrderList from "@/components/dispatch/QcOrderList.vue";
@@ -302,6 +303,7 @@ export default {
     async loadAllData() {
       try {
         await Promise.all([
+          updateQcOrderStates(),
           this.loadAllQcOrders(),
           this.loadFormNodes(),
           this.loadUserMap(),

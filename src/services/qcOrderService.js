@@ -36,3 +36,10 @@ export const getAllQcOrders = () => {
 export const deleteQcOrder = (id, userId) => {
     return api.delete(`${BASE_URL}/${id}/${userId}`);
 };
+
+/**
+ * Update QC Order States
+ */
+export const updateQcOrderStates = () => {
+    return api.post(`${BASE_URL}/update-qc-order-states`);
+};
