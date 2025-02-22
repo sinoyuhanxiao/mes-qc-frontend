@@ -50,7 +50,7 @@
           </el-menu-item>
           <el-menu-item index="/instrument-management">
             <el-icon><TakeawayBox /></el-icon>
-            <span>儀器管理</span>
+            <span>仪器管理</span>
           </el-menu-item>
           <el-menu-item index="/test-subject-management">
             <el-icon><Collection /></el-icon>
