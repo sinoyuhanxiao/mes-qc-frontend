@@ -5,8 +5,6 @@ import UserManagement from '@/views/UserManagement.vue';
 import LoginPage from '@/views/LoginPage.vue';
 import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
-import TaskAssignment from '@/views/TaskAssignment.vue'
-import MyCurrentTask from "@/views/TaskCenter/MyCurrentTask.vue";
 import MyFutureTask from "@/views/TaskCenter/MyFutureTask.vue";
 import MyTodayTask from "@/views/TaskCenter/MyTodayTask.vue";
 import MyHistoryTask from "@/views/TaskCenter/MyHistoryTask.vue";
@@ -25,7 +23,7 @@ import ShiftManagement from "@/views/ShiftManagement.vue";
 const routes = [
     {
         path: '/',
-        // redirect: '/user-management', // Default route
+        redirect: '/task-center-dashboard', // Default route
     },
     {
         path: '/form-designer',
@@ -78,7 +76,7 @@ const routes = [
         component: MyHistoryTask
     },
     {
-        path: '/-tasks',
+        path: '/overdue-tasks',
         name: 'MyOverdueTask',
         component: MyOverdueTask
     },
