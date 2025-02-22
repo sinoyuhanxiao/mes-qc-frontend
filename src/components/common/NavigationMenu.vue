@@ -18,7 +18,7 @@
       <template v-if="user.role === 1">
         <el-sub-menu index="2">
           <template #title>
-            <el-icon><Setting /></el-icon>
+            <el-icon><User /></el-icon>
             <span>{{ translate('navigationMenu.systemManagement') }}</span>
           </template>
           <el-menu-item index="/user-management">

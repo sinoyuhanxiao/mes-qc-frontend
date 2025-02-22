@@ -21,10 +21,10 @@
         <div class="statistic-footer">
           <div class="footer-item">
             <span>than yesterday</span>
-            <span class="green">
-              24%
+            <span :class="todayTaskChange >= 0 ? 'green' : 'red'">
+              {{ todayTaskChange }}%
               <el-icon>
-                <CaretTop />
+                <component :is="todayTaskChange >= 0 ? CaretTop : CaretBottom" />
               </el-icon>
             </span>
           </div>
@@ -57,10 +57,10 @@
         <div class="statistic-footer">
           <div class="footer-item">
             <span>than yesterday</span>
-            <span class="red">
-              12%
+            <span :class="futureTaskChange >= 0 ? 'green' : 'red'">
+              {{ futureTaskChange }}%
               <el-icon>
-                <CaretBottom />
+                <component :is="futureTaskChange >= 0 ? CaretTop : CaretBottom" />
               </el-icon>
             </span>
           </div>
@@ -74,7 +74,7 @@
     </el-col>
     <el-col :span="6">
       <div class="statistic-card">
-        <el-statistic :value="myCompletedTasksValue" title="New transactions today" @click="navigateTo('/history-tasks')">
+        <el-statistic :value="myhistoricalTasksValue" title="New transactions today" @click="navigateTo('/history-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
               我的历史任务
@@ -84,11 +84,11 @@
         <div class="statistic-footer">
           <div class="footer-item">
             <span>than yesterday</span>
-            <span class="green">
-              16%
-              <el-icon>
-                <CaretTop />
-              </el-icon>
+            <span :class="historicalTaskChange >= 0 ? 'green' : 'red'">
+              {{ historicalTaskChange }}%
+            <el-icon>
+              <component :is="historicalTaskChange >= 0 ? CaretTop : CaretBottom" />
+            </el-icon>
             </span>
           </div>
           <div class="footer-item">
@@ -111,10 +111,10 @@
         <div class="statistic-footer">
           <div class="footer-item">
             <span>than yesterday</span>
-            <span class="green">
-              16%
+            <span :class="overdueTaskChange >= 0 ? 'green' : 'red'">
+              {{ overdueTaskChange }}%
               <el-icon>
-                <CaretTop />
+                <component :is="overdueTaskChange >= 0 ? CaretTop : CaretBottom" />
               </el-icon>
             </span>
           </div>
@@ -139,30 +139,64 @@
   import { useTransition } from '@vueuse/core'
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import { fetchTaskStatistics } from '@/services/taskStats'
+  import { useStore } from 'vuex'
+  import { onMounted } from 'vue'
 
-  const source = ref(0)
-  const myFutureTasksValue = useTransition(source, {
+  // task numbers
+  const todayTaskSource = ref(0)
+  const futureTaskSource = ref(0)
+  const historicalTaskSource = ref(0)
+  const overdueTaskSource = ref(0)
+
+  // task percentage changes
+  const todayTaskChange = ref(0)
+  const futureTaskChange = ref(0)
+  const historicalTaskChange = ref(0)
+  const overdueTaskChange = ref(0)
+
+  const store = useStore()
+  const isLoading = ref(true)
+
+  onMounted(async () => {
+    const userId = store.getters.getUser.id
+    try {
+      const response = await fetchTaskStatistics(userId)
+      console.log('Task Statistics:', response.data)
+
+      if (response.data) {
+        todayTaskSource.value = response.data.data.todayTasks.count
+        futureTaskSource.value = response.data.data.futureTasks.count
+        historicalTaskSource.value = response.data.data.historicalTasks.count
+        overdueTaskSource.value = response.data.data.overdueTasks.count
+
+        todayTaskChange.value = response.data.data.todayTasks.percentageChange
+        futureTaskChange.value = response.data.data.futureTasks.percentageChange
+        historicalTaskChange.value = response.data.data.historicalTasks.percentageChange
+        overdueTaskChange.value = response.data.data.overdueTasks.percentageChange
+      }
+    } catch (error) {
+      console.error('Error fetching task statistics:', error)
+    } finally {
+      isLoading.value = false
+    }
+  })
+
+  const myFutureTasksValue = useTransition(futureTaskSource, {
     duration: 1200,
   })
-  source.value = 3120
 
-  const source1 = ref(0)
-  const myTodayTasksValue = useTransition(source1, {
+  const myTodayTasksValue = useTransition(todayTaskSource, {
     duration: 900,
   })
-  source1.value = 125
 
-  const source2 = ref(0)
-  const myCompletedTasksValue = useTransition(source2, {
+  const myhistoricalTasksValue = useTransition(historicalTaskSource, {
     duration: 1000,
   })
-  source2.value = 2180
 
-  const source3 = ref(0)
-  const myOverdueTasksValue = useTransition(source3, {
+  const myOverdueTasksValue = useTransition(overdueTaskSource, {
     duration: 900,
   })
-  source3.value = 72
 
   const router = useRouter()
   const navigateTo = (path: string) => {
