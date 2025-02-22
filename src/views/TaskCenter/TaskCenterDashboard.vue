@@ -2,10 +2,10 @@
 <template>
   <div class="task-center-dashboard">
     <el-row :gutter="20" class="row-bg" justify="space-between">
-      <el-col :span="10"><h1>我的任务看板</h1></el-col>
+      <el-col :span="10"><h1> {{ this.$store.getters.getUser.username }}的个人任务看板</h1></el-col>
       <el-col :span="3.5" style="align-self: center;">
-        <el-button>New</el-button>
-        <el-button>Filter</el-button>
+        <el-button @click="showDevelopingPopup">New</el-button>
+        <el-button @click="showDevelopingPopup">Filter</el-button>
       </el-col>
     </el-row>
 
@@ -61,6 +61,13 @@
   import TaskCompletionAcrossCategoriesRadar
     from "@/components/task-center/dashboard/TaskCompletionAcrossCategoriesRadar.vue";
   import TaskCenterCardStatistics from "@/components/task-center/dashboard/TaskCenterCardStatistics.vue";
+  import {ElMessageBox} from "element-plus";
+
+  const showDevelopingPopup = () => {
+    ElMessageBox.alert('此功能正在开发中，感谢您的点击', '提示', {
+      confirmButtonText: '确定',
+    })
+  }
 </script>
 
 <style scoped>
