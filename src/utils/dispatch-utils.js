@@ -1,4 +1,6 @@
 import dayjs from "dayjs";
+import * as formNodeService from "@/services/formNodeService";
+import {Base64} from "js-base64";
 
 
 // Extracts time in HH:mm format from different time structures
@@ -41,10 +43,10 @@ export function formatDate(dateString) {
 // Formats the schedule type into human-readable Chinese text
 export function formatScheduleType(type) {
     switch (type) {
-        case "SCHEDULED":
-            return "计划派发";
-        case "MANUAL":
-            return "快速派发";
+        case "regular":
+            return "周期计划";
+        case "custom":
+            return "单次计划";
         default:
             return "未知";
     }
@@ -167,5 +169,60 @@ export function calculateRemainingTime(date) {
         return `${minutes} 分钟 ${seconds} 秒`;
     } else {
         return `${seconds} 秒`;
+    }
+}
+
+export function getQcOrderStateTagData(state) {
+    const stateMap = {
+        1: { label: "活跃(有运行中的任务)", type: "success" },
+        2: { label: "非活跃(无运行中的任务)", type: "info" },
+        3: { label: "所有任务已过期", type: "danger" },
+        4: { label: "所有任务达上限", type: "warning" },
+        5: { label: "所有任务已暂停", type: "primary" },
+        6: { label: "无效(有任务失效)", type: "danger" },
+    };
+    return stateMap[state] || { label: "未知", type: "default" };
+}
+
+export function getDispatchStateTagData(state) {
+    const stateMap = {
+        1: { label: "运行中", type: "success" },
+        2: { label: "非活跃", type: "info" },
+        3: { label: "已过期", type: "danger" },
+        4: { label: "已达派发上限", type: "warning" },
+        5: { label: "暂停", type: "primary" },
+        6: { label: "失效", type: "danger" },
+    };
+    return stateMap[state] || { label: "未知", type: "default" };
+}
+
+export async function openFormPreviewWindow(nodeId, vueInstance) {
+    try {        // Fetch the qc form template id asynchronously
+        const response = await formNodeService.fetchFormNodesById(nodeId);
+        const qcFormTemplateId = response.data?.qcFormTemplateId;
+
+        if (!qcFormTemplateId) {
+            console.error("Failed to fetch qcFormTemplateId for nodeId:", nodeId);
+            vueInstance.$message.error("无法加载表单模板，请重试。");
+            return;
+        }
+
+        // Encode query parameters into a Base64 string
+        // const queryParams = { usable: taskUsable, switchDisplayed: false };
+        const queryParams = {usable: false, switchDisplayed: false, dispatchedTaskId: null};
+
+        // Construct the URL
+        const newTabUrl = vueInstance.$router.resolve({
+            name: 'FormDisplay',
+            params: {qcFormTemplateId}, // Path parameter
+            query: queryParams, // Encoded query
+        }).href;
+
+
+        // Open the URL in a new tab
+        window.open(newTabUrl, '_blank');
+    } catch (error) {
+        console.error("Error fetching qcFormTemplateId for nodeId:", nodeId, error);
+        vueInstance.$message.error("加载表单模板时出错，请稍后重试。");
     }
 }

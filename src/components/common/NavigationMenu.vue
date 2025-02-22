@@ -18,7 +18,7 @@
       <template v-if="user.role === 1">
         <el-sub-menu index="2">
           <template #title>
-            <el-icon><User /></el-icon>
+            <el-icon><Setting /></el-icon>
             <span>{{ translate('navigationMenu.systemManagement') }}</span>
           </template>
           <el-menu-item index="/user-management">
@@ -47,6 +47,18 @@
           <el-menu-item index="/task-assignment">
             <el-icon><Files /></el-icon>
             <span>{{ translate('navigationMenu.dispatchManagement') }}</span>
+          </el-menu-item>
+          <el-menu-item index="/instrument-management">
+            <el-icon><TakeawayBox /></el-icon>
+            <span>儀器管理</span>
+          </el-menu-item>
+          <el-menu-item index="/test-subject-management">
+            <el-icon><Collection /></el-icon>
+            <span>检测项目管理</span>
+          </el-menu-item>
+          <el-menu-item index="/sampling-location-management">
+            <el-icon><Location /></el-icon>
+            <span>取样点管理</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -127,13 +139,15 @@ import {
   DataAnalysis,
   Collection,
   SwitchButton,
-  Calendar, Warning
+  Calendar, Warning, Location, TakeawayBox
 } from '@element-plus/icons-vue';
 import { mapGetters, mapActions } from 'vuex';
 import { translate } from "@/utils/i18n";
 
 export default {
   components: {
+    TakeawayBox,
+    Location,
     Warning,
     Calendar,
     HomeFilled,

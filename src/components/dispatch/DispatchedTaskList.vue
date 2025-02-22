@@ -5,27 +5,48 @@
     <el-input
         v-model="searchInput"
         style="width: 240px; margin: 10px;"
-        placeholder="输入派发ID搜索"
+        placeholder="输入关键字搜索"
         clearable
         :prefix-icon="Search"
         v-if="showSearchBox"
+        @input="handleSearch"
     />
 
     <!-- Table -->
     <el-table
         :data="paginatedTasks"
-        border
         style="width: 100%"
         :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
+        @sort-change="handleSortChange"
     >
+      <!-- 查看提交记录 -->
+      <el-table-column label="操作" width="150">
+        <template #default="scope">
+          <el-button
+              type="primary"
+              v-if="scope.row.dispatched_task_state_id !== 1 && scope.row.dispatched_task_state_id !== 4"
+              @click="openTaskLogTab(scope.row)"
+          >
+            查看提交记录
+          </el-button>
+        </template>
+      </el-table-column>
+
       <!-- ID -->
-      <el-table-column prop="id" label="ID" width="80" sortable></el-table-column>
+      <el-table-column prop="id" label="ID" width="90" sortable></el-table-column>
 
       <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="派发ID" width="100" sortable></el-table-column>
+      <el-table-column prop="dispatch_id" label="派发计划ID" width="120" sortable></el-table-column>
+
+      <!-- Name -->
+      <el-table-column prop="name" label="任务名称" width="150" sortable show-overflow-tooltip>
+        <template #default="scope">
+          {{ scope.row.name || "-" }}
+        </template>
+      </el-table-column>
 
       <!-- Personnel -->
-      <el-table-column prop="user_id" label="人员" width="200">
+      <el-table-column prop="user_id" label="人员" width="110" sortable>
         <template #default="scope">
           <el-tag
               v-if="getUserById(scope.row.user_id)"
@@ -54,7 +75,7 @@
       </el-table-column>
 
       <!-- Form -->
-      <el-table-column prop="qc_form_tree_node_id" label="表单" width="200">
+      <el-table-column prop="qc_form_tree_node_id" label="质检表单" width="200" sortable>
         <template #default="scope">
           <el-tag
               v-if="getFormById(scope.row.qc_form_tree_node_id)"
@@ -70,7 +91,7 @@
             >
               <template #default>
                 <div>ID: {{ scope.row.qc_form_tree_node_id }}</div>
-                <div>表单名: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
+                <div>质检表单名: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
               </template>
               <template #reference>
                 {{ getFormById(scope.row.qc_form_tree_node_id) }}
@@ -81,7 +102,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="180" sortable>
+      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="120" sortable>
         <template #default="scope">
           <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
             {{ stateName(scope.row.dispatched_task_state_id) }}
@@ -90,14 +111,14 @@
       </el-table-column>
 
       <!-- Dispatch Time -->
-      <el-table-column prop="dispatch_time" label="推送时间" width="180" sortable>
+      <el-table-column prop="dispatch_time" label="派发时间" width="180" sortable>
         <template #default="scope">
           {{ formatDate(scope.row.dispatch_time) }}
         </template>
       </el-table-column>
 
       <!-- Due Date -->
-      <el-table-column prop="due_date" label="到期时间" width="180" sortable>
+      <el-table-column prop="due_date" label="到期时间" width="150" sortable>
         <template #default="scope">
           <el-tag style="font-weight: bold" :type="remainingTimeTag(scope.row['due_date'])">
             {{ calculateRemainingTime(scope.row['due_date']) }}
@@ -106,7 +127,7 @@
       </el-table-column>
 
       <!-- Notes -->
-      <el-table-column prop="notes" label="备注" width="200">
+      <el-table-column prop="notes" label="备注" width="200" show-overflow-tooltip>
         <template #default="scope">
           {{ scope.row.notes || "-" }}
         </template>
@@ -117,13 +138,17 @@
 
     <!-- Pagination -->
     <el-pagination
-        class="mt-4"
+        v-if="tasks.length > 0"
+        style="margin-top: 16px; text-align: right;"
         background
-        layout="prev, pager, next, jumper, ->, total"
-        :total="totalFilteredRows()"
+        layout="sizes, prev, pager, next, jumper, ->, total"
+        :total="totalTasks"
         :page-size="pageSize"
+        :page-sizes="[15, 30, 45, 60]"
         :current-page="currentPage"
+        @size-change="handleSizeChange"
         @current-change="handlePageChange"
+
     />
   </div>
 </template>
@@ -131,13 +156,14 @@
 <script>
 import dayjs from "dayjs";
 import {Search} from "@element-plus/icons-vue";
+import { getAllDispatchedTasks, getAllDispatchedTasksByDispatchId } from "@/services/taskCenterService"
+
 
 export default {
-  name: "DispatchedTasksTable",
   props: {
-    dispatchedTasks: {
-      type: Array,
-      required: true,
+    dispatchId: {
+      type: Number,
+      required: false,
     },
     formMap: {
       type: Object,
@@ -155,8 +181,12 @@ export default {
   data() {
     return {
       currentPage: 1,
-      pageSize: 10, // Number of rows per page
+      pageSize: 15, // Number of rows per page
       searchInput: "",
+      tasks: [],
+      totalTasks: 0,
+      sortField: "dispatch_time",
+      sortOrder: "desc",
     };
   },
   watch: {
@@ -164,15 +194,37 @@ export default {
     searchInput() {
       this.currentPage = 1;
     },
+    dispatchId: {
+      immediate: true,
+      handler() {
+        this.fetchTasks();
+      },
+    },
+    refreshKey: {
+      immediate: false,
+      handler() {
+        this.fetchTasks();
+      },
+    },
   },
   computed: {
     Search() {
       return Search
     },
     paginatedTasks() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      return this.filteredRows().slice(start, end);
+      return this.tasks;
+    },
+    filteredTasks() {
+      return this.tasks.filter((task) => {
+        if (!this.searchInput.trim()) return true;
+
+        const searchTerm = this.searchInput.toLowerCase();
+        return (
+            task.id.toString().includes(searchTerm) ||
+            (task.name && task.name.toLowerCase().includes(searchTerm)) ||
+            task.dispatch_id.toString().includes(searchTerm)
+        );
+      });
     },
   },
   methods: {
@@ -193,8 +245,19 @@ export default {
     getUserById(userId) {
       return this.userMap[userId] || null;
     },
-    handlePageChange(page) {
-      this.currentPage = page;
+    handleSortChange({ prop, order }) {
+      this.sortField = prop || "dispatch_time";
+      this.sortOrder = order === "ascending" ? "asc" : "desc";
+      this.fetchTasks();
+    },
+    handlePageChange(newPage) {
+      this.currentPage = newPage;
+      this.fetchTasks();
+    },
+    handleSizeChange(newSize) {
+      this.pageSize = newSize;
+      this.currentPage = 1;
+      this.fetchTasks();
     },
     stateTagType(stateId) {
       const stateMap = {
@@ -254,26 +317,43 @@ export default {
         return "danger";
       }
     },
+    openTaskLogTab(row){
+      const url = this.$router.resolve({
+        name: "TaskLog",
+        params: {
+          createdBy: row.user_id, // Pass user_id as :createdBy
+          dispatchedTaskId: row.id, // Pass id as :dispatchedTaskId
+        },
+      }).href;
 
-    filteredRows() {
-      // Ensure dispatchedTasks is an array
-      if (!Array.isArray(this.dispatchedTasks)) return [];
-
-      // If no search input, return all rows
-      if (!this.searchInput.trim()) return this.dispatchedTasks;
-
-      // Filter by search input
-      return this.dispatchedTasks.filter((task) =>
-          this.searchInput
-              ? task.dispatch_id.toString().includes(this.searchInput) // Convert to string first
-              : true
-      );
+      // Open the URL in a new tab
+      window.open(url, "_blank");
     },
-    // Dynamic total count for pagination
-    totalFilteredRows() {
-      return this.filteredRows().length;
-    },
+    async fetchTasks() {
+      try {
+        const sortParam = `${this.sortField},${this.sortOrder}`;
+        let response;
+        if (this.dispatchId) {
+          response = await getAllDispatchedTasksByDispatchId(this.dispatchId, this.currentPage, this.pageSize, sortParam, this.searchInput);
+        } else {
+          response = await getAllDispatchedTasks(this.currentPage, this.pageSize, sortParam, this.searchInput);
+        }
 
+        if (response && response.status === 200) {
+          console.log(response);
+          this.tasks = response.data.data.content;
+          this.totalTasks = response.data.data.totalElements;
+        }
+      } catch (error) {
+        console.error("Error fetching dispatched tasks:", error);
+      }
+    },
+    handleSearch() {
+      this.fetchTasks();
+    },
+  },
+  mounted() {
+    this.fetchTasks();
   },
 };
 </script>

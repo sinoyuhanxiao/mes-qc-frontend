@@ -1,0 +1,215 @@
+<template>
+  <el-container class="test-subject-page">
+    <div class="top-section">
+      <!-- Top Section -->
+      <div class="top-left">
+        <h2>检测项目管理</h2>
+        <!-- Search Bar -->
+        <el-input
+            v-model="searchQuery"
+            placeholder="搜索关键字"
+            clearable
+            class="search-bar"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
+
+      <div class="top-right">
+        <!-- Refresh Button -->
+        <el-tooltip content="刷新列表" placement="top">
+          <el-button
+              class="refresh-button"
+              type="primary"
+              circle
+              @click="handleRefreshButton"
+          >
+            <el-icon style="color: #004085;">
+              <RefreshRight />
+            </el-icon>
+          </el-button>
+        </el-tooltip>
+
+        <el-button type="primary" @click="openDialog()">
+          新增检测项目
+        </el-button>
+      </div>
+    </div>
+
+    <el-main class="table-section">
+      <!-- Test Subject List -->
+      <TestSubjectList
+          :testSubjects="testSubjects"
+          @edit-test-subject="openDialog"
+          @delete-test-subject="confirmDelete"
+          :search-input="searchQuery"
+      />
+    </el-main>
+
+    <!-- Dialog for Create / Edit -->
+    <el-dialog
+        v-model="dialogVisible"
+        :title="isEditMode ? '编辑检测项目' : '新增检测项目'"
+        width="500px"
+        :close-on-click-modal="false"
+    >
+      <TestSubjectForm
+          :testSubject="testSubjectForm"
+          :is-edit-mode="isEditMode"
+          @submit="submitForm"
+          @cancel="dialogVisible = false"
+      />
+    </el-dialog>
+  </el-container>
+</template>
+
+<script>
+import {
+  getAllTestSubjects,
+  createTestSubject,
+  updateTestSubject,
+  deleteTestSubject
+} from "@/services/testSubjectService";
+import {RefreshRight, Search} from "@element-plus/icons-vue";
+import TestSubjectList from "@/components/test-subject/TestSubjectList.vue";
+import TestSubjectForm from "@/components/test-subject/TestSubjectForm.vue";
+import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
+
+export default {
+  components: {RefreshRight, SamplingLocationList, Search, TestSubjectList, TestSubjectForm },
+  data() {
+    return {
+      testSubjects: [],
+      searchQuery: "",
+      dialogVisible: false,
+      isEditMode: false,
+      testSubjectForm: {
+        id: null,
+        name: "",
+        description: "",
+      },
+    };
+  },
+  methods: {
+    async loadTestSubjects() {
+      try {
+        const response = await getAllTestSubjects();
+        if (response.data && response.data.data) {
+          this.testSubjects = response.data.data;
+        } else {
+          this.testSubjects = [];
+        }
+      } catch (error) {
+        console.error("Failed to load test subjects:", error);
+        this.testSubjects = [];
+      }
+    },
+    openDialog(testSubject = null) {
+      this.isEditMode = !!testSubject;
+      this.testSubjectForm = testSubject
+          ? { ...testSubject }
+          : { name: "", description: "" };
+      this.dialogVisible = true;
+    },
+    async submitForm(updatedTestSubject) {
+      try {
+        console.log(updatedTestSubject);
+        if (this.isEditMode) {
+          await updateTestSubject(updatedTestSubject.id, updatedTestSubject);
+        } else {
+          await createTestSubject(updatedTestSubject);
+        }
+        this.dialogVisible = false;
+        await this.loadTestSubjects();
+      } catch (error) {
+        console.error("Error saving test subject:", error);
+      }
+    },
+    async confirmDelete(id) {
+      try {
+        await this.$confirm("确定删除该检测项目吗？", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+        await deleteTestSubject(id, 1);
+        await this.loadTestSubjects();
+      } catch (error) {
+        console.error("Error deleting test subject:", error);
+      }
+    },
+    async handleRefreshButton() {
+      this.searchQuery = "";
+      await this.loadTestSubjects()
+      this.$notify({
+        title: "提示",
+        message: "列表已更新。",
+        type: "success",
+      });
+    },
+  },
+  mounted() {
+    this.loadTestSubjects();
+  },
+};
+</script>
+
+<style scoped>
+.test-subject-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.search-bar {
+  width: 300px;
+  margin-left: 20px;
+}
+
+.pagination {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.top-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+}
+
+.top-right {
+  display: flex;
+  gap: 10px;
+}
+
+.table-section {
+  flex: 1;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.refresh-button {
+  background-color: #80cfff; /* Slightly lighter shade of primary color */
+  border-color: #80cfff; /* Match lighter background */
+}
+
+.refresh-button:hover {
+  background-color: #66b5ff; /* Slightly darker hover effect */
+  border-color: #66b5ff;
+  transform: rotate(360deg); /* Rotate on hover */
+  transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
+}
+
+.refresh-button el-icon {
+  color: #004085; /* Darker primary-like color for the refresh icon */
+}
+</style>

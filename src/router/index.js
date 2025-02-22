@@ -6,7 +6,6 @@ import LoginPage from '@/views/LoginPage.vue';
 import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 import TaskAssignment from '@/views/TaskAssignment.vue'
-import DispatcherPage from "@/views/DispatcherPage.vue";
 import MyCurrentTask from "@/views/TaskCenter/MyCurrentTask.vue";
 import MyFutureTask from "@/views/TaskCenter/MyFutureTask.vue";
 import MyTodayTask from "@/views/TaskCenter/MyTodayTask.vue";
@@ -15,9 +14,13 @@ import MyOverdueTask from "@/views/TaskCenter/MyOverdueTask.vue";
 import TaskCenterDashboard from "@/views/TaskCenter/TaskCenterDashboard.vue";
 import ErikTestView from "@/views/ErikTestView.vue";
 import QcTaskSubmissionLogs from "@/components/task-center/QcTaskSubmissionLogs.vue";
-import ShiftManagement from "@/views/ShiftManagement.vue";
+import OrderManagement from "@/views/OrderManagement.vue";
 import ReportManagement from "@/views/ReportManagement.vue";
 import FormDataSummary from "@/views/FormDataSummary.vue";
+import InstrumentManagement from "@/views/InstrumentManagement.vue";
+import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
+import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
+import ShiftManagement from "@/views/ShiftManagement.vue";
 
 const routes = [
     {
@@ -57,7 +60,7 @@ const routes = [
     {
         path: '/task-assignment',
         name: 'TaskAssignment',
-        component: DispatcherPage
+        component: OrderManagement,
     },
     {
         path: '/current-tasks',
@@ -110,6 +113,21 @@ const routes = [
         name: 'TaskLog',
         component: QcTaskSubmissionLogs,
         props: true, // Pass route params as props to the component
+    },
+    {
+        path: '/instrument-management',
+        name: 'InstrumentManagement',
+        component: InstrumentManagement,
+    },
+    {
+        path: '/sampling-location-management',
+        name: 'SamplingLocationManagement',
+        component: SamplingLocationManagement,
+    },
+    {
+        path: '/test-subject-management',
+        name: 'TestSubjectManagement',
+        component: TestSubjectManagement,
     },
 ];
 

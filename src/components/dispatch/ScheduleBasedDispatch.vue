@@ -28,8 +28,9 @@
       <cron-element-plus
           v-model="dispatchForm.cronExpression"
           :button-props="{ type: 'primary' }"
+          locale="zh-cn"
       />
-<!--      <p class="text-lightest pt-2">当前 Cron 表达式: {{ normalizedCronExpression }}</p>-->
+      <!--      <p class="text-lightest pt-2">当前 Cron 表达式: {{ normalizedCronExpression }}</p>-->
     </el-form-item>
 
     <!-- Dispatch Limit -->
@@ -47,49 +48,7 @@
       <el-input type="textarea" v-model="dispatchForm.remark" placeholder="请输入备注"></el-input>
     </el-form-item>
 
-<!--    <el-divider>具体日期</el-divider>-->
 
-<!--    <el-form-item label="选择派发日">-->
-<!--      <el-checkbox-->
-<!--          v-model="selectAllDays"-->
-<!--          :indeterminate="isPartialDaysSelected"-->
-<!--          @change="toggleAllDays">-->
-<!--        每天-->
-<!--      </el-checkbox>-->
-<!--    </el-form-item>-->
-<!--    <el-form-item>-->
-<!--      <el-checkbox-group-->
-<!--          v-model="dispatchForm.dispatch_days"-->
-<!--          @change="updatePartialDaysState"-->
-<!--      >-->
-<!--        <el-checkbox-->
-<!--            v-for="day in weekDaysMap"-->
-<!--            :key="day.key"-->
-<!--            :label="day.key"-->
-<!--        >-->
-<!--          {{ day.display }}-->
-<!--        </el-checkbox>-->
-<!--      </el-checkbox-group>-->
-<!--    </el-form-item>-->
-<!--    <el-form-item label="时间">-->
-<!--      <el-time-picker-->
-<!--          v-model="dispatchForm.timeOfDay"-->
-<!--          placeholder="请选择时间"-->
-<!--          format="HH:mm"-->
-<!--          value-format="HH:mm"-->
-<!--          :step="60"-->
-<!--      ></el-time-picker>-->
-<!--    </el-form-item>-->
-
-
-<!--    <el-divider>设置重复派发</el-divider>-->
-
-<!--    <el-form-item label="时间间隔(分钟)">-->
-<!--      <el-input-number v-model="dispatchForm.intervalMinutes" :min="1"></el-input-number>-->
-<!--    </el-form-item>-->
-<!--    <el-form-item label="重复次数">-->
-<!--      <el-input-number v-model="dispatchForm.repeatCount" :min="1"></el-input-number>-->
-<!--    </el-form-item>-->
 
     <!-- User Selection -->
     <el-divider>人员</el-divider>
@@ -121,7 +80,11 @@
 
     <el-divider>生产模块关联</el-divider>
       <el-form-item label="选择产品">
-        <el-select v-model="dispatchForm.productIds" multiple filterable>
+        <el-select v-model="dispatchForm.productIds"
+                   multiple
+                   filterable
+                   placeholder="请选择产品"
+        >
           <el-option
               v-for="product in productOptions"
               :key="product.value"
@@ -132,46 +95,70 @@
       </el-form-item>
 
       <el-form-item label="选择原料">
-        <el-select v-model="dispatchForm.rawMaterialIds" multiple filterable>
+        <el-select
+            v-model="dispatchForm.rawMaterialIds"
+            multiple
+            filterable
+            placeholder="请选择原料"
+        >
           <el-option
               v-for="material in rawMaterialOptions"
               :key="material.value"
               :label="material.label"
               :value="material.value"
+
           />
         </el-select>
       </el-form-item>
 
       <el-form-item label="选择生产工单">
-        <el-select v-model="dispatchForm.productionWorkOrderIds" multiple filterable>
+        <el-select
+            v-model="dispatchForm.productionWorkOrderIds"
+            multiple
+            filterable
+            placeholder="请选择生产工单"
+        >
           <el-option
               v-for="workOrder in productionWorkOrderOptions"
               :key="workOrder.value"
               :label="workOrder.label"
               :value="workOrder.value"
+
           />
         </el-select>
       </el-form-item>
 
     <el-divider>维护模块关联</el-divider>
       <el-form-item label="选择设备">
-        <el-select v-model="dispatchForm.equipmentIds" multiple filterable>
+        <el-select
+            v-model="dispatchForm.equipmentIds"
+            filterable
+            multiple
+            placeholder="请选择设备"
+        >
           <el-option
               v-for="equipment in equipmentOptions"
               :key="equipment.value"
               :label="equipment.label"
               :value="equipment.value"
+
           />
         </el-select>
       </el-form-item>
 
       <el-form-item label="选择维护工单">
-        <el-select v-model="dispatchForm.maintenanceWorkOrderIds" multiple filterable>
+        <el-select
+            v-model="dispatchForm.maintenanceWorkOrderIds"
+            multiple
+            filterable
+            placeholder="请选择维护工单"
+        >
           <el-option
               v-for="workOrder in maintenanceWorkOrderOptions"
               :key="workOrder.value"
               :label="workOrder.label"
               :value="workOrder.value"
+
           />
         </el-select>
       </el-form-item>
@@ -214,7 +201,7 @@
 <script>
 import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
 import isEqual from "lodash/isEqual";
-import {normalizeCronExpression, unnormalizeCronExpression, parseCronExpressionToChinese } from "@/utils/dispatch-utils";
+import {normalizeCronExpression, unnormalizeCronExpression } from "@/utils/dispatch-utils";
 import { humanizeCronInChinese } from "cron-chinese";
 import {fetchUsers} from "@/services/userService";
 import {
@@ -227,6 +214,7 @@ import {
   getAllMaintenanceWorkOrders,
 } from "@/services/maintenanceService";
 
+import { CronElementPlus } from '@vue-js-cron/element-plus'
 
 export default {
   components: {DispatchFormTreeSelect},
@@ -260,7 +248,27 @@ export default {
       },
       validationRules: {
         name: [{ required: true, message: "请输入派发名称", trigger: "blur" }],
-        dateRange: [{ required: true, message: "请选择派发运行时间", trigger: "change" }],
+        dateRange: [
+            {
+              required: true, message: "请选择派发运行时间", trigger: "change"
+            },
+            {
+              validator: (rule, value, callback) => {
+                if (!value || value.length !== 2) {
+                  callback(new Error("请选择派发运行时间"));
+                  return;
+                }
+                const now = new Date();
+                const endDate = new Date(value[1]); // Assuming value[1] is the end date
+                if (endDate < now) {
+                  callback(new Error("结束时间不能早于当前时间"));
+                } else {
+                  callback();
+                }
+              },
+              trigger: "change",
+            },
+        ],
         cronExpression: [{ required: true, message: "请输入派发计划", trigger: "change" }],
         dispatchLimit: [{ required: true, message: "请输入派发计划", trigger: "change" }],
         dueDateOffsetMinute: [
@@ -318,7 +326,6 @@ export default {
     chineseSchedule() {
       if (!this.dispatchForm.cronExpression) return "无效的 Cron 表达式";
       try {
-        // return parseCronExpressionToChinese(this.dispatchForm.cronExpression);
         return humanizeCronInChinese(this.dispatchForm.cronExpression);
       } catch {
         return "无法解析 Cron 表达式";
@@ -546,3 +553,48 @@ export default {
   margin-top: 16px;
 }
 </style>
+
+
+<!--    <el-divider>具体日期</el-divider>-->
+
+<!--    <el-form-item label="选择派发日">-->
+<!--      <el-checkbox-->
+<!--          v-model="selectAllDays"-->
+<!--          :indeterminate="isPartialDaysSelected"-->
+<!--          @change="toggleAllDays">-->
+<!--        每天-->
+<!--      </el-checkbox>-->
+<!--    </el-form-item>-->
+<!--    <el-form-item>-->
+<!--      <el-checkbox-group-->
+<!--          v-model="dispatchForm.dispatch_days"-->
+<!--          @change="updatePartialDaysState"-->
+<!--      >-->
+<!--        <el-checkbox-->
+<!--            v-for="day in weekDaysMap"-->
+<!--            :key="day.key"-->
+<!--            :label="day.key"-->
+<!--        >-->
+<!--          {{ day.display }}-->
+<!--        </el-checkbox>-->
+<!--      </el-checkbox-group>-->
+<!--    </el-form-item>-->
+<!--    <el-form-item label="时间">-->
+<!--      <el-time-picker-->
+<!--          v-model="dispatchForm.timeOfDay"-->
+<!--          placeholder="请选择时间"-->
+<!--          format="HH:mm"-->
+<!--          value-format="HH:mm"-->
+<!--          :step="60"-->
+<!--      ></el-time-picker>-->
+<!--    </el-form-item>-->
+
+
+<!--    <el-divider>设置重复派发</el-divider>-->
+
+<!--    <el-form-item label="时间间隔(分钟)">-->
+<!--      <el-input-number v-model="dispatchForm.intervalMinutes" :min="1"></el-input-number>-->
+<!--    </el-form-item>-->
+<!--    <el-form-item label="重复次数">-->
+<!--      <el-input-number v-model="dispatchForm.repeatCount" :min="1"></el-input-number>-->
+<!--    </el-form-item>-->
