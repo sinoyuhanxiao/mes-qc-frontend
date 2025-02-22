@@ -2,13 +2,13 @@
   <el-row :gutter="16">
     <el-col :span="6">
       <div class="statistic-card">
-        <el-statistic :value="myTodayTasksValue">
+        <el-statistic :value="myTodayTasksValue" @click="navigateTo('/current-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
               我的今日任务
               <el-tooltip
                   effect="dark"
-                  content="The number of tasks already scheduled for you today."
+                  content="今日任务数量"
                   placement="top"
               >
                 <el-icon style="margin-left: 4px" :size="12">
@@ -28,18 +28,23 @@
               </el-icon>
             </span>
           </div>
+          <div class="footer-item">
+            <el-icon :size="14">
+              <ArrowRight />
+            </el-icon>
+          </div>
         </div>
       </div>
     </el-col>
     <el-col :span="6">
       <div class="statistic-card">
-        <el-statistic :value="myFutureTasksValue">
+        <el-statistic :value="myFutureTasksValue" @click="navigateTo('/future-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
               我的未来任务
               <el-tooltip
                   effect="dark"
-                  content="The number of tasks already scheduled for you in the future."
+                  content="未来任务数量"
                   placement="top"
               >
                 <el-icon style="margin-left: 4px" :size="12">
@@ -59,15 +64,20 @@
               </el-icon>
             </span>
           </div>
+          <div class="footer-item">
+            <el-icon :size="14">
+              <ArrowRight />
+            </el-icon>
+          </div>
         </div>
       </div>
     </el-col>
     <el-col :span="6">
       <div class="statistic-card">
-        <el-statistic :value="myCompletedTasksValue" title="New transactions today">
+        <el-statistic :value="myCompletedTasksValue" title="New transactions today" @click="navigateTo('/history-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              我已完成的任务
+              我的历史任务
             </div>
           </template>
         </el-statistic>
@@ -91,10 +101,10 @@
     </el-col>
     <el-col :span="6">
       <div class="statistic-card">
-        <el-statistic :value="myOverdueTasksValue" title="New transactions today">
+        <el-statistic :value="myOverdueTasksValue" title="New transactions today" @click="navigateTo('/overdue-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              我的过期任务
+              我的逾期任务
             </div>
           </template>
         </el-statistic>
@@ -120,39 +130,44 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  ArrowRight,
-  CaretBottom,
-  CaretTop,
-  Warning,
-} from '@element-plus/icons-vue'
-import { useTransition } from '@vueuse/core'
-import { ref } from 'vue'
+  import {
+    ArrowRight,
+    CaretBottom,
+    CaretTop,
+    Warning,
+  } from '@element-plus/icons-vue'
+  import { useTransition } from '@vueuse/core'
+  import { ref } from 'vue'
+  import { useRouter } from 'vue-router'
 
-const source = ref(0)
-const myFutureTasksValue = useTransition(source, {
-  duration: 1200,
-})
-source.value = 3120
+  const source = ref(0)
+  const myFutureTasksValue = useTransition(source, {
+    duration: 1200,
+  })
+  source.value = 3120
 
-const source1 = ref(0)
-const myTodayTasksValue = useTransition(source1, {
-  duration: 900,
-})
-source1.value = 125
+  const source1 = ref(0)
+  const myTodayTasksValue = useTransition(source1, {
+    duration: 900,
+  })
+  source1.value = 125
 
-const source2 = ref(0)
-const myCompletedTasksValue = useTransition(source2, {
-  duration: 1000,
-})
-source2.value = 2180
+  const source2 = ref(0)
+  const myCompletedTasksValue = useTransition(source2, {
+    duration: 1000,
+  })
+  source2.value = 2180
 
-const source3 = ref(0)
-const myOverdueTasksValue = useTransition(source3, {
-  duration: 900,
-})
-source3.value = 72
+  const source3 = ref(0)
+  const myOverdueTasksValue = useTransition(source3, {
+    duration: 900,
+  })
+  source3.value = 72
 
+  const router = useRouter()
+  const navigateTo = (path: string) => {
+    router.push(path)
+  }
 </script>
 
 <style scoped>
@@ -171,6 +186,7 @@ source3.value = 72
   padding: 20px;
   border-radius: 5px;
   background-color: var(--el-bg-color-overlay);
+  cursor: pointer;
 }
 
 /* Hover effect for cards */

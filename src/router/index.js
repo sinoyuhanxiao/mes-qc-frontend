@@ -75,7 +75,7 @@ const routes = [
         component: MyHistoryTask
     },
     {
-        path: '/overdue-tasks',
+        path: '/-tasks',
         name: 'MyOverdueTask',
         component: MyOverdueTask
     },
