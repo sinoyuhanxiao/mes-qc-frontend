@@ -100,10 +100,10 @@
           <el-icon><Warning /></el-icon>
           <span>{{ translate('navigationMenu.overdueTasks') }}</span>
         </el-menu-item>
-        <el-menu-item index="/task-calendar">
-          <el-icon><Calendar /></el-icon>
-          <span>{{ translate('navigationMenu.taskCalendar') }}</span>
-        </el-menu-item>
+<!--        <el-menu-item index="/task-calendar">-->
+<!--          <el-icon><Calendar /></el-icon>-->
+<!--          <span>{{ translate('navigationMenu.taskCalendar') }}</span>-->
+<!--        </el-menu-item>-->
       </el-sub-menu>
     </div>
 

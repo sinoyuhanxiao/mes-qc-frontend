@@ -6,10 +6,10 @@
           style="width: 240px; margin-right: 10px;"
           placeholder="Filter keyword"
       />
-      <el-button :type="isEditMode ? 'success' : 'primary'" @click="toggleEditMode">
+      <el-button :type="isEditMode ? 'success' : 'primary'" @click="toggleEditMode" style="margin-top: 0">
         {{ isEditMode ? 'View' : 'Edit' }}
       </el-button>
-      <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null)" style="margin-left: 10px;">
+      <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null)" style="margin-left: 10px; margin-top: 0">
         New
       </el-button>
     </div>

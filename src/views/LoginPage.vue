@@ -174,7 +174,7 @@ export default {
               if (userInfoResponse.data.data.role_id === 1) {
                 this.$router.push('/user-management');
               } else if (userInfoResponse.data.data.role_id === 2) {
-                this.$router.push('/my-tasks');
+                this.$router.push('/');
               }
             } else {
               this.errorMessage = '获取用户信息失败，请稍后重试';
