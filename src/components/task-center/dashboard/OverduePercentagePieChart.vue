@@ -1,4 +1,3 @@
-
 <template>
   <div class="card flex justify-center">
     <Chart type="pie" :data="chartData" :options="chartOptions" class="w-full md:w-[30rem]" />
@@ -7,24 +6,37 @@
 
 <script setup>
 import Chart from 'primevue/chart';
-import { ref, onMounted } from "vue";
+import {ref, onMounted} from "vue";
+import {fetchTaskStateStatistics} from "@/services/taskStats";
+import {useStore} from "vuex";
 
-onMounted(() => {
-  chartData.value = setChartData();
-  chartOptions.value = setChartOptions();
-});
-
+const store = useStore();
 const chartData = ref();
 const chartOptions = ref();
 
-const setChartData = () => {
-  const documentStyle = getComputedStyle(document.body);
+onMounted(async () => {
+  const userId = store.getters.getUser.id; // Get userId from store
+  try {
+    const response = await fetchTaskStateStatistics(userId);
+    console.log("Task State Statistics:", response.data);
 
+    // Extract data from response
+    const {pendingCount, inProgressCount, completedCount} = response.data.data;
+
+    // Set chart data dynamically
+    chartData.value = setChartData(pendingCount, inProgressCount, completedCount);
+    chartOptions.value = setChartOptions();
+  } catch (error) {
+    console.error("Error fetching task state statistics:", error);
+  }
+});
+
+const setChartData = (pending, inProgress, completed) => {
   return {
-    labels: ['Overdue', 'Completed', 'Cancelled'],
+    labels: ['Pending', 'In Progress', 'Completed'],
     datasets: [
       {
-        data: [540, 325, 702],
+        data: [pending, inProgress, completed], // Dynamically set data from backend response
         backgroundColor: ['rgba(249, 115, 22, 0.2)', 'rgba(6, 182, 212, 0.2)', 'rgba(107, 114, 128, 0.2)'],
         hoverBackgroundColor: ['rgba(249, 115, 22, 0.1)', 'rgba(6, 182, 212, 0.1)', 'rgba(107, 114, 128, 0.1)']
       }
@@ -37,8 +49,6 @@ const setChartOptions = () => {
   const textColor = documentStyle.getPropertyValue('--p-text-color');
 
   return {
-    // maintainAspectRatio: true,
-    // aspectRatio: 0.92,
     plugins: {
       legend: {
         labels: {
@@ -50,3 +60,5 @@ const setChartOptions = () => {
   };
 };
 </script>
+
+<style scoped></style>

@@ -109,7 +109,6 @@
 
 /* Hover effect for cards */
 .card > .content-border:hover {
-  transform: scale(1.001); /* Slightly enlarge on hover */
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
 }
 

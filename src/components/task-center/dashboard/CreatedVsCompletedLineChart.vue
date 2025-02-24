@@ -1,13 +1,22 @@
-
 <template>
   <div class="card">
-    <Chart type="line" :data="chartData" :options="chartOptions" class="h-[30rem]" />
+    <div class="content-border relative">
+      <!-- Wrapper ensures overlay text is centered inside the chart only -->
+      <div class="chart-wrapper">
+        <Chart type="line" :data="chartData" :options="chartOptions" class="h-[30rem] chart-overlay" />
+        <div class="overlay-text" v-if="isUnavailable">
+          暂不可用
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import Chart from 'primevue/chart';
+
+const isUnavailable = ref(true); // 控制是否显示“Unavailable for now”
 
 onMounted(() => {
   chartData.value = setChartData();
@@ -42,6 +51,7 @@ const setChartData = () => {
     ]
   };
 };
+
 const setChartOptions = () => {
   const documentStyle = getComputedStyle(document.documentElement);
   const textColor = documentStyle.getPropertyValue('--p-text-color');
@@ -93,5 +103,35 @@ const setChartOptions = () => {
       }
     }
   };
-}
+};
 </script>
+
+<style scoped>
+/* Wrapper to properly position the chart and overlay */
+.chart-wrapper {
+  position: relative; /* This makes overlay text position inside it */
+  width: 100%;
+  height: 100%;
+}
+
+/* Make the chart slightly transparent */
+.chart-overlay {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Center the overlay text relative to the chart */
+.overlay-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: gray;
+  padding: 10px 20px;
+  border-radius: 8px;
+  pointer-events: none; /* Prevents interaction */
+  user-select: none; /* Prevents text selection */
+}
+</style>

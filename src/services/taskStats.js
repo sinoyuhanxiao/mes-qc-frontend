@@ -23,3 +23,15 @@ export const fetchQuarterlyTaskStatistics = (userId) => {
         params: { userId },
     });
 };
+
+/**
+ * Fetch task state statistics for a user.
+ * @param {number} userId - The ID of the user.
+ * @returns {Promise} API response with task state statistics.
+ */
+export const fetchTaskStateStatistics = (userId) => {
+    return api.get(`${TASK_STATS_URL}/state-stats`, {
+        params: { userId },
+    });
+};
+
