@@ -1,137 +1,165 @@
 <template>
-  <el-menu
-      :default-active="activeMenu"
-      class="el-menu-vertical-demo"
-      background-color="#545c64"
-      text-color="#fff"
-      active-text-color="#ffd04b"
-      router
-  >
-    <el-scrollbar>
-      <div class="menu-container">
-        <!-- 管理员和质检人员共享的菜单 -->
-        <el-menu-item index="/">
-          <el-icon><HomeFilled /></el-icon>
-          <span>{{ translate('navigationMenu.home') }}</span>
-        </el-menu-item>
+  <div :class="['sidebar', { 'collapsed': isCollapsed }]">
+    <el-menu
+        :default-active="activeMenu"
+        class="el-menu-vertical-demo"
+        background-color="#545c64"
+        text-color="#fff"
+        active-text-color="#ffd04b"
+        router
+        :collapse="isCollapsed"
+    >
+      <el-scrollbar>
+        <div class="menu-container">
+          <!-- 顶部菜单栏，添加可折叠按钮 -->
+          <el-menu-item index="/">
+            <el-icon><HomeFilled /></el-icon>
+            <template v-if="!isCollapsed" #title>{{ translate('navigationMenu.home') }}</template>
+            <el-tooltip
+                content="收起"
+                placement="right"
+                :hide-after="0"
+            >
+              <el-icon v-if="!isCollapsed" class="collapse-icon" @click="toggleCollapse($event)">
+                <DArrowLeft />
+              </el-icon>
+            </el-tooltip>
+          </el-menu-item>
 
-        <!-- 仅管理员可见的菜单 -->
-        <template v-if="user.role === 1">
-          <el-sub-menu index="2">
-            <template #title>
-              <el-icon><User /></el-icon>
-              <span>{{ translate('navigationMenu.systemManagement') }}</span>
-            </template>
-            <el-menu-item index="/user-management">
-              <el-icon><User /></el-icon>
-              <span>{{ translate('navigationMenu.userManagement') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/shift-management">
-              <el-icon><User /></el-icon>
-              <span>{{ translate('navigationMenu.shiftManagement') }}</span>
-            </el-menu-item>
-          </el-sub-menu>
+          <!-- 仅管理员可见的菜单 -->
+          <template v-if="user.role === 1">
+            <el-sub-menu index="2">
+              <template #title>
+                <el-icon><User /></el-icon>
+                <span v-if="!isCollapsed">{{ translate('navigationMenu.systemManagement') }}</span>
+              </template>
+              <el-menu-item index="/user-management">
+                <el-icon><User /></el-icon>
+                <span>{{ translate('navigationMenu.userManagement') }}</span>
+              </el-menu-item>
+              <el-menu-item index="/shift-management">
+                <el-icon><User /></el-icon>
+                <span>{{ translate('navigationMenu.shiftManagement') }}</span>
+              </el-menu-item>
+            </el-sub-menu>
 
-          <el-sub-menu index="3">
-            <template #title>
-              <el-icon><List /></el-icon>
-              <span>{{ translate('navigationMenu.qualityManagement') }}</span>
-            </template>
-            <el-menu-item index="/quality-form-management">
-              <el-icon><Document /></el-icon>
-              <span>{{ translate('navigationMenu.formManagement') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/form-designer">
-              <el-icon><Edit /></el-icon>
-              <span>{{ translate('navigationMenu.formDesigner') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/task-assignment">
-              <el-icon><Files /></el-icon>
-              <span>{{ translate('navigationMenu.dispatchManagement') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/instrument-management">
-              <el-icon><TakeawayBox /></el-icon>
-              <span>仪器管理</span>
-            </el-menu-item>
-            <el-menu-item index="/test-subject-management">
-              <el-icon><Collection /></el-icon>
-              <span>检测项目管理</span>
-            </el-menu-item>
-            <el-menu-item index="/sampling-location-management">
-              <el-icon><Location /></el-icon>
-              <span>取样点管理</span>
-            </el-menu-item>
-          </el-sub-menu>
+            <el-sub-menu index="3">
+              <template #title>
+                <el-icon><List /></el-icon>
+                <span v-if="!isCollapsed">{{ translate('navigationMenu.qualityManagement') }}</span>
+              </template>
+              <el-menu-item index="/quality-form-management">
+                <el-icon><Document /></el-icon>
+                <span >{{ translate('navigationMenu.formManagement') }}</span>
+              </el-menu-item>
+              <el-menu-item index="/form-designer">
+                <el-icon><Edit /></el-icon>
+                <span>{{ translate('navigationMenu.formDesigner') }}</span>
+              </el-menu-item>
+              <el-menu-item index="/task-assignment">
+                <el-icon><Files /></el-icon>
+                <span>{{ translate('navigationMenu.dispatchManagement') }}</span>
+              </el-menu-item>
+              <el-menu-item index="/instrument-management">
+                <el-icon><TakeawayBox /></el-icon>
+                <span>仪器管理</span>
+              </el-menu-item>
+              <el-menu-item index="/test-subject-management">
+                <el-icon><Collection /></el-icon>
+                <span>检测项目管理</span>
+              </el-menu-item>
+              <el-menu-item index="/sampling-location-management">
+                <el-icon><Location /></el-icon>
+                <span>取样点管理</span>
+              </el-menu-item>
+            </el-sub-menu>
 
-          <el-sub-menu index="4">
-            <template #title>
-              <el-icon><DataAnalysis /></el-icon>
-              <span>{{ translate('navigationMenu.dataSummary') }}</span>
-            </template>
-            <el-menu-item index="/form-data-summary">
-              <el-icon><Document /></el-icon>
-              <span>{{ translate('navigationMenu.formDataSummary') }}</span>
-            </el-menu-item>
-          </el-sub-menu>
-        </template>
-
-        <!-- 任务中心 (所有角色可见) -->
-        <el-sub-menu index="5">
-          <template #title>
-            <el-icon><Collection /></el-icon>
-            <span>{{ translate('navigationMenu.taskCenter') }}</span>
+            <el-sub-menu index="4">
+              <template #title>
+                <el-icon><DataAnalysis /></el-icon>
+                <span v-if="!isCollapsed">{{ translate('navigationMenu.dataSummary') }}</span>
+              </template>
+              <el-menu-item index="/form-data-summary">
+                <el-icon><Document /></el-icon>
+                <span>{{ translate('navigationMenu.formDataSummary') }}</span>
+              </el-menu-item>
+            </el-sub-menu>
           </template>
-          <el-menu-item index="/task-center-dashboard">
-            <el-icon><DataAnalysis /></el-icon>
-            <span>{{ translate('navigationMenu.taskDashboard') }}</span>
-          </el-menu-item>
-          <el-menu-item index="/current-tasks">
-            <el-icon><Document /></el-icon>
-            <span>{{ translate('navigationMenu.todayTasks') }}</span>
-          </el-menu-item>
-          <el-menu-item index="/future-tasks">
-            <el-icon><List /></el-icon>
-            <span>{{ translate('navigationMenu.futureTasks') }}</span>
-          </el-menu-item>
-          <el-menu-item index="/history-tasks">
-            <el-icon><Files /></el-icon>
-            <span>{{ translate('navigationMenu.historyTasks') }}</span>
-          </el-menu-item>
-          <el-menu-item index="/overdue-tasks">
-            <el-icon><Warning /></el-icon>
-            <span>{{ translate('navigationMenu.overdueTasks') }}</span>
-          </el-menu-item>
-  <!--        <el-menu-item index="/task-calendar">-->
-  <!--          <el-icon><Calendar /></el-icon>-->
-  <!--          <span>{{ translate('navigationMenu.taskCalendar') }}</span>-->
-  <!--        </el-menu-item>-->
-        </el-sub-menu>
-      </div>
-    </el-scrollbar>
 
-    <!-- 用户信息显示在 Navbar 底部 -->
-    <div class="user-info">
-      <el-divider />
-      <div class="user-details">
-        <el-tooltip content="编辑个人信息" placement="top">
-          <el-icon class="edit-icon-wrapper" @click="openEditDialog" :size="20">
-            <Edit />
+          <!-- 任务中心 (所有角色可见) -->
+          <el-sub-menu index="5">
+            <template #title>
+              <el-icon><Collection /></el-icon>
+              <span v-if="!isCollapsed">{{ translate('navigationMenu.taskCenter') }}</span>
+            </template>
+            <el-menu-item index="/task-center-dashboard">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>{{ translate('navigationMenu.taskDashboard') }}</span>
+            </el-menu-item>
+            <el-menu-item index="/current-tasks">
+              <el-icon><Document /></el-icon>
+              <span>{{ translate('navigationMenu.todayTasks') }}</span>
+            </el-menu-item>
+            <el-menu-item index="/future-tasks">
+              <el-icon><List /></el-icon>
+              <span>{{ translate('navigationMenu.futureTasks') }}</span>
+            </el-menu-item>
+            <el-menu-item index="/history-tasks">
+              <el-icon><Files /></el-icon>
+              <span>{{ translate('navigationMenu.historyTasks') }}</span>
+            </el-menu-item>
+            <el-menu-item index="/overdue-tasks">
+              <el-icon><Warning /></el-icon>
+              <span>{{ translate('navigationMenu.overdueTasks') }}</span>
+            </el-menu-item>
+    <!--        <el-menu-item index="/task-calendar">-->
+    <!--          <el-icon><Calendar /></el-icon>-->
+    <!--          <span>{{ translate('navigationMenu.taskCalendar') }}</span>-->
+    <!--        </el-menu-item>-->
+          </el-sub-menu>
+        </div>
+      </el-scrollbar>
+
+      <!-- 用户信息显示在 Navbar 底部 -->
+      <div v-if="!isCollapsed" class="user-info">
+        <el-divider />
+        <div class="user-details">
+          <el-tooltip content="编辑个人信息" placement="top">
+            <el-icon class="edit-icon-wrapper" @click="openEditDialog" :size="20">
+              <Edit />
+            </el-icon>
+          </el-tooltip>
+          <!--        <el-icon size="20px"><User /></el-icon>-->
+          <span class="username">{{ user.name }}</span>
+        </div>
+        <div class="user-role">{{ roleName }}</div>
+
+        <!-- Logout Button with Tooltip and Hover Effect -->
+        <el-tooltip content="登出" placement="top">
+          <el-icon class="logout-icon" @click="handleLogout">
+            <SwitchButton />
           </el-icon>
         </el-tooltip>
-        <!--        <el-icon size="20px"><User /></el-icon>-->
-        <span class="username">{{ user.name }}</span>
       </div>
-      <div class="user-role">{{ roleName }}</div>
 
-      <!-- Logout Button with Tooltip and Hover Effect -->
-      <el-tooltip content="登出" placement="top">
-        <el-icon class="logout-icon" @click="handleLogout">
-          <SwitchButton />
-        </el-icon>
-      </el-tooltip>
-    </div>
+    </el-menu>
 
-  </el-menu>
+    <el-tooltip
+      content="展开"
+      placement="right"
+      :hide-after="0"
+      :disabled="!showExpandButton"
+    >
+      <el-button
+          class="expand-button"
+          v-if="showExpandButton"
+          @click="toggleCollapse"
+      >
+        <el-icon><DArrowRight /></el-icon>
+      </el-button>
+    </el-tooltip>
+
+  </div>
 
   <!-- 编辑用户信息弹窗 -->
   <el-dialog :title="translate('userManagement.editDialog.title')" v-model="editDialogVisible" width="50%">
@@ -209,7 +237,7 @@ import {
   DataAnalysis,
   Collection,
   SwitchButton,
-  Calendar, Warning, Location, TakeawayBox
+  Calendar, Warning, Location, TakeawayBox, DArrowLeft, DArrowRight
 } from '@element-plus/icons-vue';
 import { mapGetters, mapActions } from 'vuex';
 import { translate } from "@/utils/i18n";
@@ -217,6 +245,8 @@ import { getUserById, updateUser } from '@/services/userService.js';
 
 export default {
   components: {
+    DArrowRight,
+    DArrowLeft,
     TakeawayBox,
     Location,
     Warning,
@@ -244,9 +274,32 @@ export default {
       return this.$route.path; // highlight the current path
     }
   },
+  watch: {
+    isCollapsed(newVal) {
+      if (newVal) {
+        setTimeout(() => {
+          document.querySelectorAll('.el-sub-menu .el-sub-menu__icon-arrow').forEach(el => {
+            el.style.display = 'none';
+          });
+        }, 500);
+      }
+    }
+  },
   methods: {
     ...mapActions(['logoutUser', 'updateUserState']), // Map the logoutUser action from Vuex
-
+    toggleCollapse(event) {
+      event.stopPropagation();
+      this.isCollapsed = !this.isCollapsed;
+      if (this.isCollapsed) {
+        // 折叠时，1s 后才显示展开按钮
+        setTimeout(() => {
+          this.showExpandButton = true;
+        }, 500);
+      } else {
+        // 展开时立即隐藏展开按钮
+        this.showExpandButton = false;
+      }
+    },
     async openEditDialog() {
       try {
         const response = await getUserById(this.user.id);
@@ -384,6 +437,7 @@ export default {
   data() {
     return {
       editDialogVisible: false,
+      showExpandButton: false,
       editUser: {
         id: null,
         name: '',
@@ -394,6 +448,8 @@ export default {
         phone_number: '',
         status: null,
       },
+      isCollapsed: false,
+      hideArrow: false,
       changePassword: false,
       newPassword: '',
       confirmPassword: '',
@@ -413,6 +469,7 @@ export default {
   height: 100vh;
   width: 240px;
   display: flex;
+  transition: width 0.3s;
   flex-direction: column;
 }
 
@@ -464,6 +521,54 @@ export default {
 
 .edit-icon-wrapper:hover {
   color: #ffd04b; /* or any preferred highlight color */
+}
+
+/* 调整 `el-menu` 折叠后的宽度 */
+.sidebar.collapsed .el-menu-vertical-demo {
+  width: 64px;
+}
+
+.sidebar.collapsed:hover .el-menu span {
+  display: inline;
+}
+
+/* 在侧边栏折叠状态下，隐藏所有子菜单的小箭头 */
+.sidebar.collapsed .el-sub-menu__icon-arrow {
+  display: none !important;
+}
+
+/* 调整折叠图标的位置 */
+.collapse-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* 右上角展开按钮 */
+.expand-button {
+  position: absolute;
+  top: 5px;
+  left: 70px;  /* 让它浮在侧边栏右侧 */
+  width: 30px;
+  height: 30px;
+  background-color: #545c64;
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: right 0.3s;
+  opacity: 0.5;
+  z-index: 999;
+}
+
+.expand-button:hover {
+  background-color: #666;
+  opacity: 1;
 }
 
 </style>
