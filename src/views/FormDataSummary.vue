@@ -1,10 +1,10 @@
 <template>
-  <el-container v-loading="pdfLoading" element-loading-text="正在生成PDF报告..." element-loading-background="rgba(0, 0, 0, 0.4)">
+  <el-container v-loading="pdfLoading" element-loading-text="正在生成PDF报告..." element-loading-background="rgba(0, 0, 0, 0.4)" class="qcsum-container">
     <el-aside width="25%">
       <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
 
-    <el-main width="75%" style="max-height: 100vh; overflow-y: auto;">
+    <el-main width="75%" style="max-height: 100vh; overflow-y: auto;" v-show="isMainDisplayed">
       <div v-if="selectedForm" class="form-header">
         <h1 style="width: 200px">{{ selectedForm.label }} 汇总</h1>
         <el-date-picker
@@ -150,6 +150,7 @@ export default {
   data() {
     return {
       pdfLoading: false,
+      isMainDisplayed: true,
       lineChartRefs: [],
       pieChartRefs: [],
       selectedDetails: {},
@@ -432,6 +433,8 @@ export default {
     async selectForm(form) {
       this.selectedForm = form;
 
+      this.isMainDisplayed = this.selectedForm.nodeType !== "folder";
+
       if (form.qcFormTemplateId) {
         await this.fetchChartData(this.selectedForm.qcFormTemplateId, this.formatDate(this.dateRange[0]), this.formatDate(this.dateRange[1]));
       }
@@ -635,5 +638,4 @@ export default {
     align-items: center;
     margin-bottom: 10px;
   }
-
 </style>

@@ -163,10 +163,11 @@ export default {
 
             if (userInfoResponse.data.status === '200') {
               // Store user data in Vuex
-              this.loginUser({
+              await this.loginUser({
                 id: userInfoResponse.data.data.id,
                 username: userInfoResponse.data.data.username,
                 role: userInfoResponse.data.data.role_id,
+                name: userInfoResponse.data.data.name
               });
 
               ElMessage.success('登录成功！');

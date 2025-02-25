@@ -40,7 +40,8 @@
       <el-table
           :data="paginatedTasks"
           border
-          style="width: 100%"
+          style="width: 100%;"
+          :height="tableHeight"
           :default-sort="{ prop: 'due_date', order: 'ascending' }"
           @sort-change="handleSortChange"
       >
@@ -55,7 +56,7 @@
           <template #header>
             <span v-if="key === 'qc_form_tree_node_id'">
                 {{ keyMap[key] || key }}
-                <el-tooltip content="任务过期、未来30分钟后或已完成则无法填写。" placement="top">
+                <el-tooltip content="任务过期、未来60分钟后或已完成则无法填写。" placement="top">
                     <el-icon><QuestionFilled /></el-icon>
                 </el-tooltip>
             </span>
@@ -123,10 +124,10 @@
         <el-table-column fixed="right" label="操作" min-width="200">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="showDetails(scope.row)">
-              Detail
+              详情
             </el-button>
             <el-button link type="info" size="small" style="cursor: not-allowed" disabled @click="editTask(scope.row)">
-              Edit
+              修改
             </el-button>
             <el-button
                 link
@@ -136,7 +137,7 @@
                 :disabled="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id))"
                 @click="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id)) ? null : completeTask(scope.row)"
             >
-              Complete
+              完成
             </el-button>
 
           </template>
@@ -235,6 +236,7 @@ export default {
         prop: 'due_date', // Default sorting column
         order: 'ascending', // Default sorting order
       },
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10
     };
   },
   computed: {
@@ -280,6 +282,9 @@ export default {
       } else {
         return '200';
       }
+    },
+    updateTableHeight() {
+      this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
     },
     showFeatureDevelopmentMessage() {
       this.$message({
@@ -627,12 +632,15 @@ export default {
     },
   },
   async mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+    this.updateTableHeight(); // Ensure correct height on load
     await this.fetchDispatchedTasks();
     await this.fetchFormMap();
     // await this.startPolling();
     await this.fetchPersonnelMap();
   },
   async beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight)
     this.stopPolling();
   }
 };
@@ -680,5 +688,4 @@ export default {
     transform: rotate(360deg); /* Rotate on hover */
     transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
   }
-
 </style>
