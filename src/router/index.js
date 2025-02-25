@@ -107,7 +107,7 @@ const routes = [
         component: ReportManagement
     },
     {
-        path: '/task-log/:createdBy/:dispatchedTaskId',
+        path: '/task-log/:createdBy/:dispatchedTaskId/:taskName',
         name: 'TaskLog',
         component: QcTaskSubmissionLogs,
         props: true, // Pass route params as props to the component

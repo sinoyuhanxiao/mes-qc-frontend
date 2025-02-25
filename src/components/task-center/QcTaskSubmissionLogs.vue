@@ -150,10 +150,14 @@ export default {
       type: String,
       required: true,
     },
+    taskName: {
+      type: String,
+      required: true,
+    }
   },
   data() {
     return {
-      title: "质检任务提交记录",
+      title: this.taskName + " - 提交记录",
       selectedIds: {
         qc_form_template_id: null,
         submission_id: null,

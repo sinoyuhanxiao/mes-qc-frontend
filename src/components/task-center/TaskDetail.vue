@@ -132,9 +132,10 @@ export default {
         params: {
           createdBy: this.$store.getters.getUser.id, // the record created by myself
           dispatchedTaskId: this.task.id, // Replace with actual `dispatchedTaskId`
+          taskName: this.getFormNameById(this.task.qc_form_tree_node_id)
         },
       }).href;
-
+      console.log("taskName is " + this.getFormNameById(this.task.qc_form_tree_node_id))
       // Open the URL in a new tab
       window.open(url, '_blank');
     },

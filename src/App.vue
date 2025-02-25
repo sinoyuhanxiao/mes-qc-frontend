@@ -2,7 +2,7 @@
   <div class="container">
     <!-- Conditionally render the navigation menu -->
     <NavigationMenu v-if="showNavBar" class="nav-menu" />
-    <div :class="['content', { 'full-width': !showNavBar }]">
+    <div :class="['content', { 'full-width': !showNavBar, 'content-hidden': isFormDataSummary }]">
       <router-view></router-view>
     </div>
     <div class="floating-language-switch">
@@ -14,6 +14,8 @@
 <script>
 import NavigationMenu from '@/components/common/NavigationMenu.vue';
 import LanguageSwitch from "@/components/lang/LanguageSwitch.vue";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 
 export default {
   name: 'App',
@@ -21,12 +23,17 @@ export default {
     LanguageSwitch,
     NavigationMenu,
   },
-  computed: {
+  setup() {
+    const route = useRoute();
+
     // Determine if the navigation bar should be shown
-    showNavBar() {
-      return this.$route.name !== 'LoginPage';
-    },
-  },
+    const showNavBar = computed(() => route.name !== 'LoginPage');
+
+    // Check if the current route is FormDataSummary.vue
+    const isFormDataSummary = computed(() => route.name === "FormDataSummary" || route.name === "QualityFormManagement");
+
+    return { showNavBar, isFormDataSummary };
+  }
 };
 </script>
 
@@ -44,13 +51,19 @@ export default {
 .content {
   flex: 1;            /* Allow the content to take the remaining width */
   padding: 20px;
-  overflow-y: auto;   /* Add scroll if content overflows */
+  overflow-y: auto;   /* Default scrolling behavior */
 }
 
 /* Make content full width when the navigation bar is hidden */
 .full-width {
   width: 100%;
   padding: 0;
+}
+
+/* Disable scrolling only for FormDataSummary.vue */
+.content-hidden {
+  overflow: hidden !important;
+  padding-right: 0;
 }
 
 .floating-language-switch {

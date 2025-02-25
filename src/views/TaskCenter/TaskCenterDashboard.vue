@@ -2,7 +2,7 @@
 <template>
   <div class="task-center-dashboard">
     <el-row :gutter="20" class="row-bg" justify="space-between">
-      <el-col :span="10"><h1> {{ this.$store.getters.getUser.username }}的个人任务看板</h1></el-col>
+      <el-col :span="10"><h1> {{ this.$store.getters.getName }}的个人任务看板</h1></el-col>
       <el-col :span="3.5" style="align-self: center;">
         <el-button @click="showDevelopingPopup">New</el-button>
         <el-button @click="showDevelopingPopup">Filter</el-button>
