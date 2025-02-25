@@ -144,10 +144,23 @@ router.beforeEach((to, from, next) => {
     } else if (userRole === 0) {
         // If role is 0, redirect to the login page
         next('/LoginPage');
+    } else if (userRole === 2 && [
+        '/form-designer',
+        '/user-management',
+        '/shift-management',
+        '/quality-form-management',
+        '/form-data-summary',
+        '/task-assignment',
+        '/instrument-management',
+        '/sampling-location-management',
+        '/test-subject-management'
+    ].includes(to.path)) {
+        // If user role is 2, restrict access to these routes
+        next('/task-center-dashboard'); // Redirect to a safe page
     } else {
-        // Allow access to other routes if the role is not 0
-        next();
+        next(); // Allow navigation if no restrictions apply
     }
 });
+
 
 export default router;
