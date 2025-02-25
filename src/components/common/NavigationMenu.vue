@@ -113,7 +113,12 @@
     <div class="user-info">
       <el-divider />
       <div class="user-details">
-        <el-icon size="20px"><User /></el-icon>
+        <el-tooltip content="编辑个人信息" placement="top">
+          <el-icon class="edit-icon-wrapper" @click="openEditDialog" :size="20">
+            <Edit />
+          </el-icon>
+        </el-tooltip>
+        <!--        <el-icon size="20px"><User /></el-icon>-->
         <span class="username">{{ user.name }}</span>
       </div>
       <div class="user-role">{{ roleName }}</div>
@@ -127,6 +132,69 @@
     </div>
 
   </el-menu>
+
+  <!-- 编辑用户信息弹窗 -->
+  <el-dialog :title="translate('userManagement.editDialog.title')" v-model="editDialogVisible" width="50%">
+    <div class="popup-container">
+      <el-form ref="editUserForm" :model="editUser" :rules="rules" label-width="140px">
+        <el-form-item :label="translate('userManagement.editDialog.name')" prop="name">
+          <el-input v-model="editUser.name" />
+        </el-form-item>
+
+        <!-- ✅ Hide Role Selection if the user is not 管理员 -->
+        <el-form-item v-if="user.role === 1" :label="translate('userManagement.editDialog.role')" prop="role">
+          <el-select v-model="editUser.role">
+            <el-option :label="translate('userManagement.role.admin')" value="管理员" />
+            <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item :label="translate('userManagement.editDialog.wecomId')" prop="wecomId">
+          <el-input v-model="editUser.wecomId" />
+        </el-form-item>
+
+        <el-form-item :label="translate('userManagement.editDialog.username')" prop="username">
+          <el-input v-model="editUser.username" />
+        </el-form-item>
+
+        <el-form-item :label="translate('userManagement.editDialog.email')" prop="email">
+          <el-input v-model="editUser.email" />
+        </el-form-item>
+
+        <el-form-item :label="translate('userManagement.editDialog.phoneNumber')" prop="phone_number">
+          <el-input v-model="editUser.phone_number" />
+        </el-form-item>
+
+        <!-- ✅ Hide Status Selection if the user is not 管理员 -->
+        <el-form-item v-if="user.role === 1" :label="translate('userManagement.editDialog.status')" prop="status">
+          <el-select v-model="editUser.status">
+            <el-option :label="translate('userManagement.status.active')" :value="1" />
+            <el-option :label="translate('userManagement.status.inactive')" :value="0" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-checkbox v-model="changePassword">{{ translate('userManagement.editDialog.changePassword') }}</el-checkbox>
+        </el-form-item>
+
+        <el-form-item v-if="changePassword" :label="translate('userManagement.editDialog.newPassword')" prop="newPassword">
+          <el-input v-model="newPassword" type="password" show-password />
+        </el-form-item>
+
+        <el-form-item v-if="changePassword" :label="translate('userManagement.editDialog.confirmPassword')" prop="confirmPassword">
+          <el-input v-model="confirmPassword" type="password" show-password />
+        </el-form-item>
+
+      </el-form>
+    </div>
+
+    <template #footer>
+      <div class="popup-container">
+        <el-button @click="editDialogVisible = false">{{ translate('userManagement.editDialog.cancelButton') }}</el-button>
+        <el-button type="primary" @click="handleEditConfirm">{{ translate('userManagement.editDialog.confirmButton') }}</el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script>
@@ -145,6 +213,7 @@ import {
 } from '@element-plus/icons-vue';
 import { mapGetters, mapActions } from 'vuex';
 import { translate } from "@/utils/i18n";
+import { getUserById, updateUser } from '@/services/userService.js';
 
 export default {
   components: {
@@ -176,15 +245,165 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['logoutUser']), // Map the logoutUser action from Vuex
+    ...mapActions(['logoutUser', 'updateUserState']), // Map the logoutUser action from Vuex
 
+    async openEditDialog() {
+      try {
+        const response = await getUserById(this.user.id);
+        if (response.data.status === '200') {
+          this.editUser = {
+            id: response.data.data.id,
+            name: response.data.data.name,
+            role: response.data.data.role_id === 1 ? '管理员' : '质检人员',
+            wecomId: response.data.data.wecom_id,
+            username: response.data.data.username,
+            email: response.data.data.email,
+            phone_number: response.data.data.phone_number,
+            status: response.data.data.status,
+          };
+          this.editDialogVisible = true;
+        } else {
+          this.$message.error('Failed to fetch user details.');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        this.$message.error('Error fetching user information.');
+      }
+    },
+
+    async handleEditConfirm() {
+      this.$refs.editUserForm.validate(async (valid) => {
+        if (valid) {
+          try {
+            const originalRole = this.user.role; // Store original role
+            const roleId = this.editUser.role === '管理员' ? 1 : 2;
+
+            // logic for status deactivation
+            if (this.editUser.status === 0) {
+              try {
+                await this.$confirm(
+                    "你已选择将账号设为未激活状态，登出后将无法再次登录，除非其他管理员重新激活你的账号。确认继续吗？",
+                    "确认未激活状态",
+                    {
+                      confirmButtonText: "确认",
+                      cancelButtonText: "取消",
+                      type: "warning",
+                    }
+                );
+              } catch {
+                this.$message.info("操作已取消");
+                return; // Stop the operation if canceled
+              }
+            }
+
+            const payload = {
+              name: this.editUser.name,
+              role_id: roleId,
+              wecom_id: this.editUser.wecomId,
+              username: this.editUser.username,
+              email: this.editUser.email,
+              phone_number: this.editUser.phone_number,
+              status: this.editUser.status,
+            };
+
+            if (this.changePassword) {
+              if (!this.newPassword || this.newPassword !== this.confirmPassword) {
+                this.$message.error('Passwords do not match!');
+                return;
+              }
+              payload.password = btoa(this.newPassword);
+            }
+
+            await updateUser(this.editUser.id, payload);
+            this.$message.success("User updated successfully");
+
+            if (originalRole === 1 && roleId === 2) {
+              this.$confirm(
+                  "你已经更改了权限，确认或关闭此窗口后都将自动登出。",
+                  "权限更改确认",
+                  {
+                    confirmButtonText: "确认",
+                    type: "warning",
+                    showCancelButton: false,      // 不显示取消按钮
+                    closeOnClickModal: false,     // 禁止点击遮罩层关闭窗口
+                    closeOnPressEscape: false,    // 禁止按ESC键关闭窗口
+                  }
+              ).then(() => {
+                this.logoutUser();
+                this.$router.push("/LoginPage");
+              }).catch(() => {
+                this.logoutUser();
+                this.$router.push("/LoginPage");
+              });
+            } else {
+              // ✅ Update Vuex store user info
+              this.updateUserState({
+                name: this.editUser.name,
+                username: this.editUser.username,
+                role: this.editUser.role === '管理员' ? 1 : 2,
+                email: this.editUser.email,
+                phone_number: this.editUser.phone_number,
+                wecomId: this.editUser.wecomId,
+              });
+            }
+
+            // ✅ Reset password fields and close dialog
+            this.changePassword = false;
+            this.newPassword = '';
+            this.confirmPassword = '';
+            this.editDialogVisible = false;
+          } catch (error) {
+            console.error("Error updating user:", error);
+            this.$message.error("Failed to update user");
+          }
+        } else {
+          this.$message.error("Please fix validation errors before proceeding");
+        }
+      });
+    },
     handleLogout() {
-      this.logoutUser(); // Clear user information from Vuex
-      this.$router.push('/LoginPage'); // Redirect to the login page
+      this.$confirm(
+          "你确定要登出质量管理系统吗？",
+          "确认登出",
+          {
+            confirmButtonText: "确认",
+            cancelButtonText: "取消",
+            type: "warning",
+          }
+      ).then(() => {
+        this.logoutUser(); // Clear user information from Vuex
+        this.$router.push('/LoginPage'); // Redirect to the login page
+      }).catch(() => {
+        this.$message.info("已取消登出");
+      });
     },
     translate(key) {
       return translate(key);
     }
+  },
+  data() {
+    return {
+      editDialogVisible: false,
+      editUser: {
+        id: null,
+        name: '',
+        role: '',
+        wecomId: '',
+        username: '',
+        email: '',
+        phone_number: '',
+        status: null,
+      },
+      changePassword: false,
+      newPassword: '',
+      confirmPassword: '',
+      rules: {
+        name: [{ required: true, message: 'Name is required', trigger: 'blur' }],
+        role: [{ required: true, message: 'Role is required', trigger: 'change' }],
+        username: [{ required: true, message: 'Username is required', trigger: 'blur' }],
+        email: [{ required: true, message: 'Email is required', trigger: 'blur' }],
+      },
+    };
   },
 };
 </script>
@@ -236,6 +455,15 @@ export default {
 
 .logout-icon:hover {
   color: #ff4d4f; /* Red color on hover */
+}
+
+.edit-icon-wrapper {
+  cursor: pointer;
+  transition: color 0.1s;
+}
+
+.edit-icon-wrapper:hover {
+  color: #ffd04b; /* or any preferred highlight color */
 }
 
 </style>
