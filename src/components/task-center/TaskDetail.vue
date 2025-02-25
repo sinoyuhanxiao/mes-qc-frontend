@@ -88,11 +88,11 @@
       {{ formatDate(task.due_date) }}
     </el-form-item>
 
-    <el-form-item label="是否逾期">
-      <el-tag :type="task.is_overdue ? 'danger' : 'success'">
-        {{ task.is_overdue ? "是" : "否" }}
-      </el-tag>
-    </el-form-item>
+<!--    <el-form-item label="是否逾期">-->
+<!--      <el-tag :type="task.is_overdue ? 'danger' : 'success'">-->
+<!--        {{ task.is_overdue ? "是" : "否" }}-->
+<!--      </el-tag>-->
+<!--    </el-form-item>-->
 
     <el-form-item label="完成时间">
       {{ formatDate(task.finished_at) || "未完成" }}

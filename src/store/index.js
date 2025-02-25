@@ -56,6 +56,12 @@ export default createStore({
             localStorage.setItem(userKey, JSON.stringify(user));
             localStorage.setItem(expirationKey, (new Date().getTime() + SESSION_DURATION).toString());
         },
+        updateUserInfo(state, updatedUser) {
+            state.user = { ...state.user, ...updatedUser };
+            localStorage.setItem('current_user', JSON.stringify({ username: state.user.username, name: state.user.name }));
+            const userKey = generateUserKey(state.user.username);
+            localStorage.setItem(userKey, JSON.stringify(state.user));
+        },
         clearUser(state) {
             const currentUser = JSON.parse(localStorage.getItem('current_user')) || {};
             const userKey = currentUser.username ? generateUserKey(currentUser.username) : null;
@@ -72,6 +78,9 @@ export default createStore({
     actions: {
         loginUser({ commit }, user) {
             commit('setUser', user);
+        },
+        updateUserState({ commit }, updatedUser) {
+            commit('updateUserInfo', updatedUser);
         },
         logoutUser({ commit }) {
             commit('clearUser');

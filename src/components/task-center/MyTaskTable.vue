@@ -90,11 +90,11 @@
                 {{ calculateRemainingTime(scope.row['due_date']) }}
               </el-tag>
             </span>
-            <span v-else-if="key === 'is_overdue'">
-              <el-tag :type="scope.row[key] ? 'danger' : 'info'">
-                {{ scope.row[key] ? '是' : '否' }}
-              </el-tag>
-            </span>
+<!--            <span v-else-if="key === 'is_overdue'">-->
+<!--              <el-tag :type="scope.row[key] ? 'danger' : 'info'">-->
+<!--                {{ scope.row[key] ? '是' : '否' }}-->
+<!--              </el-tag>-->
+<!--            </span>-->
             <span v-else-if="key === 'status'">
               <el-tag :type="scope.row[key] === 0 ? 'info' : 'primary'">
                 {{ scope.row[key] === 0 ? '是' : '否' }}
