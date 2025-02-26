@@ -1,6 +1,6 @@
 <template>
-  <el-container style="display: flex; flex-direction: column; height: 100vh; max-width: 100%; overflow: hidden;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+  <div style="display: flex; flex-direction: column; max-width: 100%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; ">
       <!-- Top Section -->
       <div style="display: flex; align-items: center;">
         <h2>采样点管理</h2>
@@ -36,26 +36,25 @@
             type="primary"
             @click="openDialog()"
         >
-          新增采样点
+          + 新增采样点
         </el-button>
       </div>
     </div>
 
-    <el-main style="flex: 1; padding: 0; margin-top: 20px;">
-      <!-- Sampling Location List -->
-      <SamplingLocationList
-          :locations="locations"
-          @edit-location="openDialog"
-          @delete-location="confirmDelete"
-          :search-input="searchQuery"
-      />
-    </el-main>
+
+    <!-- Sampling Location List -->
+    <SamplingLocationList
+        :locations="locations"
+        @edit-location="openDialog"
+        @delete-location="confirmDelete"
+        :search-input="searchQuery"
+    />
+
 
     <!-- Dialog for Create / Edit -->
     <el-dialog
         v-model="dialogVisible"
         :title="isEditMode ? '编辑采样点' : '新增采样点'"
-        width="500px"
         :close-on-click-modal="false"
     >
       <SamplingLocationForm
@@ -65,7 +64,7 @@
           @cancel="dialogVisible = false"
       />
     </el-dialog>
-  </el-container>
+  </div>
 </template>
 
 <script>
