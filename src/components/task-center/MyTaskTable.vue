@@ -25,14 +25,24 @@
                 class="refresh-button"
                 type="primary"
                 circle
-                @click="showFeatureDevelopmentMessage"
+                @click="refreshTable"
             >
               <el-icon style="color: #004085;"><RefreshRight /></el-icon>
             </el-button>
           </el-tooltip>
-          <el-tooltip content="请求新任务给我做" placement="top">
-            <el-button type="primary" @click="showFeatureDevelopmentMessage"> + 请求新任务</el-button>
-          </el-tooltip>
+          <el-switch
+              id="usable-task-switch"
+              v-model="showUsableOnly"
+              inline-prompt
+              size="large"
+              style="--el-switch-off-color: grey; --el-switch-on-color: #409eff; margin-top: 10px"
+              active-text="可做任务"
+              inactive-text="所有任务"
+              @change="applyFilter"
+          />
+<!--          <el-tooltip content="请求新任务给我做" placement="top">-->
+<!--            <el-button type="primary" @click="showFeatureDevelopmentMessage"> + 请求新任务</el-button>-->
+<!--          </el-tooltip>-->
         </div>
       </div>
     </el-header>
@@ -194,6 +204,7 @@ import * as formNodeService from "@/services/formNodeService";
 import { Base64 } from 'js-base64';
 import isTaskUsable from "@/utils/task-center/taskUtils.js";
 import {ElNotification} from "element-plus";
+import {calculateRemainingTime} from "@/utils/dispatch-utils";
 
 export default {
   name: "MyTaskTable",
@@ -223,6 +234,7 @@ export default {
   },
   data() {
     return {
+      showUsableOnly: false,
       dispatchedTasks: [],
       formMap: {},
       personnelMap: {},
@@ -273,7 +285,11 @@ export default {
     },
   },
   methods: {
-    isTaskUsable,
+      async refreshTable() {
+        this.$message.success("任务列表已刷新");
+        await this.fetchDispatchedTasks();
+      },
+      isTaskUsable,
     getColumnWidth(key) {
       if (['description'].includes(key)) {
         return '350';
@@ -369,51 +385,45 @@ export default {
       }
     },
     async applyFilter() {
-      if (this.formFilter.trim() === "") {
-        this.filteredTasks = this.dispatchedTasks; // Reset to all tasks if the filter is empty
-      } else {
-        const searchText = this.formFilter.trim().toLowerCase();
+      let tasks = this.dispatchedTasks;
 
-        this.filteredTasks = this.dispatchedTasks.filter((task) => {
-          return Object.keys(task).some((key) => {
-            let value;
-
-            // Dynamically map displayed values for each column
-            switch (key) {
-              case 'qc_form_tree_node_id':
-                value = this.getFormNameById(task[key]); // Use the function to get the display name
-                break;
-
-              case 'dispatched_task_state_id':
-                value = this.stateName(task[key]); // Use function to map state to displayed name
-                break;
-
-              case 'due_date':
-              case 'dispatch_time':
-              case 'created_at':
-              case 'updated_at':
-                value = this.formatDate(task[key]); // Format date for display
-                break;
-
-              case 'remaining_time':
-                value = this.calculateRemainingTime(task['due_date']); // Use dynamic calculated value
-                break;
-
-              case 'created_by':
-              case 'updated_by':
-              case 'user_id':
-                value = this.personnelMap[task[key]]?.name; // Display personnel name
-                break;
-
-              default:
-                value = task[key]; // Use raw value for other keys
-            }
-
-            if (value === null || value === undefined) return false; // Skip null/undefined values
-            return String(value).toLowerCase().includes(searchText); // Match against the transformed value
-          });
-        });
+      if (this.showUsableOnly) {
+        tasks = tasks.filter(task => isTaskUsable(task.due_date, task.dispatched_task_state_id)); // 添加这行
       }
+
+      if (this.formFilter.trim() !== "") {
+        const searchText = this.formFilter.trim().toLowerCase();
+        tasks = tasks.filter(task => Object.keys(task).some(key => {
+          let value;
+          switch (key) {
+            case 'qc_form_tree_node_id':
+              value = this.getFormNameById(task[key]);
+              break;
+            case 'dispatched_task_state_id':
+              value = this.stateName(task[key]);
+              break;
+            case 'due_date':
+            case 'dispatch_time':
+            case 'created_at':
+            case 'updated_at':
+              value = this.formatDate(task[key]);
+              break;
+            case 'remaining_time':
+              value = this.calculateRemainingTime(task['due_date']);
+              break;
+            case 'created_by':
+            case 'updated_by':
+            case 'user_id':
+              value = this.personnelMap[task[key]]?.name;
+              break;
+            default:
+              value = task[key];
+          }
+          return value && String(value).toLowerCase().includes(searchText);
+        }));
+      }
+
+      this.filteredTasks = tasks;
     },
     async fetchFormMap() {
       try {
@@ -472,9 +482,11 @@ export default {
         // Encode query parameters into a Base64 string
         console.log("taskUsable: " + taskUsable)
         // const queryParams = { usable: taskUsable, switchDisplayed: false };
-        const queryParams = { usable: taskUsable, switchDisplayed: false, dispatchedTaskId: row.id};
+        const queryParams = { usable: taskUsable, switchDisplayed: false, dispatchedTaskId: row.id, rt: this.calculateRemainingSeconds(row.due_date)};
         const encodedQuery = Base64.encode(JSON.stringify(queryParams));
 
+        console.log("remaining time for this row")
+        console.log(row.remaining_time)
         // Construct the URL
         const newTabUrl = this.$router.resolve({
           name: 'FormDisplay',
@@ -569,6 +581,15 @@ export default {
         return `${minutes} 分钟`;
       }
     },
+    calculateRemainingSeconds(dueDate) {
+      if (!dueDate) return "-"; // If no due date, return "-"
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInSeconds = due.diff(now, "second");
+
+      return diffInSeconds > 0 ? diffInSeconds : 0; // Ensure we don't return negative values
+    },
     remainingTimeTag(dueDate) {
       if (!dueDate) return "info";
 
@@ -638,6 +659,7 @@ export default {
     await this.fetchFormMap();
     // await this.startPolling();
     await this.fetchPersonnelMap();
+    this.applyFilter();
   },
   async beforeUnmount() {
     window.removeEventListener("resize", this.updateTableHeight)
@@ -688,4 +710,9 @@ export default {
     transform: rotate(360deg); /* Rotate on hover */
     transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
   }
+
+  ::v-deep(.el-switch__inner .is-text) {
+    font-size: 16px !important;
+  }
+
 </style>
