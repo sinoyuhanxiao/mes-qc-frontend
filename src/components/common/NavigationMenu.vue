@@ -469,8 +469,9 @@ export default {
   height: 100vh;
   width: 240px;
   display: flex;
-  transition: width 0.3s;
+  transition: width 0.2s ease-in-out, opacity 0.2s ease-in-out;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .menu-container {

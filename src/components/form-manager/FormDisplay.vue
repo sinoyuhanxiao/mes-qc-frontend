@@ -14,6 +14,17 @@
       <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
         快速分配此任务
       </el-button>
+
+      <el-countdown
+          v-if="remainingTime > 0"
+          :value="countdownEndTime"
+          format="HH:mm:ss"
+      >
+        <template #title>
+          <span style="font-weight: bold; font-size: 15px">任务倒计时:</span>
+        </template>
+      </el-countdown>
+
     </div>
     <el-scrollbar :height="scrollBarHeight" width="100%">
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
@@ -80,10 +91,22 @@
     </template>
   </el-dialog>
 
+  <el-dialog
+      v-model="showCountdownEnded"
+      title="任务结束"
+      width="30%"
+      :before-close="closeCountdownEnded"
+  >
+    <span>任务已结束，窗口即将关闭。</span>
+    <template #footer>
+      <el-button type="warning" @click="closeCountdownEnded">确认</el-button>
+    </template>
+  </el-dialog>
+
 </template>
 
 <script setup>
-import {ref, reactive, watch, onMounted, onUnmounted, nextTick} from 'vue'
+import {ref, reactive, watch, onMounted, onUnmounted, nextTick, computed} from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import VFormRender from '@/components/form-render/index'
@@ -94,11 +117,19 @@ import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
 import { insertFormData } from '@/services/qcFormDataService.js';
 import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
+import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 
 const route = useRoute()
+const rt = ref(parseInt(route.query.rt, 10) || 0);
+const showCountdownEnded = ref(false);
+
+// Countdown time setup
+const remainingTime = ref(rt.value);
+const countdownEndTime = computed(() => Date.now() + remainingTime.value * 1000);
+let countdownInterval = null; // Store the interval ID
 
 const props = defineProps({
   currentForm: {
@@ -146,6 +177,45 @@ const confirmClear = () => {
   }
 };
 
+const closeCountdownEnded = () => {
+  showCountdownEnded.value = false;
+  setTimeout(() => {
+    window.close();
+  }, 300); // 给用户一点时间看到弹窗关闭
+};
+
+// ✅ Start or restart the countdown
+const startCountdown = () => {
+  // Clear any existing interval before starting a new one
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  if (remainingTime.value > 0) {
+    countdownInterval = setInterval(() => {
+      remainingTime.value -= 1;
+      if (remainingTime.value <= 0) {
+        clearInterval(countdownInterval); // Stop countdown when it reaches zero
+        showCountdownEnded.value = true;
+      }
+    }, 1000);
+  }
+};
+
+// ✅ Watch `rt` in case it changes dynamically
+watch(() => route.query.rt, (newRt) => {
+  remainingTime.value = parseInt(newRt, 10) || 0;
+  startCountdown(); // Restart the countdown if `rt` changes
+}, { immediate: true });
+
+// ✅ Ensure the countdown starts when mounted
+onMounted(() => {
+  startCountdown();
+});
+
+// ✅ Clean up the interval when unmounted
+onUnmounted(() => {
+  if (countdownInterval) clearInterval(countdownInterval);
+});
+
 const clearForm = () => {
   if (vFormRef.value) {
     vFormRef.value.resetForm(); // 调用 VFormRender 内部的 resetForm 方法
@@ -167,6 +237,7 @@ const updateScrollBarHeight = () => {
 };
 
 onMounted(() => {
+  startCountdown();
   window.addEventListener('resize', updateScrollBarHeight);
   updateScrollBarHeight();
 });
@@ -331,6 +402,23 @@ const audio = new Audio(soundEffect);
 //   }
 // }
 
+watch(remainingTime, (newTime) => {
+  nextTick(() => {
+    const countdownElement = document.querySelector(".el-statistic__number");
+    if (countdownElement) {
+      if (newTime <= 10 * 60) {
+        countdownElement.style.color = "red"; // Danger
+      } else if (newTime <= 30 * 60) {
+        countdownElement.style.color = "#e6a23c"; // Warning (Orange)
+      } else if (newTime <= 60 * 60) {
+        countdownElement.style.color = "#409eff"; // Primary (Blue)
+      } else {
+        countdownElement.style.color = ""; // Reset to default
+      }
+    }
+  });
+});
+
 </script>
 
 <style scoped>
@@ -365,5 +453,6 @@ const audio = new Audio(soundEffect);
     padding-top: 10px; /* Add space above the content */
     padding-left: 10px;
   }
+
 </style>
 
