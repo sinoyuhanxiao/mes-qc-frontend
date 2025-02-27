@@ -214,7 +214,7 @@
             <el-input v-model="newUser.email" />
           </el-form-item>
 
-          <el-form-item :label="translate('userManagement.addDialog.phoneNumber')">
+          <el-form-item :label="translate('userManagement.addDialog.phoneNumber')" prop="phone_number">
             <el-input v-model="newUser.phone_number" />
           </el-form-item>
 
@@ -435,6 +435,18 @@ export default {
           { required: true, message: 'Password is required', trigger: 'blur' },
           { min: 4, message: 'Password must be at least 4 characters', trigger: 'blur' },
         ],
+        phone_number: [
+          {
+            required: true,
+            message: 'Phone number is required',
+            trigger: 'blur'
+          },
+          {
+            pattern: /^\+?[1-9]\d{1,14}$/,
+            message: 'Invalid phone number format',
+            trigger: 'blur'
+          }
+        ]
         // newPassword: [
         //   {
         //     validator: (rule, value, callback) => {
