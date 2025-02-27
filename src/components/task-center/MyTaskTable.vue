@@ -62,6 +62,7 @@
             :label="keyMap[key] || key"
             :width="getColumnWidth(key)"
             sortable
+            :sort-method="key === 'remaining_time' ? sortByRemainingTime : undefined"
         >
           <template #header>
             <span v-if="key === 'qc_form_tree_node_id'">
@@ -285,7 +286,10 @@ export default {
     },
   },
   methods: {
-      async refreshTable() {
+    sortByRemainingTime(a, b) {
+      return this.calculateRemainingSeconds(a.due_date) - this.calculateRemainingSeconds(b.due_date);
+    },
+    async refreshTable() {
         this.$message.success("任务列表已刷新");
         this.showUsableOnly = false;
         await this.fetchDispatchedTasks();
