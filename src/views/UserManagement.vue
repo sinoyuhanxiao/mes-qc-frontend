@@ -677,8 +677,8 @@ export default {
 
             // Include password if changePassword is checked, in the future integrate to the same validation check
             if (this.changePassword) {
-              if (!this.newPassword || this.newPassword !== this.confirmPassword) {
-                this.$message.error('Passwords do not match or are empty!');
+              if (!this.newPassword || this.newPassword !== this.confirmPassword || this.newPassword.length < 4) {
+                this.$message.error('Passwords do not match or less than 4!');
                 return;
               }
               payload.password = btoa(this.newPassword);
