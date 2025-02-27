@@ -88,11 +88,11 @@
       {{ formatDate(task.due_date) }}
     </el-form-item>
 
-    <el-form-item label="是否逾期">
-      <el-tag :type="task.is_overdue ? 'danger' : 'success'">
-        {{ task.is_overdue ? "是" : "否" }}
-      </el-tag>
-    </el-form-item>
+<!--    <el-form-item label="是否逾期">-->
+<!--      <el-tag :type="task.is_overdue ? 'danger' : 'success'">-->
+<!--        {{ task.is_overdue ? "是" : "否" }}-->
+<!--      </el-tag>-->
+<!--    </el-form-item>-->
 
     <el-form-item label="完成时间">
       {{ formatDate(task.finished_at) || "未完成" }}
@@ -132,9 +132,10 @@ export default {
         params: {
           createdBy: this.$store.getters.getUser.id, // the record created by myself
           dispatchedTaskId: this.task.id, // Replace with actual `dispatchedTaskId`
+          taskName: this.getFormNameById(this.task.qc_form_tree_node_id)
         },
       }).href;
-
+      console.log("taskName is " + this.getFormNameById(this.task.qc_form_tree_node_id))
       // Open the URL in a new tab
       window.open(url, '_blank');
     },

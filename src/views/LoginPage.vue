@@ -102,6 +102,13 @@ export default {
     };
   },
   mounted() {
+    // 读取存储的用户名
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    if (savedUsername) {
+      this.form.username = savedUsername;
+      this.form.rememberMe = true; // 自动勾选 "记住我"
+    }
+
     // 初始化验证码
     this.identifyCode = "";
     this.makeIdentifyCode(4);
@@ -156,25 +163,32 @@ export default {
               btoa(this.form.password)
           );
 
-          // Check if the response indicates success
           if (validateResponse.data.status === '200') {
             // Step 2: Fetch complete user information
             const userInfoResponse = await fetchUserInfo(this.form.username);
 
             if (userInfoResponse.data.status === '200') {
               // Store user data in Vuex
-              this.loginUser({
+              await this.loginUser({
                 id: userInfoResponse.data.data.id,
                 username: userInfoResponse.data.data.username,
                 role: userInfoResponse.data.data.role_id,
+                name: userInfoResponse.data.data.name
               });
+
+              // **保存或清除用户名**
+              if (this.form.rememberMe) {
+                localStorage.setItem("rememberedUsername", this.form.username);
+              } else {
+                localStorage.removeItem("rememberedUsername");
+              }
 
               ElMessage.success('登录成功！');
               // Redirect to the dashboard or home page
               if (userInfoResponse.data.data.role_id === 1) {
                 this.$router.push('/user-management');
               } else if (userInfoResponse.data.data.role_id === 2) {
-                this.$router.push('/my-tasks');
+                this.$router.push('/');
               }
             } else {
               this.errorMessage = '获取用户信息失败，请稍后重试';
@@ -183,7 +197,6 @@ export default {
             this.errorMessage = '用户名或密码错误';
           }
         } catch (error) {
-          // Handle any errors during the request
           this.errorMessage = error.response?.data?.message || '登录时发生错误，请稍后重试';
         } finally {
           this.loading = false;

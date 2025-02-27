@@ -34,7 +34,7 @@ function loadUser() {
         }
     }
 
-    return { id: 0, username: '默认用户', role: 0 };
+    return { id: 0, username: '默认用户', role: 0, name: '默认名称'};
 }
 
 export default createStore({
@@ -46,7 +46,7 @@ export default createStore({
             state.user = user;
 
             // Store current user for reference
-            localStorage.setItem('current_user', JSON.stringify({ username: user.username }));
+            localStorage.setItem('current_user', JSON.stringify({ username: user.username, name: user.name}));
 
             // Generate dynamic keys based on the username
             const userKey = generateUserKey(user.username);
@@ -56,12 +56,18 @@ export default createStore({
             localStorage.setItem(userKey, JSON.stringify(user));
             localStorage.setItem(expirationKey, (new Date().getTime() + SESSION_DURATION).toString());
         },
+        updateUserInfo(state, updatedUser) {
+            state.user = { ...state.user, ...updatedUser };
+            localStorage.setItem('current_user', JSON.stringify({ username: state.user.username, name: state.user.name }));
+            const userKey = generateUserKey(state.user.username);
+            localStorage.setItem(userKey, JSON.stringify(state.user));
+        },
         clearUser(state) {
             const currentUser = JSON.parse(localStorage.getItem('current_user')) || {};
             const userKey = currentUser.username ? generateUserKey(currentUser.username) : null;
             const expirationKey = currentUser.username ? generateExpirationKey(currentUser.username) : null;
 
-            state.user = { id: 0, username: '', role: 0 };
+            state.user = { id: 0, username: '', name: '', role: 0 };
 
             // Clear dynamic keys and current user reference
             if (userKey) localStorage.removeItem(userKey);
@@ -73,12 +79,16 @@ export default createStore({
         loginUser({ commit }, user) {
             commit('setUser', user);
         },
+        updateUserState({ commit }, updatedUser) {
+            commit('updateUserInfo', updatedUser);
+        },
         logoutUser({ commit }) {
             commit('clearUser');
         },
     },
     getters: {
         getUser: (state) => state.user,
+        getName: (state) => state.user.name, // Added getter for `name`
         getRoleName: (state) =>
             state.user.role === 1 ? '管理员' : state.user.role === 2 ? '质检人员' : '未知角色',
     },

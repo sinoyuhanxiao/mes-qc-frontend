@@ -37,7 +37,7 @@
 
     <!-- Table -->
     <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
-      <el-table :data="paginatedShifts" style="width: 100%" @sort-change="handleSortChange">
+      <el-table :data="paginatedShifts" style="width: 100%" @sort-change="handleSortChange" :height="tableHeight">
         <el-table-column label="ID" width="100" prop="id" sortable>
           <template #default="scope">
             <span>{{ scope.row.id }}</span>
@@ -387,6 +387,7 @@ export default {
   },
   data() {
     return {
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
       searchUserQuery: "", // Search input value for users
       userCurrentPage: 1, // Current page for members
       userPageSize: 10, // Page size for members
@@ -473,6 +474,15 @@ export default {
       const end = start + this.pageSize;
       return sortedData.slice(start, end);
     },
+  },
+  mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+  },
+  updateTableHeight() {
+    this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight);
   },
   methods: {
     translate,

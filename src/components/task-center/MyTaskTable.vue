@@ -25,14 +25,24 @@
                 class="refresh-button"
                 type="primary"
                 circle
-                @click="showFeatureDevelopmentMessage"
+                @click="refreshTable"
             >
               <el-icon style="color: #004085;"><RefreshRight /></el-icon>
             </el-button>
           </el-tooltip>
-          <el-tooltip content="请求新任务给我做" placement="top">
-            <el-button type="primary" @click="showFeatureDevelopmentMessage"> + 请求新任务</el-button>
-          </el-tooltip>
+          <el-switch
+              id="usable-task-switch"
+              v-model="showUsableOnly"
+              inline-prompt
+              size="large"
+              style="--el-switch-off-color: grey; --el-switch-on-color: #409eff; margin-top: 10px"
+              active-text="可做任务"
+              inactive-text="所有任务"
+              @change="applyFilter"
+          />
+<!--          <el-tooltip content="请求新任务给我做" placement="top">-->
+<!--            <el-button type="primary" @click="showFeatureDevelopmentMessage"> + 请求新任务</el-button>-->
+<!--          </el-tooltip>-->
         </div>
       </div>
     </el-header>
@@ -40,7 +50,8 @@
       <el-table
           :data="paginatedTasks"
           border
-          style="width: 100%"
+          style="width: 100%;"
+          :height="tableHeight"
           :default-sort="{ prop: 'due_date', order: 'ascending' }"
           @sort-change="handleSortChange"
       >
@@ -55,7 +66,7 @@
           <template #header>
             <span v-if="key === 'qc_form_tree_node_id'">
                 {{ keyMap[key] || key }}
-                <el-tooltip content="任务过期、未来30分钟后或已完成则无法填写。" placement="top">
+                <el-tooltip content="任务过期、未来60分钟后或已完成则无法填写。" placement="top">
                     <el-icon><QuestionFilled /></el-icon>
                 </el-tooltip>
             </span>
@@ -89,11 +100,11 @@
                 {{ calculateRemainingTime(scope.row['due_date']) }}
               </el-tag>
             </span>
-            <span v-else-if="key === 'is_overdue'">
-              <el-tag :type="scope.row[key] ? 'danger' : 'info'">
-                {{ scope.row[key] ? '是' : '否' }}
-              </el-tag>
-            </span>
+<!--            <span v-else-if="key === 'is_overdue'">-->
+<!--              <el-tag :type="scope.row[key] ? 'danger' : 'info'">-->
+<!--                {{ scope.row[key] ? '是' : '否' }}-->
+<!--              </el-tag>-->
+<!--            </span>-->
             <span v-else-if="key === 'status'">
               <el-tag :type="scope.row[key] === 0 ? 'info' : 'primary'">
                 {{ scope.row[key] === 0 ? '是' : '否' }}
@@ -123,10 +134,10 @@
         <el-table-column fixed="right" label="操作" min-width="200">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="showDetails(scope.row)">
-              Detail
+              详情
             </el-button>
             <el-button link type="info" size="small" style="cursor: not-allowed" disabled @click="editTask(scope.row)">
-              Edit
+              修改
             </el-button>
             <el-button
                 link
@@ -136,7 +147,7 @@
                 :disabled="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id))"
                 @click="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id)) ? null : completeTask(scope.row)"
             >
-              Complete
+              完成
             </el-button>
 
           </template>
@@ -193,6 +204,7 @@ import * as formNodeService from "@/services/formNodeService";
 import { Base64 } from 'js-base64';
 import isTaskUsable from "@/utils/task-center/taskUtils.js";
 import {ElNotification} from "element-plus";
+import {calculateRemainingTime} from "@/utils/dispatch-utils";
 
 export default {
   name: "MyTaskTable",
@@ -222,6 +234,7 @@ export default {
   },
   data() {
     return {
+      showUsableOnly: false,
       dispatchedTasks: [],
       formMap: {},
       personnelMap: {},
@@ -235,6 +248,7 @@ export default {
         prop: 'due_date', // Default sorting column
         order: 'ascending', // Default sorting order
       },
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10
     };
   },
   computed: {
@@ -271,7 +285,12 @@ export default {
     },
   },
   methods: {
-    isTaskUsable,
+      async refreshTable() {
+        this.$message.success("任务列表已刷新");
+        this.showUsableOnly = false;
+        await this.fetchDispatchedTasks();
+      },
+      isTaskUsable,
     getColumnWidth(key) {
       if (['description'].includes(key)) {
         return '350';
@@ -280,6 +299,9 @@ export default {
       } else {
         return '200';
       }
+    },
+    updateTableHeight() {
+      this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
     },
     showFeatureDevelopmentMessage() {
       this.$message({
@@ -311,7 +333,7 @@ export default {
 
         // Re-apply the filter if one is active
         if (this.formFilter.trim() !== "") {
-          this.applyFilter();
+          await this.applyFilter();
         }
 
         if (this.type === "today") {
@@ -364,51 +386,45 @@ export default {
       }
     },
     async applyFilter() {
-      if (this.formFilter.trim() === "") {
-        this.filteredTasks = this.dispatchedTasks; // Reset to all tasks if the filter is empty
-      } else {
-        const searchText = this.formFilter.trim().toLowerCase();
+      let tasks = this.dispatchedTasks;
 
-        this.filteredTasks = this.dispatchedTasks.filter((task) => {
-          return Object.keys(task).some((key) => {
-            let value;
-
-            // Dynamically map displayed values for each column
-            switch (key) {
-              case 'qc_form_tree_node_id':
-                value = this.getFormNameById(task[key]); // Use the function to get the display name
-                break;
-
-              case 'dispatched_task_state_id':
-                value = this.stateName(task[key]); // Use function to map state to displayed name
-                break;
-
-              case 'due_date':
-              case 'dispatch_time':
-              case 'created_at':
-              case 'updated_at':
-                value = this.formatDate(task[key]); // Format date for display
-                break;
-
-              case 'remaining_time':
-                value = this.calculateRemainingTime(task['due_date']); // Use dynamic calculated value
-                break;
-
-              case 'created_by':
-              case 'updated_by':
-              case 'user_id':
-                value = this.personnelMap[task[key]]?.name; // Display personnel name
-                break;
-
-              default:
-                value = task[key]; // Use raw value for other keys
-            }
-
-            if (value === null || value === undefined) return false; // Skip null/undefined values
-            return String(value).toLowerCase().includes(searchText); // Match against the transformed value
-          });
-        });
+      if (this.showUsableOnly) {
+        tasks = tasks.filter(task => isTaskUsable(task.due_date, task.dispatched_task_state_id)); // 添加这行
       }
+
+      if (this.formFilter.trim() !== "") {
+        const searchText = this.formFilter.trim().toLowerCase();
+        tasks = tasks.filter(task => Object.keys(task).some(key => {
+          let value;
+          switch (key) {
+            case 'qc_form_tree_node_id':
+              value = this.getFormNameById(task[key]);
+              break;
+            case 'dispatched_task_state_id':
+              value = this.stateName(task[key]);
+              break;
+            case 'due_date':
+            case 'dispatch_time':
+            case 'created_at':
+            case 'updated_at':
+              value = this.formatDate(task[key]);
+              break;
+            case 'remaining_time':
+              value = this.calculateRemainingTime(task['due_date']);
+              break;
+            case 'created_by':
+            case 'updated_by':
+            case 'user_id':
+              value = this.personnelMap[task[key]]?.name;
+              break;
+            default:
+              value = task[key];
+          }
+          return value && String(value).toLowerCase().includes(searchText);
+        }));
+      }
+
+      this.filteredTasks = tasks;
     },
     async fetchFormMap() {
       try {
@@ -465,11 +481,17 @@ export default {
         }
 
         // Encode query parameters into a Base64 string
-        console.log("taskUsable: " + taskUsable)
         // const queryParams = { usable: taskUsable, switchDisplayed: false };
-        const queryParams = { usable: taskUsable, switchDisplayed: false, dispatchedTaskId: row.id};
+        const queryParams = {
+          usable: taskUsable,
+          switchDisplayed: false,
+          dispatchedTaskId: row.id,
+          rt: row.dispatched_task_state_id === 1 || row.dispatched_task_state_id === 2 ? this.calculateRemainingSeconds(row.due_date) : 0
+        };
         const encodedQuery = Base64.encode(JSON.stringify(queryParams));
 
+        console.log("remaining time for this row")
+        console.log(row.remaining_time)
         // Construct the URL
         const newTabUrl = this.$router.resolve({
           name: 'FormDisplay',
@@ -564,6 +586,15 @@ export default {
         return `${minutes} 分钟`;
       }
     },
+    calculateRemainingSeconds(dueDate) {
+      if (!dueDate) return "-"; // If no due date, return "-"
+
+      const now = dayjs();
+      const due = dayjs(dueDate);
+      const diffInSeconds = due.diff(now, "second");
+
+      return diffInSeconds > 0 ? diffInSeconds : 0; // Ensure we don't return negative values
+    },
     remainingTimeTag(dueDate) {
       if (!dueDate) return "info";
 
@@ -627,12 +658,16 @@ export default {
     },
   },
   async mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+    this.updateTableHeight(); // Ensure correct height on load
     await this.fetchDispatchedTasks();
     await this.fetchFormMap();
     // await this.startPolling();
     await this.fetchPersonnelMap();
+    this.applyFilter();
   },
   async beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight)
     this.stopPolling();
   }
 };
@@ -679,6 +714,10 @@ export default {
     border-color: #66b5ff;
     transform: rotate(360deg); /* Rotate on hover */
     transition: transform 0.3s ease-in-out, background-color 0.2s ease; /* Smooth animation */
+  }
+
+  ::v-deep(.el-switch__inner .is-text) {
+    font-size: 16px !important;
   }
 
 </style>

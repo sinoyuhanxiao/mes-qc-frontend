@@ -5,8 +5,6 @@ import UserManagement from '@/views/UserManagement.vue';
 import LoginPage from '@/views/LoginPage.vue';
 import QualityFormManagement from '@/views/QualityFormManagement.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
-import TaskAssignment from '@/views/TaskAssignment.vue'
-import MyCurrentTask from "@/views/TaskCenter/MyCurrentTask.vue";
 import MyFutureTask from "@/views/TaskCenter/MyFutureTask.vue";
 import MyTodayTask from "@/views/TaskCenter/MyTodayTask.vue";
 import MyHistoryTask from "@/views/TaskCenter/MyHistoryTask.vue";
@@ -25,7 +23,7 @@ import ShiftManagement from "@/views/ShiftManagement.vue";
 const routes = [
     {
         path: '/',
-        // redirect: '/user-management', // Default route
+        redirect: '/task-center-dashboard', // Default route
     },
     {
         path: '/form-designer',
@@ -90,7 +88,8 @@ const routes = [
             qcFormTemplateId: route.params.qcFormTemplateId, // Path parameter
             usable: route.query.usable === 'true', // Query parameter, parse to boolean
             dispatchedTaskId: route.query.dispatchedTaskId, // Query parameter, parse to number
-            switchDisplayed: route.query.switchDisplayed === 'true' // Query parameter, parse to boolean
+            switchDisplayed: route.query.switchDisplayed === 'true', // Query parameter, parse to boolean
+            rt: route.query.rt // Query parameter, parse to number
         }),
     },
     {
@@ -109,7 +108,7 @@ const routes = [
         component: ReportManagement
     },
     {
-        path: '/task-log/:createdBy/:dispatchedTaskId',
+        path: '/task-log/:createdBy/:dispatchedTaskId/:taskName',
         name: 'TaskLog',
         component: QcTaskSubmissionLogs,
         props: true, // Pass route params as props to the component
@@ -146,10 +145,23 @@ router.beforeEach((to, from, next) => {
     } else if (userRole === 0) {
         // If role is 0, redirect to the login page
         next('/LoginPage');
+    } else if (userRole === 2 && [
+        '/form-designer',
+        '/user-management',
+        '/shift-management',
+        '/quality-form-management',
+        '/form-data-summary',
+        '/task-assignment',
+        '/instrument-management',
+        '/sampling-location-management',
+        '/test-subject-management'
+    ].includes(to.path)) {
+        // If user role is 2, restrict access to these routes
+        next('/task-center-dashboard'); // Redirect to a safe page
     } else {
-        // Allow access to other routes if the role is not 0
-        next();
+        next(); // Allow navigation if no restrictions apply
     }
 });
+
 
 export default router;

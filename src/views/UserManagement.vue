@@ -37,7 +37,7 @@
 
     <!-- Table -->
     <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
-      <el-table v-loading="loading" :data="paginatedUsers" style="width: 100%" @sort-change="handleSortChange">
+      <el-table v-loading="loading" :data="paginatedUsers" :height="tableHeight" style="width: 100%" @sort-change="handleSortChange">
         <el-table-column :label="translate('userManagement.table.id')" width="100" prop="id" sortable>
           <template #default="scope">
             <span>{{ scope.row.id }}</span>
@@ -461,7 +461,8 @@ export default {
         //     trigger: 'blur',
         //   },
         // ],
-      }
+      },
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
     };
   },
   watch: {
@@ -501,19 +502,27 @@ export default {
       return sortedData.slice(start, end);
     },
   },
+  mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+    this.updateTableHeight();
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight);
+  },
   methods: {
     translate,
     handleSortChange({ prop, order }) {
       // Update the sorting settings
       this.sortSettings = { prop, order };
     },
+    updateTableHeight() {
+      this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
+    },
     async fetchUserData() {
       this.loading = true;
       try {
         const response = await fetchUsers();
         if (response.data.status === '200') {
-          console.log("all user data")
-          console.log(response.data.data)
           const sortedData = response.data.data.sort((a, b) => a.id - b.id); // Sort by ID
           this.tableData = sortedData;
 
@@ -669,9 +678,6 @@ export default {
               // Remove the user from all current shifts
               await removeUserFromAllShifts(this.editUser.id);
 
-              // Assign the user to the selected shifts
-              console.log("assignedShifts: ")
-              console.log(this.editUser.assignedShifts)
               if (this.editUser.assignedShifts && this.editUser.assignedShifts.length > 0) {
                 await assignUserToShifts(this.editUser.id, this.editUser.assignedShifts);
               }
@@ -694,7 +700,6 @@ export default {
       });
     },
     handleEdit(index, row) {
-      console.log(row.shifts)
       this.editUser = {
         id: row.id,
         name: row.name,
@@ -836,9 +841,9 @@ export default {
   .tableContainer {
     display: flex;
     flex-direction: column;
-    overflow-x: auto; /* Enable horizontal scrolling */
-    max-width: 100%; /* Prevent table from overflowing */
-    white-space: nowrap; /* Prevent column content from wrapping */
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: nowrap;
   }
 
   .custom-assign-button {
