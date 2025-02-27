@@ -114,7 +114,7 @@ const nodeToDelete = ref<{ node: any; nodeData: Tree } | null>(null)
 const parentDataToAppend = ref<Tree | null>(null)
 const newNodeLabel = ref('')
 const newNodeType = ref('folder') // Default to folder
-const emit = defineEmits(['select-form']);
+const emit = defineEmits(['select-form', 'is-deletion']);
 
 const scrollbarHeight = ref(`${window.innerHeight - 70}px`); // Adjust height dynamically
 
@@ -176,6 +176,7 @@ const confirmDelete = async () => {
   const { node, nodeData } = nodeToDelete.value;
   try {
     await deleteNode(nodeData.id);
+    emit('is-deletion');
     const parent = node.parent;
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d) => d.id === nodeData.id);

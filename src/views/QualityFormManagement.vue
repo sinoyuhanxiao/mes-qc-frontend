@@ -1,7 +1,7 @@
 <template>
   <el-container>
     <el-aside width="25%">
-        <FormTree @select-form="selectForm" @add-form="addForm" />
+        <FormTree @select-form="selectForm" @add-form="addForm" @is-deletion="handleDeletion"/>
     </el-aside>
     <el-main>
       <!-- Render FormDisplay only if selectedForm exists and nodeType is not 'folder' -->
@@ -32,6 +32,9 @@ export default {
     addForm() {
       this.selectedForm = {widgetList: [], formConfig: {}, qcFormTemplateId: null};
     },
+    handleDeletion() {
+      this.selectedForm = null;
+    }
   },
 };
 </script>
