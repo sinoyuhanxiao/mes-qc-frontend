@@ -287,6 +287,7 @@ export default {
   methods: {
       async refreshTable() {
         this.$message.success("任务列表已刷新");
+        this.showUsableOnly = false;
         await this.fetchDispatchedTasks();
       },
       isTaskUsable,
@@ -332,7 +333,7 @@ export default {
 
         // Re-apply the filter if one is active
         if (this.formFilter.trim() !== "") {
-          this.applyFilter();
+          await this.applyFilter();
         }
 
         if (this.type === "today") {
@@ -480,9 +481,13 @@ export default {
         }
 
         // Encode query parameters into a Base64 string
-        console.log("taskUsable: " + taskUsable)
         // const queryParams = { usable: taskUsable, switchDisplayed: false };
-        const queryParams = { usable: taskUsable, switchDisplayed: false, dispatchedTaskId: row.id, rt: this.calculateRemainingSeconds(row.due_date)};
+        const queryParams = {
+          usable: taskUsable,
+          switchDisplayed: false,
+          dispatchedTaskId: row.id,
+          rt: row.dispatched_task_state_id === 1 || row.dispatched_task_state_id === 2 ? this.calculateRemainingSeconds(row.due_date) : 0
+        };
         const encodedQuery = Base64.encode(JSON.stringify(queryParams));
 
         console.log("remaining time for this row")
