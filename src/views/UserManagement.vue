@@ -818,6 +818,8 @@ export default {
             (item.shifts && item.shifts.some(shift => shift.shift_name.toLowerCase().includes(searchText))) // 过滤 所属班组
         );
       });
+
+      this.currentPage = 1;
     },
     handleSizeChange(size) {
       this.pageSize = size;
