@@ -140,6 +140,7 @@ export default {
             editButton: 'Edit',
             deleteButton: 'Delete',
             viewMembers: 'Members',
+            createdAt: 'Created At'
         },
         addDialog: {
             title: 'Add Shift',

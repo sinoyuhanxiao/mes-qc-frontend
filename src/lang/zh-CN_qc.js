@@ -140,6 +140,7 @@ export default {
             editButton: '修改',
             deleteButton: '删除',
             viewMembers: '查看成员',
+            createdAt: '创建时间'
         },
         addDialog: {
             title: '添加班组',
