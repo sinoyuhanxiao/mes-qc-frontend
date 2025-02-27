@@ -9,7 +9,7 @@
       <el-button :type="isEditMode ? 'success' : 'primary'" @click="toggleEditMode" style="margin-top: 0">
         {{ isEditMode ? 'View' : 'Edit' }}
       </el-button>
-      <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null)" style="margin-left: 10px; margin-top: 0">
+      <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null, $event)" style="margin-left: 10px; margin-top: 0">
         New
       </el-button>
     </div>
@@ -28,15 +28,17 @@
         <template #default="{ node, data }">
           <div class="custom-tree-node" @click="logNodeData(node, data)">
             <div class="node-content">
-              <el-icon>
+              <el-icon style="margin-right: 5px;">
                 <Folder v-if="data.nodeType === 'folder'" />
                 <Document v-else />
               </el-icon>
-              <span class="node-label">{{ data.label }}</span>
+              <el-text style="max-width: 150px;" truncated>
+                {{ data.label }}
+              </el-text>
             </div>
             <div class="node-actions" v-if="isEditMode">
-              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data)" style="color: #3f9dfd; cursor: pointer;">Append</a>
-              <a @click="showDeleteConfirmation(node, data)" style="color: #3f9dfd; cursor: pointer; margin-left: 8px;">Delete</a>
+              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">Append</a>
+              <a @click="showDeleteConfirmation(node, data, $event)" style="color: #3f9dfd; cursor: pointer; margin-left: 8px;">Delete</a>
             </div>
           </div>
         </template>
@@ -82,7 +84,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, defineEmits } from 'vue'
-import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
+import {ElTree, ElAlert, ElButton, ElDialog, ElInput, ElMessage} from 'element-plus'
 import { Folder, Document } from '@element-plus/icons-vue'
 import {
   fetchFormNodes,
@@ -165,7 +167,8 @@ const filterNode = (value: string, data: Tree) => {
 }
 
 // Show the delete confirmation dialog
-const showDeleteConfirmation = (node: any, nodeData: Tree) => {
+const showDeleteConfirmation = (node: any, nodeData: Tree, event) => {
+  event.stopPropagation()
   nodeToDelete.value = { node, nodeData }
   deleteDialogVisible.value = true
 }
@@ -183,6 +186,7 @@ const confirmDelete = async () => {
     children.splice(index, 1);
     data.value = [...data.value];
     deleteDialogVisible.value = false;
+    ElMessage.success("删除成功！")
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to delete node';
     deleteDialogVisible.value = false;
@@ -190,7 +194,8 @@ const confirmDelete = async () => {
 };
 
 // Show the append dialog
-const showAppendPopup = (parentData: Tree | null) => {
+const showAppendPopup = (parentData: Tree | null, event) => {
+  event.stopPropagation();
   parentDataToAppend.value = parentData
   newNodeLabel.value = ''
   appendDialogVisible.value = true
@@ -227,6 +232,7 @@ const confirmAppend = async () => {
 
     data.value = [...data.value];
     appendDialogVisible.value = false;
+    ElMessage.success("添加成功！");
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to add node';
     appendDialogVisible.value = false;
