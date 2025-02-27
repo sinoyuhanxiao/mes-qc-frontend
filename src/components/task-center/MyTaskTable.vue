@@ -65,12 +65,20 @@
             :sort-method="key === 'remaining_time' ? sortByRemainingTime : undefined"
         >
           <template #header>
-            <span v-if="key === 'qc_form_tree_node_id'">
-                {{ keyMap[key] || key }}
-                <el-tooltip content="任务过期、未来60分钟后或已完成则无法填写。" placement="top">
-                    <el-icon><QuestionFilled /></el-icon>
-                </el-tooltip>
-            </span>
+              <span v-if="key === 'qc_form_tree_node_id'">
+                  {{ keyMap[key] || key }}
+                  <el-tooltip placement="top">
+                      <template #content>
+                          <div>以下三种情况，您将无法填写任务：</div>
+                          <ul style="margin: 0; padding-left: 16px;">
+                              <li>任务已过期</li>
+                              <li>任务的到期时间在未来60分钟之后</li>
+                              <li>任务已完成</li>
+                          </ul>
+                      </template>
+                      <el-icon><QuestionFilled /></el-icon>
+                  </el-tooltip>
+              </span>
                 <span v-else>
                 {{ keyMap[key] || key }}
             </span>
