@@ -104,7 +104,7 @@
           </el-form-item>
 
           <el-form-item
-              label="派发计划ID">
+              label="派发计划号码">
             {{ dispatch.id }}
           </el-form-item>
 
@@ -194,7 +194,7 @@
                     placement="top"
                     width="auto">
                   <template #default>
-                    <div>ID: {{ testSubject.id }}</div>
+                    <div>检测项目号码: {{ testSubject.id }}</div>
                     <div v-if="testSubject.description">备注: {{ testSubject.description }}</div>
                     <div v-if="testSubject.status">状态: {{ testSubject.status }}</div>
                     <div v-if="testSubject.created_by">创建者: {{ testSubject.created_by }}</div>
@@ -211,7 +211,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="采样位置" v-if="dispatch.samplingLocationDetails.length > 0">
+          <el-form-item label="采样点" v-if="dispatch.samplingLocationDetails.length > 0">
             <div class="tags">
               <el-tag v-for="samplingLocation in dispatch.samplingLocationDetails"
                       :key="samplingLocation.id"
@@ -224,7 +224,7 @@
                     placement="top"
                     width="auto">
                   <template #default>
-                    <div>ID: {{ samplingLocation.id }}</div>
+                    <div>采样点号码: {{ samplingLocation.id }}</div>
                     <div v-if="samplingLocation.description">备注: {{ samplingLocation.description }}</div>
                     <div v-if="samplingLocation.status">状态: {{ samplingLocation.status }}</div>
                     <div v-if="samplingLocation.created_by">创建者: {{ samplingLocation.created_by }}</div>
@@ -256,7 +256,7 @@
                     placement="top"
                     width="auto">
                   <template #default>
-                    <div>ID: {{ instrument.id }}</div>
+                    <div>仪器号码 : {{ instrument.id }}</div>
                     <div v-if="instrument.description">备注: {{ instrument.description}}</div>
                     <div v-if="instrument.model_number">型号: {{ instrument.model_number }}</div>
                     <div v-if="instrument.manufacturer">制造商: {{ instrument.manufacturer }}</div>
@@ -296,7 +296,7 @@
               >
                 <el-popover effect="light" trigger="hover" placement="top" width="auto">
                   <template #default>
-                    <div>ID: {{ formId }}</div>
+                    <div>号码: {{ formId }}</div>
                     <div>表单名: {{ getFormById(formId) }}</div>
                   </template>
                   <template #reference>
@@ -326,7 +326,7 @@
                     width="300px">
                   <template #default>
                     <!-- Product Details -->
-                    <div><strong>ID:</strong> {{ product.id }}</div>
+                    <div><strong>号码:</strong> {{ product.id }}</div>
                     <div><strong>代码:</strong> {{ product.product_code }}</div>
                     <div><strong>描述:</strong> {{ product.description || '无' }}</div>
                     <div><strong>单位销售价:</strong> {{ product.unit_sales_price || '无'  }}</div>
@@ -368,7 +368,7 @@
                     width="300px">
                   <template #default>
                     <!-- Raw Material Details -->
-                    <div><strong>ID:</strong> {{ material.id }}</div>
+                    <div><strong>号码:</strong> {{ material.id }}</div>
                     <div><strong>代码:</strong> {{ material.code }}</div>
                     <div><strong>描述:</strong> {{ material.description || '无' }}</div>
                     <div><strong>单位价格:</strong> {{ material.unit_price }}</div>
@@ -413,7 +413,7 @@
                     width="300px">
                   <template #default>
                     <!-- Production Work Order Details -->
-                    <div><strong>ID:</strong> {{ workOrder.id }}</div>
+                    <div><strong>工单号码:</strong> {{ workOrder.id }}</div>
                     <div><strong>代码:</strong> {{ workOrder.code }}</div>
                     <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
                     <div><strong>计划数量:</strong> {{ workOrder.wo_quantity }}</div>
@@ -463,7 +463,7 @@
                   <template #default>
 
                     <!-- Equipment Details -->
-                    <div><strong>ID:</strong> {{ equipment.id }}</div>
+                    <div><strong>设备号码:</strong> {{ equipment.id }}</div>
                     <div><strong>代码:</strong> {{ equipment.code }}</div>
                     <div><strong>PLC:</strong> {{ equipment.plc }}</div>
                     <div><strong>序列号:</strong> {{ equipment.serial_number }}</div>
@@ -662,7 +662,6 @@ export default {
 
       for (let dispatch of this.dispatches) {
         try {
-          console.log(`Fetching details for dispatch ID: ${dispatch.id}`);
           dispatch.createdByDetail = await this.fetchUserHelper(dispatch.created_by);
           dispatch.updatedByDetail = await this.fetchUserHelper(dispatch.updated_by);
           dispatch.productDetails = await this.fetchDetails(dispatch.product_ids, getProductById);
