@@ -787,8 +787,13 @@
       },
 
       confirmQcTemplateSave() {
-        if (!this.formName || !this.selectedFolder) {
-          this.$message.warning('Please provide a form name and select a folder.');
+        if (!this.formName.trim()) {
+          this.$message.warning('质检单名称不能为空！');
+          return;
+        }
+
+        if (!this.selectedFolder) {
+          this.$message.warning('请选择一个文件夹。');
           return;
         }
 

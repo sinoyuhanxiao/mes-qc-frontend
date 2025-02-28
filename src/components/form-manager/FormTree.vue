@@ -65,7 +65,7 @@
     </el-dialog>
 
     <!-- Append Node Dialog -->
-    <el-dialog v-model="appendDialogVisible" :title="`Add New Node Under ${parentDataToAppend?.label}`" width="30%">
+    <el-dialog v-model="appendDialogVisible" :title="`Add New Node Under ${parentDataToAppend?.label || 'Root'}`" width="30%">
       <el-input v-model="newNodeLabel" placeholder="Enter node name" style="margin-bottom: 10px;" />
       <el-select v-model="newNodeType" placeholder="Select Node Type">
         <el-option label="Folder" value="folder"></el-option>
@@ -92,6 +92,7 @@ import {
   addChildNode,
   deleteNode,
 } from '@/services/formNodeService.js';
+import { ElMessageBox } from "element-plus";
 
 interface Tree {
   _id: string
@@ -203,13 +204,50 @@ const showAppendPopup = (parentData: Tree | null, event) => {
 
 // Confirm appending a new child node
 const confirmAppend = async () => {
+  // no empty string allowed
+  if (!newNodeLabel.value.trim()) {
+    ElMessage.warning("名称不能为空！");
+    return;
+  }
+
+  // check for duplicate names
+  const isDuplicate = (parentDataToAppend.value ? parentDataToAppend.value.children : data.value)
+      ?.some(node => node.label === newNodeLabel.value);
+
+  // 深度搜索整个树结构，检查是否有重复 label
+  const deepSearchDuplicate = (nodes, label) => {
+    for (const node of nodes) {
+      if (node.label === label) return true;
+      if (node.children && deepSearchDuplicate(node.children, label)) return true;
+    }
+    return false;
+  };
+
+  // 使用深度搜索检查整个树
+  const hasDuplicate = isDuplicate || deepSearchDuplicate(data.value, newNodeLabel.value);
+
+  if (hasDuplicate) {
+    ElMessageBox.confirm(
+        "已有重复名称，是否继续创建？",
+        "警告",
+        { confirmButtonText: "继续", cancelButtonText: "取消", type: "warning" }
+    ).then(() => {
+      proceedWithNodeCreation();
+    }).catch(() => {});
+    return;
+  }
+
+  await proceedWithNodeCreation();
+};
+
+const proceedWithNodeCreation = async () => {
   try {
     let newNode = {
       label: newNodeLabel.value,
       nodeType: newNodeType.value,
       children: newNodeType.value === 'folder' ? [] : undefined,
       qcFormTemplateId: newNodeType.value === 'document' ? '' : undefined,
-    }
+    };
 
     let response;
 
