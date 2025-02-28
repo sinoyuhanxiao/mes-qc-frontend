@@ -423,13 +423,13 @@ export default {
       newPassword: '', // New password input
       confirmPassword: '', // Confirm password input
       rules: {
-        name: [{ required: true, message: 'Name is required', trigger: 'blur' }],
-        role: [{ required: true, message: 'Role is required', trigger: 'change' }],
-        wecomId: [{ required: true, message: 'WeChat ID is required', trigger: 'blur' }],
-        status: [{ required: true, message: 'Status is required', trigger: 'change' }],
+        name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
+        role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+        wecomId: [{ required: true, message: '请输入企业微信ID', trigger: 'blur' }],
+        status: [{ required: true, message: '请选择激活状态', trigger: 'change' }],
         username: [
-          { required: true, message: 'Username is required', trigger: 'blur' },
-          { min: 4, message: 'Username must be at least 4 characters', trigger: 'blur' },
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 4, message: '用户名不少于四个字符', trigger: 'blur' },
           {
             validator: (rule, value, callback) => {
               if (!value) return callback();
@@ -440,7 +440,7 @@ export default {
                   .map(user => user.username.toLowerCase());
 
               if (existingNames.includes(value.toLowerCase())) {
-                return callback(new Error('Username already exists'));
+                return callback(new Error('该用户名已存在'));
               }
               callback();
             },
@@ -448,18 +448,18 @@ export default {
           }
         ],
         password: [
-          { required: true, message: 'Password is required', trigger: 'blur' },
-          { min: 4, message: 'Password must be at least 4 characters', trigger: 'blur' },
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 4, message: '密码不少于4位数', trigger: 'blur' },
         ],
         phone_number: [
           {
             required: true,
-            message: 'Phone number is required',
+            message: '请输入手机号',
             trigger: 'blur'
           },
           {
             pattern: /^\+?[1-9]\d{1,14}$/,
-            message: 'Invalid phone number format',
+            message: '请输入正确的手机号',
             trigger: 'blur'
           }
         ]
@@ -596,11 +596,11 @@ export default {
       if (userId === currentUserId && newStatus === 0) {
         try {
           await this.$confirm(
-              `You are deactivating your own account. Are you sure you want to proceed?`,
-              "Self Deactivation Confirmation",
+              `你正在注销你自己的账号，确定继续吗？`,
+              "注销自己账号",
               {
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
                 type: "warning",
               }
           )
@@ -608,16 +608,16 @@ export default {
                 // Proceed with deactivation
                 const payload = { status: newStatus };
                 await updateUser(userId, payload);
-                this.$message.success("Your account has been deactivated successfully");
+                this.$message.success("你的账号已经成功注销，登出后将无法登入。");
                 // Handle logout or session cleanup here
               })
               .catch(() => {
-                this.$message.info("Self-deactivation canceled");
+                this.$message.info("操作取消");
                 this.fetchUserData(); // Refresh the table data
               });
         } catch (error) {
-          console.error("Error deactivating user:", error);
-          this.$message.error("Failed to deactivate your account");
+          console.error("注销用户有误:", error);
+          this.$message.error("注销用户失败");
         }
         return;
       }
@@ -626,11 +626,11 @@ export default {
       try {
         const payload = { status: newStatus };
         await updateUser(userId, payload);
-        this.$message.success("Status updated successfully");
+        this.$message.success("激活状态更新成功");
         this.fetchUserData(); // Refresh the table data
       } catch (error) {
-        console.error("Error updating status:", error);
-        this.$message.error("Failed to update status");
+        console.error("激活状态更新有误", error);
+        this.$message.error("激活状态更新失败");
       }
     },
     getRoleName(roleId) {
@@ -647,7 +647,7 @@ export default {
         if (valid) {
           await this.performAddUser(); // Call the actual method to add the user
         } else {
-          this.$message.error('Please fix validation errors before proceeding');
+          this.$message.error('请修正错误！');
         }
       });
     },
@@ -675,10 +675,10 @@ export default {
 
         this.addDialogVisible = false;
         await this.fetchUserData();
-        this.$message.success('User added successfully');
+        this.$message.success('用户已成功添加！');
       } catch (error) {
         console.error('Error adding user:', error);
-        this.$message.error('Failed to add user');
+        this.$message.error('用户添加失败');
       }
     },
     async handleEditConfirm() {
@@ -699,7 +699,7 @@ export default {
             // Include password if changePassword is checked, in the future integrate to the same validation check
             if (this.changePassword) {
               if (!this.newPassword || this.newPassword !== this.confirmPassword || this.newPassword.length < 4) {
-                this.$message.error('Passwords do not match or less than 4!');
+                this.$message.error('密码不匹配或少于 4 个字符！');
                 return;
               }
               payload.password = btoa(this.newPassword);
@@ -715,20 +715,20 @@ export default {
                 await assignUserToShifts(this.editUser.id, this.editUser.assignedShifts);
               }
 
-              this.$message.success("Shifts updated successfully");
+              this.$message.success("班组更新成功");
             } catch (shiftError) {
               console.error("Error updating shifts:", shiftError);
-              this.$message.error("Failed to update shifts");
+              this.$message.error("班组更新失败");
             }
             this.editDialogVisible = false;
             await this.fetchUserData();
-            this.$message.success("User updated successfully");
+            this.$message.success("用户更新成功");
           } catch (error) {
             console.error("Error editing user:", error);
-            this.$message.error("Failed to update user");
+            this.$message.error("用户更新失败");
           }
         } else {
-          this.$message.error("Please fix validation errors before proceeding");
+          this.$message.error("请修正错误");
         }
       });
     },
@@ -759,28 +759,28 @@ export default {
         try {
           // Show self-deletion confirmation dialog
           await this.$confirm(
-              `You are deleting your own account and your associated shifts. Are you sure you want to proceed?`,
-              "Self Deletion Confirmation",
+              `您正在删除自己的账户及其关联的班次。确定要继续吗？`,
+              "删除确认",
               {
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
+                confirmButtonText: "确定",
+                cancelButtonText: "取消",
                 type: "warning",
               }
           )
               .then(async () => {
                 // If confirmed, call delete API
                 await deleteUser(row.id);
-                this.$message.success("Your account has been deleted successfully");
+                this.$message.success("你的账户已被删除，登出后将无法登入");
                 await this.fetchUserData(); // Refresh the table data
                 // handle logout or session cleanup: optional for now, give the user chance to wrap up
               })
               .catch(() => {
-                this.$message.info("Self-deletion canceled");
+                this.$message.info("操作已取消");
                 this.fetchUserData(); // Refresh the table data
               });
         } catch (error) {
           console.error("Error deleting user:", error);
-          this.$message.error("Failed to delete your account");
+          this.$message.error("删除错误");
         }
         return;
       }
@@ -788,11 +788,11 @@ export default {
       // Regular deletion for other users
       try {
         this.$confirm(
-            `Are you sure you want to delete the user "${row.name}" as well as the associated shifts?`,
-            "Delete Confirmation",
+            `你确认要删除用户 "${row.name}" 以及相关的班组?`,
+            "删除确认",
             {
-              confirmButtonText: "Yes",
-              cancelButtonText: "No",
+              confirmButtonText: "确认",
+              cancelButtonText: "取消",
               type: "warning",
             }
         )
@@ -800,15 +800,15 @@ export default {
               // If confirmed, call delete API
               await deleteUser(row.id);
               await removeUserFromAllShifts(row.id);
-              this.$message.success("User deleted successfully");
+              this.$message.success("用户已成功删除");
               await this.fetchUserData(); // Refresh the table data
             })
             .catch(() => {
-              this.$message.info("Deletion canceled");
+              this.$message.info("操作取消");
             });
       } catch (error) {
         console.error("Error deleting user:", error);
-        this.$message.error("Failed to delete user");
+        this.$message.error("删除错误");
       }
     },
     showAddDialog() {

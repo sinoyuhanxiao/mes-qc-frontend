@@ -600,10 +600,10 @@ export default {
         if (this.editUser.assignedUsers.length > 0) {
           await assignUsersToShift(shiftId, this.editUser.assignedUsers);
         }
-        this.$message.success('Users updated successfully');
+        this.$message.success('更新成功');
       } catch (error) {
         console.error('Error updating users for shift:', error);
-        this.$message.error('Failed to update users');
+        this.$message.error('更新失败');
       }
     },
     async fetchShiftData() {
@@ -661,15 +661,15 @@ export default {
               await assignUsersToShift(shiftId, this.newUser.selectedUsers);
             }
 
-            this.$message.success("Shift created and users assigned successfully");
+            this.$message.success("班次创建成功，用户分配完成。");
             await this.$nextTick(() => this.resetNewShiftForm());
             // Force reset after successful addition
             this.addDialogVisible = false;
             await this.fetchShiftData();
-            this.$message.success("Shift added successfully");
+            this.$message.success("班组创建成功");
           } catch (error) {
             console.error("Error adding shift:", error);
-            this.$message.error("Failed to create shift or assign users");
+            this.$message.error("创建失败");
           }
         }
       });
@@ -683,13 +683,12 @@ export default {
         payload.start_time = this.toOffsetTime(payload.start_time);
         payload.end_time = this.toOffsetTime(payload.end_time);
 
-        console.log("Updating shift:", payload)
         await updateShift(payload.id, payload, this.$store.getters.getUser.id);
         // deal with shift members update
         await this.updateUsersForShift(payload.id)
         this.editDialogVisible = false;
         await this.fetchShiftData();
-        this.$message.success("Shift updated successfully");
+        this.$message.success("班组创建成功");
       } catch (error) {
         console.error("Error updating shift:", error);
       }
@@ -702,7 +701,7 @@ export default {
           await deactivateShift(id, this.$store.getters.getUser.id);
         }
         await this.fetchShiftData();
-        this.$message.success("Status updated successfully");
+        this.$message.success("激活状态更改成功");
       } catch (error) {
         console.error("Error updating status:", error);
       }
@@ -710,24 +709,24 @@ export default {
     async handleDelete(index, row) {
       try {
         this.$confirm(
-            `Are you sure you want to delete the shift "${row.name}" and disconnect all its relationships with members?`,
-            'Delete Confirmation',
+            `您确认要删除班次 "${row.name}" 并解除其与所有成员的关联吗？`,
+            '删除确认',
             {
-              confirmButtonText: 'Yes',
-              cancelButtonText: 'No',
+              confirmButtonText: '确认',
+              cancelButtonText: '取消',
               type: 'warning',
             }
         ).then(async () => {
           await deleteShift(row.id);
           await removeShiftFromAllUsers(row.id);
           await this.fetchShiftData();
-          this.$message.success('Shift deleted successfully');
+          this.$message.success('班组删除成功');
         }).catch(() => {
-          this.$message.info('Shift deletion canceled');
+          this.$message.info('班组删除取消');
         });
       } catch (error) {
         console.error('Error deleting shift:', error);
-        this.$message.error('Failed to delete the shift');
+        this.$message.error('删除班组失败');
       }
     },
     handleEdit(index, row) {
@@ -763,8 +762,6 @@ export default {
       });
     },
     showAddDialog() {
-      console.log("showAddDialog's newShift: ")
-      console.log(this.newShift)
       this.fetchUserOptions(); // Fetch the user list
       this.addDialogVisible = true; // Open the dialog
       // this.$nextTick(() => {
