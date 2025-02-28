@@ -409,6 +409,11 @@ export default {
       const formTemplateId = this.selectedForm.qcFormTemplateId;
       const startDateTime = this.formatDate(this.dateRange[0]);
       const endDateTime = this.formatDate(this.dateRange[1]);
+      // console log the dates here
+      // log formTemplateId
+      console.log("📋 Form Template ID:", formTemplateId)
+      console.log("📅 Start Date:", startDateTime);
+      console.log("📅 End Date:", endDateTime);
 
       // Reset the arrays before fetching new data
       this.pieChartWidgets = [];

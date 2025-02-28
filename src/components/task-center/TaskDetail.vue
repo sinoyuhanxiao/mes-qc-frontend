@@ -151,11 +151,11 @@ export default {
     },
     stateName(stateId) {
       const stateMap = {
-        1: "Pending",
-        2: "In Progress",
-        3: "Completed",
-        4: "Canceled",
-        5: "Overdue",
+        1: "待处理",
+        2: "进行中",
+        3: "已完成",
+        4: "已取消",
+        5: "已逾期",
       };
       return stateMap[stateId] || "Unknown";
     },

@@ -4,8 +4,8 @@
     <el-row :gutter="20" class="row-bg" justify="space-between">
       <el-col :span="10"><h1> {{ name }}的个人任务看板</h1></el-col>
       <el-col :span="3.5" style="align-self: center;">
-        <el-button @click="showDevelopingPopup">New</el-button>
-        <el-button @click="showDevelopingPopup">Filter</el-button>
+        <el-button @click="showDevelopingPopup">+ 新建</el-button>
+        <el-button @click="showDevelopingPopup">过滤器</el-button>
       </el-col>
     </el-row>
 

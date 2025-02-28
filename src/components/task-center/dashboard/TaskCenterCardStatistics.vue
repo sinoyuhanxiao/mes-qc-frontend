@@ -20,7 +20,7 @@
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>than yesterday</span>
+            <span>相比昨天</span>
             <span :class="todayTaskChange >= 0 ? 'green' : 'red'">
               {{ todayTaskChange }}%
               <el-icon>
@@ -56,7 +56,7 @@
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>than yesterday</span>
+            <span>相比昨天</span>
             <span :class="futureTaskChange >= 0 ? 'green' : 'red'">
               {{ futureTaskChange }}%
               <el-icon>
@@ -83,7 +83,7 @@
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>than yesterday</span>
+            <span>相比昨天</span>
             <span :class="historicalTaskChange >= 0 ? 'green' : 'red'">
               {{ historicalTaskChange }}%
             <el-icon>
@@ -110,7 +110,7 @@
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>than yesterday</span>
+            <span>相比昨天</span>
             <span :class="overdueTaskChange >= 0 ? 'green' : 'red'">
               {{ overdueTaskChange }}%
               <el-icon>

@@ -1,10 +1,10 @@
 <template>
   <div class="form-tree-multi-select">
-    Select Folders
+    选择文件夹
     <el-tree-select
         v-model="selectedValues"
         :data="treeData"
-        placeholder="Select Folders"
+        placeholder="请选择文件夹"
         multiple
         filterable
         :render-after-expand="false"

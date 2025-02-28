@@ -33,7 +33,7 @@ onMounted(async () => {
 
 const setChartData = (pending, inProgress, completed) => {
   return {
-    labels: ['Pending', 'In Progress', 'Completed'],
+    labels: ['待处理', '进行中', '已完成'],
     datasets: [
       {
         data: [pending, inProgress, completed], // Dynamically set data from backend response

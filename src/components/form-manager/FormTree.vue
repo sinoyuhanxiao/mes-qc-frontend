@@ -4,13 +4,13 @@
       <el-input
           v-model="filterText"
           style="width: 240px; margin-right: 10px;"
-          placeholder="Filter keyword"
+          placeholder="搜索名称"
       />
       <el-button :type="isEditMode ? 'success' : 'primary'" @click="toggleEditMode" style="margin-top: 0">
-        {{ isEditMode ? 'View' : 'Edit' }}
+        {{ isEditMode ? '取消编辑' : '编辑' }}
       </el-button>
       <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null, $event)" style="margin-left: 10px; margin-top: 0">
-        New
+        + 新建
       </el-button>
     </div>
 
@@ -37,8 +37,8 @@
               </el-text>
             </div>
             <div class="node-actions" v-if="isEditMode">
-              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">Append</a>
-              <a @click="showDeleteConfirmation(node, data, $event)" style="color: #3f9dfd; cursor: pointer; margin-left: 8px;">Delete</a>
+              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">添加</a>
+              <a @click="showDeleteConfirmation(node, data, $event)" style="color: #fb8080; cursor: pointer; margin-left: 8px;">删除</a>
             </div>
           </div>
         </template>
@@ -54,27 +54,27 @@
     />
 
     <!-- Delete Confirmation Dialog -->
-    <el-dialog v-model="deleteDialogVisible" title="Confirm Deletion" width="30%">
-      <span>Are you sure you want to delete <strong>{{ nodeToDelete?.nodeData.label }}</strong>?</span>
+    <el-dialog v-model="deleteDialogVisible" title="删除确认" width="30%">
+      <span>是否确认删除 <strong>{{ nodeToDelete?.nodeData.label }}</strong>?</span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="deleteDialogVisible = false">Cancel</el-button>
-          <el-button type="danger" @click="confirmDelete">Delete</el-button>
+          <el-button @click="deleteDialogVisible = false">取消</el-button>
+          <el-button type="danger" @click="confirmDelete">删除</el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- Append Node Dialog -->
-    <el-dialog v-model="appendDialogVisible" :title="`Add New Node Under ${parentDataToAppend?.label || 'Root'}`" width="30%">
-      <el-input v-model="newNodeLabel" placeholder="Enter node name" style="margin-bottom: 10px;" />
-      <el-select v-model="newNodeType" placeholder="Select Node Type">
-        <el-option label="Folder" value="folder"></el-option>
-        <el-option label="Document" value="document"></el-option>
+    <el-dialog v-model="appendDialogVisible" :title="`添加节点到 ${parentDataToAppend?.label || '根目录'}`" width="30%">
+      <el-input v-model="newNodeLabel" placeholder="输入节点名称" style="margin-bottom: 10px;" />
+      <el-select v-model="newNodeType" placeholder="选择节点类型">
+        <el-option label="文件夹" value="folder"></el-option>
+        <el-option label="质检表单" value="document"></el-option>
       </el-select>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="appendDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="confirmAppend">Add</el-button>
+          <el-button @click="appendDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmAppend">添加</el-button>
         </span>
       </template>
     </el-dialog>
@@ -149,7 +149,7 @@ const fetchFormTreeData = async () => {
     const response = await fetchFormNodes();
     data.value = response.data;
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load form tree data';
+    error.value = err.response?.data?.message || '加载数据失败';
   }
 };
 
@@ -189,7 +189,7 @@ const confirmDelete = async () => {
     deleteDialogVisible.value = false;
     ElMessage.success("删除成功！")
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to delete node';
+    error.value = err.response?.data?.message || '删除失败';
     deleteDialogVisible.value = false;
   }
 };
@@ -272,7 +272,7 @@ const proceedWithNodeCreation = async () => {
     appendDialogVisible.value = false;
     ElMessage.success("添加成功！");
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to add node';
+    error.value = err.response?.data?.message || '添加节点失败';
     appendDialogVisible.value = false;
   }
 };

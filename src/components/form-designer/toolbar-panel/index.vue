@@ -184,21 +184,21 @@
     </div>
 
     <div v-if="saveDialogVisible" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
-      <el-dialog title='Save QC Form Template to Folders' v-model="saveDialogVisible"
+      <el-dialog title='保存质检单' v-model="saveDialogVisible"
                  :show-close="true" class="drag-dialog small-padding-dialog" :append-to-body="true" center
                  :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true" width="50%">
         <div>
-          <el-form label-width="150px">
-            <el-form-item label="Form Name">
-              <el-input v-model="formName" placeholder="Give the new form a name" />
+          <el-form label-width="130px">
+            <el-form-item label="质检单名称" style="margin-right: 40px">
+              <el-input v-model="formName" placeholder="请输入质检单名称..." />
             </el-form-item>
             <FormTreeMultipleSelection  style="margin-left: 50px" v-model:selectedFolders="selectedFolder" />
           </el-form>
         </div>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="saveDialogVisible = false">Cancel</el-button>
-            <el-button type="primary" @click="confirmQcTemplateSave">Save</el-button>
+            <el-button @click="saveDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="confirmQcTemplateSave">保存</el-button>
           </div>
         </template>
       </el-dialog>
