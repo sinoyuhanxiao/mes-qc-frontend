@@ -430,6 +430,22 @@ export default {
         username: [
           { required: true, message: 'Username is required', trigger: 'blur' },
           { min: 4, message: 'Username must be at least 4 characters', trigger: 'blur' },
+          {
+            validator: (rule, value, callback) => {
+              if (!value) return callback();
+
+              // Get the list excluding the current user's username
+              const existingNames = this.tableData
+                  .filter(user => user.id !== (this.editUser.id || this.newUser.id)) // Exclude self
+                  .map(user => user.username.toLowerCase());
+
+              if (existingNames.includes(value.toLowerCase())) {
+                return callback(new Error('Username already exists'));
+              }
+              callback();
+            },
+            trigger: 'blur'
+          }
         ],
         password: [
           { required: true, message: 'Password is required', trigger: 'blur' },
@@ -494,6 +510,11 @@ export default {
     this.fetchShiftOptions();
   },
   computed: {
+    existingUsernames() {
+      return this.tableData
+          .filter(user => user.id !== (this.editUser.id || this.newUser.id)) // Exclude self
+          .map(user => user.username.toLowerCase());
+    },
     paginatedUsers() {
       // Apply sorting first
       const sortedData = [...this.filteredData].sort((a, b) => {
