@@ -70,7 +70,7 @@
               </el-menu-item>
               <el-menu-item index="/sampling-location-management">
                 <el-icon><Location /></el-icon>
-                <span>取样点管理</span>
+                <span>采样点管理</span>
               </el-menu-item>
             </el-sub-menu>
 
