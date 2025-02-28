@@ -83,13 +83,13 @@
           </el-button>
 
           <el-button
-              v-if="dispatch.state === 1"
+              v-if="dispatch.type === 'regular' && dispatch.state === 1"
               type="info"
               @click="handlePauseOrderDispatch(dispatch.id)">
             暂停
           </el-button>
           <el-button
-              v-if="dispatch.state === 5"
+              v-if="dispatch.type === 'regular' && dispatch.state === 5"
               type="info"
               @click="handleResumeOrderDispatch(dispatch.id)">
             重启
