@@ -35,7 +35,7 @@
           </el-tooltip>
           <el-input
               v-model="searchTerm"
-              placeholder="Search by ID or Submission ID"
+              placeholder="搜索ID或单号"
               clearable
               style="width: 300px;"
               @input="applyFilter"

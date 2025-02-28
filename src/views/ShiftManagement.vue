@@ -152,7 +152,7 @@
       <!-- Filter Bar -->
       <el-input
           v-model="searchUserQuery"
-          placeholder="Search Members"
+          placeholder="搜索成员"
           clearable
           @input="filterShiftUsers"
           style="margin-bottom: 10px; width: 300px;"
@@ -164,19 +164,19 @@
 
       <!-- Table with Sorting -->
       <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
-        <el-table-column prop="id" label="User ID" width="100" sortable />
-        <el-table-column prop="name" label="Name" width="180" sortable />
-        <el-table-column prop="role_id" label="Role" width="150" sortable>
+        <el-table-column prop="id" label="ID" width="100" sortable />
+        <el-table-column prop="name" label="名称" width="180" sortable />
+        <el-table-column prop="role_id" label="角色" width="150" sortable>
           <template #default="scope">
             <el-tag :type="scope.row.role_id === 1 ? 'warning' : 'success'">
               {{ getRoleName(scope.row.role_id) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="wecom_id" label="WeCom ID" width="180" sortable />
-        <el-table-column prop="username" label="Username" width="180" sortable />
-        <el-table-column prop="email" label="Email" width="220" sortable />
-        <el-table-column prop="phone_number" label="Phone Number" width="180" sortable>
+        <el-table-column prop="wecom_id" label="企业微信ID" width="180" sortable />
+        <el-table-column prop="username" label="用户名" width="180" sortable />
+        <el-table-column prop="email" label="邮箱" width="220" sortable />
+        <el-table-column prop="phone_number" label="电话号码" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.phone_number || '-' }}</span>
           </template>
