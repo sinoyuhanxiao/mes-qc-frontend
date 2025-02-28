@@ -1,39 +1,50 @@
 <template>
   <div :class="[{ 'error-border': hasError }]">
-    <div class="toolbar">
+    <el-form-item
+        label="质检表单"
+        required
+        :prop="propName"
+        :rules="[{ validator: validateSelectedForms, trigger: 'change' }]"
+    >
       <el-input
           v-model="filterText"
-          style="width: 240px; margin-right: 10px;"
+          style="width: 240px; margin-left: 10px;"
           placeholder="搜索表单"
+          clearable
       />
 
-    </div>
-
-    <el-tree
-        ref="treeRef"
-        style="max-height: 300px; /* Set vertical limit */ overflow-y: auto;   /* Enable scrolling */ border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px;"
-        :data="data"
-        node-key="id"
-        :props="defaultProps"
-        :filter-node-method="filterNode"
-        @check-change="handleCheckChange"
-        @node-click="handleNodeClicked"
-        show-checkbox
-        default-expand-all
-    >
-      <template #default="{ node, data }">
-        <div class="custom-tree-node">
-          <div class="node-content">
-            <el-icon>
-              <Folder v-if="data.nodeType === 'folder'" />
-              <Document v-else />
-            </el-icon>
-            <span class="node-label">{{ data.label }}</span>
+      <el-tree
+          ref="treeRef"
+          style="
+            max-height: 300px; /* Set vertical limit */
+            overflow-y: auto;   /* Enable scrolling */
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;"
+          :data="data"
+          node-key="id"
+          :props="defaultProps"
+          :filter-node-method="filterNode"
+          @check-change="handleCheckChange"
+          @node-click="handleNodeClicked"
+          show-checkbox
+          default-expand-all
+      >
+        <template #default="{ node, data }">
+          <div class="custom-tree-node">
+            <div class="node-content">
+              <el-icon>
+                <Folder v-if="data.nodeType === 'folder'" />
+                <Document v-else />
+              </el-icon>
+              <span class="node-label">{{ data.label }}</span>
+            </div>
           </div>
-        </div>
-      </template>
-
-    </el-tree>
+        </template>
+      </el-tree>
+      <div v-if="hasError" class="el-form-item__error">
+        请选择至少一个表单
+      </div>
+    </el-form-item>
 
     <el-alert
         v-if="error"
@@ -42,8 +53,6 @@
         :description="error"
         show-icon
     />
-
-
   </div>
 </template>
 
@@ -75,6 +84,9 @@ const props = defineProps({
     type: Boolean,
     default: false, // Controls whether to show red overlay
   },
+  propName: {
+    type: String,
+  },
 });
 const emit = defineEmits(['update-selected-forms','on-node-clicked']);
 const filterText = ref('')
@@ -82,6 +94,14 @@ const treeRef = ref<InstanceType<typeof ElTree>>()
 const data = ref<Tree[]>([])
 const error = ref<string | null>(null)
 
+// Custom Validation Method
+const validateSelectedForms = (rule, value, callback) => {
+  if (!props.selectedFormIds || props.selectedFormIds.length === 0) {
+    callback(new Error("请选择至少一个表单"));
+  } else {
+    callback();
+  }
+};
 
 const defaultProps = {
   children: 'children',
@@ -201,11 +221,5 @@ const handleNodeClicked = (nodeData) => {
 
 .node-actions a {
   margin-left: 8px;
-}
-
-.error-border {
-  border: 2px solid #f56c6c !important; /* Red validation border */
-  border-radius: 4px;
-  padding: 5px;
 }
 </style>

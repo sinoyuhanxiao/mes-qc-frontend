@@ -76,7 +76,7 @@
         >
           <!-- Expand Arrow -->
           <el-button
-              type="text"
+              :link="true"
               @click="toggleCollapse(index)"
               :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
             {{ dispatch.collapsed ? '展开' : '收起' }}
@@ -104,7 +104,7 @@
           </el-form-item>
 
           <el-form-item
-              label="ID">
+              label="派发计划ID">
             {{ dispatch.id }}
           </el-form-item>
 
@@ -159,7 +159,7 @@
             {{ dispatch.executed_count }}
           </el-form-item>
 
-          <el-form-item label="创建者">
+          <el-form-item label="创建者" v-if="dispatch.created_by">
             <UserReference :userId="dispatch.created_by" />
           </el-form-item>
 
@@ -168,8 +168,8 @@
             {{ formatDate(dispatch.created_at) }}
           </el-form-item>
 
-          <el-form-item label="更新者">
-            <UserReference :userId="dispatch.updated_by" />
+          <el-form-item label="更新者" v-if="dispatch.updated_by">
+            <UserReference :userId="dispatch.updated_by"/>
           </el-form-item>
 
           <el-form-item label="更新时间" v-if="dispatch.updated_at">
@@ -277,34 +277,11 @@
           </el-form-item>
 
           <el-form-item label="检测人员" v-if="dispatch.userDetails.length > 0">
-            <div class="tags">
-              <el-tag
-                  v-for="user in dispatch.userDetails"
-                  :key="user.id"
-                  type="primary"
-                  size="small"
-                  effect="light"
-              >
-                <el-popover
-                    effect="light"
-                    trigger="hover"
-                    placement="top"
-                    width="auto">
-                  <template #default>
-                    <div>姓名: {{ user.name }}</div>
-                    <div>用户名: {{ user.username }}</div>
-                    <div>角色: {{ user.wecom_id }}</div>
-                    <div>企业微信: {{ user.wecom_id }}</div>
-                    <div>信箱: {{ user.wecom_id }}</div>
-                    <div>电话: {{ user.wecom_id }}</div>
-                    <div>班组: TODO </div>
-
-                  </template>
-                  <template #reference>
-                    {{ user.name }}
-                  </template>
-                </el-popover>
-              </el-tag>
+            <div
+                v-for="user in dispatch.userDetails"
+                class="tags"
+            >
+              <UserReference :userId="user.id"/>
             </div>
           </el-form-item>
 
@@ -739,7 +716,7 @@ export default {
 
         if (response && response.status === 200) {
           this.$message.success("任务已暂停");
-          this.$emit("refresh-order"); // ✅ Refresh only if successful
+          this.$emit("refresh-order"); //
         } else {
           this.$message.error("暂停任务失败，请重试！");
         }
@@ -756,7 +733,7 @@ export default {
 
         if (response && response.status === 200) {
           this.$message.success("任务已重启");
-          this.$emit("refresh-order"); // ✅ Refresh only if successful
+          this.$emit("refresh-order"); //
         } else {
           this.$message.error("重启任务失败，请重试！");
         }
@@ -797,7 +774,8 @@ export default {
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
+  margin-right: 10px;
 }
 
 .wrap-text {

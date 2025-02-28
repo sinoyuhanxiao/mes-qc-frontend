@@ -33,7 +33,7 @@
       </el-table-column>
 
       <!-- ID -->
-      <el-table-column prop="id" label="ID" width="90" sortable></el-table-column>
+      <el-table-column prop="id" label="任务ID" width="90" sortable></el-table-column>
 
       <!-- Dispatch ID -->
       <el-table-column prop="dispatch_id" label="派发计划ID" width="120" sortable></el-table-column>
@@ -340,7 +340,6 @@ export default {
         }
 
         if (response && response.status === 200) {
-          console.log(response);
           this.tasks = response.data.data.content;
           this.totalTasks = response.data.data.totalElements;
         }

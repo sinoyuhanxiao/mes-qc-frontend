@@ -1,5 +1,5 @@
 <template>
-  <el-container style="display: flex; flex-direction: column; height: fit-content; max-width: 100%; max-height: 100vh; overflow-y: hidden;">
+  <el-container style="display: flex; flex-direction: column; height: max-content; max-width: 100%; max-height: 100vh; overflow-y: hidden;">
     <!-- Top Section -->
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center;">
@@ -21,7 +21,6 @@
           </template>
         </el-input>
       </div>
-
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
         <el-tooltip content="刷新列表" placement="top">
@@ -59,7 +58,7 @@
     </div>
 
     <!-- QC Order Table -->
-    <el-main style="padding: 0;   margin-top: 20px;">
+    <el-main style="padding: 0; margin-top: 20px;">
       <QcOrderList
           :qc-order-list="qcOrders"
           :form-map="formMap"
@@ -79,7 +78,7 @@
         top="5vh"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
-        style="max-width: 1200px; max-height: 90vh; overflow: hidden;">
+        style="max-width: 1200px; max-height: 90vh; overflow: auto;">
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
             :key="refreshKey"
@@ -108,6 +107,7 @@
     <!-- Dispatched Tasks Dialog -->
     <el-dialog
         title="已派发任務"
+        top="5vh"
         v-model="isDispatchedTestsDialogVisible"
         width="70%"
         @close="closeViewDispatchedTestsDialog"
@@ -195,23 +195,17 @@ export default {
         let response = null;
         if (this.currentOrder && this.currentOrder.id != null) {
           // update call
-          console.log("update order");
-          console.log(order);
           response = await updateQcOrder(this.currentOrder.id, order);
         } else {
           // create call
-          console.log("create order");
-          console.log(order);
           response = await createQcOrder(order);
         }
         if (response && response.status === 200) {
           this.$message.success("工单已创建！");
         }
-
           await this.loadAllQcOrders();
           this.closeAndResetDetailsDialog();
       } catch (error) {
-        console.error("Error creating QC Order:", error);
         this.$message.error("Failed to create QC Order. Please try again.");
       }
     },
@@ -233,10 +227,7 @@ export default {
             await this.loadAllQcOrders();
             this.selectedRows = [];
           })
-          .catch((error) => {
-            this.$message.error("删除失败，请重试。");
-            console.log(error);
-          });
+
     },
     closeAndResetDetailsDialog() {
       console.log('closeAndResetDetailsDialog')
@@ -274,15 +265,15 @@ export default {
         const response = await getQcOrderById(id);
         const updatedOrder = response.data?.data;
         this.refreshKey++;
+        console.log(`increased refresh key.`);
 
         if (updatedOrder) {
           this.currentOrder = { ...updatedOrder };
-
-          const orderIndex = this.originalQcOrders.findIndex(order => order.id === updatedOrder.id);
-          if (orderIndex !== -1) {
-            this.originalQcOrders.splice(orderIndex, 1, updatedOrder);
-          }
+          console.log("set current order to updated order");
         }
+        await this.loadAllData();
+        console.log("loaded all data.");
+
       } catch (error) {
         console.error("Failed to refresh current order:", error);
         this.$message.error("无法更新工单信息，请重试！");

@@ -6,7 +6,8 @@
       @selection-change="onSelectionChange"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
-      height="75vh"
+      :height = "tableHeight"
+      border
   >
     <!-- Row Selection -->
     <el-table-column type="selection" width="55"></el-table-column>
@@ -131,6 +132,7 @@
       :current-page="currentPage"
       @size-change="handleSizeChange"
       @current-change="handlePageChange"
+      :height="tableHeight"
   />
 </template>
 
@@ -152,6 +154,7 @@ export default {
       sortSettings: {prop: '', order: ''}, // store sorting column and order
       currentPage: 1,
       pageSize: 15,
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
     }
   },
   props: {
@@ -278,6 +281,9 @@ export default {
     handleSortChange({prop, order}) {
       this.sortSettings = { prop, order };
     },
+    updateTableHeight() {
+      this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
+    },
   },
   computed: {
     paginatedQcOrderList() {
@@ -380,7 +386,14 @@ export default {
         this.filterTable(val);
       }
     }
-  }
+  },
+  mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+    this.updateTableHeight();
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight);
+  },
 };
 </script>
 
