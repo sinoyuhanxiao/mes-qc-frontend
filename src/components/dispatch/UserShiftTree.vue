@@ -1,15 +1,21 @@
 <template>
   <div>
     <!-- Search Input & Clear Button (Same Row) -->
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+    <div style="display: flex; margin-bottom: 10px;">
       <el-input
           v-model="searchQuery"
           placeholder="搜索班次"
           clearable
-          style="flex: 1;"
           @input="filterTree"
+          style="flex: 8; margin-right: 10px"
       />
-      <el-button type="warning" @click="clearSelection">清空选择</el-button>
+      <el-button
+          type="warning"
+          @click="clearSelection"
+          style="flex: 2;"
+      >
+        清空选择
+      </el-button>
     </div>
 
     <!-- Tree Wrapper with Conditional Red Border -->

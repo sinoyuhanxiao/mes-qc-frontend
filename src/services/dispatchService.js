@@ -53,5 +53,16 @@ export const parseCronToChinese = (cronExpression) => {
     });
 };
 
+/**
+ * Retrieves the dispatch information associated with a dispatched task ID.
+ * @param {number} dispatchedTaskId - The ID of the dispatched task.
+ * @returns {Promise} - The API response with the dispatch data.
+ */
+export const getDispatchByDispatchedTaskId = (dispatchedTaskId) => {
+    return api.get(`${BASE_URL}/dispatched-task/${dispatchedTaskId}`);
+};
+
+
+
 
 

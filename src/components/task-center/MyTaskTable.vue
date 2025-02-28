@@ -287,7 +287,7 @@ export default {
         updated_by: "更新人",
         status: "归档状态",
         id: "任务号码",
-        dispatch_id: "派发号码",
+        dispatch_id: "派发计划号码",
         is_overdue: "是否过期",
         finished_at: "完成时间"
       };

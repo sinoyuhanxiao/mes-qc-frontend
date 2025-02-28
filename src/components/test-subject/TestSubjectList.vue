@@ -4,27 +4,21 @@
       style="width: 100%"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
-      height="75vh"
+      :height = "tableHeight"
   >
-    <el-table-column prop="id" label="ID" width="80" sortable/>
+    <el-table-column prop="id" label="号码" width="80" sortable/>
     <el-table-column prop="name" label="名称" width="200" sortable show-overflow-tooltip/>
     <el-table-column prop="description" label="描述" sortable show-overflow-tooltip/>
-
-    <!-- Created At -->
     <el-table-column prop="created_at" label="创建时间" width="180" sortable>
       <template #default="scope">
         <time-slot :value="scope.row.created_at" />
       </template>
     </el-table-column>
-
-    <!-- Created By -->
     <el-table-column prop="created_by" label="创建者" width="180" sortable>
       <template #default="scope">
         <UserReference :user-id="scope.row.created_by"/>
       </template>
     </el-table-column>
-
-    <!-- Actions -->
     <el-table-column label="操作" width="250">
       <template #default="scope">
         <el-button size="small" @click="$emit('edit-test-subject', scope.row)">
@@ -39,15 +33,17 @@
 
   <!-- Pagination -->
   <el-pagination
+      v-if="filteredList.length > 15"
       background
-      style="margin-top: 16px; text-align: center;"
+      style="margin-top: 10px;"
       layout="total, sizes, prev, pager, next"
       :total="filteredList.length"
-      :page-size="15"
+      :page-size="pageSize"
       :page-sizes="[15, 30, 45, 60]"
       :current-page="currentPage"
       @size-change="handleSizeChange"
       @current-change="handlePageChange"
+      :hide-on-single-page="true"
   />
 </template>
 
@@ -98,6 +94,7 @@ export default {
       sortSettings: {prop: '', order: ''}, // store sorting column and order
       currentPage: 1,
       pageSize: 15,
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
     }
   },
   methods: {
@@ -127,6 +124,9 @@ export default {
     forceUpdateTable() {
       // Force Vue to recompute the list by modifying `filteredList`
       this.filteredList = [...this.filteredList]; // Creates a new reference
+    },
+    updateTableHeight() {
+      this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
     },
   },
   computed: {
@@ -170,6 +170,13 @@ export default {
       const end = start + this.pageSize;
       return sortedData.slice(start, end);
     },
+  },
+  mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+    this.updateTableHeight();
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight);
   },
 };
 </script>

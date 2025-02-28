@@ -22,6 +22,7 @@
 
 <script>
 import QcOrderForm from "@/components/dispatch/QcOrderForm.vue";
+import {unnormalizeCronExpression} from "@/utils/dispatch-utils";
 
 export default {
   components: {
@@ -97,7 +98,8 @@ export default {
           description: dispatch.description || null,
           start_time: dispatch.start_time || null,
           end_time: dispatch.end_time || null,
-          cron_expression: dispatch.cron_expression || null,
+          cron_expression: unnormalizeCronExpression(dispatch.cron_expression) || null,
+          isUnlimited: dispatch.dispatch_limit === -1,
           dispatch_limit: dispatch.dispatch_limit || null,
           custom_time: dispatch.custom_time || null,
           due_date_offset_minute: dispatch.due_date_offset_minute || null,

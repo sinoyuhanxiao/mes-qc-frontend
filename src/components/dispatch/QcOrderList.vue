@@ -6,7 +6,9 @@
       @selection-change="onSelectionChange"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
-      height="75vh"
+      :height = "tableHeight"
+      border
+      v-loading="loading"
   >
     <!-- Row Selection -->
     <el-table-column type="selection" width="55"></el-table-column>
@@ -14,20 +16,19 @@
     <!-- QC Order Name -->
     <el-table-column
         prop="name"
-        label="QC 工单名称"
+        label="工单名称"
         width="200"
         sortable
-        show-overflow-tooltip
     >
       <template #default="scope">
-        <span class="clickable-name" @click="clickedNameColumn(scope.row)">
-          {{ scope.row.name }}
-        </span>
+          <span class="truncate-text clickable-name" @click="clickedNameColumn(scope.row)">
+            {{ scope.row.name }}
+          </span>
       </template>
     </el-table-column>
 
     <!-- Order ID -->
-    <el-table-column prop="id" label="工单 ID" width="100" sortable></el-table-column>
+    <el-table-column prop="id" label="工单号码" width="110" sortable></el-table-column>
 
     <!-- Order State -->
     <el-table-column prop="state" label="工单状态" width="170" sortable>
@@ -80,7 +81,7 @@
       </template>
     </el-table-column>
 
-    <el-table-column prop="dispatch_ids" label="派发计划ID" width="250" >
+    <el-table-column prop="dispatch_ids" label="派发计划号码" width="250" >
       <template #default="scope">
         <div v-if="scope.row.dispatches.length > 0">
           <el-tag
@@ -98,7 +99,7 @@
     </el-table-column>
 
     <!-- Dispatch Count -->
-    <el-table-column prop="dispatches.length" label="任务数量" width="120" sortable>
+    <el-table-column prop="dispatches.length" label="计划数量" width="120" sortable>
       <template #default="scope">
         {{ scope.row.dispatches.length }}
       </template>
@@ -131,6 +132,7 @@
       :current-page="currentPage"
       @size-change="handleSizeChange"
       @current-change="handlePageChange"
+      :height="tableHeight"
   />
 </template>
 
@@ -152,6 +154,7 @@ export default {
       sortSettings: {prop: '', order: ''}, // store sorting column and order
       currentPage: 1,
       pageSize: 15,
+      tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
     }
   },
   props: {
@@ -169,6 +172,10 @@ export default {
     },
     searchInput: {
       type: String,
+      required: true,
+    },
+    loading: {
+      type: Boolean,
       required: true,
     }
   },
@@ -278,6 +285,9 @@ export default {
     handleSortChange({prop, order}) {
       this.sortSettings = { prop, order };
     },
+    updateTableHeight() {
+      this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
+    },
   },
   computed: {
     paginatedQcOrderList() {
@@ -380,7 +390,14 @@ export default {
         this.filterTable(val);
       }
     }
-  }
+  },
+  mounted() {
+    window.addEventListener("resize", this.updateTableHeight);
+    this.updateTableHeight();
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.updateTableHeight);
+  },
 };
 </script>
 
@@ -397,5 +414,14 @@ export default {
 
 .tab-container {
   margin-right: 8px;
+}
+
+.truncate-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 </style>
