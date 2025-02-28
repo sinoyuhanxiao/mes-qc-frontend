@@ -2,7 +2,7 @@
   <el-form :model="location" ref="locationFormRef" label-width="120px" :rules="validationRules">
     <!-- Name (Required) -->
     <el-form-item label="名称" prop="name">
-      <el-input v-model="location.name" placeholder="输入采样点名称" />
+      <el-input v-model="location.name" placeholder="输入采样点名称" maxlength="255"/>
     </el-form-item>
 
     <!-- Description (Optional) -->

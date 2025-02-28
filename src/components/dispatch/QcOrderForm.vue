@@ -10,13 +10,28 @@
           label-width="200px"
       >
         <!-- QC Order Name -->
-        <el-form-item label="工单名称" required prop="name">
-          <el-input v-model="qcOrderForm.name" placeholder="请输入质检工单名称" />
+        <el-form-item
+            label="工单名称"
+            required
+            prop="name"
+        >
+          <el-input
+              v-model="qcOrderForm.name"
+              placeholder="请输入质检工单名称"
+              maxlength="255"
+          />
         </el-form-item>
 
         <!-- Description -->
-        <el-form-item label="工单备注">
-          <el-input type="textarea" v-model="qcOrderForm.description" placeholder="请输入备注"></el-input>
+        <el-form-item
+            label="工单备注"
+        >
+          <el-input
+              type="textarea"
+              v-model="qcOrderForm.description"
+              placeholder="请输入备注"
+          >
+          </el-input>
         </el-form-item>
 
         <!-- Dispatch List -->
@@ -34,16 +49,18 @@
                 <div style="display: flex; gap: 8px;">
                   <!-- Expand Button -->
                   <el-button
-                      type="text"
+                      :link="true"
                       @click="toggleCollapse(index)"
-                      :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
+                      :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'"
+                  >
                     {{ dispatch.collapsed ? '展开' : '收起' }}
                   </el-button>
                   <!-- Remove Dispatch Button -->
                   <el-button
                       type="danger"
                       plain
-                      @click="removeDispatch(index)">
+                      @click="removeDispatch(index)"
+                  >
                     删除派发计划
                   </el-button>
                 </div>
@@ -54,12 +71,13 @@
             <div v-show="!dispatch.collapsed">
               <!-- Name -->
               <el-form-item
-                  label="名称">
+                  label="派发计划名称">
                 <el-input
                     type="text"
                     v-model="dispatch.name"
-                    placeholder="请输入任务名称"
+                    placeholder="请输入派发计划名称"
                     :prop="'dispatches.' + index + '.name'"
+                    maxlength="255"
                 />
               </el-form-item>
 
@@ -71,7 +89,6 @@
                     type="textarea"
                     v-model="dispatch.description"
                     placeholder="请输入备注"
-                    :prop="'dispatches.' + index + '.description'"
                 />
               </el-form-item>
 
@@ -83,9 +100,11 @@
                   required
                   :prop="'dispatches.' + index + '.type'"
               >
-                <el-radio-group v-model="dispatch.type">
-                  <el-radio label="regular">周期计划</el-radio>
-                  <el-radio label="custom">单次计划</el-radio>
+                <el-radio-group
+                    v-model="dispatch.type"
+                >
+                  <el-radio value="regular">周期计划</el-radio>
+                  <el-radio value="custom">单次计划</el-radio>
                 </el-radio-group>
               </el-form-item>
 
@@ -109,6 +128,11 @@
                   label="执行周期"
                   required
                   :prop="'dispatches.' + index + '.date_range'"
+                  :rules="[{
+                    required: true,
+                    message: '请选择派发计划执行周期',
+                    trigger: ['change'],
+                    }]"
               >
                 <el-date-picker
                     v-model="dispatch.date_range"
@@ -128,11 +152,12 @@
                   label="执行时间"
                   required
                   :prop="'dispatches.' + index + '.custom_time'"
+                  :rules="[{required: true, message: '请选择执行时间', trigger: 'change'},]"
               >
                 <el-date-picker
                     v-model="dispatch.custom_time"
                     type="datetime"
-                    placeholder="选择执行时间"
+                    placeholder="请选择执行时间"
                     :format="dateFormat"
                     :value-format="valueFormat"
                     :disabled-date="disablePastDates"
@@ -144,19 +169,44 @@
                   v-if="dispatch.type === 'regular'"
                   label="派发次数上限"
                   required
-                  :prop="'dispatches.' + index + '.dispatch_limit'">
-                <el-radio-group
-                    v-model="dispatch.isUnlimited"
-                    @change="updateDispatchLimit(index)">
-                  <el-radio :label="true">无限制</el-radio>
-                  <el-radio :label="false">限制</el-radio>
-                </el-radio-group>
-                <el-input-number
-                    v-if="!dispatch.isUnlimited"
-                    v-model="dispatch.dispatch_limit"
-                    :min="1"
-                    style="margin-left: 10px;"
-                    placeholder="请输入限制次数" />
+              >
+                <el-col :span="12">
+                  <el-form-item
+                      :prop="'dispatches.' + index + '.isUnlimited'"
+                      :rules="[{
+                        required: true,
+                        message: '请选择有无限制派发上限',
+                        trigger: ['change'],
+                        }]">
+                    <el-radio-group
+                        v-model="dispatch.isUnlimited"
+                    >
+                      <el-radio :value="true">无限制</el-radio>
+                      <el-radio :value="false">限制</el-radio>
+                    </el-radio-group>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item
+                      v-if="!dispatch.isUnlimited"
+                      :prop="'dispatches.' + index + '.dispatch_limit'"
+                      :rules="[{
+                        required: true,
+                        message: '请输入派发次数上限',
+                        trigger: ['change'],
+                      }]"
+                  >
+                    <el-input-number
+                        v-model="dispatch.dispatch_limit"
+                        :min="1"
+                        :max="9999"
+                        :precision="0"
+                        style="margin-left: 10px;"
+                        placeholder="请输入派发上限"
+
+                    />
+                  </el-form-item>
+                </el-col>
               </el-form-item>
 
               <el-divider>质检任务配置</el-divider>
@@ -164,10 +214,19 @@
               <el-form-item
                   label="派发任务时限(分钟)"
                   required
-                  :prop="'dispatches.' + index + '.due_date_offset_minute'">
+                  :prop="'dispatches.' + index + '.due_date_offset_minute'"
+                  :rules="[{
+                        required: true,
+                        message: '请输入派发任务时限',
+                        trigger: ['change'],
+                        }]"
+              >
                 <el-input-number
                     v-model="dispatch.due_date_offset_minute"
-                    :min="0" />
+                    :min="1"
+                    :max="9999"
+                    :precision="0"
+                />
               </el-form-item>
 
               <!-- Test Subject Selection -->
@@ -180,6 +239,7 @@
                     placeholder="请选择检测项目"
                     multiple
                     filterable
+                    :fit-input-width="true"
                 >
                   <el-option
                       v-for="subject in testSubjectOptions"
@@ -200,6 +260,7 @@
                     placeholder="请选择采样位置"
                     multiple
                     filterable
+                    :fit-input-width="true"
                 >
                   <el-option
                       v-for="location in samplingLocationOptions"
@@ -219,6 +280,7 @@
                     placeholder="请选择仪器"
                     multiple
                     filterable
+                    :fit-input-width="true"
                 >
                   <el-option
                       v-for="instrument in instrumentOptions"
@@ -229,17 +291,25 @@
                 </el-select>
               </el-form-item>
 
+
               <!-- User Selection -->
               <el-form-item
                   label="检测人员"
                   :prop="'dispatches.' + index + '.user_ids'"
-                  required>
+                  required
+                  :rules="[{
+                      required: true,
+                      message: '请选择至少一名人员或班次',
+                      trigger: ['change'],
+                      }]"
+              >
                 <el-select
                     v-model="dispatch.dropdownUserIds"
                     multiple
                     filterable
                     placeholder="请选择人员"
                     @change="handleDropdownUserChange($event, index)"
+                    :fit-input-width="true"
                 >
                   <el-option
                       v-for="user in userOptions"
@@ -254,24 +324,18 @@
               <el-form-item
                   :prop="'dispatches.' + index + '.user_ids'"
               >
-                  <UserShiftTree
-                      @update-selected-users="(users) => handleUserShiftTreeSelection(users, index)"
-                  />
-              </el-form-item>
-
-              <!-- Form Tree -->
-              <el-form-item
-                  label="质检表单"
-                  :prop="'dispatches.' + index + '.form_ids'"
-                  required
-              >
-                <DispatchFormTreeSelect
-                    :selected-form-ids="dispatch.form_ids"
-                    :has-error="isSubmitted && dispatch.form_ids.length === 0"
-                    @update-selected-forms="(forms) => handleSelectedForms(forms, index)"
-                    @on-node-clicked="handleFormNodeClicked"
+                <UserShiftTree
+                    @update-selected-users="(users) => handleUserShiftTreeSelection(users, index)"
                 />
               </el-form-item>
+
+              <DispatchFormTreeSelect
+                  :selected-form-ids="dispatch.form_ids"
+                  :prop-name="`dispatches.${index}.form_ids`"
+                  :has-error="isSubmitted && dispatch.form_ids.length === 0"
+                  @update-selected-forms="(forms) => handleSelectedForms(forms, index)"
+                  @on-node-clicked="handleFormNodeClicked"
+              />
 
               <el-divider>生产模块关联</el-divider>
 
@@ -280,7 +344,9 @@
                 <el-select v-model="dispatch.product_ids"
                            multiple
                            filterable
-                           placeholder="请选择产品">
+                           placeholder="请选择产品"
+                           :fit-input-width="true"
+                >
                   <el-option v-for="product in productOptions"
                              :key="product.id"
                              :label="product.name"
@@ -293,7 +359,9 @@
                 <el-select v-model="dispatch.production_work_order_ids"
                            multiple
                            filterable
-                           placeholder="请选择生产工单">
+                           placeholder="请选择生产工单"
+                           :fit-input-width="true"
+                >
                   <el-option v-for="workOrder in productionWorkOrderOptions"
                              :key="workOrder.id"
                              :label="workOrder.name"
@@ -306,7 +374,9 @@
                 <el-select v-model="dispatch.raw_material_ids"
                            multiple
                            filterable
-                           placeholder="请选择原料">
+                           placeholder="请选择原料"
+                           :fit-input-width="true"
+                >
                   <el-option v-for="material in rawMaterialOptions"
                              :key="material.id"
                              :label="material.name"
@@ -320,7 +390,9 @@
                 <el-select v-model="dispatch.maintenance_work_order_ids"
                            multiple
                            filterable
-                           placeholder="请选择维护工单">
+                           placeholder="请选择维护工单"
+                           :fit-input-width="true"
+                >
                   <el-option v-for="workOrder in maintenanceWorkOrderOptions"
                              :key="workOrder.id"
                              :label="workOrder.name"
@@ -333,7 +405,9 @@
                 <el-select v-model="dispatch.equipment_ids"
                            multiple
                            filterable
-                           placeholder="请选择设备">
+                           placeholder="请选择设备"
+                           :fit-input-width="true"
+                >
                   <el-option v-for="equipment in equipmentOptions"
                              :key="equipment.id"
                              :label="equipment.name"
@@ -368,7 +442,7 @@
 </template>
 
 <script>
-import DispatchFormTreeSelect from "@/components/form-manager/DispatchFormTreeSelect.vue";
+import DispatchFormTreeSelect from "@/components/dispatch/DispatchFormTreeSelect.vue";
 import {CronElementPlus} from "@vue-js-cron/element-plus";
 import {fetchUsers} from "@/services/userService";
 import {normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
@@ -401,29 +475,9 @@ export default {
       originalQcOrderForm: null, // Store the original order for comparison
       validationRules: {
         name: [
-            {required: true, message: "请输入质检工单名称", trigger: "blur"}
+          {required: true, message: "请输入工单名称", trigger: "blur"},
+          { max: 255, message: "工单名称不能超过255个字符", trigger: "blur" }
         ],
-        "dispatches.*.date_range": [
-          {required: true, message: "请选择派发运行时间", trigger: "change"},
-        ],
-        "dispatches.*.dispatch_limit": [
-          {required: true, message: "请输入派发次数上限", trigger: "change"},
-        ],
-        "dispatches.*.due_date_offset_minute": [
-          {required: true, message: "请输入派发任务时限", trigger: "change"},
-        ],
-        "dispatches.*.type": [
-          {required: true, message: "请选择任务类型", trigger: "change"},
-        ],
-        "dispatches.*.cron_expression": [
-          {required: true, message: "请输入有效的执行计划", trigger: "blur"},
-        ],
-        "dispatches.*.custom_time": [
-          {required: true, message: "请选择执行时间", trigger: "change"},
-        ],
-        "dispatches.*.selectedUsers": [
-          { required: true, message: "请至少选择一个人员或班次", trigger: "change" }
-        ]
       },
       userOptions: [],  // Stores user data fetch from backend
       instrumentOptions: [],
@@ -463,8 +517,8 @@ export default {
         type: "regular",
         name: "",
         description: "",
-        state:1,
-        cron_expression: "* * * * * *",
+        state: 1,
+        cron_expression: "* * * * *",
         start_time: null,
         end_time: null,
         dispatch_limit: -1,
@@ -488,12 +542,6 @@ export default {
         shiftTreeUserIds: [],
       };
       this.qcOrderForm.dispatches.push(newDispatch);
-    },
-    updateDispatchLimit(index) {
-      const dispatch = this.qcOrderForm.dispatches[index];
-      if (dispatch.isUnlimited) {
-        dispatch.dispatch_limit = -1;
-      }
     },
     removeDispatch(index) {
       this.qcOrderForm.dispatches.splice(index, 1);
@@ -535,7 +583,7 @@ export default {
             } else {
               payload.updated_by = this.$store.getters.getUser.id;
               payload.updated_at = new Date().toISOString();
-              message = "确定提交已编辑工单吗? 将取消工单目前所有未开始的已派发任务,并按照新设置重新开始派发.";
+              message = "确认提交工单吗? 所有未开始任务将被取消,并按照新设置重新派发.";
             }
 
             await this.$confirm(message, "提示", {
@@ -546,7 +594,6 @@ export default {
 
             this.$emit("on-submit", payload); // Emit success event to parent
           } catch (error) {
-            console.error("Error creating QC Order:", error);
           }
         } else {
           await this.$alert("请填写所有必填字段后再提交。", "提示", {
@@ -563,39 +610,38 @@ export default {
         type: "warning",
       });
       this.$emit("reset-form");
-      this.isSubmitted = false;  // Reset submission state
-
+      this.isSubmitted = false;
     },
-    // Transform order data to match order backend api request
-    transformDispatchData(data) {
+    // Transform dispatch data to match backend api request
+    transformDispatchData(dispatchData) {
       let payload = {
-        id: data.id || null,
+        id: dispatchData.id || null,
         executed_count: 0,
         status:1,
         state:1,
-        created_at: data.created_at || null,
-        created_by: data.created_by || null,
-        updated_at: data.updated_at || null,
-        updated_by: data.updated_by || null,
-        type: data.type,
-        name: data.name || null, // Fallback for  name
-        description: data.description || null,
-        start_time: data.date_range?.[0] || null,
-        end_time: data.date_range?.[1] || null,
-        cron_expression: data.cron_expression? normalizeCronExpression(data.cron_expression) : null,
-        dispatch_limit: data.dispatch_limit,
-        custom_time: data.custom_time || null,
-        due_date_offset_minute: data.due_date_offset_minute,
-        user_ids: data.user_ids,
-        form_ids: data.form_ids,
-        product_ids: data.product_ids || [],
-        raw_material_ids: data.raw_material_ids || [],
-        production_work_order_ids: data.production_work_order_ids || [],
-        equipment_ids: data.equipment_ids || [],
-        maintenance_work_order_ids: data.maintenance_work_order_ids || [],
-        sampling_location_ids: data.sampling_location_ids || [],
-        instrument_ids: data.instrument_ids || [],
-        test_subject_ids: data.test_subject_ids || [],
+        created_at: dispatchData.created_at || null,
+        created_by: dispatchData.created_by || null,
+        updated_at: dispatchData.updated_at || null,
+        updated_by: dispatchData.updated_by || null,
+        type: dispatchData.type,
+        name: dispatchData.name || null,
+        description: dispatchData.description || null,
+        start_time: dispatchData.date_range?.[0] || null,
+        end_time: dispatchData.date_range?.[1] || null,
+        cron_expression: dispatchData.cron_expression? normalizeCronExpression(dispatchData.cron_expression) : null,
+        dispatch_limit: dispatchData.isUnlimited === true ? -1 : dispatchData.dispatch_limit,
+        custom_time: dispatchData.custom_time || null,
+        due_date_offset_minute: dispatchData.due_date_offset_minute,
+        user_ids: dispatchData.user_ids,
+        form_ids: dispatchData.form_ids,
+        product_ids: dispatchData.product_ids || [],
+        raw_material_ids: dispatchData.raw_material_ids || [],
+        production_work_order_ids: dispatchData.production_work_order_ids || [],
+        equipment_ids: dispatchData.equipment_ids || [],
+        maintenance_work_order_ids: dispatchData.maintenance_work_order_ids || [],
+        sampling_location_ids: dispatchData.sampling_location_ids || [],
+        instrument_ids: dispatchData.instrument_ids || [],
+        test_subject_ids: dispatchData.test_subject_ids || [],
       };
 
       if (payload.type === 'custom') {
@@ -743,7 +789,6 @@ export default {
       ]);
     },
     async handleFormNodeClicked(formTemplateId) {
-      console.log("qc order form a node is clicked: " + formTemplateId);
       await openFormPreviewWindow(formTemplateId, this)
     },
     async handleUserShiftTreeSelection(userIdsFromTree, index) {
@@ -778,8 +823,6 @@ export default {
 
       // Convert Set to Array and update `user_ids`
       dispatch.user_ids = [...mergedUserIds];
-
-      console.log(`Updated dispatch[${index}].user_ids:`, dispatch.user_ids);
     }
   },
   mounted() {
@@ -792,10 +835,9 @@ export default {
 
 <style scoped>
 
-.tree-wrapper-error {
-  border: 1px solid #f56c6c !important; /* Red border for validation */
+.error-border {
+  border: 1px solid #f56c6c !important; /* Red validation border */
   border-radius: 4px;
-  padding: 5px;
 }
 
 </style>

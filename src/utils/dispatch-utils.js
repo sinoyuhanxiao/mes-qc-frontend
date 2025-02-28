@@ -135,12 +135,14 @@ export function parseCronExpressionToChinese(cronExpression) {
         .join(", ");
 }
 
+// Convert linux cron format to spring cron format by setting execute at 0 second
 export function normalizeCronExpression(cronExpression) {
     return cronExpression.trim().split(" ").length === 5
         ? `0 ${cronExpression}` // Add "0" as the seconds field
         : cronExpression;
 }
 
+// Reverse spring cron format to linux cron format to match display component format.
 export function unnormalizeCronExpression(cronExpression) {
     if (cronExpression != null) {
         return cronExpression.startsWith("0 ") ? cronExpression.substring(2) : cronExpression;

@@ -2,7 +2,10 @@
   <el-form :model="instrument" ref="instrumentFormRef" label-width="120px" :rules="validationRules">
     <!-- Name (Required) -->
     <el-form-item label="名称" prop="name">
-      <el-input v-model="instrument.name" placeholder="输入仪器名称" />
+      <el-input
+          v-model="instrument.name"
+          placeholder="输入仪器名称"
+          maxlength="255"/>
     </el-form-item>
 
     <!-- Type (Optional) -->

@@ -23,9 +23,9 @@
         <li v-else>
           执行时间: <strong>{{ formatDate(dispatch.custom_time) }}</strong>
         </li>
-        <li>
+        <li v-if="dispatch.type === 'regular'">
           派发次数上限:
-          <strong>{{ dispatch.dispatch_limit === -1 ? "无限制" : dispatch.dispatch_limit }}</strong>
+          <strong>{{ dispatch.isUnlimited === true ? "无限制" : dispatch.dispatch_limit }}</strong>
         </li>
         <li>
           派发任务时限:

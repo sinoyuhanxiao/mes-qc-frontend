@@ -184,7 +184,7 @@ export default {
         created_at: "提交时间",
         created_by: "提交人号码",
         comment: "备注",
-        dispatched_task_id: "任务派遣ID",
+        dispatched_task_id: "任务号码",
         qc_form_template_id: "质检表单ID",
         status: "状态"
       },

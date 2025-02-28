@@ -1,24 +1,23 @@
 <template>
-  <el-container class="test-subject-page">
-    <div class="top-section">
-      <!-- Top Section -->
-      <div class="top-left">
+  <div style="display: flex; flex-direction: column; max-width: 100%;">
+    <!-- Title, Search Box -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+      <div style="display: flex; align-items: center;">
         <h2>检测项目管理</h2>
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
             placeholder="搜索关键字"
             clearable
-            class="search-bar"
+            style="width: 300px; margin-left: 20px;"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
       </div>
-
-      <div class="top-right">
-        <!-- Refresh Button -->
+      <!-- Refresh Button -->
+      <div style="display: flex; gap: 10px;">
         <el-tooltip content="刷新列表" placement="top">
           <el-button
               class="refresh-button"
@@ -31,28 +30,25 @@
             </el-icon>
           </el-button>
         </el-tooltip>
-
         <el-button type="primary" @click="openDialog()">
-          新增检测项目
+          + 新增
         </el-button>
       </div>
     </div>
 
-    <el-main class="table-section">
-      <!-- Test Subject List -->
-      <TestSubjectList
-          :testSubjects="testSubjects"
-          @edit-test-subject="openDialog"
-          @delete-test-subject="confirmDelete"
-          :search-input="searchQuery"
-      />
-    </el-main>
+    <!-- Test Subject List -->
+    <TestSubjectList
+        :testSubjects="testSubjects"
+        @edit-test-subject="openDialog"
+        @delete-test-subject="confirmDelete"
+        :search-input="searchQuery"
+    />
+
 
     <!-- Dialog for Create / Edit -->
     <el-dialog
         v-model="dialogVisible"
         :title="isEditMode ? '编辑检测项目' : '新增检测项目'"
-        width="500px"
         :close-on-click-modal="false"
     >
       <TestSubjectForm
@@ -62,7 +58,7 @@
           @cancel="dialogVisible = false"
       />
     </el-dialog>
-  </el-container>
+  </div>
 </template>
 
 <script>
@@ -157,45 +153,6 @@ export default {
 </script>
 
 <style scoped>
-.test-subject-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.search-bar {
-  width: 300px;
-  margin-left: 20px;
-}
-
-.pagination {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.top-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.top-left {
-  display: flex;
-  align-items: center;
-}
-
-.top-right {
-  display: flex;
-  gap: 10px;
-}
-
-.table-section {
-  flex: 1;
-  padding: 0;
-  margin-top: 20px;
-}
 
 .refresh-button {
   background-color: #80cfff; /* Slightly lighter shade of primary color */
