@@ -838,7 +838,6 @@ export default {
 .error-border {
   border: 1px solid #f56c6c !important; /* Red validation border */
   border-radius: 4px;
-
 }
 
 </style>

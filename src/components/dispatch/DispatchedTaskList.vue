@@ -33,10 +33,10 @@
       </el-table-column>
 
       <!-- ID -->
-      <el-table-column prop="id" label="任务ID" width="90" sortable></el-table-column>
+      <el-table-column prop="id" label="任务号码" width="110" sortable></el-table-column>
 
       <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="派发计划ID" width="120" sortable></el-table-column>
+      <el-table-column prop="dispatch_id" label="派发计划号码" width="140" sortable></el-table-column>
 
       <!-- Name -->
       <el-table-column prop="name" label="任务名称" width="150" sortable show-overflow-tooltip>
@@ -321,6 +321,7 @@ export default {
       const url = this.$router.resolve({
         name: "TaskLog",
         params: {
+          taskName: this.getFormById(row.qc_form_tree_node_id),
           createdBy: row.user_id, // Pass user_id as :createdBy
           dispatchedTaskId: row.id, // Pass id as :dispatchedTaskId
         },

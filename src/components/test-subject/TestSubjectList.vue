@@ -6,7 +6,7 @@
       :default-sort="{ prop: 'id', order: 'descending' }"
       :height = "tableHeight"
   >
-    <el-table-column prop="id" label="ID" width="80" sortable/>
+    <el-table-column prop="id" label="号码" width="80" sortable/>
     <el-table-column prop="name" label="名称" width="200" sortable show-overflow-tooltip/>
     <el-table-column prop="description" label="描述" sortable show-overflow-tooltip/>
     <el-table-column prop="created_at" label="创建时间" width="180" sortable>

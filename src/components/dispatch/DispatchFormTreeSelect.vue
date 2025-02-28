@@ -8,7 +8,7 @@
     >
       <el-input
           v-model="filterText"
-          style="width: 240px; margin-left: 10px;"
+          style="width: 240px; margin-bottom:10px;"
           placeholder="搜索表单"
           clearable
       />

@@ -38,7 +38,7 @@
             type="primary"
             @click="openDialog()"
         >
-          + 新增仪器
+          + 新增
         </el-button>
       </div>
     </div>

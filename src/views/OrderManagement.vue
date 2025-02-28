@@ -38,7 +38,7 @@
 
         <!-- New QC Order Button -->
         <el-button type="primary" @click="handleNewQcOrderButtonClick">
-          新增QC工单
+          + 新增
         </el-button>
 
         <!-- View All Tasks Button -->
@@ -64,6 +64,7 @@
           :form-map="formMap"
           :user-map="userMap"
           :search-input="searchInput"
+          :loading="loading"
           @order-clicked="handleOrderClicked"
           @selection-change="updateSelectedRows"
 
@@ -72,13 +73,14 @@
 
     <!-- Dialog (QC Order Detail/Dispatch Configurator(Qc Order Form/Quick Dispatch Form)) -->
     <el-dialog
-        title="工單详情"
+        :title="dialogTitle"
         v-model="isDetailsDialogVisible"
         width="80%"
         top="5vh"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
-        style="max-width: 1200px; max-height: 90vh; overflow: auto;">
+        style="max-width: 1200px; max-height: 90vh; overflow: auto;"
+    >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
             :key="refreshKey"
@@ -162,9 +164,16 @@ export default {
       formMap: [],
       userMap: [],
       qcOrders: [],
+      loading: false,
     };
   },
   computed: {
+    dialogTitle() {
+      if (this.isEditMode) {
+        return this.currentOrder ? "编辑工单" : "新增工单";
+      }
+      return this.currentOrder ? "工单详情" : "新增工单";
+    }
   },
   methods: {
     async loadAllQcOrders() {
@@ -196,17 +205,20 @@ export default {
         if (this.currentOrder && this.currentOrder.id != null) {
           // update call
           response = await updateQcOrder(this.currentOrder.id, order);
+          if (response && response.status === 200) {
+            this.$message.success("工单已更新！");
+          }
         } else {
           // create call
           response = await createQcOrder(order);
-        }
-        if (response && response.status === 200) {
-          this.$message.success("工单已创建！");
+          if (response && response.status === 200) {
+            this.$message.success("工单已创建！");
+          }
         }
           await this.loadAllQcOrders();
           this.closeAndResetDetailsDialog();
       } catch (error) {
-        this.$message.error("Failed to create QC Order. Please try again.");
+        this.$message.error("创建/更新 工单失败。请重试。");
       }
     },
     confirmDeleteSelectedRows() {
@@ -292,6 +304,7 @@ export default {
       });
     },
     async loadAllData() {
+      this.loading = true;
       try {
         await Promise.all([
           updateQcOrderStates(),
@@ -302,6 +315,8 @@ export default {
 
       } catch (error) {
         console.error("Failed to load data during polling:", error);
+      } finally {
+        this.loading = false;
       }
     },
     async loadFormNodes() {

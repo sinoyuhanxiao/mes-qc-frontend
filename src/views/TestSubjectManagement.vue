@@ -31,7 +31,7 @@
           </el-button>
         </el-tooltip>
         <el-button type="primary" @click="openDialog()">
-          + 新增检测项目
+          + 新增
         </el-button>
       </div>
     </div>

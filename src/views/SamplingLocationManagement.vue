@@ -36,7 +36,7 @@
             type="primary"
             @click="openDialog()"
         >
-          + 新增采样点
+          + 新增
         </el-button>
       </div>
     </div>
