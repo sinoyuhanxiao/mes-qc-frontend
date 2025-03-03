@@ -44,7 +44,7 @@
     </el-main>
 
     <!-- Full-Screen Dialog for QC Records Table -->
-    <el-dialog v-model="qcRecordsDialogVisible" title="提交记录" fullscreen>
+    <el-dialog v-model="qcRecordsDialogVisible" :title="`${this.selectedForm?.label} - 提交记录`" fullscreen>
 
       <!-- Search and Date Picker Container -->
       <div class="toolbar">
@@ -108,18 +108,23 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="提交记录" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
+    <el-dialog :title="`${this.selectedForm?.label} - 提交记录`" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
       <el-scrollbar max-height="500px">
         <div v-for="(fields, category) in groupedDetails" :key="category">
-          <el-descriptions :title="category" border style="margin-top: 10px"> <!-- 这是 divider -->
+          <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px"> <!-- 这是 divider -->
             <el-descriptions-item v-for="(value, key) in fields" :key="key" :label="key">
               {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
             </el-descriptions-item>
           </el-descriptions>
         </div>
+        <el-descriptions title="质检提交信息" border style="margin-top: 10px">
+          <el-descriptions-item label="提交人">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
+          <el-descriptions-item label="提交时间">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
+        </el-descriptions>
       </el-scrollbar>
       <template #footer>
-        <el-button type="primary" @click="generatePdf(selectedDetails)">导出</el-button>
+        <el-button type="info" @click="closeDetailsDialog">取消</el-button>
+        <el-button type="primary" @click="newExportToPdf">导出</el-button>
       </template>
     </el-dialog>
 
@@ -134,6 +139,11 @@ import PieChart from '@/components/charts/pie001.vue';
 import LineChart from '@/components/charts/line001.vue';
 import {extractWidgetDataWithCounts, fetchQcRecords, generateQcReport} from "@/services/qcReportingService";
 import {deleteTaskSubmissionLog, exportDocumentToPDF, getMyDocument} from "@/services/qcTaskSubmissionLogsService";
+import {getUserById} from "@/services/userService";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";  // ✅ Import autoTable plugin explicitly
+import callAddFont from "@/assets/simfang.js";
+import callAddBoldFont from "@/assets/simfang-bold.js"; // 添加这行
 
 export default {
   components: { FormTree, PieChart, LineChart },
@@ -147,6 +157,7 @@ export default {
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
       loadingCharts: false,
       groupedDetails: {},
+      systemInfo: {},
       shortcuts: [
         {
           text: '本周',
@@ -232,6 +243,70 @@ export default {
     }
   },
   methods: {
+    newExportToPdf() {
+      const doc = new jsPDF();
+      callAddBoldFont.apply(doc); // 添加这行
+      doc.setFont("simfang", "bold");
+
+      let y = 10; // Initial vertical spacing
+
+      // **Add Title**
+      // dynamic title according to clicked
+
+      const title = `${this.selectedForm?.label}提交记录`;
+      doc.setFont("simfang", "bold");
+      doc.setFontSize(16);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const textWidth = doc.getTextWidth(title);
+      const x = (pageWidth - textWidth) / 2;
+      doc.text(title, x, y);
+      doc.setFont("simfang", "bold");
+      y += 10; // Add some spacing after the title
+
+      // **Loop through all grouped details and export them**
+      Object.entries(this.groupedDetails).forEach(([category, fields]) => {
+        doc.setFontSize(14);
+        doc.text(category, 10, y); // **Divider Title**
+        y += 6;
+
+        const tableData = Object.entries(fields).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(", ") : value || " - ",
+        ]);
+
+        autoTable(doc, {
+          startY: y,
+          head: [["质检项目", "质检结果"]],
+          body: tableData,
+          theme: "grid",
+          styles: { font: "simfang", fontSize: 10 },
+          headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
+        });
+
+        y = doc.lastAutoTable.finalY + 10; // Update y for next section
+      });
+
+      // **Add System Information (质检提交信息)**
+      doc.setFontSize(14);
+      doc.text("质检提交信息", 10, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [["质检项目", "质检结果"]],
+        body: [
+          ["提交人", this.systemInfo.提交人 || " - "],
+          ["提交时间", this.systemInfo.提交时间 || " - "],
+          ["提交单号", this.systemInfo.提交单号 || " - "]
+        ],
+        theme: "grid",
+        styles: { font: "simfang", fontSize: 10 },
+        headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
+      });
+
+      // **Save PDF**
+      doc.save(`${this.selectedForm?.label}-提交记录.pdf`);
+    },
     async exportToPdf() {
       if (!this.lineChartWidgets.length && !this.pieChartWidgets.length) {
         this.$message.warning("暂无图表数据可导出!");
@@ -379,6 +454,22 @@ export default {
 
         const response = await getMyDocument(row._id, this.selectedForm.qcFormTemplateId, row.created_by, inputCollectionName);
         this.selectedDetails = { ...response.data, "submissionId": row._id };
+        this.systemInfo = {
+          提交单号: this.selectedDetails.submissionId,
+          // format the 提交时间 to YYYY-MM-DD HH:MM:SS
+          提交时间: new Date(this.selectedDetails.created_at).toLocaleString("zh-CN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+          }),
+          提交人: await getUserById(this.selectedDetails.created_by).then(response => response.data?.data?.name || '-')
+        };
+
+        console.log(this.systemInfo)
 
         // **Step 1: First, determine all `el-descriptions` sections**
         const groupedDetails = {};
@@ -532,7 +623,7 @@ export default {
         const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
         this.qcRecords = response.data;
 
-        console.log("Updated qcRecords: ", this.qcRecords);
+        console.log("fetched qcRecords: ", this.qcRecords);
 
         // Ensure column headers remain in sync
         if (Array.isArray(this.qcRecords) && this.qcRecords.length > 0) {
@@ -603,6 +694,8 @@ export default {
     async openQcRecordsDialog() {
       this.qcRecordsDialogVisible = true;
       this.loadingQcRecords = true;
+      // console.log("selected form is")
+      // console.log(this.selectedForm)
 
       const formTemplateId = this.selectedForm ? this.selectedForm.qcFormTemplateId : null;
 
