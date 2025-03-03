@@ -69,7 +69,6 @@
       </div>
 
       <el-table
-          v-if="qcRecords.length > 0"
           v-loading="loadingQcRecords"
           :data="paginatedQcRecords"
           border
@@ -104,30 +103,21 @@
           @current-change="handlePageChange"
       />
 
-      <p v-else class="empty-message">暂无数据</p> <!-- If empty, show message -->
       <template #footer>
         <el-button type="primary" @click="closeQcRecordsDialog">关闭</el-button>
       </template>
     </el-dialog>
 
     <el-dialog title="提交记录" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
-      <el-row gutter="20">
-        <el-col
-            v-for="(columnItems, columnIndex) in columns"
-            :key="columnIndex"
-            :span="Math.min(24 / columns.length, 12)"
-        >
-          <el-form label-position="left" label-width="120px" class="task-details">
-            <el-form-item
-                v-for="(value, key) in columnItems"
-                :key="key"
-                :label="key === 'submissionId' ? '提交单号' : key"
-            >
-              <span>{{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}</span>
-            </el-form-item>
-          </el-form>
-        </el-col>
-      </el-row>
+      <el-scrollbar max-height="500px">
+        <div v-for="(fields, category) in groupedDetails" :key="category">
+          <el-descriptions :title="category" border style="margin-top: 10px"> <!-- 这是 divider -->
+            <el-descriptions-item v-for="(value, key) in fields" :key="key" :label="key">
+              {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </el-scrollbar>
       <template #footer>
         <el-button type="primary" @click="generatePdf(selectedDetails)">导出</el-button>
       </template>
@@ -156,6 +146,7 @@ export default {
       selectedDetails: {},
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
       loadingCharts: false,
+      groupedDetails: {},
       shortcuts: [
         {
           text: '本周',
@@ -198,7 +189,7 @@ export default {
       dialogVisible: false,
       qcRecords: [], // ✅ Ensure this is always an array
       columnHeaders: [], // ✅ Also initialized as an empty array
-      loadingQcRecords: false,
+      loadingQcRecords: true,
       reorderedColumnHeaders: [],
       currentPage: 1,
       pageSize: 15,
@@ -380,19 +371,35 @@ export default {
     },
     async viewDetails(row) {
       try {
-        // Extract year and month from row.created_at
         const createdAt = new Date(row['提交时间']);
         const yearMonth = createdAt.getFullYear().toString() +
             (createdAt.getMonth() + 1).toString().padStart(2, "0");
 
-        // Generate inputCollectionName dynamically
         const inputCollectionName = `form_template_${this.selectedForm.qcFormTemplateId}_${yearMonth}`;
 
-        // Fetch document details using the dynamically created collection name
         const response = await getMyDocument(row._id, this.selectedForm.qcFormTemplateId, row.created_by, inputCollectionName);
-
         this.selectedDetails = { ...response.data, "submissionId": row._id };
-        console.log("this selectedDetails: ", this.selectedDetails);
+
+        // **Step 1: First, determine all `el-descriptions` sections**
+        const groupedDetails = {};
+        Object.entries(this.selectedDetails).forEach(([key, value]) => {
+          if (["_id", "created_at", "created_by", "submissionId"].includes(key)) return; // Ignore base fields
+
+          // **Identify if this key belongs to a section (divider)**
+          if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+            // If value is an object, it represents a `divider` section
+            groupedDetails[key] = value;
+          } else {
+            // If it's a standalone value, place it under "未分类"
+            if (!groupedDetails["未分类"]) {
+              groupedDetails["未分类"] = {};
+            }
+            groupedDetails["未分类"][key] = value;
+          }
+        });
+
+        this.groupedDetails = groupedDetails;
+        console.log("Grouped Details: ", this.groupedDetails);
 
         this.dialogVisible = true;
       } catch (err) {
@@ -518,12 +525,10 @@ export default {
     async fetchQcRecordsData(formTemplateId, startDateTime, endDateTime) {
       if (!formTemplateId) {
         console.error("No formTemplateId selected");
-        this.loadingQcRecords = false;
         return;
       }
 
       try {
-        this.loadingQcRecords = true;
         const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
         this.qcRecords = response.data;
 
@@ -597,6 +602,7 @@ export default {
 
     async openQcRecordsDialog() {
       this.qcRecordsDialogVisible = true;
+      this.loadingQcRecords = true;
 
       const formTemplateId = this.selectedForm ? this.selectedForm.qcFormTemplateId : null;
 
@@ -605,6 +611,7 @@ export default {
       const endDateTime = this.formatDate(this.dateRange[1]);
 
       await this.fetchQcRecordsData(formTemplateId, startDateTime, endDateTime);
+      this.loadingQcRecords = false;
     }
 
   },
