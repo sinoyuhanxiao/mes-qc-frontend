@@ -316,11 +316,11 @@ export default {
           };
           this.editDialogVisible = true;
         } else {
-          this.$message.error('Failed to fetch user details.');
+          this.$message.error('用户信息获取失败');
         }
       } catch (error) {
         console.error('Error fetching user:', error);
-        this.$message.error('Error fetching user information.');
+        this.$message.error('用户信息获取失败');
       }
     },
 
@@ -361,14 +361,14 @@ export default {
 
             if (this.changePassword) {
               if (!this.newPassword || this.newPassword !== this.confirmPassword) {
-                this.$message.error('Passwords do not match!');
+                this.$message.error('密码不一致!');
                 return;
               }
               payload.password = btoa(this.newPassword);
             }
 
             await updateUser(this.editUser.id, payload);
-            this.$message.success("User updated successfully");
+            this.$message.success("用户更新成功！");
 
             if (originalRole === 1 && roleId === 2) {
               this.$confirm(
@@ -407,10 +407,10 @@ export default {
             this.editDialogVisible = false;
           } catch (error) {
             console.error("Error updating user:", error);
-            this.$message.error("Failed to update user");
+            this.$message.error("用户更新失败");
           }
         } else {
-          this.$message.error("Please fix validation errors before proceeding");
+          this.$message.error("请修复错误");
         }
       });
     },

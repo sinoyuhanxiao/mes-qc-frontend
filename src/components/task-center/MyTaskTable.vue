@@ -639,11 +639,11 @@ export default {
 
       // Show a confirmation popup
       this.$confirm(
-          "If you mark this task as completed, you will no longer be able to submit this form. Are you sure you want to continue?",
-          "Confirm Completion",
+          "如果你选择完成此任务，你将无法再次填写表单。",
+          "确认完成",
           {
-            confirmButtonText: "Yes, Complete",
-            cancelButtonText: "Cancel",
+            confirmButtonText: "确认",
+            cancelButtonText: "取消",
             type: "warning",
           }
       )

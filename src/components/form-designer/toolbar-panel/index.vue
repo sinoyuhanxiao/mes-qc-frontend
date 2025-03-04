@@ -812,15 +812,15 @@
         createFormTemplateWithNodes(payload) // Use service function
             .then((response) => {
               if (response.data.status === '200') {
-                this.$message.success('Template saved successfully!');
+                this.$message.success('保存成功!');
                 this.saveDialogVisible = false; // Close the dialog
               } else {
-                this.$message.error(response.data.message || 'Failed to save template.');
+                this.$message.error(response.data.message || '保存失败');
               }
             })
             .catch((error) => {
               console.error('Error saving template:', error);
-              this.$message.error('An error occurred while saving.');
+              this.$message.error('保存失败');
             });
       }
     }
