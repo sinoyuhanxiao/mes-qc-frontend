@@ -205,7 +205,7 @@ export default {
     getUniqueUserIds(o) {
       if (!o || !Array.isArray(o.dispatches)) return [];
 
-      const uniqueUserIds = new Set();  // Use Set for O(1) lookup & insertion
+      const uniqueUserIds = new Set();
 
       for (const dispatch of o.dispatches) {
         if (Array.isArray(dispatch.user_ids)) {
@@ -215,7 +215,7 @@ export default {
         }
       }
 
-      return Array.from(uniqueUserIds);  // Convert Set to Array
+      return Array.from(uniqueUserIds);
     },
     getUniqueFormIds(order) {
       const uniqueFormIds = new Set();

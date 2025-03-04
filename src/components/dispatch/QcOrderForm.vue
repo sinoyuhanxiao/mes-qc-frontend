@@ -835,9 +835,5 @@ export default {
 
 <style scoped>
 
-.error-border {
-  border: 1px solid #f56c6c !important; /* Red validation border */
-  border-radius: 4px;
-}
 
 </style>
