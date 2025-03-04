@@ -1,25 +1,33 @@
 <template>
-  <div :class="[{ 'error-border': hasError }]">
+  <div class="search-container">
+    <el-input
+        v-model="filterText"
+        placeholder="搜索表单"
+        clearable
+        style="margin-right: 10px; height: 32px; max-width: 395px"
+    >
+      <template #prefix>
+        <el-icon><Search /></el-icon>
+      </template>
+    </el-input>
+    <el-button
+        type="warning"
+        @click="clearFormSelection"
+        style="height: 32px; width: 80px; line-height: normal; margin: 0"
+    >
+      清空选择
+    </el-button>
+  </div>
+  <div class="form-container" :class="{ 'error-border': hasError }">
     <el-form-item
         label="质检表单"
         required
         :prop="propName"
         :rules="[{ validator: validateSelectedForms, trigger: 'change' }]"
     >
-      <el-input
-          v-model="filterText"
-          style="width: 240px; margin-bottom:10px;"
-          placeholder="搜索表单"
-          clearable
-      />
-
       <el-tree
           ref="treeRef"
-          style="
-            max-height: 300px; /* Set vertical limit */
-            overflow-y: auto;   /* Enable scrolling */
-            border: 1px solid #dcdfe6;
-            border-radius: 4px;"
+          class="qc-tree"
           :data="data"
           node-key="id"
           :props="defaultProps"
@@ -59,7 +67,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, watch, defineEmits } from 'vue'
 import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
-import { Folder, Document } from '@element-plus/icons-vue'
+import { Folder, Document, Search } from '@element-plus/icons-vue'
 import {
   fetchFormNodes,
   addTopLevelNode,
@@ -185,6 +193,13 @@ const handleNodeClicked = (nodeData) => {
   }
 };
 
+/** Clears all selected nodes */
+const clearFormSelection= () => {
+  // clear selectedFormIds
+  treeRef.value.setCheckedKeys([]);
+  emit('update-selected-forms', []);
+};
+
 
 </script>
 
@@ -222,4 +237,30 @@ const handleNodeClicked = (nodeData) => {
 .node-actions a {
   margin-left: 8px;
 }
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.search-container {
+  display: flex;
+  justify-content: flex-end; /* Align search box to the right */
+  margin-bottom: 10px;
+}
+
+
+.qc-tree {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+}
+
+.error-border {
+  border: 1px solid #f56c6c !important; /* Red validation border */
+  border-radius: 4px;
+}
+
 </style>

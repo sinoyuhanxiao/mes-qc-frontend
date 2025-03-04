@@ -108,7 +108,7 @@
 
     <!-- Dispatched Tasks Dialog -->
     <el-dialog
-        title="已派发任務"
+        title="已派发任务"
         top="5vh"
         v-model="isDispatchedTestsDialogVisible"
         width="70%"
