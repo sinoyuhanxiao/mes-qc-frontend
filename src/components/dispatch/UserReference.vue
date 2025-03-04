@@ -52,6 +52,16 @@ export default {
       return roleMap[roleId] || "未知角色";
     },
   },
+  watch: {
+    userId: {
+      immediate: true, // Run immediately when component mounts
+      handler(newVal, oldVal) {
+        if (newVal !== oldVal) {
+          this.fetchUserDetail();
+        }
+      },
+    },
+  },
   mounted() {
     this.fetchUserDetail();
   },

@@ -1,18 +1,22 @@
 <template>
   <div>
     <!-- Search Input & Clear Button (Same Row) -->
-    <div style="display: flex; margin-bottom: 10px;">
+    <div style="display: flex; justify-content: flex-end;">
       <el-input
           v-model="searchQuery"
           placeholder="搜索班次"
           clearable
           @input="filterTree"
-          style="flex: 8; margin-right: 10px"
-      />
+          style="height: 32px; margin-right: 10px"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
       <el-button
           type="warning"
           @click="clearSelection"
-          style="flex: 2;"
+          style="height: 32px; width: 80px; line-height: normal; margin: 0"
       >
         清空选择
       </el-button>
@@ -21,7 +25,7 @@
     <!-- Tree Wrapper with Conditional Red Border -->
     <div>
       <el-tree
-          style="max-height: 300px; /* Set vertical limit */ overflow-y: auto;   /* Enable scrolling */ border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px;"
+          style="max-height: 300px; /* Set vertical limit */ overflow-y: auto;   /* Enable scrolling */ border: 1px solid #dcdfe6; border-radius: 4px; padding: 5px; margin-top: 10px"
           ref="treeRef"
           :data="filteredTreeData"
           show-checkbox
@@ -39,8 +43,10 @@
 import {getAllShifts} from "@/services/shiftService";
 import {getAllShiftUsers} from "@/services/shiftUserService";
 import {fetchUsers} from "@/services/userService";
+import {Search} from "@element-plus/icons-vue";
 
 export default {
+  components: {Search},
   data() {
     return {
       searchQuery: "",
@@ -194,9 +200,5 @@ export default {
 </script>
 
 <style scoped>
-.tree-wrapper-error {
-  border: 1px solid #f56c6c !important; /* Red border for validation */
-  border-radius: 4px;
-  padding: 5px;
-}
+
 </style>
