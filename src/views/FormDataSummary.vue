@@ -71,19 +71,41 @@
       <el-table
           v-loading="loadingQcRecords"
           :data="paginatedQcRecords"
+          :height="tableHeight"
           border
           style="width: 100%; white-space: nowrap;"
           :scroll-x="true"
       >
-        <el-table-column
-            v-for="(header, index) in reorderedColumnHeaders"
-            v-if="header !== 'created_by'"
+        <el-table-column label="系统提交信息" label-class-name="group-header" fixed>
+          <el-table-column prop="created_by" label="提交人" fixed="left" width="150" sortable>
+            <template #default="scope">
+              <span>{{ scope.row['提交人'] }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="created_at" label="提交时间" fixed="left" width="180" sortable>
+            <template #default="scope">
+              <span>{{ scope.row['提交时间'] }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="_id" label="提交单号" fixed="left" width="220" sortable>
+            <template #default="scope">
+              <span>{{ scope.row._id }}</span>
+            </template>
+          </el-table-column>
+        </el-table-column>
+
+        <el-table-column label="质检填写记录" label-class-name="group-header">
+          <el-table-column
+            v-for="(header, index) in displayedColumnHeaders"
             :key="index"
             :prop="header"
-            :label="header === '_id' ? '提交单号' : header"
+            :label="header"
             sortable
-            :width="header === '_id' ? 300 : header === '提交时间' ? 200 : 150"
-        />
+            :width="150"
+          />
+        </el-table-column>
 
         <!-- Fixed 操作 column on the right -->
         <el-table-column label="操作" fixed="right" width="120">
@@ -143,12 +165,14 @@ import {getUserById} from "@/services/userService";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";  // ✅ Import autoTable plugin explicitly
 import callAddFont from "@/assets/simfang.js";
-import callAddBoldFont from "@/assets/simfang-bold.js"; // 添加这行
+import callAddBoldFont from "@/assets/simfang-bold.js";
+import {nextTick} from "vue"; // 添加这行
 
 export default {
   components: { FormTree, PieChart, LineChart },
   data() {
     return {
+      tableHeight: window.innerHeight - 220,
       pdfLoading: false,
       isMainDisplayed: true,
       lineChartRefs: [],
@@ -206,6 +230,15 @@ export default {
       pageSize: 15,
     };
   },
+  mounted() {
+    window.addEventListener('resize', this.updateTableHeight);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.updateTableHeight); // 添加这行
+  },
+  updateTableHeight() {
+    this.tableHeight = window.innerHeight - 200;
+  },
   computed: {
     filteredQcRecords() {
       if (!this.searchQuery) return this.qcRecords;
@@ -215,6 +248,20 @@ export default {
           )
       );
     },
+    displayedColumnHeaders() {
+      return this.reorderedColumnHeaders.filter(header =>
+          !["提交人", "提交时间", "_id"].includes(header)  // 提前过滤
+      );
+    },
+    // 在 `computed: { reorderedColumnHeaders() }` 这个函数里，确保 `created_at` 和 `created_by` 排在最前
+    reorderedColumnHeaders() {
+      let headers = Object.keys(this.qcRecords[0] || {});
+      headers = headers.filter(header => header !== "created_by" && header !== "created_at");
+      headers.unshift("created_at", "created_by"); // 确保这两个字段在最前
+      headers = headers.map(header => (header === "created_at" ? "提交时间" : header));
+      return headers;
+    },
+
     paginatedQcRecords() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
@@ -694,6 +741,22 @@ export default {
     async openQcRecordsDialog() {
       this.qcRecordsDialogVisible = true;
       this.loadingQcRecords = true;
+
+      await nextTick(); // Wait until the DOM updates before rendering
+
+      const observer = new MutationObserver((mutations, obs) => {
+        const groupHeaders = document.querySelectorAll('.group-header .cell');
+        if (groupHeaders.length > 0) {
+          groupHeaders.forEach(header => {
+            header.style.fontWeight = 'bold';
+            header.style.fontSize = '16px';
+            header.style.color = '#606266'
+          });
+          obs.disconnect(); // Stop observing once changes are applied
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
       // console.log("selected form is")
       // console.log(this.selectedForm)
 
@@ -742,5 +805,11 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+  }
+
+  .group-header .cell {
+    font-weight: bold !important;
+    font-size: 16px; /* Adjust the size as needed */
+    text-align: center;
   }
 </style>

@@ -21,18 +21,18 @@
         <!-- Right Section: Search Input -->
         <div style="display: flex; align-items: center; gap: 10px;">
           <!-- make this button vertically align center -->
-          <el-tooltip>
-            <el-button
-                type="success"
-                style="margin-top: 0"
-                @click="downloadExcel"
-            >
-              导出 Excel
-            </el-button>
-            <template #content>
-              <span>下载你的质检提交记录</span>
-            </template>
-          </el-tooltip>
+<!--          <el-tooltip>-->
+<!--            <el-button-->
+<!--                type="success"-->
+<!--                style="margin-top: 0"-->
+<!--                @click="downloadExcel"-->
+<!--            >-->
+<!--              导出 Excel-->
+<!--            </el-button>-->
+<!--            <template #content>-->
+<!--              <span>下载你的质检提交记录</span>-->
+<!--            </template>-->
+<!--          </el-tooltip>-->
           <el-input
               v-model="searchTerm"
               placeholder="搜索ID或单号"
@@ -54,7 +54,7 @@
           style="width: 100%;"
       >
         <el-table-column
-            v-for="key in columnList"
+            v-for="key in columnList.filter(k => k !== 'created_by')"
             :key="key"
             :prop="key"
             :label="columnHeaders[key]"
@@ -91,32 +91,23 @@
     </el-main>
   </el-container>
 
-  <el-dialog
-      title="提交记录"
-      v-model="dialogVisible"
-      width="50%"
-      @close="closeDetailsDialog"
-  >
-    <el-row gutter="20">
-      <el-col
-          v-for="(columnItems, columnIndex) in columns"
-          :key="columnIndex"
-          :span="Math.min(24 / columns.length, 12)"
-      >
-        <el-form label-position="left" label-width="120px" class="task-details">
-          <el-form-item
-              v-for="(value, key) in columnItems"
-              :key="key"
-              :label="key"
-          >
-            <span>{{ Array.isArray(value) ? value.join(', ') : value || " - " }}</span>
-          </el-form-item>
-        </el-form>
-      </el-col>
-    </el-row>
+  <el-dialog :title="this.title" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
+    <el-scrollbar max-height="500px">
+      <div v-for="(fields, category) in groupedDetails" :key="category">
+        <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px">
+          <el-descriptions-item v-for="(value, key) in fields" :key="key" :label="key">
+            {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <el-descriptions title="质检提交信息" border style="margin-top: 10px">
+        <el-descriptions-item label="提交人">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
+        <el-descriptions-item label="提交时间">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
+      </el-descriptions>
+    </el-scrollbar>
     <template #footer>
-      <!-- add a download button to download this record in pdf -->
-      <el-button type="primary" style="margin-right: 10px" @click="downloadPdf">导出</el-button>
+      <el-button type="info" @click="closeDetailsDialog">取消</el-button>
+      <el-button type="primary" @click="newExportToPdf">导出</el-button>
     </template>
   </el-dialog>
 
@@ -132,6 +123,10 @@ import {
 } from "@/services/qcTaskSubmissionLogsService"; // Import the backend service
 import { formatDate } from "@/utils/task-center/dateFormatUtils";
 import TaskDetail from "@/components/task-center/TaskDetail.vue";
+import { getUserById } from "@/services/userService";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import callAddBoldFont from "@/assets/simfang-bold.js";
 
 export default {
   name: "QcTaskSubmissionLogs",
@@ -163,6 +158,9 @@ export default {
         submission_id: null,
         inputCollectionName: null
       },
+      selectedForm: null, // 选中的表单
+      systemInfo: {}, // 存储提交信息
+      groupedDetails: {}, // 按类别整理的数据
       searchTerm: "",
       tableData: [], // Backend data
       filteredData: [],
@@ -193,7 +191,7 @@ export default {
         submission_id: "300px",
         created_at: "200px",
         created_by: "150px",
-        comment: "400px",
+        comment: "600px",
         dispatched_task_id: "200px",
         qc_form_template_id: "200px",
         status: "100px",
@@ -225,6 +223,66 @@ export default {
     },
   },
   methods: {
+    async newExportToPdf() {
+      try {
+        const doc = new jsPDF();
+        callAddBoldFont.apply(doc);
+        doc.setFont("simfang", "bold");
+
+        let y = 10;
+        const title = this.title;
+        doc.setFontSize(16);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const textWidth = doc.getTextWidth(title);
+        doc.text(title, (pageWidth - textWidth) / 2, y);
+        y += 10;
+
+        Object.entries(this.groupedDetails).forEach(([category, fields]) => {
+          doc.setFontSize(14);
+          doc.text(category, 10, y);
+          y += 6;
+
+          const tableData = Object.entries(fields).map(([key, value]) => [
+            key,
+            Array.isArray(value) ? value.join(", ") : value || " - ",
+          ]);
+
+          autoTable(doc, {
+            startY: y,
+            head: [["质检项目", "质检结果"]],
+            body: tableData,
+            theme: "grid",
+            styles: { font: "simfang", fontSize: 10 },
+            headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
+          });
+
+          y = doc.lastAutoTable.finalY + 10;
+        });
+
+        doc.setFontSize(14);
+        doc.text("质检提交信息", 10, y);
+        y += 6;
+
+        autoTable(doc, {
+          startY: y,
+          head: [["质检项目", "质检结果"]],
+          body: [
+            ["提交人", this.systemInfo.提交人 || " - "],
+            ["提交时间", this.systemInfo.提交时间 || " - "],
+            ["提交单号", this.systemInfo.提交单号 || " - "]
+          ],
+          theme: "grid",
+          styles: { font: "simfang", fontSize: 10 },
+          headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
+        });
+
+        doc.save(`${this.title}.pdf`);
+        this.$message.success("PDF 导出成功!");
+      } catch (err) {
+        console.error("PDF 生成失败:", err);
+        this.$message.error("PDF 生成失败，请重试!");
+      }
+    },
     async fetchTableData() {
       try {
         const response = await getAllTaskLogs(this.createdBy, this.dispatchedTaskId);
@@ -242,6 +300,9 @@ export default {
           status: log.status,
         }));
         this.filteredData = [...this.tableData]; // Apply the fetched data to filteredData
+        // console log the table data
+        console.log("table data: ")
+        console.log(this.tableData)
       } catch (err) {
         console.error("Error fetching task logs:", err);
       }
@@ -300,45 +361,111 @@ export default {
     },
     async viewDetails(row) {
       try {
-        // Extract year and month from row.created_at
-        const createdAt = new Date(row.created_at);
-        const yearMonth = createdAt.getFullYear().toString() +
-            (createdAt.getMonth() + 1).toString().padStart(2, "0");
-
-        // Generate inputCollectionName dynamically
+        const createdAt = new Date(row['created_at']);
+        const yearMonth = createdAt.getFullYear().toString() + (createdAt.getMonth() + 1).toString().padStart(2, "0");
+        console.log("row")
+        console.log(row)
         const inputCollectionName = `form_template_${row.qc_form_template_id}_${yearMonth}`;
 
-        // Fetch document details using the dynamically created collection name
+        // **获取数据**
         const response = await getMyDocument(row.submission_id, row.qc_form_template_id, row.created_by, inputCollectionName);
+        this.selectedDetails = { ...response.data, "submissionId": row.submission_id };
 
-        this.selectedDetails = response.data; // Populate the details
-        this.selectedIds.qc_form_template_id = row.qc_form_template_id
-        this.selectedIds.submission_id = row.submission_id
-        this.selectedIds.inputCollectionName = inputCollectionName
-        this.dialogVisible = true; // Show the dialog
+        // **提取基本信息**
+        this.systemInfo = {
+          提交单号: this.selectedDetails.submissionId,
+          提交时间: new Date(this.selectedDetails.created_at).toLocaleString("zh-CN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+          }),
+          提交人: await getUserById(this.selectedDetails.created_by).then(response => response.data?.data?.name || '-')
+        };
+
+        // **整理数据**
+        const grouped = {};
+        Object.entries(this.selectedDetails).forEach(([key, value]) => {
+          if (["_id", "created_at", "created_by", "submissionId"].includes(key)) return; // 忽略基础字段
+          if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+            grouped[key] = value; // 如果是对象，归类到单独分区
+          } else {
+            if (!grouped["未分类"]) {
+              grouped["未分类"] = {};
+            }
+            grouped["未分类"][key] = value;
+          }
+        });
+
+        this.groupedDetails = grouped;
+        this.dialogVisible = true;
       } catch (err) {
-        console.error("Error fetching document details:", err);
+        console.error("获取详情失败:", err);
       }
     },
+    // async downloadPdf() {
+    //   try {
+    //     const response = await exportDocumentToPDF(
+    //         this.selectedIds.submission_id,
+    //         this.selectedIds.qc_form_template_id,
+    //         this.$store.getters.getUser.id,
+    //         this.selectedIds.inputCollectionName
+    //     );
+    //
+    //     const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+    //     const url = window.URL.createObjectURL(pdfBlob);
+    //     const link = document.createElement("a");
+    //     link.href = url;
+    //     link.setAttribute("download", `task_submission_${this.selectedDetails.submission_id}.pdf`);
+    //     document.body.appendChild(link);
+    //     link.click();
+    //
+    //     document.body.removeChild(link);
+    //     window.URL.revokeObjectURL(url);
+    //     this.$message.success("PDF 下载成功!");
+    //   } catch (err) {
+    //     console.error("Error downloading PDF:", err);
+    //     this.$message.error("PDF 下载失败，请重试!");
+    //   }
+    // },
     async downloadPdf() {
       try {
-        const response = await exportDocumentToPDF(
-            this.selectedIds.submission_id,
-            this.selectedIds.qc_form_template_id,
-            this.$store.getters.getUser.id,
-            this.selectedIds.inputCollectionName
-        );
+        const doc = new jsPDF();
+        callAddBoldFont.apply(doc); // 添加这行
+        doc.setFont("simfang", "bold"); // 设置加粗字体
 
-        const pdfBlob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(pdfBlob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", `task_submission_${this.selectedDetails.submission_id}.pdf`);
-        document.body.appendChild(link);
-        link.click();
+        let y = 10;
 
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        // **Add Title (Centered, Bold)**
+        const title = `${this.selectedDetails?.submission_id} 提交记录`;
+        doc.setFontSize(16);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const textWidth = doc.getTextWidth(title);
+        doc.text(title, (pageWidth - textWidth) / 2, y);
+        y += 10;
+
+        // **Loop through all grouped details and export them**
+        Object.entries(this.filteredDetails).forEach(([category, fields]) => {
+          doc.setFontSize(14);
+          doc.text(category, 10, y); // **Section Title**
+          y += 6;
+
+          Object.entries(fields).forEach(([key, value]) => {
+            doc.setFontSize(12);
+            doc.text(`${key}:`, 10, y);
+            doc.setFont("simfang", "normal"); // 设置普通字体
+            doc.text(Array.isArray(value) ? value.join(", ") : value || " - ", 50, y);
+            y += 6;
+          });
+
+          y += 4; // Extra spacing after section
+        });
+
+        // **Save PDF**
+        doc.save(`${this.selectedDetails?.submission_id}-提交记录.pdf`);
         this.$message.success("PDF 下载成功!");
       } catch (err) {
         console.error("Error downloading PDF:", err);
@@ -349,6 +476,7 @@ export default {
     closeDetailsDialog() {
       this.dialogVisible = false; // Close the dialog
       this.currentTask = null; // Reset currentTask
+      this.selectedDetails = {};
     },
     handlePageSizeChange(newSize) {
       this.pageSize = newSize;
