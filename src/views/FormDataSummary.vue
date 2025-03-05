@@ -85,7 +85,7 @@
 
           <el-table-column prop="created_at" label="提交时间" fixed="left" width="180" sortable>
             <template #default="scope">
-              <span>{{ scope.row['提交时间'] }}</span>
+              <span>{{ formatClientTime(scope.row['提交时间']) }}</span>
             </template>
           </el-table-column>
 
@@ -120,7 +120,7 @@
           v-if="qcRecords.length > 0"
           v-model:currentPage="currentPage"
           :page-size="pageSize"
-          layout="prev, pager, next"
+          layout="total, prev, pager, next"
           :total="filteredQcRecords.length"
           @current-change="handlePageChange"
       />
@@ -289,7 +289,20 @@ export default {
       // }
     }
   },
-  methods: {
+  methods: {formatClientTime(utcDateTime) {
+      if (!utcDateTime) return "-";
+      const utcDate = new Date(utcDateTime + "Z"); // 确保它被解析为 UTC
+      return utcDate.toLocaleString("zh-CN", {
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).replace(/\//g, "-");
+    },
     newExportToPdf() {
       const doc = new jsPDF();
       callAddBoldFont.apply(doc); // 添加这行
@@ -462,7 +475,7 @@ export default {
 
       this.$message.success("Excel 导出成功！");
     },
-    formatDate(date) {
+    formatDate(date) { // convert to the client local time also to the YYYY-MM-DD HH:MM:SS string in 24 hours
       if (!date) return "";
       const d = new Date(date);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ` +
@@ -493,7 +506,7 @@ export default {
     },
     async viewDetails(row) {
       try {
-        const createdAt = new Date(row['提交时间']);
+        const createdAt = new Date(this.formatClientTime(row['提交时间']));
         const yearMonth = createdAt.getFullYear().toString() +
             (createdAt.getMonth() + 1).toString().padStart(2, "0");
 
@@ -629,10 +642,17 @@ export default {
       this.loadingCharts = true; // Start loading indicator
 
       try {
-        // Call extractWidgetDataWithCounts with only formTemplateId
+        // Call extractWidgetDataWithCounts with formTemplateId
         const countResponse = await extractWidgetDataWithCounts(formTemplateId, startDateTime, endDateTime);
 
-        // Process PieChart widgets (for option-based items
+        // Function to convert UTC timestamp to client local time
+        const convertToLocalTime = (utcDateTime) => {
+          const utcDate = new Date(utcDateTime + "Z"); // Ensure it's treated as UTC
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          return utcDate.toLocaleString("zh-CN", { timeZone: userTimezone, hour12: false });
+        };
+
+        // Process PieChart widgets (for option-based items)
         this.pieChartWidgets = countResponse.data
             .filter(widget => widget.optionItems.length > 0) // Only include widgets with options
             .map(widget => ({
@@ -651,7 +671,7 @@ export default {
               name: widget.name,
               label: widget.label,
               chartData: widget.chartData, // Directly use extracted numerical data
-              xaxisData: widget.xaxisData, // Use formatted timestamps
+              xaxisData: widget.xaxisData.map(convertToLocalTime) // Convert x-axis timestamps to local time
             }));
 
       } catch (error) {
@@ -669,8 +689,6 @@ export default {
       try {
         const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
         this.qcRecords = response.data;
-
-        console.log("fetched qcRecords: ", this.qcRecords);
 
         // Ensure column headers remain in sync
         if (Array.isArray(this.qcRecords) && this.qcRecords.length > 0) {
@@ -757,14 +775,13 @@ export default {
       });
 
       observer.observe(document.body, { childList: true, subtree: true });
-      // console.log("selected form is")
-      // console.log(this.selectedForm)
 
       const formTemplateId = this.selectedForm ? this.selectedForm.qcFormTemplateId : null;
 
-      // Use the same date range selected above the charts
-      const startDateTime = this.formatDate(this.dateRange[0]);
-      const endDateTime = this.formatDate(this.dateRange[1]);
+      // convert these two time to YYYY-MM-DD HH:SS:MM strings
+      const formatDate = (date) => date.toISOString().slice(0, 19).replace("T", " ");
+      let startDateTime = formatDate(this.dateRange[0]);
+      let endDateTime = formatDate(this.dateRange[1]);
 
       await this.fetchQcRecordsData(formTemplateId, startDateTime, endDateTime);
       this.loadingQcRecords = false;

@@ -15,14 +15,44 @@ export const extractWidgetData = (jsonInput) => {
 
 /**
  * Extract widget data along with count statistics.
+ * Converts startDateTime and endDateTime from local time to UTC before sending.
+ * Logs the user's local timezone.
  * @param {Long} formTemplateId - The Form Template ID.
- * @param {String} startDateTime
- * @param {String} endDateTime
+ * @param {String} startDateTime - Local datetime string in "YYYY-MM-DD HH:MM:SS".
+ * @param {String} endDateTime - Local datetime string in "YYYY-MM-DD HH:MM:SS".
  * @returns {Promise} API response containing widget data with counts.
  */
+// TODO: move this conversion to formatDate function such as the one in the FormDataSummary.vue
 export const extractWidgetDataWithCounts = (formTemplateId, startDateTime, endDateTime) => {
-    return api.post(`${BASE_URL}/extract-with-counts`, {}, { // Empty request body
-        params: { formTemplateId, startDateTime, endDateTime},
+    // Get the user's local timezone
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const convertToUTC = (localDateTime) => {
+        // Parse input datetime manually (Ensure it's treated as LOCAL time)
+        const [datePart, timePart] = localDateTime.split(" ");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hour, minute, second] = timePart.split(":").map(Number);
+
+        // Create a Date object in the **local timezone**
+        const localDate = new Date(year, month - 1, day, hour, minute, second);
+
+        // Fix: getTimezoneOffset() is in minutes and is negative for UTC-8, so we ADD it to shift forward.
+        const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+
+        // Ensure 24-hour format and return in "YYYY-MM-DD HH:MM:SS"
+        const pad = (num) => String(num).padStart(2, "0");
+        return `${utcDate.getFullYear()}-${pad(utcDate.getMonth() + 1)}-${pad(utcDate.getDate())} ` +
+            `${pad(utcDate.getHours())}:${pad(utcDate.getMinutes())}:${pad(utcDate.getSeconds())}`;
+    };
+
+    const startDateTimeUTC = convertToUTC(startDateTime);
+    const endDateTimeUTC = convertToUTC(endDateTime);
+
+    console.log("User's Local Timezone:", userTimezone);
+    console.log("extractWidgetDataWithCounts", formTemplateId, startDateTime, endDateTime, "->", startDateTimeUTC, endDateTimeUTC);
+
+    return api.post(`${BASE_URL}/extract-with-counts`, {}, {
+        params: { formTemplateId, startDateTime: startDateTimeUTC, endDateTime: endDateTimeUTC },
         headers: { 'Content-Type': 'application/json' }
     });
 };
@@ -37,8 +67,32 @@ export const extractWidgetDataWithCounts = (formTemplateId, startDateTime, endDa
  * @returns {Promise} API response containing the QC records.
  */
 export const fetchQcRecords = (formTemplateId, startDateTime, endDateTime, page = 0, size = 1000) => {
+    // Convert local datetime to UTC using the same method
+    const convertToUTC = (localDateTime) => {
+        const [datePart, timePart] = localDateTime.split(" ");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hour, minute, second] = timePart.split(":").map(Number);
+
+        // Create a Date object in the **local timezone**
+        const localDate = new Date(year, month - 1, day, hour, minute, second);
+
+        // Convert to UTC
+        const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+
+        // Format to "YYYY-MM-DD HH:mm:ss"
+        const pad = (num) => String(num).padStart(2, "0");
+        return `${utcDate.getFullYear()}-${pad(utcDate.getMonth() + 1)}-${pad(utcDate.getDate())} ` +
+            `${pad(utcDate.getHours())}:${pad(utcDate.getMinutes())}:${pad(utcDate.getSeconds())}`;
+    };
+
+    // Convert input times
+    const startDateTimeUTC = convertToUTC(startDateTime);
+    const endDateTimeUTC = convertToUTC(endDateTime);
+
+    console.log("fetchQcRecords", formTemplateId, startDateTime, endDateTime, "->", startDateTimeUTC, endDateTimeUTC);
+
     return api.get(`${BASE_URL}/qc-records`, {
-        params: { formTemplateId, startDateTime, endDateTime, page, size },
+        params: { formTemplateId, startDateTime: startDateTimeUTC, endDateTime: endDateTimeUTC, page, size },
         headers: { 'Content-Type': 'application/json' }
     });
 };
