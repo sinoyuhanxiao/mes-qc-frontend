@@ -83,7 +83,6 @@
     >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
-            :key="refreshKey"
             :currentOrder="currentOrder"
             :user-map="userMap"
             :form-map="formMap"
@@ -118,7 +117,7 @@
           :form-map="formMap"
           :user-map="userMap"
           :show-search-box="true"
-          :key="refreshKey"/>
+      />
 
     </el-dialog>
   </el-container>
@@ -154,7 +153,6 @@ export default {
   },
   data() {
     return {
-      refreshKey: 0,
       isDetailsDialogVisible: false,
       isDispatchedTestsDialogVisible: false,
       isEditMode: false,
@@ -276,9 +274,6 @@ export default {
       try {
         const response = await getQcOrderById(id);
         const updatedOrder = response.data?.data;
-        this.refreshKey++;
-        console.log(`increased refresh key.`);
-
         if (updatedOrder) {
           this.currentOrder = { ...updatedOrder };
           console.log("set current order to updated order");

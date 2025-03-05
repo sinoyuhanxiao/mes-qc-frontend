@@ -40,7 +40,7 @@
     </el-table-column>
 
     <!-- Assigned User -->
-    <el-table-column prop="assignedUsersCount" label="分配用户" width="200">
+    <el-table-column prop="assignedUsersCount" label="关联用户" width="200">
       <template #default="scope">
         <div >
           <el-tag
@@ -61,7 +61,7 @@
     </el-table-column>
 
     <!-- Assigned Form -->
-    <el-table-column prop="assignedFormsCount" label="分配表单" width="200" >
+    <el-table-column prop="assignedFormsCount" label="关联表单" width="200" >
       <template #default="scope">
         <div>
           <el-tag
@@ -182,11 +182,9 @@ export default {
   methods: {
     getQcOrderStateTagData,
     clickedNameColumn(row) {
-      console.log("Clicked Order:", row);
       this.$emit("order-clicked", row);
     },
     onSelectionChange(selected) {
-      console.log("Selection changed:", selected);
       this.$emit("selection-change", selected);
     },
     formatDate(date) {
@@ -334,7 +332,6 @@ export default {
               break;
 
             case "assignedUsersCount":
-              console.log('sorting assigned user count')
               valueA = this.getUniqueUserIds(a).length;
               valueB = this.getUniqueUserIds(b).length;
 

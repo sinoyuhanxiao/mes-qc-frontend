@@ -118,7 +118,7 @@
       </el-table-column>
 
       <!-- Due Date -->
-      <el-table-column prop="due_date" label="到期时间" width="150" sortable>
+      <el-table-column prop="due_date" label="剩余时间" width="150" sortable>
         <template #default="scope">
           <el-tag style="font-weight: bold" :type="remainingTimeTag(scope.row['due_date'])">
             {{ calculateRemainingTime(scope.row['due_date']) }}
@@ -196,12 +196,6 @@ export default {
     },
     dispatchId: {
       immediate: true,
-      handler() {
-        this.fetchTasks();
-      },
-    },
-    refreshKey: {
-      immediate: false,
       handler() {
         this.fetchTasks();
       },

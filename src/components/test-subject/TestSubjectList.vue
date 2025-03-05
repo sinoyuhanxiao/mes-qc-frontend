@@ -22,7 +22,7 @@
     <el-table-column label="操作" width="250">
       <template #default="scope">
         <el-button size="small" @click="$emit('edit-test-subject', scope.row)">
-          编辑
+          修改
         </el-button>
         <el-button size="small" type="danger" @click="$emit('delete-test-subject', scope.row.id)">
           删除
