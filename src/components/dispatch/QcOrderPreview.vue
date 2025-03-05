@@ -80,9 +80,9 @@ export default {
     },
     // Format user list (Order summary helper)
     formatUsers(userIds) {
-      if (!userIds) return "无";
+      if (!userIds || userIds.length === 0) return "无";
       return userIds
-          .map((id) => this.userMap.find((user) => user.id === id)?.name || "未知用户")
+          .map((id) => this.userMap[id]?.name || "未知用户")
           .join(", ");
     },
     // Format form list (Order summary helper)

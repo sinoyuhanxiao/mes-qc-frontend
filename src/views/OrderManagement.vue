@@ -98,6 +98,7 @@
               :current-order="currentOrder"
               :is-edit-mode="isEditMode"
               :form-map="formMap"
+              :user-map="userMap"
               @on-submit="handleOrderSubmit"
               @on-cancel="closeAndResetDetailsDialog"
           />
@@ -160,7 +161,7 @@ export default {
       selectedRows: [],
       searchInput: "",
       formMap: [],
-      userMap: [],
+      userMap: {},
       qcOrders: [],
       loading: false,
     };

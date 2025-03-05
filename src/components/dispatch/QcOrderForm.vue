@@ -291,7 +291,6 @@
                 </el-select>
               </el-form-item>
 
-
               <!-- User Selection -->
               <el-form-item
                   label="检测人员"
@@ -308,11 +307,11 @@
                     multiple
                     filterable
                     placeholder="请选择人员"
-                    @change="handleDropdownUserChange($event, index)"
+                    @change="addUniqueUserIdsToDispatch($event, index)"
                     :fit-input-width="true"
                 >
                   <el-option
-                      v-for="user in userOptions"
+                      v-for="user in Object.values(userMap)"
                       :key="user.id"
                       :label="user.name"
                       :value="user.id"
@@ -433,9 +432,9 @@
     <!-- Right Section - Preview -->
     <el-aside style="flex: 3; padding: 20px; max-height: 75vh; background: #f9f9f9; overflow-y: auto;">
       <qc-order-preview
-        :qc-order-form = "qcOrderForm"
+        :qc-order-form="qcOrderForm"
         :form-map="formMap"
-        :user-map="userOptions"
+        :user-map="userMap"
     />
     </el-aside>
   </el-container>
@@ -464,31 +463,11 @@ export default {
     formMap: {
       type: Object,
       required: true,
-    }
-  },
-  data() {
-    return {
-      isSubmitted: false,
-      dateFormat: "YYYY-MM-DD HH:mm:ss",
-      valueFormat: "YYYY-MM-DDTHH:mm:ssZ",
-      qcOrderForm: null,
-      originalQcOrderForm: null, // Store the original order for comparison
-      validationRules: {
-        name: [
-          {required: true, message: "请输入工单名称", trigger: "blur"},
-          { max: 255, message: "工单名称不能超过255个字符", trigger: "blur" }
-        ],
-      },
-      userOptions: [],  // Stores user data fetch from backend
-      instrumentOptions: [],
-      samplingLocationOptions: [],
-      testSubjectOptions: [],
-      productOptions: [],
-      rawMaterialOptions: [],
-      productionWorkOrderOptions: [],
-      equipmentOptions: [],
-      maintenanceWorkOrderOptions: [],
-    };
+    },
+    userMap: {
+      type: Object,
+      required: true,
+    },
   },
   watch: {
     currentOrder: {
@@ -506,6 +485,38 @@ export default {
     isFormModified() {
       return JSON.stringify(this.qcOrderForm) !== JSON.stringify(this.originalQcOrderForm);
     },
+    userOptions() {
+      return Object.values(this.userMap).map(user => ({
+        label: user.name,
+        value: user.id
+      }));
+    }
+  },
+  mounted() {
+    this.loadAllOptions()
+  },
+  data() {
+    return {
+      isSubmitted: false,
+      dateFormat: "YYYY-MM-DD HH:mm:ss",
+      valueFormat: "YYYY-MM-DDTHH:mm:ssZ",
+      qcOrderForm: null,
+      originalQcOrderForm: null, // Store the original order for comparison
+      validationRules: {
+        name: [
+          {required: true, message: "请输入工单名称", trigger: "blur"},
+          { max: 255, message: "工单名称不能超过255个字符", trigger: "blur" }
+        ],
+      },
+      instrumentOptions: [],
+      samplingLocationOptions: [],
+      testSubjectOptions: [],
+      productOptions: [],
+      rawMaterialOptions: [],
+      productionWorkOrderOptions: [],
+      equipmentOptions: [],
+      maintenanceWorkOrderOptions: [],
+    };
   },
   methods: {
     disablePastDates(date) {
@@ -560,7 +571,6 @@ export default {
       this.$refs.formRef.validate(async (valid) => {
         if (valid) {
           try {
-            // Prepare the request payload
             const payload = {
               id: this.qcOrderForm.id || null,
               name: this.qcOrderForm.name,
@@ -572,7 +582,7 @@ export default {
               updated_at: this.qcOrderForm.updated_at || null,
               updated_by: this.qcOrderForm.updated_by || null,
               dispatches: this.qcOrderForm.dispatches.map((dispatch) =>
-                  (this.transformDispatchData(dispatch))),
+                  (this.getDispatchAPIPayload(dispatch))),
             };
             let message;
 
@@ -613,7 +623,7 @@ export default {
       this.isSubmitted = false;
     },
     // Transform dispatch data to match backend api request
-    transformDispatchData(dispatchData) {
+    getDispatchAPIPayload(dispatchData) {
       let payload = {
         id: dispatchData.id || null,
         executed_count: 0,
@@ -660,20 +670,6 @@ export default {
       }
 
       return payload;
-    },
-    async loadUserOptions() {
-      try {
-        const response = await fetchUsers();
-        const users = response.data?.data || [];
-        this.userOptions = users
-            .filter(user => user.status !== 0)
-            .map((user) => ({
-          id: user.id,
-          name: user.name,
-        }));
-      } catch (error) {
-        console.error("Failed to load user options:", error);
-      }
     },
     async loadProductOptions() {
       try {
@@ -782,7 +778,6 @@ export default {
         this.loadProductionWorkOrderOptions(),
         this.loadEquipmentOptions(),
         this.loadMaintenanceWorkOrderOptions(),
-        this.loadUserOptions(),
         this.loadInstrumentOptions(),
         this.loadSamplingLocationOptions(),
         this.loadTestSubjectOptions(),
@@ -805,7 +800,8 @@ export default {
       // Merge `dispatch.user_ids` (el-select) and `userIdsFromTree`
       dispatch.user_ids = [...new Set([...dispatch.dropdownUserIds, ...dispatch.shiftTreeUserIds])]; // OR: Array.from(mergedUserIds);
     },
-    handleDropdownUserChange(newUserIds, index) {
+    addUniqueUserIdsToDispatch(newUserIds, index) {
+      console.log("AddUniqueUserIdsToDispatch", index);
       const dispatch = this.qcOrderForm.dispatches[index];
 
       if (!dispatch) {
@@ -825,9 +821,6 @@ export default {
       dispatch.user_ids = [...mergedUserIds];
     }
   },
-  mounted() {
-    this.loadAllOptions()
-  }
 }
 
 
