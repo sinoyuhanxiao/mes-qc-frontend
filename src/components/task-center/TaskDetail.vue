@@ -181,6 +181,7 @@
 </template>
 
 <script>
+import dayjs from "dayjs";
 import {getDispatchByDispatchedTaskId} from "@/services/dispatchService";
 import {getTestSubjectById} from "@/services/testSubjectService";
 import {getSamplingLocationById} from "@/services/samplingLocationService";
@@ -214,7 +215,7 @@ export default {
       return this.personnelMap[personnelId] || null;
     },
     formatDate(dateString) {
-      return dateString ? new Date(dateString).toLocaleString() : "-";
+      return dateString ? dayjs(dateString).format("YYYY-MM-DD HH:mm:ss") : "-";
     },
     showDevelopmentPopup() {
       const url = this.$router.resolve({

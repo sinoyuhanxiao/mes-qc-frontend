@@ -4,12 +4,12 @@
     <div style="display: flex; justify-content: flex-end;">
       <!-- Action Buttons -->
       <el-button-group>
-        <el-button type="success" @click="handleEditOrder">编辑</el-button>
+        <el-button type="success" @click="handleEditOrder">修改</el-button>
         <el-button type="danger" @click="handleDeleteOrder">删除</el-button>
       </el-button-group>
     </div>
 
-    <el-divider>QC 工单详情</el-divider>
+    <el-divider>工单详情</el-divider>
 
     <el-form-item
         label="工单名称"
@@ -18,12 +18,12 @@
     </el-form-item>
 
     <el-form-item
-        label="工单ID">
+        label="工单号码">
       {{ currentOrder.id }}
     </el-form-item>
 
     <el-form-item
-        label="任务备注"
+        label="工单备注"
         class="wrap-text"
         v-if="currentOrder.description">
       {{ currentOrder.description }}
@@ -97,19 +97,19 @@
         </div>
         <div v-show="!dispatch.collapsed">
           <el-form-item
-              label="名称"
+              label="计划名称"
               class="wrap-text"
               v-if="dispatch.name">
             {{ dispatch.name }}
           </el-form-item>
 
           <el-form-item
-              label="派发计划号码">
+              label="计划号码">
             {{ dispatch.id }}
           </el-form-item>
 
           <el-form-item
-              label="备注"
+              label="计划备注"
               class="wrap-text"
               v-if="dispatch.description">
             {{ dispatch.description }}
@@ -419,14 +419,14 @@
                     <div><strong>计划数量:</strong> {{ workOrder.wo_quantity }}</div>
                     <div><strong>未排数量:</strong> {{ workOrder.unscheduled_quantity }}</div>
                     <div><strong>工单截止日期:</strong> {{ formatDate(workOrder.wo_deadline) }}</div>
-                    <div><strong>产品 ID:</strong> {{ workOrder.product_id }}</div>
+                    <div><strong>产品号码:</strong> {{ workOrder.product_id }}</div>
                     <div><strong>批准时间:</strong> {{ formatDate(workOrder.approved_at) }}</div>
                     <div><strong>起始时间:</strong> {{ formatDate(workOrder.start_date) }}</div>
                     <div><strong>结束时间:</strong> {{ formatDate(workOrder.end_date) }}</div>
                     <div><strong>预计生产时间:</strong> {{ workOrder.estimated_production_time }} 小时</div>
                     <div><strong>生产线:</strong> {{ workOrder.production_line }}</div>
                     <div><strong>更新日期:</strong> {{ formatDate(workOrder.updated_at) }}</div>
-                    <div><strong>UUID:</strong> {{ workOrder.recurrence_uuid }}</div>
+                    <div><strong>工单识别码:</strong> {{ workOrder.recurrence_uuid }}</div>
 
                     <!-- Image Display -->
                     <div v-if="workOrder.image_path" style="margin-top: 10px;">
@@ -467,8 +467,8 @@
                     <div><strong>代码:</strong> {{ equipment.code }}</div>
                     <div><strong>PLC:</strong> {{ equipment.plc }}</div>
                     <div><strong>序列号:</strong> {{ equipment.serial_number }}</div>
-                    <div><strong>供应商 ID:</strong> {{ equipment.vendor_id }}</div>
-                    <div><strong>位置 ID:</strong> {{ equipment.location_id }}</div>
+                    <div><strong>供应商号码:</strong> {{ equipment.vendor_id }}</div>
+                    <div><strong>位置号码:</strong> {{ equipment.location_id }}</div>
 
                     <!-- Image Display -->
                     <div v-if="equipment.image_path" style="margin-top: 10px;">
@@ -504,15 +504,15 @@
                     width="300px">
                   <template #default>
                     <!-- Maintenance Work Order Details -->
-                    <div><strong>ID:</strong> {{ workOrder.id }}</div>
+                    <div><strong>维护工单号码:</strong> {{ workOrder.id }}</div>
                     <div><strong>代码:</strong> {{ workOrder.code }}</div>
                     <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
                     <div><strong>开始日期:</strong> {{ formatDate(workOrder.start_date) }}</div>
                     <div><strong>结束日期:</strong> {{ formatDate(workOrder.end_date) }}</div>
-                    <div><strong>重复 UUID:</strong> {{ workOrder.recurrence_uuid }}</div>
+                    <div><strong>工单识别码:</strong> {{ workOrder.recurrence_uuid }}</div>
                     <div><strong>到期时间:</strong> {{ formatDate(workOrder.due_date) }}</div>
                     <div><strong>预计分钟数:</strong> {{ workOrder.estimated_minutes }}</div>
-                    <div><strong>生产线 ID:</strong> {{ workOrder.production_line_id }}</div>
+                    <div><strong>生产线号码:</strong> {{ workOrder.production_line_id }}</div>
 
                     <!-- Image Display -->
                     <div v-if="workOrder.image_path" style="margin-top: 10px;">
@@ -695,11 +695,10 @@ export default {
       }
     },
     handleCountdownFinish(dispatch) {
-      console.log("reach countdown")
       setTimeout(() => {
         this.fetchNextExecutionTime(dispatch);
-        this.refreshKey++;
-        console.log("fetch next execution time now")
+        this.refreshKey++; // refresh dispatched list
+        this.$emit("refresh-order"); // trigger refreshing current order on order management
       }, 2000); // Refresh next execution time after 2 second
     },
     toggleCollapse(index) {
@@ -741,7 +740,7 @@ export default {
       }
     },
     async handleEditOrder(){
-      await this.$confirm("确定编辑工單吗？", "提示", {
+      await this.$confirm("确定修改工單吗？", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
@@ -764,6 +763,16 @@ export default {
 
     // fetch each dispatch's data under order
     this.loadDispatchDetails();
+  },
+  watch: {
+    currentOrder: {
+      immediate: true,
+      handler() {
+        this.fetchCreatedByDetail();
+        this.fetchUpdatedByDetail();
+        this.loadDispatchDetails();
+      }
+    }
   }
 };
 </script>

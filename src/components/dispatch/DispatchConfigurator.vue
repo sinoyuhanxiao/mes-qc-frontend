@@ -8,9 +8,9 @@
           label="定时质检工单"
           name="QcOrderForm">
         <qc-order-form
-            :key="resetKey"
             :current-order="qcOrderForm"
             :form-map="formMap"
+            :user-map="userMap"
             @on-submit="handleSubmit"
             @on-cancel="handleCancel"
             @reset-form="handleReset"/>
@@ -40,12 +40,15 @@ export default {
     formMap: {
       type: Object,
       required:true,
-    }
+    },
+    userMap: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
       activeTab: "QcOrderForm", // Default tab
-      resetKey: 0, // Force re-render of QcOrderForm
       qcOrderForm: {},
     };
   },
@@ -61,7 +64,6 @@ export default {
     },
     handleReset() {
       this.qcOrderForm = this.getNormalizedOrderData(this.currentOrder);
-      this.resetKey++; // Force re-render of QcOrderForm
     },
     getNormalizedOrderData(order) {
       if (!this.isEditMode || !order) {
