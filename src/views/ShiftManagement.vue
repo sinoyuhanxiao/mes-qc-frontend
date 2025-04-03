@@ -166,10 +166,10 @@
       <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
         <el-table-column prop="id" label="ID" width="100" sortable />
         <el-table-column prop="name" label="名称" width="180" sortable />
-        <el-table-column prop="role_id" label="角色" width="150" sortable>
+        <el-table-column prop="role" label="角色" width="150" sortable>
           <template #default="scope">
-            <el-tag :type="scope.row.role_id === 1 ? 'warning' : 'success'">
-              {{ getRoleName(scope.row.role_id) }}
+            <el-tag :type="scope.row.role?.el_tag_type || 'info'">
+              {{ scope.row.role?.name || '未知角色' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -218,7 +218,7 @@
                 style="width: 480px"
             >
               <el-option
-                  v-for="user in userOptions"
+                  v-for="user in shiftLeaderOptions"
                   :key="user.id"
                   :label="user.name"
                   :value="user.id"
@@ -293,7 +293,7 @@
           <el-form-item :label="translate('shiftManagement.editDialog.leader')" prop="leader_id">
             <el-select v-model="editShift.leader_id" filterable :placeholder="translate('shiftManagement.editDialog.selectLeaderPlaceholder')" style="width: 480px">
               <el-option
-                  v-for="user in userOptions"
+                  v-for="user in shiftLeaderOptions"
                   :key="user.id"
                   :label="user.name"
                   :value="user.id"
@@ -395,7 +395,8 @@ export default {
       userSortSettings: { prop: "", order: "" }, // Sort settings
       tableData: [], // Original data
       filteredData: [], // Filtered data for display
-      userOptions: [], // Dropdown options for users
+      userOptions: [], // Dropdown options for all users
+      shiftLeaderOptions: [], // Dropdown options for shift leaders
       currentPage: 1, // Current page number
       pageSize: 15, // Number of items per page
       searchQuery: "", // Search input value
@@ -582,16 +583,27 @@ export default {
       try {
         const response = await fetchUsers(); // Fetch users from the backend
         if (response.data && response.data.status === "200") {
+          // ✅ Store all users for general use
           this.userOptions = response.data.data.map((user) => ({
-            id: user.id, // Use user ID for value
-            name: user.name, // Use user name for display
+            id: user.id,
+            name: user.name,
           }));
+
+          // ✅ Filter only 班长 (role.id === 3)
+          this.shiftLeaderOptions = response.data.data
+              .filter(user => user.role && user.role.id === 3)
+              .map(user => ({
+                id: user.id,
+                name: user.name,
+              }));
         } else {
-          this.userOptions = []; // Fallback if no data is returned
+          this.userOptions = [];
+          this.shiftLeaderOptions = []; // Ensure empty state
         }
       } catch (error) {
         console.error("Error fetching user options:", error);
         this.userOptions = [];
+        this.shiftLeaderOptions = [];
       }
     },
     async updateUsersForShift(shiftId) {

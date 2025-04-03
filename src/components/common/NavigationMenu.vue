@@ -27,7 +27,7 @@
           </el-menu-item>
 
           <!-- 仅管理员可见的菜单 -->
-          <template v-if="user.role === 1">
+          <template v-if="user.role.id !== 2">
             <el-sub-menu index="2">
               <template #title>
                 <el-icon><User /></el-icon>
@@ -170,8 +170,8 @@
         </el-form-item>
 
         <!-- ✅ Hide Role Selection if the user is not 管理员 -->
-        <el-form-item v-if="user.role === 1" :label="translate('userManagement.editDialog.role')" prop="role">
-          <el-select v-model="editUser.role">
+        <el-form-item v-if="user.role.id !== 2" :label="translate('userManagement.editDialog.role')" prop="role">
+          <el-select v-model="editUser.role.id">
             <el-option :label="translate('userManagement.role.admin')" value="管理员" />
             <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
           </el-select>
@@ -194,7 +194,7 @@
         </el-form-item>
 
         <!-- ✅ Hide Status Selection if the user is not 管理员 -->
-        <el-form-item v-if="user.role === 1" :label="translate('userManagement.editDialog.status')" prop="status">
+        <el-form-item v-if="user.role.id !== 2" :label="translate('userManagement.editDialog.status')" prop="status">
           <el-select v-model="editUser.status">
             <el-option :label="translate('userManagement.status.active')" :value="1" />
             <el-option :label="translate('userManagement.status.inactive')" :value="0" />
@@ -307,7 +307,7 @@ export default {
           this.editUser = {
             id: response.data.data.id,
             name: response.data.data.name,
-            role: response.data.data.role_id === 1 ? '管理员' : '质检人员',
+            role: response.data.data.role.id === 1 ? '管理员' : '质检人员',
             wecomId: response.data.data.wecom_id,
             username: response.data.data.username,
             email: response.data.data.email,

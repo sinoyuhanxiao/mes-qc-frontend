@@ -143,13 +143,9 @@ export default {
     async handleLogin() {
       this.errorMessage = '';
 
-      // Validate form before sending the request
       this.$refs.loginForm.validate(async (valid) => {
-        if (!valid) {
-          return;
-        }
+        if (!valid) return;
 
-        // Check if the user input matches the captcha
         if (this.form.userInputIdentifyCodes !== this.identifyCode) {
           this.errorMessage = '验证码错误，请重新输入';
           return;
@@ -157,38 +153,41 @@ export default {
 
         this.loading = true;
         try {
-          // Step 1: Validate the user credentials
           const validateResponse = await validateUser(
               this.form.username,
               btoa(this.form.password)
           );
 
           if (validateResponse.data.status === '200') {
-            // Step 2: Fetch complete user information
             const userInfoResponse = await fetchUserInfo(this.form.username);
 
             if (userInfoResponse.data.status === '200') {
-              // Store user data in Vuex
-              await this.loginUser({
-                id: userInfoResponse.data.data.id,
-                username: userInfoResponse.data.data.username,
-                role: userInfoResponse.data.data.role_id,
-                name: userInfoResponse.data.data.name
-              });
+              const userRole = userInfoResponse.data.data.role.id;
 
-              // **保存或清除用户名**
-              if (this.form.rememberMe) {
-                localStorage.setItem("rememberedUsername", this.form.username);
+              // Allow login only for 管理员 (role_id: 1) and 班长 (role_id: 3), hardcoded currently, TODO: should include in the role settings
+              if (userRole === 1 || userRole === 3) {
+                await this.loginUser({
+                  id: userInfoResponse.data.data.id,
+                  username: userInfoResponse.data.data.username,
+                  role: userInfoResponse.data.data.role,
+                  name: userInfoResponse.data.data.name
+                });
+
+                if (this.form.rememberMe) {
+                  localStorage.setItem("rememberedUsername", this.form.username);
+                } else {
+                  localStorage.removeItem("rememberedUsername");
+                }
+
+                ElMessage.success('登录成功！');
+
+                if (userRole === 1) {
+                  this.$router.push('/user-management');
+                } else if (userRole === 3) {
+                  this.$router.push('/');
+                }
               } else {
-                localStorage.removeItem("rememberedUsername");
-              }
-
-              ElMessage.success('登录成功！');
-              // Redirect to the dashboard or home page
-              if (userInfoResponse.data.data.role_id === 1) {
-                this.$router.push('/user-management');
-              } else if (userInfoResponse.data.data.role_id === 2) {
-                this.$router.push('/');
+                this.errorMessage = '该用户无权登录';  // Show error message in Chinese
               }
             } else {
               this.errorMessage = '获取用户信息失败，请稍后重试';
