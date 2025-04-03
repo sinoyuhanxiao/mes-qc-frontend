@@ -104,6 +104,10 @@
         <el-descriptions-item label="提交人">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="提交时间">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
       </el-descriptions>
+      <div v-if="eSignature && eSignature.startsWith('data:image')" style="margin-top: 20px;">
+        <h3>质检人签名：</h3>
+        <img :src="eSignature" alt="电子签名" style="width: 300px; height: auto;" />
+      </div>
     </el-scrollbar>
     <template #footer>
       <el-button type="info" @click="closeDetailsDialog">取消</el-button>
@@ -165,6 +169,7 @@ export default {
       tableData: [], // Backend data
       filteredData: [],
       dialogVisible: false,
+      eSignature: null,
       selectedDetails: null, // Stores the selected details for the dialog
       columnList: [
         "id",
@@ -276,6 +281,23 @@ export default {
           headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
         });
 
+        y = doc.lastAutoTable.finalY + 10;
+
+        // 添加电子签名，直接使用已经渲染的 <img> 元素
+        const signatureImg = document.querySelector('img[alt="电子签名"]');
+        if (signatureImg) {
+          const imgWidth = 150;
+          const aspectRatio = signatureImg.naturalWidth / signatureImg.naturalHeight;
+          const imgHeight = imgWidth / aspectRatio;
+
+          doc.setFontSize(14);
+          doc.text("质检人签名：", 10, y);
+          y += 10;
+
+          doc.addImage(signatureImg, 'PNG', 10, y, imgWidth, imgHeight);
+          y += imgHeight + 10;
+        }
+
         doc.save(`${this.title}.pdf`);
         this.$message.success("PDF 导出成功!");
       } catch (err) {
@@ -363,8 +385,6 @@ export default {
       try {
         const createdAt = new Date(row['created_at']);
         const yearMonth = createdAt.getFullYear().toString() + (createdAt.getMonth() + 1).toString().padStart(2, "0");
-        console.log("row")
-        console.log(row)
         const inputCollectionName = `form_template_${row.qc_form_template_id}_${yearMonth}`;
 
         // **获取数据**
@@ -388,8 +408,18 @@ export default {
 
         // **整理数据**
         const grouped = {};
+        let eSignatureFound = false;  // Track if e-signature was found
         Object.entries(this.selectedDetails).forEach(([key, value]) => {
           if (["_id", "created_at", "created_by", "submissionId"].includes(key)) return; // 忽略基础字段
+
+          console.log("Key:", key, "Value:", value)
+          if (value['e-signature']) {
+            console.log("Found e-signature:", value['e-signature']);
+            this.eSignature = value['e-signature'];  // Store the base64 image string for rendering
+            eSignatureFound = true;
+            return;
+          }
+
           if (typeof value === "object" && value !== null && !Array.isArray(value)) {
             grouped[key] = value; // 如果是对象，归类到单独分区
           } else {
@@ -399,6 +429,11 @@ export default {
             grouped["未分类"][key] = value;
           }
         });
+
+        // Clear e-signature if not found in this record
+        if (!eSignatureFound) {
+          this.eSignature = null;
+        }
 
         this.groupedDetails = grouped;
         this.dialogVisible = true;

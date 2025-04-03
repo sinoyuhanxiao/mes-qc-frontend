@@ -139,16 +139,26 @@
             </el-descriptions-item>
           </el-descriptions>
         </div>
+
+        <!-- Display System Information -->
         <el-descriptions title="质检提交信息" border style="margin-top: 10px">
           <el-descriptions-item label="提交人">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
           <el-descriptions-item label="提交时间">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
         </el-descriptions>
+
+        <!-- Display E-signature if present -->
+        <div v-if="eSignature && eSignature.startsWith('data:image')" style="margin-top: 20px;">
+          <h3>质检人签名：</h3>
+          <img :src="eSignature" alt="电子签名" style="width: 300px; height: auto;" />
+        </div>
       </el-scrollbar>
+
       <template #footer>
         <el-button type="info" @click="closeDetailsDialog">取消</el-button>
         <el-button type="primary" @click="newExportToPdf">导出</el-button>
       </template>
     </el-dialog>
+
 
   </el-container>
 </template>
@@ -182,6 +192,7 @@ export default {
       loadingCharts: false,
       groupedDetails: {},
       systemInfo: {},
+      eSignature: null,
       shortcuts: [
         {
           text: '本周',
@@ -250,7 +261,7 @@ export default {
     },
     displayedColumnHeaders() {
       return this.reorderedColumnHeaders.filter(header =>
-          !["提交人", "提交时间", "_id"].includes(header)  // 提前过滤
+          !["提交人", "提交时间", "_id", "e-signature"].includes(header)  // 提前过滤
       );
     },
     // 在 `computed: { reorderedColumnHeaders() }` 这个函数里，确保 `created_at` 和 `created_by` 排在最前
@@ -289,7 +300,8 @@ export default {
       // }
     }
   },
-  methods: {formatClientTime(utcDateTime) {
+  methods: {
+    formatClientTime(utcDateTime) {
       if (!utcDateTime) return "-";
       const utcDate = new Date(utcDateTime + "Z"); // 确保它被解析为 UTC
       return utcDate.toLocaleString("zh-CN", {
@@ -305,28 +317,24 @@ export default {
     },
     newExportToPdf() {
       const doc = new jsPDF();
-      callAddBoldFont.apply(doc); // 添加这行
+      callAddBoldFont.apply(doc); // 添加字体
       doc.setFont("simfang", "bold");
 
-      let y = 10; // Initial vertical spacing
+      let y = 10; // 初始的垂直间距
 
-      // **Add Title**
-      // dynamic title according to clicked
-
+      // 添加标题
       const title = `${this.selectedForm?.label}提交记录`;
-      doc.setFont("simfang", "bold");
       doc.setFontSize(16);
       const pageWidth = doc.internal.pageSize.getWidth();
       const textWidth = doc.getTextWidth(title);
       const x = (pageWidth - textWidth) / 2;
       doc.text(title, x, y);
-      doc.setFont("simfang", "bold");
-      y += 10; // Add some spacing after the title
+      y += 10;
 
-      // **Loop through all grouped details and export them**
+      // 导出所有组内的字段和数据
       Object.entries(this.groupedDetails).forEach(([category, fields]) => {
         doc.setFontSize(14);
-        doc.text(category, 10, y); // **Divider Title**
+        doc.text(category, 10, y);
         y += 6;
 
         const tableData = Object.entries(fields).map(([key, value]) => [
@@ -343,10 +351,10 @@ export default {
           headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
         });
 
-        y = doc.lastAutoTable.finalY + 10; // Update y for next section
+        y = doc.lastAutoTable.finalY + 10;
       });
 
-      // **Add System Information (质检提交信息)**
+      // 添加系统信息
       doc.setFontSize(14);
       doc.text("质检提交信息", 10, y);
       y += 6;
@@ -364,7 +372,24 @@ export default {
         headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
       });
 
-      // **Save PDF**
+      y = doc.lastAutoTable.finalY + 10;
+
+      // 添加电子签名，直接使用已经渲染的 <img> 元素
+      const signatureImg = document.querySelector('img[alt="电子签名"]');
+      if (signatureImg) {
+        const imgWidth = 150;
+        const aspectRatio = signatureImg.naturalWidth / signatureImg.naturalHeight;
+        const imgHeight = imgWidth / aspectRatio;
+
+        doc.setFontSize(14);
+        doc.text("质检人签名：", 10, y);
+        y += 10;
+
+        doc.addImage(signatureImg, 'PNG', 10, y, imgWidth, imgHeight);
+        y += imgHeight + 10;
+      }
+
+      // 保存 PDF
       doc.save(`${this.selectedForm?.label}-提交记录.pdf`);
     },
     async exportToPdf() {
@@ -516,7 +541,6 @@ export default {
         this.selectedDetails = { ...response.data, "submissionId": row._id };
         this.systemInfo = {
           提交单号: this.selectedDetails.submissionId,
-          // format the 提交时间 to YYYY-MM-DD HH:MM:SS
           提交时间: new Date(this.selectedDetails.created_at).toLocaleString("zh-CN", {
             year: "numeric",
             month: "2-digit",
@@ -529,17 +553,26 @@ export default {
           提交人: await getUserById(this.selectedDetails.created_by).then(response => response.data?.data?.name || '-')
         };
 
-        console.log(this.systemInfo)
-
         // **Step 1: First, determine all `el-descriptions` sections**
         const groupedDetails = {};
+        let eSignatureFound = false;  // Track if e-signature was found
+
         Object.entries(this.selectedDetails).forEach(([key, value]) => {
           if (["_id", "created_at", "created_by", "submissionId"].includes(key)) return; // Ignore base fields
 
+          // Detect e-signature and store it separately
+          // console log each key and value
+          console.log("Key:", key, "Value:", value)
+          if (value['e-signature']) {
+            console.log("Found e-signature:", value['e-signature']);
+            this.eSignature = value['e-signature'];  // Store the base64 image string for rendering
+            eSignatureFound = true;
+            return;
+          }
+
           // **Identify if this key belongs to a section (divider)**
           if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-            // If value is an object, it represents a `divider` section
-            groupedDetails[key] = value;
+            groupedDetails[key] = value;  // If value is an object, treat it as a divider section
           } else {
             // If it's a standalone value, place it under "未分类"
             if (!groupedDetails["未分类"]) {
@@ -549,10 +582,15 @@ export default {
           }
         });
 
+        // Clear e-signature if not found in this record
+        if (!eSignatureFound) {
+          this.eSignature = null;
+        }
+
         this.groupedDetails = groupedDetails;
         console.log("Grouped Details: ", this.groupedDetails);
 
-        this.dialogVisible = true;
+        this.dialogVisible = true;  // Display the dialog
       } catch (err) {
         console.error("Error fetching document details:", err);
       }

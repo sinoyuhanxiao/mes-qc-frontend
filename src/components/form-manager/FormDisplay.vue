@@ -28,10 +28,32 @@
     </div>
     <el-scrollbar :height="scrollBarHeight" width="100%">
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
-      <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">提交</el-button>
-      <el-button type="warning" v-if="props.usable || enable_form" @click="showClearConfirmation = true">
-        重置表单
-      </el-button>
+
+      <div>
+        <!-- 签名 Buttons and Display -->
+        <div style="margin-bottom: 20px; text-align: left;">
+          <el-button type="primary" @click="showSignaturePad = true">电子签名</el-button>
+          <el-button v-if="signatureData !== null" type="info" @click="handleSignatureClear">清空签名</el-button>
+          <div v-if="signatureData" class="signature-preview">
+            <img :src="signatureData" alt="签名图片" class="signature-image"/>
+          </div>
+        </div>
+
+        <!-- 提交 和 重置 表单 Buttons (Right-Aligned) -->
+        <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+          <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">提交</el-button>
+          <el-button type="warning" v-if="props.usable || enable_form" @click="showClearConfirmation = true">重置</el-button>
+        </div>
+
+        <SignaturePadComponent
+            v-if="showSignaturePad"
+            :visible="showSignaturePad"
+            @close="showSignaturePad = false"
+            @save="handleSignatureSave"
+            @clear="handleSignatureClear"
+        />
+      </div>
+
       <p class="node-id">Node ID: {{ props.currentForm?.id || 'Unneeded info for you' }}</p>
       <p class="node-id">QC Template Form ID: {{ props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId || 'N/A' }}</p>
     </el-scrollbar>
@@ -119,12 +141,25 @@ import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
+import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 
 const route = useRoute()
 const rt = ref(parseInt(route.query.rt, 10) || 0);
 const showCountdownEnded = ref(false);
+
+const showSignaturePad = ref(false);
+const signatureData = ref(null);
+
+const handleSignatureSave = (data) => {
+  signatureData.value = data; // Save the base64 image data here
+  showSignaturePad.value = false; // Close the signature pad after saving
+};
+
+const handleSignatureClear = () => {
+  signatureData.value = null; // Clear the preview when cleared from the pad
+};
 
 // Countdown time setup
 const remainingTime = ref(rt.value);
@@ -275,6 +310,11 @@ const confirmSubmission = async () => {
 
   try {
     const formData = await vFormRef.value.getFormData();
+
+    formData['e-signature'] = signatureData.value || null;
+
+    // For debugging
+    console.log("提交的数据 (key-value pairs):", formData);
 
     // Insert into MongoDB
     const response = await insertFormData(userId, collectionName, formData);
@@ -452,6 +492,29 @@ watch(remainingTime, (newTime) => {
     box-sizing: border-box; /* Handle padding correctly */
     padding-top: 10px; /* Add space above the content */
     padding-left: 10px;
+  }
+
+  .signature-preview {
+    margin-top: 20px;
+  }
+
+  .signature-image {
+    width: 300px;
+    border: 1px solid #ddd;
+    margin-top: 10px;
+  }
+
+  .signature-clear-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
   }
 
 </style>
