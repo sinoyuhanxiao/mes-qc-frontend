@@ -381,6 +381,13 @@ export default {
         const aspectRatio = signatureImg.naturalWidth / signatureImg.naturalHeight;
         const imgHeight = imgWidth / aspectRatio;
 
+        const pageHeight = doc.internal.pageSize.getHeight();
+        // 检查是否需要分页
+        if (y + imgHeight + 20 > pageHeight) { // 20 是为了确保有足够的底部空白
+          doc.addPage();
+          y = 10; // 重置Y位置
+        }
+
         doc.setFontSize(14);
         doc.text("质检人签名：", 10, y);
         y += 10;

@@ -32,8 +32,8 @@
       <div>
         <!-- 签名 Buttons and Display -->
         <div style="margin-bottom: 20px; text-align: left;">
-          <el-button type="primary" @click="showSignaturePad = true">电子签名</el-button>
-          <el-button v-if="signatureData !== null" type="info" @click="handleSignatureClear">清空签名</el-button>
+          <el-button type="primary" @click="showSignaturePad = true" :disabled="!(enable_form || enable_common_fields)">电子签名</el-button>
+          <el-button v-if="signatureData !== null" type="info" @click="handleSignatureClear" :disabled="!(enable_form || enable_common_fields)">清空签名</el-button>
           <div v-if="signatureData" class="signature-preview">
             <img :src="signatureData" alt="签名图片" class="signature-image"/>
           </div>
@@ -182,6 +182,10 @@ const props = defineProps({
   dispatchedTaskId: {
     type: String,
     required: false // Make it optional
+  },
+  formSwitched: { // Add formSwitched prop to detect switching
+    type: Boolean,
+    default: false,
   }
 });
 
@@ -191,6 +195,7 @@ const formData = reactive({})
 const optionData = reactive({})
 const formTitle = ref(''); // Store form title
 const enable_form = ref(false)
+const enable_common_fields = ref(false)
 let vFormRef = ref(null)
 const showQuickDispatch = ref(false);
 const showConfirmation = ref(false);
@@ -208,6 +213,8 @@ const confirmClear = () => {
   showClearConfirmation.value = false; // Close the confirmation dialog
   if (vFormRef.value) {
     vFormRef.value.resetForm(); // Actually reset the form
+    // clear the signature and
+    signatureData.value = null;
     ElMessage.success("表单已清空！");
   }
 };
@@ -240,6 +247,15 @@ watch(() => route.query.rt, (newRt) => {
   remainingTime.value = parseInt(newRt, 10) || 0;
   startCountdown(); // Restart the countdown if `rt` changes
 }, { immediate: true });
+
+watch(() => props.currentForm?.qcFormTemplateId, (newFormId, oldFormId) => {
+  if (newFormId !== oldFormId) {
+    // Clear signature data and disable the form when form is switched
+    signatureData.value = null;
+    enable_form.value = false;
+    console.log("Form switched, signature data cleared and form disabled.");
+  }
+});
 
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
@@ -367,8 +383,11 @@ watch(
           formTitle.value = response.data.data.name
           vFormRef.value.setFormJson(templateJson); // Update the form JSON dynamically
           await nextTick();
+          enable_common_fields.value = true;
+          // when usable is false it will disable the forms as well as the common fields
           if (!props.usable && vFormRef.value) {
             vFormRef.value.disableForm();
+            enable_common_fields.value = false;
           }
           ElMessage.success('Form loaded successfully!');
         } else {

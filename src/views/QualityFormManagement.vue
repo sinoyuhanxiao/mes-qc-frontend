@@ -1,7 +1,7 @@
 <template>
   <el-container>
     <el-aside width="25%">
-        <FormTree @select-form="selectForm" @add-form="addForm" @is-deletion="handleDeletion"/>
+      <FormTree @select-form="selectForm" @add-form="addForm" @is-deletion="handleDeletion"/>
     </el-aside>
     <el-main>
       <!-- Render FormDisplay only if selectedForm exists and nodeType is not 'folder' -->
@@ -19,7 +19,7 @@ import FormTree from '@/components/form-manager/FormTree.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
 
 export default {
-  components: { FormTree, FormDisplay },
+  components: {FormTree, FormDisplay},
   data() {
     return {
       selectedForm: null, // Ensure it's initially null
@@ -38,12 +38,3 @@ export default {
   },
 };
 </script>
-
-<style>
-  /*
-    #app > div > div {
-       overflow-y: hidden
-    }
-   */
-</style>
-
