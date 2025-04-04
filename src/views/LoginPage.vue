@@ -165,7 +165,7 @@ export default {
               const userRole = userInfoResponse.data.data.role.id;
 
               // Allow login only for 管理员 (role_id: 1) and 班长 (role_id: 3), hardcoded currently, TODO: should include in the role settings
-              if (userRole === 1 || userRole === 3) {
+              if (userRole !== 2) {
                 await this.loginUser({
                   id: userInfoResponse.data.data.id,
                   username: userInfoResponse.data.data.username,
@@ -181,9 +181,9 @@ export default {
 
                 ElMessage.success('登录成功！');
 
-                if (userRole === 1) {
+                if (userRole === 4) {
                   this.$router.push('/user-management');
-                } else if (userRole === 3) {
+                } else if (userRole === 3 || userRole === 1) {
                   this.$router.push('/');
                 }
               } else {

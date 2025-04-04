@@ -200,7 +200,7 @@
 
     <!-- Add Shift Dialog -->
     <el-dialog :title="translate('shiftManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
-      <div class="popup-container">
+      <div v-loading="loadingShift" class="popup-container">
         <el-form ref="addShiftForm" :model="newShift" :rules="rules" label-width="140px">
           <el-form-item :label="translate('shiftManagement.addDialog.name')" prop="name">
             <el-input v-model="newShift.name" />
@@ -280,7 +280,7 @@
 
     <!-- Edit Shift Dialog -->
     <el-dialog :title="translate('shiftManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
-      <div class="popup-container">
+      <div v-loading="loadingShift" class="popup-container">
         <el-form ref="editShiftForm" :model="editShift" :rules="rules" label-width="140px">
           <el-form-item :label="translate('shiftManagement.editDialog.name')" prop="name">
             <el-input v-model="editShift.name" />
@@ -388,6 +388,7 @@ export default {
   data() {
     return {
       tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
+      loadingShift: false,
       searchUserQuery: "", // Search input value for users
       userCurrentPage: 1, // Current page for members
       userPageSize: 10, // Page size for members
@@ -607,15 +608,18 @@ export default {
       }
     },
     async updateUsersForShift(shiftId) {
+      this.loadingShift = true;
       try {
         await removeShiftFromAllUsers(shiftId); // Remove all users from shift
         if (this.editUser.assignedUsers.length > 0) {
           await assignUsersToShift(shiftId, this.editUser.assignedUsers);
         }
         this.$message.success('更新成功');
+        this.loadingShift = false;
       } catch (error) {
         console.error('Error updating users for shift:', error);
         this.$message.error('更新失败');
+        this.loadingShift = false;
       }
     },
     async fetchShiftData() {
@@ -656,6 +660,7 @@ export default {
       this.currentPage = page;
     },
     async validateAndAddShift() {
+      this.loadingShift = true;
       this.$refs.addShiftForm.validate(async (valid) => {
         if (valid) {
           try {
@@ -682,11 +687,17 @@ export default {
           } catch (error) {
             console.error("Error adding shift:", error);
             this.$message.error("创建失败");
+          } finally {
+            this.loadingShift = false;
           }
+        } else {
+          this.loadingShift = false;
         }
       });
     },
     async handleEditConfirm() {
+      this.loadingShift = true;
+      await this.$nextTick();
       try {
         const payload = {...this.editShift}; // 浅拷贝原始对象
         delete payload.leader; // 去掉 `leader` 键值对
@@ -703,6 +714,9 @@ export default {
         this.$message.success("班组创建成功");
       } catch (error) {
         console.error("Error updating shift:", error);
+        this.$message.error("编辑失败");
+      } finally {
+        this.loadingShift = false;
       }
     },
     async handleStatusChange(id, status) {
