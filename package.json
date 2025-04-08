@@ -43,6 +43,7 @@
     "vform3-builds": "^3.0.10",
     "vue": "^3.2.32",
     "vue-router": "^4.5.0",
+    "vue-signature-pad": "^3.0.2",
     "vue3-quill": "^0.2.6",
     "vuex": "^4.0.2",
     "xlsx": "^0.18.5"

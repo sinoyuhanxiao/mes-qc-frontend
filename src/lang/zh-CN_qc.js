@@ -126,6 +126,8 @@ export default {
         confirm: '确认',
         delete: '删除',
         actions: '操作',
+        membersTab: '成员',
+        formsTab: '表单',
         table: {
             id: 'ID',
             name: '名称',
@@ -140,6 +142,7 @@ export default {
             editButton: '修改',
             deleteButton: '删除',
             viewMembers: '查看成员',
+            viewShift: '查看',
             createdAt: '创建时间'
         },
         addDialog: {
@@ -150,13 +153,14 @@ export default {
             startTime: '开始时间',
             endTime: '结束时间',
             members: '成员',
+            forms: '表单',
             description: '描述',
             status: '状态',
             cancelButton: '取消',
             confirmButton: '确认',
             selectLeaderPlaceholder: '选择班长',
             selectStatusPlaceholder: '选择状态',
-            selectMembers:  '选择成员',
+            selectMembers: '选择成员',
         },
         editDialog: {
             title: '编辑班组',
@@ -166,6 +170,7 @@ export default {
             startTime: '开始时间',
             endTime: '结束时间',
             members: '成员',
+            forms: '表单',
             description: '描述',
             status: '状态',
             cancelButton: '取消',

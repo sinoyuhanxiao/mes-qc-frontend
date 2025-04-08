@@ -127,7 +127,7 @@
 
         <el-table-column :title="translate('shiftManagement.table.actions')" align="right" header-align="right" width="230" fixed="right">
           <template #default="scope">
-            <el-button size="small" type="primary" @click="openShiftUsersDialog(scope.row)">{{ translate('shiftManagement.table.viewMembers') }}</el-button>
+            <el-button size="small" type="primary" @click="openShiftInfoDialog(scope.row)">{{ translate('shiftManagement.table.viewShift') }}</el-button>
             <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate('shiftManagement.edit') }}</el-button>
             <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate('shiftManagement.delete') }}</el-button>
           </template>
@@ -148,19 +148,22 @@
         :hide-on-single-page="true"
     />
 
-    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName} - 成员列表`" width="800">
-      <!-- Filter Bar -->
-      <el-input
-          v-model="searchUserQuery"
-          placeholder="搜索成员"
-          clearable
-          @input="filterShiftUsers"
-          style="margin-bottom: 10px; width: 300px;"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
+    <!-- Shift Info Dialog -->
+    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName} - 资讯`" width="800">
+      <el-tabs>
+        <el-tab-pane :label="translate('shiftManagement.membersTab')">
+          <!-- Filter Bar -->
+          <el-input
+              v-model="searchUserQuery"
+              placeholder="搜索成员"
+              clearable
+              @input="filterShiftUsers"
+              style="margin-bottom: 10px; width: 300px;"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
 
       <!-- Table with Sorting -->
       <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
@@ -183,20 +186,34 @@
         </el-table-column>
       </el-table>
 
-      <!-- Pagination -->
-      <el-pagination
-          style="margin-top: 10px"
-          @size-change="handleUserSizeChange"
-          @current-change="handleUserPageChange"
-          :current-page="userCurrentPage"
-          :page-size="userPageSize"
-          :page-sizes="[10, 20, 30, 50]"
-          layout="total, sizes, prev, pager, next"
-          :total="filteredShiftUsers.length"
-          :hide-on-single-page="true"
-      />
-    </el-dialog>
+          <!-- Pagination -->
+          <el-pagination
+              style="margin-top: 10px"
+              @size-change="handleUserSizeChange"
+              @current-change="handleUserPageChange"
+              :current-page="userCurrentPage"
+              :page-size="userPageSize"
+              :page-sizes="[10, 20, 30, 50]"
+              layout="total, sizes, prev, pager, next"
+              :total="filteredShiftUsers.length"
+              :hide-on-single-page="true"
+          />
+        </el-tab-pane>
 
+        <el-tab-pane :label="translate('shiftManagement.formsTab')">
+            <div class="popup-container">
+              <el-form>
+                <shift-form-tree
+                    :selectedFormIds="shiftForms"
+                    :showOnlySelectedNode="true"
+                    @on-node-clicked="handleFormNodeClicked"
+                >
+                </shift-form-tree>
+              </el-form>
+            </div>
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
 
     <!-- Add Shift Dialog -->
     <el-dialog :title="translate('shiftManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
@@ -255,6 +272,15 @@
                   :value="user.id"
               />
             </el-select>
+          </el-form-item>
+
+          <el-form-item :label="translate('shiftManagement.addDialog.forms')" prop="selectedForms">
+            <shift-form-tree
+                :showOnlySelectedNode="false"
+                @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
+                @on-node-clicked="handleFormNodeClicked"
+            >
+            </shift-form-tree>
           </el-form-item>
 
           <el-form-item :label="translate('shiftManagement.addDialog.description')" prop="description">
@@ -332,6 +358,16 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item :label="translate('shiftManagement.editDialog.forms')">
+            <shift-form-tree
+                :selectedFormIds="editForm.assignedForms"
+                :showOnlySelectedNode="false"
+                @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
+                @on-node-clicked="handleFormNodeClicked"
+            >
+            </shift-form-tree>
+          </el-form-item>
+
           <el-form-item :label="translate('shiftManagement.editDialog.description')" prop="description">
             <el-input type="textarea" v-model="editShift.description" />
           </el-form-item>
@@ -373,6 +409,9 @@ import {formatDate} from "@/utils/task-center/dateFormatUtils";
 import {fetchUsers} from "@/services/userService";
 import {getUsersForShift} from "@/services/shiftUserService";
 import {translate} from "@/utils/i18n";
+import {assignFormsToShift, getFormIdsForShift, removeAllFormsFromShift} from "@/services/shiftFormService";
+import ShiftFormTree from "@/components/dispatch/ShiftFormTree.vue";
+import {openFormPreviewWindow} from "@/utils/dispatch-utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -380,6 +419,7 @@ dayjs.extend(timezone);
 export default {
   name: "ShiftManagement",
   components: {
+    ShiftFormTree,
     Search,
     Plus,
     QuestionFilled,
@@ -404,6 +444,7 @@ export default {
       addDialogVisible: false, // Add dialog visibility
       editDialogVisible: false, // Edit dialog visibility
       shiftUsers: [], // Stores users assigned to the shift
+      shiftForms: [], // Stores forms assigned to the shift
       dialogTableVisible: false, // Controls the visibility of the table dialog
       loadingUsers: false, // Loading state for the user list
       sortSettings: { prop: "", order: "" },
@@ -432,6 +473,12 @@ export default {
       },
       newUser: { // representing add new members
         selectedUsers: [],
+      },
+      editForm: {
+        assignedForms: [],
+      },
+      newForm: {
+        selectedForms: [],
       },
       rules: {
         name: [{ required: true, message: translate("shiftManagement.validation.nameRequired"), trigger: "blur" }],
@@ -540,13 +587,13 @@ export default {
       const date = new Date(`1970-01-01T${time}`);
       return date.toLocaleTimeString('en-US', {hour12: false}); // Format to HH:mm:ss
     },
-    async openShiftUsersDialog(shift) {
+    async openShiftInfoDialog(shift) {
       this.dialogTableVisible = true;
       this.loadingUsers = true;
       this.selectedShiftName = shift.name;
 
       try {
-        const response = await getUsersForShift(shift.id);
+        let response = await getUsersForShift(shift.id);
         if (response.data.status === "200") {
           this.shiftUsers = response.data.data;
           this.filteredShiftUsers = [...this.shiftUsers];
@@ -554,15 +601,26 @@ export default {
           this.shiftUsers = [];
           this.filteredShiftUsers = [];
         }
+
+        // Load forms of this shift
+        response = await getFormIdsForShift(shift.id);
+        if (response.data.status === "200") {
+          this.shiftForms = [...response.data.data];
+        } else {
+          this.shiftForms = [];
+        }
       } catch (error) {
-        console.error("Error fetching users for shift:", error);
+        console.error("Error fetching shift association", error);
         this.shiftUsers = [];
         this.filteredShiftUsers = [];
+        this.shiftForms = [];
       } finally {
         this.loadingUsers = false;
       }
     },
-
+    async handleFormNodeClicked(formTemplateId) {
+      await openFormPreviewWindow(formTemplateId, this)
+    },
     getRoleName(roleId) {
       return roleId === 1 ? "管理员" : "质检人员";
     },
@@ -614,12 +672,22 @@ export default {
         if (this.editUser.assignedUsers.length > 0) {
           await assignUsersToShift(shiftId, this.editUser.assignedUsers);
         }
-        this.$message.success('更新成功');
         this.loadingShift = false;
       } catch (error) {
         console.error('Error updating users for shift:', error);
-        this.$message.error('更新失败');
+        this.$message.error('人员更新失败');
         this.loadingShift = false;
+      }
+    },
+    async updateFormsForShift(shiftId) {
+      try {
+        await removeAllFormsFromShift(shiftId);
+        if (this.editForm.assignedForms.length > 0) {
+          await assignFormsToShift(shiftId, this.editForm.assignedForms);
+        }
+      } catch (error) {
+        console.error('Error updating forms for shift:', error);
+        this.$message.error('表单更新失败');
       }
     },
     async fetchShiftData() {
@@ -678,7 +746,10 @@ export default {
               await assignUsersToShift(shiftId, this.newUser.selectedUsers);
             }
 
-            this.$message.success("班次创建成功，用户分配完成。");
+            if (this.newForm.selectedForms.length > 0) {
+              await assignFormsToShift(shiftId, this.newForm.selectedForms);
+            }
+
             await this.$nextTick(() => this.resetNewShiftForm());
             // Force reset after successful addition
             this.addDialogVisible = false;
@@ -686,7 +757,7 @@ export default {
             this.$message.success("班组创建成功");
           } catch (error) {
             console.error("Error adding shift:", error);
-            this.$message.error("创建失败");
+            this.$message.error("班组创建失败");
           } finally {
             this.loadingShift = false;
           }
@@ -708,13 +779,15 @@ export default {
 
         await updateShift(payload.id, payload, this.$store.getters.getUser.id);
         // deal with shift members update
-        await this.updateUsersForShift(payload.id)
+        await this.updateUsersForShift(payload.id);
+        await this.updateFormsForShift(payload.id);
         this.editDialogVisible = false;
+
         await this.fetchShiftData();
-        this.$message.success("班组创建成功");
+        this.$message.success("班组编辑成功");
       } catch (error) {
         console.error("Error updating shift:", error);
-        this.$message.error("编辑失败");
+        this.$message.error("班组编辑失败");
       } finally {
         this.loadingShift = false;
       }
@@ -778,6 +851,7 @@ export default {
           status: row.status
         };
         this.editUser.assignedUsers = (await getUsersForShift(row.id)).data.data.map(user => user.id);
+        this.editForm.assignedForms = [...(await getFormIdsForShift(row.id)).data.data];
         // Fetch user options for the dropdown
         await this.fetchUserOptions();
 
@@ -804,6 +878,10 @@ export default {
         description: "", // Ensure description is reset to empty string
         status: 1,
       };
+
+      // Reset users and forms
+      this.newUser.selectedUsers = [];
+      this.newForm.selectedForms = [];
     },
     },
   watch: {

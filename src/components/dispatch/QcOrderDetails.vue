@@ -70,39 +70,39 @@
           :key="dispatch.id"
           style="margin-bottom: 20px;"
       >
-        <div
-            style="display: flex;
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;">
+          <span>
+            派发计划 {{ index + 1 }}
+            <span v-if="dispatch.name"> - {{ dispatch.name }}</span>
+          </span>
+          <div
+              style="display: flex;
             justify-content: flex-end;"
-        >
-          <!-- Expand Arrow -->
-          <el-button
-              :link="true"
-              @click="toggleCollapse(index)"
-              :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
-            {{ dispatch.collapsed ? '展开' : '收起' }}
-          </el-button>
+          >
+            <!-- Expand Arrow -->
+            <el-button
+                :link="true"
+                @click="toggleCollapse(index)"
+                :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
+              {{ dispatch.collapsed ? '展开' : '收起' }}
+            </el-button>
 
-          <el-button
-              v-if="dispatch.type === 'regular' && dispatch.state === 1"
-              type="info"
-              @click="handlePauseOrderDispatch(dispatch.id)">
-            暂停
-          </el-button>
-          <el-button
-              v-if="dispatch.type === 'regular' && dispatch.state === 5"
-              type="info"
-              @click="handleResumeOrderDispatch(dispatch.id)">
-            重启
-          </el-button>
+            <el-button
+                v-if="dispatch.type === 'regular' && dispatch.state === 1"
+                type="info"
+                @click="handlePauseOrderDispatch(dispatch.id)">
+              暂停
+            </el-button>
+            <el-button
+                v-if="dispatch.type === 'regular' && dispatch.state === 5"
+                type="info"
+                @click="handleResumeOrderDispatch(dispatch.id)">
+              重启
+            </el-button>
+          </div>
         </div>
-        <div v-show="!dispatch.collapsed">
-          <el-form-item
-              label="计划名称"
-              class="wrap-text"
-              v-if="dispatch.name">
-            {{ dispatch.name }}
-          </el-form-item>
 
+        <div v-show="!dispatch.collapsed">
           <el-form-item
               label="计划号码">
             {{ dispatch.id }}

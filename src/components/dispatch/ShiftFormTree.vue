@@ -11,6 +11,7 @@
       </template>
     </el-input>
     <el-button
+        v-if="showOnlySelectedNode === false"
         type="warning"
         @click="clearFormSelection"
         style="height: 32px; width: 80px; line-height: normal; margin: 0"
@@ -18,13 +19,7 @@
       清空选择
     </el-button>
   </div>
-  <div class="form-container" :class="{ 'error-border': hasError }">
-    <el-form-item
-        label="质检表单"
-        required
-        :prop="propName"
-        :rules="[{ validator: validateSelectedForms, trigger: 'change' }]"
-    >
+  <div class="form-container">
       <el-tree
           ref="treeRef"
           class="qc-tree"
@@ -34,8 +29,7 @@
           :filter-node-method="filterNode"
           @check-change="handleCheckChange"
           @node-click="handleNodeClicked"
-          show-checkbox
-          default-expand-all
+          :show-checkbox="!showOnlySelectedNode"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node">
@@ -49,125 +43,58 @@
           </div>
         </template>
       </el-tree>
-      <div v-if="hasError" class="el-form-item__error">
-        请选择至少一个表单
-      </div>
-    </el-form-item>
-
-    <el-alert
-        v-if="error"
-        title="Error"
-        type="error"
-        :description="error"
-        show-icon
-    />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, defineEmits } from 'vue'
-import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
-import { Folder, Document, Search } from '@element-plus/icons-vue'
-import {
-  fetchFormNodes,
-  addTopLevelNode,
-  addChildNode,
-  deleteNode,
-} from '@/services/formNodeService.js';
+import {defineEmits, onMounted, ref, watch} from 'vue'
+import {ElButton, ElInput, ElTree} from 'element-plus'
+import {Document, Folder, Search} from '@element-plus/icons-vue'
+import {fetchFormNodes,} from '@/services/formNodeService.js';
 
 interface Tree {
-  _id: string;
+  id: string;
   label: string;
   children?: Tree[];
   nodeType: string;
   qcFormTemplateId: string | null;
 }
 
-const props = defineProps({
-  selectedFormIds: {
-    type: Array,
-    default: () => [],
-  },
-  hasError: {
-    type: Boolean,
-    default: false, // Controls whether to show red overlay
-  },
-  propName: {
-    type: String,
-  },
+const props = withDefaults(defineProps<{
+  selectedFormIds: string[];
+  showOnlySelectedNode: boolean;
+}>(), {
+  selectedFormIds: () => [],
+  showOnlySelectedNode: false,
 });
 
 const emit = defineEmits(['update-selected-forms','on-node-clicked']);
 const filterText = ref('')
 const treeRef = ref<InstanceType<typeof ElTree>>()
+
+// Store raw form tree data from backend
+const rawTreeData = ref<Tree[]>([]);
+
+// Data to display in el-tree
 const data = ref<Tree[]>([])
 const error = ref<string | null>(null)
-
-// Custom Validation Method
-const validateSelectedForms = (rule, value, callback) => {
-  if (!props.selectedFormIds || props.selectedFormIds.length === 0) {
-    callback(new Error("请选择至少一个表单"));
-  } else {
-    callback();
-  }
-};
 
 const defaultProps = {
   children: 'children',
   label: 'label',
-}
+};
 
-// Fetch data from the backend
 const fetchFormTreeData = async () => {
   try {
     const response = await fetchFormNodes();
+    rawTreeData.value = response.data;
     data.value = response.data;
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load form tree data';
+    console.log('Failed to load form tree data', err);
   }
 };
 
-// Watch for changes in `selectedFormIds` and update the tree
-watch(
-    () => props.selectedFormIds,
-    (newVal) => {
-      if (treeRef.value) {
-        treeRef.value.setCheckedKeys(newVal);
-      }
-    },
-    { immediate: true }
-);
-
-onMounted(async () => {
-  await fetchFormTreeData();
-  if (props.selectedFormIds.length && treeRef.value) {
-    // Pre-check nodes based on `selectedFormIds`
-    // console.log('selected ids: ',props.selectedFormIds)
-    const nodesToCheck = data.value
-        .flatMap(flattenTree) // Flatten the tree to find all nodes
-        .filter(node => props.selectedFormIds.includes(node.id));
-    // console.log('nodesToCheck: ', nodesToCheck)
-
-    const nodeKeys = nodesToCheck.map(node => node.id);
-    // console.log('nodeKeys: ', nodeKeys)
-    // console.log("Tree instance:", treeRef.value);
-    treeRef.value.setCheckedKeys(nodeKeys);
-  }
-});
-
-// Utility to flatten tree recursively
-function flattenTree(treeNode) {
-  return [treeNode].concat(
-      (treeNode.children || []).flatMap(flattenTree)
-  );
-}
-
-// Watch for changes in filterText and apply filtering to the tree
-watch(filterText, (val) => {
-  treeRef.value?.filter(val)
-})
-
-// Filter function for tree nodes
+// Filter tree by string input
 const filterNode = (value: string, data: Tree) => {
   if (!value) return true
   return data.label.includes(value)
@@ -176,12 +103,12 @@ const filterNode = (value: string, data: Tree) => {
 const handleCheckChange = () => {
   const checkedNodes = treeRef.value.getCheckedNodes(false, false);
   const selectedForms = checkedNodes
-      .filter(node => node.nodeType === 'document') // Only include documents
+      .filter(node => node.nodeType === 'document')
       .map(node => ({
         id: node.id,
         label: node.label,
-      })); // Extract IDs
-  emit('update-selected-forms', selectedForms); // Emit IDs to parent
+      }));
+  emit('update-selected-forms', selectedForms);
 };
 
 const handleNodeClicked = (nodeData) => {
@@ -190,12 +117,74 @@ const handleNodeClicked = (nodeData) => {
   }
 };
 
-/** Clears all selected nodes */
+// Clears all selected nodes
 const clearFormSelection= () => {
   // clear selectedFormIds
   treeRef.value.setCheckedKeys([]);
   emit('update-selected-forms', []);
 };
+
+// Utility to flatten tree recursively
+function flattenTree(treeNode) {
+  return [treeNode].concat(
+      (treeNode.children || []).flatMap(flattenTree)
+  );
+}
+
+function filterTreeBySelectedIds(tree: Tree[], selectedIds: string[]): Tree[] {
+  const result: Tree[] = [];
+  for (const node of tree) {
+    if (node.children && node.children.length > 0) {
+      const filteredChildren = filterTreeBySelectedIds(node.children, selectedIds);
+
+      if (filteredChildren.length > 0) {
+        result.push({
+          ...node,
+          children: filteredChildren,
+        });
+      }
+    } else {
+      if (selectedIds.includes(node.id)) {
+        result.push({ ...node });
+      }
+    }
+  }
+
+  return result;
+}
+
+onMounted(async () => {
+  await fetchFormTreeData();
+  if (props.showOnlySelectedNode != true && treeRef.value) {
+    const nodesToCheck = rawTreeData.value
+        .flatMap(flattenTree) // Flatten the tree to find all nodes
+        .filter(node => props.selectedFormIds.includes(node.id));
+
+    const nodeKeys = nodesToCheck.map(node => node.id);
+    treeRef.value.setCheckedKeys(nodeKeys);
+  } else {
+    data.value = filterTreeBySelectedIds(rawTreeData.value, props.selectedFormIds);
+  }
+});
+
+watch(
+    () => props.selectedFormIds,
+    (newVal) => {
+      if (treeRef.value) {
+        treeRef.value.setCheckedKeys(newVal);
+      }
+
+      if (props.showOnlySelectedNode) {
+        data.value = filterTreeBySelectedIds(rawTreeData.value, props.selectedFormIds);
+      }
+    },
+    { immediate: true }
+);
+
+// Watch for changes in filterText and apply filtering to the tree
+watch(filterText, (val) => {
+  treeRef.value?.filter(val)
+});
 
 </script>
 
@@ -242,7 +231,7 @@ const clearFormSelection= () => {
 
 .search-container {
   display: flex;
-  justify-content: flex-end; /* Align search box to the right */
+  justify-content: flex-start; /* Align search box to the right */
   margin-bottom: 10px;
 }
 
@@ -250,11 +239,6 @@ const clearFormSelection= () => {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
-}
-
-.error-border {
-  border: 1px solid #f56c6c !important; /* Red validation border */
   border-radius: 4px;
 }
 </style>

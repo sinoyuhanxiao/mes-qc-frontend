@@ -126,6 +126,8 @@ export default {
         confirm: 'Confirm',
         delete: 'Delete',
         actions: 'Actions',
+        membersTab: 'Members',
+        formsTab: 'Forms',
         table: {
             id: 'ID',
             name: 'Name',
@@ -140,6 +142,7 @@ export default {
             editButton: 'Edit',
             deleteButton: 'Delete',
             viewMembers: 'Members',
+            viewShift: 'View',
             createdAt: 'Created At'
         },
         addDialog: {
@@ -150,6 +153,7 @@ export default {
             startTime: 'Start Time',
             endTime: 'End Time',
             members: 'Members',
+            forms: 'Forms',
             description: 'Description',
             status: 'Status',
             cancelButton: 'Cancel',
@@ -166,6 +170,7 @@ export default {
             startTime: 'Start Time',
             endTime: 'End Time',
             members: 'Members',
+            forms: 'Forms',
             description: 'Description',
             status: 'Status',
             cancelButton: 'Cancel',

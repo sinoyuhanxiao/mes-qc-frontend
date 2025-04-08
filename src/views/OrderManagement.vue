@@ -79,7 +79,7 @@
         top="5vh"
         :close-on-click-modal="false"
         @close="closeAndResetDetailsDialog"
-        style="max-width: 1200px; max-height: 90vh; overflow: auto;"
+        style="max-width: 1200px; max-height: 90vh;"
     >
       <template v-if="isDetailsDialogVisible && !isEditMode && currentOrder">
         <qc-order-details
@@ -93,12 +93,14 @@
       </template>
 
       <template v-else-if="isDetailsDialogVisible && isEditMode">
-        <div style="max-height: 80vh;  overflow-y: hidden; padding: 10px;">
+<!--        <div style="max-height: 80vh; overflow-y: hidden; padding: 10px;">-->
+        <div style="max-height: 80vh; padding: 10px;">
           <dispatch-configurator
               :current-order="currentOrder"
               :is-edit-mode="isEditMode"
               :form-map="formMap"
               :user-map="userMap"
+              :shift-map="shiftMap"
               @on-submit="handleOrderSubmit"
               @on-cancel="closeAndResetDetailsDialog"
           />
@@ -117,9 +119,9 @@
       <DispatchedTasksList
           :form-map="formMap"
           :user-map="userMap"
+          :shift-map="shiftMap"
           :show-search-box="true"
       />
-
     </el-dialog>
   </el-container>
 </template>
@@ -142,6 +144,9 @@ import {fetchFormNodes} from "@/services/formNodeService";
 import {generateFormMap} from "@/utils/dispatch-utils";
 import {fetchUsers} from "@/services/userService";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
+import {getAllShifts} from "@/services/shiftService";
+import {getUsersForShift} from "@/services/shiftUserService";
+import {getFormIdsForShift} from "@/services/shiftFormService";
 
 export default {
   components: {
@@ -162,6 +167,7 @@ export default {
       searchInput: "",
       formMap: [],
       userMap: {},
+      shiftMap: {},
       qcOrders: [],
       loading: false,
     };
@@ -307,6 +313,7 @@ export default {
           this.loadAllQcOrders(),
           this.loadFormNodes(),
           this.loadUserMap(),
+          this.loadShiftMap(),
         ]);
 
       } catch (error) {
@@ -336,15 +343,44 @@ export default {
         }, {});
 
         if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
-          // this.$notify({
-          //   title: "人员列表更新",
-          //   message: "人员列表已更新。",
-          //   type: "success",
-          // });
           this.userMap = updatedUserMap;
         }
       } catch (error) {
         this.$message.error("无法加载人员信息，请重试。");
+      }
+    },
+    async loadShiftMap() {
+      try {
+        const response = await getAllShifts();
+        const shifts = response.data?.data || [];
+
+        const updatedShiftMap = {};
+
+        for (const shift of shifts) {
+          const shiftId = shift.id;
+
+          // Fetch associated form_ids
+          const formResponse = await getFormIdsForShift(shiftId);
+          const formIds = formResponse.status === 200 ? formResponse.data.data : [];
+
+          // Fetch associated user_ids
+          const userResponse = await getUsersForShift(shiftId);
+          const userIds = userResponse.status === 200 ? userResponse.data.data.map(user => user.id) : [];
+
+          // Add to shift object
+          updatedShiftMap[shiftId] = {
+            ...shift,
+            form_ids: formIds,
+            user_ids: userIds,
+          };
+        }
+
+        if (JSON.stringify(this.shiftMap) !== JSON.stringify(updatedShiftMap)) {
+          this.shiftMap = updatedShiftMap;
+        }
+      } catch (error) {
+        console.error("Failed to load Shift Map:", error);
+        this.$message.error("无法加载班组信息，请重试。");
       }
     },
     openViewDispatchedTestsDialog() {
