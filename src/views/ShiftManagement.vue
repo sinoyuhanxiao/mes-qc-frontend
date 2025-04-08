@@ -204,8 +204,9 @@
             <div class="popup-container">
               <el-form>
                 <shift-form-tree
-                    :selected-form-ids="this.shiftForms"
-                    :disable-nodes="true"
+                    :selectedFormIds="shiftForms"
+                    :showOnlySelectedNode="true"
+                    @on-node-clicked="handleFormNodeClicked"
                 >
                 </shift-form-tree>
               </el-form>
@@ -275,8 +276,9 @@
 
           <el-form-item :label="translate('shiftManagement.addDialog.forms')" prop="selectedForms">
             <shift-form-tree
-                :disable-nodes="false"
+                :showOnlySelectedNode="false"
                 @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
+                @on-node-clicked="handleFormNodeClicked"
             >
             </shift-form-tree>
           </el-form-item>
@@ -358,9 +360,10 @@
 
           <el-form-item :label="translate('shiftManagement.editDialog.forms')">
             <shift-form-tree
-                :selected-form-ids="this.editForm.assignedForms"
-                :disable-nodes="false"
+                :selectedFormIds="editForm.assignedForms"
+                :showOnlySelectedNode="false"
                 @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
+                @on-node-clicked="handleFormNodeClicked"
             >
             </shift-form-tree>
           </el-form-item>
@@ -408,6 +411,7 @@ import {getUsersForShift} from "@/services/shiftUserService";
 import {translate} from "@/utils/i18n";
 import {assignFormsToShift, getFormIdsForShift, removeAllFormsFromShift} from "@/services/shiftFormService";
 import ShiftFormTree from "@/components/dispatch/ShiftFormTree.vue";
+import {openFormPreviewWindow} from "@/utils/dispatch-utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -601,7 +605,7 @@ export default {
         // Load forms of this shift
         response = await getFormIdsForShift(shift.id);
         if (response.data.status === "200") {
-          this.shiftForms = response.data.data;
+          this.shiftForms = [...response.data.data];
         } else {
           this.shiftForms = [];
         }
@@ -614,7 +618,9 @@ export default {
         this.loadingUsers = false;
       }
     },
-
+    async handleFormNodeClicked(formTemplateId) {
+      await openFormPreviewWindow(formTemplateId, this)
+    },
     getRoleName(roleId) {
       return roleId === 1 ? "管理员" : "质检人员";
     },
@@ -666,11 +672,10 @@ export default {
         if (this.editUser.assignedUsers.length > 0) {
           await assignUsersToShift(shiftId, this.editUser.assignedUsers);
         }
-        this.$message.success('更新成功');
         this.loadingShift = false;
       } catch (error) {
         console.error('Error updating users for shift:', error);
-        this.$message.error('更新失败');
+        this.$message.error('人员更新失败');
         this.loadingShift = false;
       }
     },
@@ -680,10 +685,9 @@ export default {
         if (this.editForm.assignedForms.length > 0) {
           await assignFormsToShift(shiftId, this.editForm.assignedForms);
         }
-        this.$message.success('更新成功');
       } catch (error) {
         console.error('Error updating forms for shift:', error);
-        this.$message.error('更新失败');
+        this.$message.error('表单更新失败');
       }
     },
     async fetchShiftData() {
@@ -742,8 +746,6 @@ export default {
               await assignUsersToShift(shiftId, this.newUser.selectedUsers);
             }
 
-            this.$message.success("班次创建成功，用户分配完成。");
-
             if (this.newForm.selectedForms.length > 0) {
               await assignFormsToShift(shiftId, this.newForm.selectedForms);
             }
@@ -755,7 +757,7 @@ export default {
             this.$message.success("班组创建成功");
           } catch (error) {
             console.error("Error adding shift:", error);
-            this.$message.error("创建失败");
+            this.$message.error("班组创建失败");
           } finally {
             this.loadingShift = false;
           }
@@ -782,10 +784,10 @@ export default {
         this.editDialogVisible = false;
 
         await this.fetchShiftData();
-        this.$message.success("班组创建成功");
+        this.$message.success("班组编辑成功");
       } catch (error) {
         console.error("Error updating shift:", error);
-        this.$message.error("编辑失败");
+        this.$message.error("班组编辑失败");
       } finally {
         this.loadingShift = false;
       }
@@ -849,7 +851,7 @@ export default {
           status: row.status
         };
         this.editUser.assignedUsers = (await getUsersForShift(row.id)).data.data.map(user => user.id);
-        this.editForm.assignedForms = (await getFormIdsForShift(row.id)).data.data;
+        this.editForm.assignedForms = [...(await getFormIdsForShift(row.id)).data.data];
         // Fetch user options for the dropdown
         await this.fetchUserOptions();
 

@@ -199,7 +199,8 @@ export function getDispatchStateTagData(state) {
 }
 
 export async function openFormPreviewWindow(nodeId, vueInstance) {
-    try {        // Fetch the qc form template id asynchronously
+    try {
+        // Fetch the qc form template id asynchronously
         const response = await formNodeService.fetchFormNodesById(nodeId);
         const qcFormTemplateId = response.data?.qcFormTemplateId;
 
@@ -209,8 +210,6 @@ export async function openFormPreviewWindow(nodeId, vueInstance) {
             return;
         }
 
-        // Encode query parameters into a Base64 string
-        // const queryParams = { usable: taskUsable, switchDisplayed: false };
         const queryParams = {usable: false, switchDisplayed: false, dispatchedTaskId: null};
 
         // Construct the URL
@@ -219,7 +218,6 @@ export async function openFormPreviewWindow(nodeId, vueInstance) {
             params: {qcFormTemplateId}, // Path parameter
             query: queryParams, // Encoded query
         }).href;
-
 
         // Open the URL in a new tab
         window.open(newTabUrl, '_blank');

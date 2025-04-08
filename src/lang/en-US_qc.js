@@ -142,7 +142,7 @@ export default {
             editButton: 'Edit',
             deleteButton: 'Delete',
             viewMembers: 'Members',
-            viewShift: 'Shift Info',
+            viewShift: 'View',
             createdAt: 'Created At'
         },
         addDialog: {

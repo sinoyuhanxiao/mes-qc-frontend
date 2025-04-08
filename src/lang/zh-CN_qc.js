@@ -142,7 +142,7 @@ export default {
             editButton: '修改',
             deleteButton: '删除',
             viewMembers: '查看成员',
-            viewShift: '查看班组',
+            viewShift: '查看',
             createdAt: '创建时间'
         },
         addDialog: {
