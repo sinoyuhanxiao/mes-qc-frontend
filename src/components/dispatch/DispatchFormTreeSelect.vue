@@ -96,6 +96,7 @@ const props = defineProps({
     type: String,
   },
 });
+
 const emit = defineEmits(['update-selected-forms','on-node-clicked']);
 const filterText = ref('')
 const treeRef = ref<InstanceType<typeof ElTree>>()
@@ -115,9 +116,6 @@ const defaultProps = {
   children: 'children',
   label: 'label',
 }
-
-
-
 
 // Fetch data from the backend
 const fetchFormTreeData = async () => {
@@ -139,7 +137,6 @@ watch(
     },
     { immediate: true }
 );
-
 
 onMounted(async () => {
   await fetchFormTreeData();
@@ -200,7 +197,6 @@ const clearFormSelection= () => {
   emit('update-selected-forms', []);
 };
 
-
 </script>
 
 <style>
@@ -250,7 +246,6 @@ const clearFormSelection= () => {
   margin-bottom: 10px;
 }
 
-
 .qc-tree {
   max-height: 300px;
   overflow-y: auto;
@@ -262,5 +257,4 @@ const clearFormSelection= () => {
   border: 1px solid #f56c6c !important; /* Red validation border */
   border-radius: 4px;
 }
-
 </style>

@@ -6,11 +6,13 @@
       <!-- QC Order Form -->
       <el-tab-pane
           label="定时质检工单"
-          name="QcOrderForm">
+          name="QcOrderForm"
+      >
         <qc-order-form
             :current-order="qcOrderForm"
             :form-map="formMap"
             :user-map="userMap"
+            :shift-map="shiftMap"
             @on-submit="handleSubmit"
             @on-cancel="handleCancel"
             @reset-form="handleReset"/>
@@ -21,7 +23,7 @@
 
 
 <script>
-import QcOrderForm from "@/components/dispatch/QcOrderForm.vue";
+import QcOrderForm from "@/components/dispatch/QcOrderFormV2.vue";
 import {unnormalizeCronExpression} from "@/utils/dispatch-utils";
 
 export default {
@@ -45,6 +47,10 @@ export default {
       type: Object,
       required: true,
     },
+    shiftMap: {
+      type: Object,
+      required: true,
+    }
   },
   data() {
     return {

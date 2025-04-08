@@ -1,41 +1,56 @@
 <template>
   <!-- Schedule Summary -->
   <el-card class="mt-4" shadow="always">
-    <h4>工单预览</h4>
+    <h4>预览</h4>
     <p><strong>工单名称:</strong> {{ qcOrderForm.name }}</p>
-    <p><strong>工单备注:</strong> {{ qcOrderForm.description || "无" }}</p>
+    <p><strong>工单备注:</strong> {{ qcOrderForm.description }}</p>
     <p><strong>派发计划总数:</strong> {{ qcOrderForm.dispatches?.length }}</p>
     <div v-for="(dispatch, index) in qcOrderForm.dispatches" :key="dispatch.id" class="dispatch-preview">
       <h5>派发计划 {{ index + 1 }}</h5>
       <ul class="dispatch-details">
         <li v-if="dispatch.name">
-          名称: <strong>{{ dispatch.name }}</strong>
+          <strong>名称: </strong>{{ dispatch.name }}
         </li>
         <li>
-          类型: <strong>{{ dispatch.type === 'regular' ? '周期计划' : '单次计划' }}</strong>
+          <strong>类型: </strong>{{ dispatch.type === 'regular' ? '周期计划' : '单次计划' }}
         </li>
         <li v-if="dispatch.type === 'regular'">
-          执行计划: <strong>{{ formatCronExpression(dispatch.cron_expression) }}</strong>
+          <strong>执行频率: </strong> {{ formatCronExpression(dispatch.cron_expression) }}
         </li>
         <li v-if="dispatch.type === 'regular'">
-          执行周期: <strong>{{ formatDateRange(dispatch.date_range) }}</strong>
+          <strong>执行周期: </strong>
+          <span :class="{'missing-field': !dispatch.date_range || dispatch.date_range.length !== 2}">
+          {{ formatDateRange(dispatch.date_range) }}
+          </span>
         </li>
         <li v-else>
-          执行时间: <strong>{{ formatDate(dispatch.custom_time) }}</strong>
+          <strong>执行时间: </strong> {{ formatDate(dispatch.custom_time) }}
         </li>
-        <li v-if="dispatch.type === 'regular'">
-          派发次数上限:
-          <strong>{{ dispatch.isUnlimited === true ? "无限制" : dispatch.dispatch_limit }}</strong>
+        <li v-if="dispatch.type === 'regular' && dispatch.source !== 'shift'">
+          <strong>派发次数上限: </strong>
+          {{ dispatch.isUnlimited === true ? "无限制" : dispatch.dispatch_limit }}
+        </li>
+        <li v-if="dispatch.type === 'regular' && dispatch.source !== 'shift'">
+          <strong>派发任务时限: </strong>
+           {{ dispatch.due_date_offset_minute }} 分钟
+        </li>
+        <li v-if="dispatch.source === 'shift'">
+          <strong>派发任务时限: </strong>24小时
         </li>
         <li>
-          派发任务时限:
-          <strong> {{ dispatch.due_date_offset_minute }} 分钟 </strong>
+          <strong>班组: </strong> {{ formatShift(dispatch.shift_id) }}
         </li>
         <li>
-          人员: <strong>{{ formatUsers(dispatch.user_ids) }}</strong>
+          <strong>人员: </strong>
+          <span :class="{'missing-field': !dispatch.user_ids || dispatch.user_ids.length === 0}">
+            {{ formatUsers(dispatch.user_ids) }}
+          </span>
         </li>
         <li>
-          表单: <strong>{{ formatForms(dispatch.form_ids) }}</strong>
+          <strong>表单: </strong>
+          <span :class="{'missing-field': !dispatch.form_ids || dispatch.form_ids.length === 0}">
+             {{ formatForms(dispatch.form_ids) }}
+          </span>
         </li>
       </ul>
     </div>
@@ -82,6 +97,13 @@ export default {
       if (!Array.isArray(range) || range.length !== 2) return "无";
       return `${this.formatDate(range[0])} 至 ${this.formatDate(range[1])}`;
     },
+    formatShift(shiftId) {
+      if (!shiftId) {
+        return "无";
+      }
+
+      return this.shiftMap[shiftId]?.name || "未知班组";
+    },
     // Format user list (Order summary helper)
     formatUsers(userIds) {
       if (!userIds || userIds.length === 0) return "无";
@@ -91,7 +113,7 @@ export default {
     },
     // Format form list (Order summary helper)
     formatForms(formIds) {
-      if (!formIds) return "无";
+      if (!formIds || formIds.length === 0) return "无";
 
       const formNames = formIds.map(id => this.formMap[id] ||  `未知表单 (${id})`)
 
@@ -110,3 +132,11 @@ export default {
 }
 
 </script>
+
+<style scoped>
+
+.missing-field {
+  color: red;
+  font-weight: bold;
+}
+</style>
