@@ -165,26 +165,26 @@
             </template>
           </el-input>
 
-          <!-- Table with Sorting -->
-          <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
-            <el-table-column prop="id" label="ID" width="100" sortable />
-            <el-table-column prop="name" label="名称" width="180" sortable />
-            <el-table-column prop="role_id" label="角色" width="150" sortable>
-              <template #default="scope">
-                <el-tag :type="scope.row.role_id === 1 ? 'warning' : 'success'">
-                  {{ getRoleName(scope.row.role_id) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="wecom_id" label="企业微信ID" width="180" sortable />
-            <el-table-column prop="username" label="用户名" width="180" sortable />
-            <el-table-column prop="email" label="邮箱" width="220" sortable />
-            <el-table-column prop="phone_number" label="电话号码" width="180" sortable>
-              <template #default="scope">
-                <span>{{ scope.row.phone_number || '-' }}</span>
-              </template>
-            </el-table-column>
-          </el-table>
+      <!-- Table with Sorting -->
+      <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
+        <el-table-column prop="id" label="ID" width="100" sortable />
+        <el-table-column prop="name" label="名称" width="180" sortable />
+        <el-table-column prop="role" label="角色" width="150" sortable>
+          <template #default="scope">
+            <el-tag :type="scope.row.role?.el_tag_type || 'info'">
+              {{ scope.row.role?.name || '未知角色' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="wecom_id" label="企业微信ID" width="180" sortable />
+        <el-table-column prop="username" label="用户名" width="180" sortable />
+        <el-table-column prop="email" label="邮箱" width="220" sortable />
+        <el-table-column prop="phone_number" label="电话号码" width="180" sortable>
+          <template #default="scope">
+            <span>{{ scope.row.phone_number || '-' }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
 
           <!-- Pagination -->
           <el-pagination
@@ -216,7 +216,7 @@
 
     <!-- Add Shift Dialog -->
     <el-dialog :title="translate('shiftManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
-      <div class="popup-container">
+      <div v-loading="loadingShift" class="popup-container">
         <el-form ref="addShiftForm" :model="newShift" :rules="rules" label-width="140px">
           <el-form-item :label="translate('shiftManagement.addDialog.name')" prop="name">
             <el-input v-model="newShift.name" />
@@ -234,7 +234,7 @@
                 style="width: 480px"
             >
               <el-option
-                  v-for="user in userOptions"
+                  v-for="user in shiftLeaderOptions"
                   :key="user.id"
                   :label="user.name"
                   :value="user.id"
@@ -304,7 +304,7 @@
 
     <!-- Edit Shift Dialog -->
     <el-dialog :title="translate('shiftManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
-      <div class="popup-container">
+      <div v-loading="loadingShift" class="popup-container">
         <el-form ref="editShiftForm" :model="editShift" :rules="rules" label-width="140px">
           <el-form-item :label="translate('shiftManagement.editDialog.name')" prop="name">
             <el-input v-model="editShift.name" />
@@ -317,7 +317,7 @@
           <el-form-item :label="translate('shiftManagement.editDialog.leader')" prop="leader_id">
             <el-select v-model="editShift.leader_id" filterable :placeholder="translate('shiftManagement.editDialog.selectLeaderPlaceholder')" style="width: 480px">
               <el-option
-                  v-for="user in userOptions"
+                  v-for="user in shiftLeaderOptions"
                   :key="user.id"
                   :label="user.name"
                   :value="user.id"
@@ -424,6 +424,7 @@ export default {
   data() {
     return {
       tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
+      loadingShift: false,
       searchUserQuery: "", // Search input value for users
       userCurrentPage: 1, // Current page for members
       userPageSize: 10, // Page size for members
@@ -431,7 +432,8 @@ export default {
       userSortSettings: { prop: "", order: "" }, // Sort settings
       tableData: [], // Original data
       filteredData: [], // Filtered data for display
-      userOptions: [], // Dropdown options for users
+      userOptions: [], // Dropdown options for all users
+      shiftLeaderOptions: [], // Dropdown options for shift leaders
       currentPage: 1, // Current page number
       pageSize: 15, // Number of items per page
       searchQuery: "", // Search input value
@@ -634,28 +636,42 @@ export default {
       try {
         const response = await fetchUsers(); // Fetch users from the backend
         if (response.data && response.data.status === "200") {
+          // ✅ Store all users for general use
           this.userOptions = response.data.data.map((user) => ({
-            id: user.id, // Use user ID for value
-            name: user.name, // Use user name for display
+            id: user.id,
+            name: user.name,
           }));
+
+          // ✅ Filter only 班长 (role.id === 3)
+          this.shiftLeaderOptions = response.data.data
+              .filter(user => user.role && user.role.id === 3)
+              .map(user => ({
+                id: user.id,
+                name: user.name,
+              }));
         } else {
-          this.userOptions = []; // Fallback if no data is returned
+          this.userOptions = [];
+          this.shiftLeaderOptions = []; // Ensure empty state
         }
       } catch (error) {
         console.error("Error fetching user options:", error);
         this.userOptions = [];
+        this.shiftLeaderOptions = [];
       }
     },
     async updateUsersForShift(shiftId) {
+      this.loadingShift = true;
       try {
         await removeShiftFromAllUsers(shiftId); // Remove all users from shift
         if (this.editUser.assignedUsers.length > 0) {
           await assignUsersToShift(shiftId, this.editUser.assignedUsers);
         }
         this.$message.success('更新成功');
+        this.loadingShift = false;
       } catch (error) {
         console.error('Error updating users for shift:', error);
         this.$message.error('更新失败');
+        this.loadingShift = false;
       }
     },
     async updateFormsForShift(shiftId) {
@@ -708,6 +724,7 @@ export default {
       this.currentPage = page;
     },
     async validateAndAddShift() {
+      this.loadingShift = true;
       this.$refs.addShiftForm.validate(async (valid) => {
         if (valid) {
           try {
@@ -739,11 +756,17 @@ export default {
           } catch (error) {
             console.error("Error adding shift:", error);
             this.$message.error("创建失败");
+          } finally {
+            this.loadingShift = false;
           }
+        } else {
+          this.loadingShift = false;
         }
       });
     },
     async handleEditConfirm() {
+      this.loadingShift = true;
+      await this.$nextTick();
       try {
         const payload = {...this.editShift}; // 浅拷贝原始对象
         delete payload.leader; // 去掉 `leader` 键值对
@@ -762,6 +785,9 @@ export default {
         this.$message.success("班组创建成功");
       } catch (error) {
         console.error("Error updating shift:", error);
+        this.$message.error("编辑失败");
+      } finally {
+        this.loadingShift = false;
       }
     },
     async handleStatusChange(id, status) {

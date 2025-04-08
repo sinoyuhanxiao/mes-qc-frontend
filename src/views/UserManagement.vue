@@ -96,14 +96,14 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('userManagement.table.role')" prop="role_id" width="150" sortable>
+        <el-table-column :label="translate('userManagement.table.role')" prop="role.name" width="150" sortable>
           <template #default="scope">
             <el-tag
-                :type="scope.row.role_id === 1 ? 'warning' : 'success'"
+                :type="scope.row.role.el_tag_type || 'info'"
                 size="medium"
                 style="font-weight:bold"
             >
-              {{ getRoleName(scope.row.role_id) }}
+              {{ scope.row.role.name }}
             </el-tag>
           </template>
         </el-table-column>
@@ -200,9 +200,15 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.table.role')" prop="role">
-            <el-select v-model="newUser.role" :placeholder="translate('userManagement.role.selectRowPlaceHolder')">
-              <el-option :label="translate('userManagement.role.admin')" value="管理员" />
-              <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
+            <el-select v-model="newUser.role" placeholder="Select a Role">
+              <el-option
+                  v-for="role in rolesOptions"
+                  :key="role.id"
+                  :label="role.name"
+                  :value="role.id"
+              >
+                <el-tag :type="role.el_tag_type">{{ role.name }}</el-tag>
+              </el-option>
             </el-select>
           </el-form-item>
 
@@ -280,9 +286,15 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.role')" prop="role">
-            <el-select v-model="editUser.role" :placeholder="translate('userManagement.editDialog.role')">
-              <el-option :label="translate('userManagement.role.admin')" value="管理员" />
-              <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
+            <el-select v-model="editUser.role" placeholder="Select a Role">
+              <el-option
+                  v-for="role in rolesOptions"
+                  :key="role.id"
+                  :label="role.name"
+                  :value="role.id"
+              >
+                <el-tag :type="role.el_tag_type">{{ role.name }}</el-tag>
+              </el-option>
             </el-select>
           </el-form-item>
 
@@ -376,6 +388,7 @@ import {
 } from '@/services/userService.js';
 import {getAllShifts} from "@/services/shiftService";
 import {assignUserToShifts, removeUserFromAllShifts} from "@/services/shiftUserService";
+import {fetchRoles} from "@/services/roleService";
 
 export default {
   name: 'UserManagement',
@@ -393,6 +406,7 @@ export default {
       filteredData: [], // Filtered data for display
       currentPage: 1, // Current page number
       pageSize: 15, // Number of items per page
+      rolesOptions: [], // Stores roles fetched from backend
       searchQuery: '', // Search input value
       addDialogVisible: false, // Controls the visibility of the add user dialog
       editDialogVisible: false, // Controls the visibility of the edit user dialog
@@ -504,10 +518,21 @@ export default {
       },
       deep: true, // Ensures nested changes are tracked
     },
+    // Watch for changes in editUser.role and log the changes
+    "editUser.role": {
+      handler(newValue, oldValue) {
+        console.log("Role changed:", {
+          newValue,
+          oldValue,
+        });
+      },
+      immediate: true // Trigger the watch immediately upon initialization
+    }
   },
   created() {
     this.fetchUserData();
     this.fetchShiftOptions();
+    this.fetchRoles();
   },
   computed: {
     existingUsernames() {
@@ -551,6 +576,21 @@ export default {
     updateTableHeight() {
       this.tableHeight = window.innerHeight - 50 - 100 - 20 - 20 - 10;
     },
+    async fetchRoles() {
+      try {
+        const response = await fetchRoles();
+        if (response.data.status === '200') {
+          this.rolesOptions = response.data.data.map(role => ({
+            id: role.id,
+            name: role.name,
+            el_tag_type: role.el_tag_type || 'info'
+          }));
+        }
+        console.log('Roles fetched:', this.rolesOptions)
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+      }
+    },
     async fetchUserData() {
       this.loading = true;
       try {
@@ -559,11 +599,10 @@ export default {
           const sortedData = response.data.data.sort((a, b) => a.id - b.id); // Sort by ID
           this.tableData = sortedData;
 
-          // Apply the filter if a search query is present
           if (this.searchQuery.trim()) {
-            this.filterTable(); // Filter data based on searchQuery
+            this.filterTable();
           } else {
-            this.filteredData = sortedData; // Show all data if no filter is applied
+            this.filteredData = sortedData;
           }
         }
       } catch (error) {
@@ -653,11 +692,13 @@ export default {
     },
     async performAddUser() {
       try {
-        const roleId = this.newUser.role === '管理员' ? 1 : 2;
+        const roleId = this.editUser.role; // Now role is stored as ID directly
         const encryptedPassword = btoa(this.newUser.password);
         const payload = {
           name: this.newUser.name,
-          role_id: roleId,
+          role: {
+            id: this.newUser.role
+          },
           wecom_id: this.newUser.wecomId,
           username: this.newUser.username,
           email: this.newUser.email ?? '',
@@ -686,9 +727,12 @@ export default {
         if (valid) {
           try {
             const roleId = this.editUser.role === '管理员' ? 1 : 2; // This 管理员 should not be modified since it now acts as an value, should be modified later
+            console.log("Edit User Role", this.editUser.role);
             const payload = {
               name: this.editUser.name,
-              role_id: roleId,
+              role: {
+                id: this.editUser.role // this role is actually role id, nado
+              },
               wecom_id: this.editUser.wecomId,
               username: this.editUser.username,
               email: this.editUser.email,
@@ -736,7 +780,7 @@ export default {
       this.editUser = {
         id: row.id,
         name: row.name,
-        role: row.role_id === 1 ? '管理员' : '质检人员',
+        role: row.role.id,
         wecomId: row.wecom_id,
         username: row.username,
         email: row.email,

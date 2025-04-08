@@ -90,6 +90,6 @@ export default createStore({
         getUser: (state) => state.user,
         getName: (state) => state.user.name, // Added getter for `name`
         getRoleName: (state) =>
-            state.user.role === 1 ? '管理员' : state.user.role === 2 ? '质检人员' : '未知角色',
+            state.user.role.name
     },
 });
