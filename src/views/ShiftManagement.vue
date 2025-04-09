@@ -149,7 +149,7 @@
     />
 
     <!-- Shift Info Dialog -->
-    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName} - 资讯`" width="800">
+    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName} - 信息`" width="800">
       <el-tabs>
         <el-tab-pane :label="translate('shiftManagement.membersTab')">
           <!-- Filter Bar -->
