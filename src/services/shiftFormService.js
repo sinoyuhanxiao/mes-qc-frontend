@@ -41,3 +41,13 @@ export const removeAllFormsFromShift = (shiftId) => {
 export const getFormIdsForShift = (shiftId) => {
     return api.get(`${BASE_URL}/shifts/${shiftId}/forms`);
 };
+
+/**
+ * Retrieve filtered form tree assigned to a specific shift.
+ * This returns a tree structure where only the forms tied to the shift are included.
+ * @param {number} shiftId - The ID of the shift.
+ * @returns {Promise} API response with the filtered form tree.
+ */
+export const getFormTreeByShift = (shiftId) => {
+    return api.get(`${BASE_URL}/shifts/${shiftId}/form-tree`);
+};
