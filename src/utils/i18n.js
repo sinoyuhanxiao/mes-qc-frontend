@@ -45,6 +45,14 @@ export const translate = function(key) {
   return i18n.$st(key)
 }
 
+export function translateWithParams(key, params = {}) {
+  let raw = translate(key)
+  Object.keys(params).forEach(p => {
+    raw = raw.replace(new RegExp(`{${p}}`, 'g'), params[p])
+  })
+  return raw
+}
+
 export const installI18n = (app) => {
   //
 }
