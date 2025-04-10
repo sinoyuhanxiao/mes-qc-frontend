@@ -287,7 +287,7 @@ export default {
         formLoadSuccess: 'Form loaded successfully!',
         formLoadFailed: 'Failed to load form template!',
         formLoadError: 'Error fetching form template!'
-    }
+    },
     orderManagement: {
         type: 'Type',
         createdAt: 'Created At',

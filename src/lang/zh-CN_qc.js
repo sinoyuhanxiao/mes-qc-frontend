@@ -287,7 +287,7 @@ export default {
         formLoadSuccess: '表单加载成功！',
         formLoadFailed: '加载表单模板失败！',
         formLoadError: '获取表单模板出错！'
-    }
+    },
     orderManagement: {
         type: '类型',
         createdAt: '创建时间',
