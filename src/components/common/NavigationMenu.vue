@@ -62,15 +62,15 @@
               </el-menu-item>
               <el-menu-item index="/instrument-management">
                 <el-icon><TakeawayBox /></el-icon>
-                <span>仪器管理</span>
+                <span>{{ translate('navigationMenu.instrumentManagement') }}</span>
               </el-menu-item>
               <el-menu-item index="/test-subject-management">
                 <el-icon><Collection /></el-icon>
-                <span>检测项目管理</span>
+                <span>{{ translate('navigationMenu.testSubjectManagement') }}</span>
               </el-menu-item>
               <el-menu-item index="/sampling-location-management">
                 <el-icon><Location /></el-icon>
-                <span>采样点管理</span>
+                <span>{{ translate('navigationMenu.samplingLocationManagement') }}</span>
               </el-menu-item>
             </el-sub-menu>
 
@@ -124,7 +124,7 @@
       <div v-if="!isCollapsed" class="user-info">
         <el-divider />
         <div class="user-details">
-          <el-tooltip content="编辑个人信息" placement="top">
+          <el-tooltip :content="translate('navigationMenu.editUserToolTip')" placement="top">
             <el-icon class="edit-icon-wrapper" @click="openEditDialog" :size="20">
               <Edit />
             </el-icon>
@@ -135,7 +135,7 @@
         <div class="user-role">{{ roleName }}</div>
 
         <!-- Logout Button with Tooltip and Hover Effect -->
-        <el-tooltip content="登出" placement="top">
+        <el-tooltip :content="translate('navigationMenu.logOutToolTip')" placement="top">
           <el-icon class="logout-icon" @click="handleLogout">
             <SwitchButton />
           </el-icon>
