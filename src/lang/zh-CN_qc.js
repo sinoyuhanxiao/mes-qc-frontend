@@ -1,4 +1,36 @@
 export default {
+    common: {
+        searchPlaceholder: '搜索关键字',
+        refreshTooltip: '刷新表格',
+        addButton: '+ 新增',
+        cancel: '取消',
+        confirm: '确认',
+        delete: '删除',
+        operationCancelled: '操作已取消',
+        table: {
+            id: '编号',
+            name: '名称',
+            actions: '操作',
+            editButton: '编辑',
+            deleteButton: '删除',
+        },
+        addDialog: {
+            title: '新增',
+            name: '名称',
+            cancelButton: '取消',
+            confirmButton: '确认',
+        },
+        editDialog: {
+            title: '编辑',
+            name: '名称',
+            cancelButton: '取消',
+            confirmButton: '确认',
+        },
+        messages: {
+            saveSuccess: '保存成功！',
+            saveFailed: '保存失败',
+        }
+    },
     userManagement: {
         title: '用户管理',
         searchPlaceholder: '搜索关键字',
@@ -256,7 +288,9 @@ export default {
         deleteSuccess: '删除成功！',
         deleteFailed: '删除失败',
         loadFailed: '加载数据失败',
-        errorTitle: '错误'
+        errorTitle: '错误',
+        pleaseSelectFolder: '请选择文件夹',
+        selectFolder: '选择文件夹'
     },
     FormDisplay: {
         titlePrefix: '表单',
@@ -287,6 +321,19 @@ export default {
         formLoadSuccess: '表单加载成功！',
         formLoadFailed: '加载表单模板失败！',
         formLoadError: '获取表单模板出错！'
+    },
+    FormDesigner: {
+        saveDialog: {
+            title: '保存质检单',
+            formNameLabel: '质检单名称',
+            formNamePlaceholder: '请输入质检单名称...',
+            cancel: '取消',
+            confirm: '保存'
+        },
+        validation: {
+            formNameRequired: '质检单名称不能为空！',
+            folderRequired: '请选择一个文件夹。'
+        }
     },
     orderManagement: {
         type: '类型',
@@ -404,4 +451,67 @@ export default {
     samplingLocationManagement: {
         samplingLocation: '采样点',
     },
+    FormDataSummary: {
+        loadingText: "正在生成PDF报告...",
+        summaryTitle: "汇总",
+        dateRangeSeparator: "至",
+        startPlaceholder: "开始日期",
+        endPlaceholder: "结束日期",
+        generatePdf: "生成 PDF",
+        viewRecords: "查看质检记录",
+        recordTable: {
+            groupSystemInfo: "系统提交信息",
+            submitter: "提交人",
+            submittedAt: "提交时间",
+            submissionId: "提交单号",
+            groupQcDetails: "质检填写记录",
+            actions: "操作",
+            view: "查看",
+            delete: "删除",
+            deleteConfirmTitle: "删除确认",
+            deleteConfirmMessage: "确认删除提交单号 {id} 的记录吗？",
+            deleteSuccess: "记录删除成功！",
+            deleteCanceled: "删除已取消",
+            deleteFailed: "删除失败，请重试",
+            exportExcel: "导出 Excel",
+            searchPlaceholder: "搜索...",
+            closeButton: "关闭"
+        },
+        detailDialog: {
+            titleSuffix: "提交记录",
+            uncategorized: "未分类",
+            submitter: "提交人",
+            submittedAt: "提交时间",
+            signatureTitle: "质检人签名：",
+            cancelButton: "取消",
+            exportButton: "导出"
+        },
+        shortcuts: {
+            thisWeek: "本周",
+            thisMonth: "本月",
+            lastMonth: "上个月",
+            lastThreeMonths: "最近三个月"
+        },
+        messages: {
+            noChartData: "暂无图表数据可导出!",
+            exportSuccess: "PDF 下载成功!",
+            exportFailed: "PDF 生成失败，请重试!",
+            noExcelData: "暂无数据可导出",
+            exportExcelSuccess: "Excel 导出成功！",
+            selectRecordToExport: "请选择要导出的记录!"
+        }
+    },
+    Export: {
+        titleSuffix: '提交记录',
+        groupTitle: '质检提交信息',
+        signatureTitle: '质检人签名：',
+        tableHead: ['质检项目', '质检结果'],
+        fallback: ' - ',
+        systemInfo: {
+            submitter: '提交人',
+            submittedAt: '提交时间',
+            submissionId: '提交单号'
+        }
+    }
+
 };

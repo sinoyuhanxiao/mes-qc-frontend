@@ -184,21 +184,21 @@
     </div>
 
     <div v-if="saveDialogVisible" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
-      <el-dialog title='保存质检单' v-model="saveDialogVisible"
+      <el-dialog :title="translate('FormDesigner.saveDialog.title')" v-model="saveDialogVisible"
                  :show-close="true" class="drag-dialog small-padding-dialog" :append-to-body="true" center
                  :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true" width="50%">
         <div>
           <el-form label-width="130px">
-            <el-form-item label="质检单名称" style="margin-right: 40px">
-              <el-input v-model="formName" placeholder="请输入质检单名称..." />
+            <el-form-item :label="translate('FormDesigner.saveDialog.formNameLabel')" style="margin-right: 40px">
+              <el-input v-model="formName" :placeholder="translate('FormDesigner.saveDialog.formNamePlaceholder')" />
             </el-form-item>
             <FormTreeMultipleSelection  style="margin-left: 50px" v-model:selectedFolders="selectedFolder" />
           </el-form>
         </div>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="saveDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmQcTemplateSave">保存</el-button>
+            <el-button @click="saveDialogVisible = false">{{ translate('FormDesigner.saveDialog.cancel') }}</el-button>
+            <el-button type="primary" @click="confirmQcTemplateSave">{{ translate('FormDesigner.saveDialog.confirm') }}</el-button>
           </div>
         </template>
       </el-dialog>
@@ -219,7 +219,7 @@
     getQueryParam,
     traverseAllWidgets, addWindowResizeHandler
   } from "@/utils/util"
-  import i18n from '@/utils/i18n'
+  import i18n, {translate} from '@/utils/i18n'
   import {generateCode} from "@/utils/code-generator"
   import {genSFC} from "@/utils/sfc-generator"
   import loadBeautifier from "@/utils/beautifierLoader"
@@ -371,6 +371,7 @@
       this.screenMediaQuery.removeEventListener('change', this.updateToolBarWidth); // Cleanup
     },
     methods: {
+      translate,
       updateToolBarWidth() {
         const screenWidth = window.screen.width;
         console.log('screenWidth', screenWidth)
@@ -788,12 +789,12 @@
 
       confirmQcTemplateSave() {
         if (!this.formName.trim()) {
-          this.$message.warning('质检单名称不能为空！');
+          this.$message.warning(translate('FormDesigner.validation.formNameRequired'));
           return;
         }
 
         if (!this.selectedFolder) {
-          this.$message.warning('请选择一个文件夹。');
+          this.$message.warning(translate('FormDesigner.validation.folderRequired'));
           return;
         }
 
@@ -812,15 +813,15 @@
         createFormTemplateWithNodes(payload) // Use service function
             .then((response) => {
               if (response.data.status === '200') {
-                this.$message.success('保存成功!');
+                this.$message.success(translate('common.messages.saveSuccess'));
                 this.saveDialogVisible = false; // Close the dialog
               } else {
-                this.$message.error(response.data.message || '保存失败');
+                this.$message.error(response.data.message || translate('common.messages.saveFailed'));
               }
             })
             .catch((error) => {
               console.error('Error saving template:', error);
-              this.$message.error('保存失败');
+              this.$message.error(translate('common.messages.saveFailed'));
             });
       }
     }

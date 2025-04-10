@@ -102,14 +102,16 @@ export const fetchQcRecords = (formTemplateId, startDateTime, endDateTime, page 
  * @param {Object} reportData - The JSON object containing report details.
  */
 export const generateQcReport = (reportData) => {
-    return api.post(`/generate`, reportData, {
+    const language = localStorage.getItem('app-language') || 'en-US';
+
+    return api.post(`/generate?language=${language}`, reportData, {
         responseType: 'blob', // Ensures PDF is treated as binary data
         headers: { 'Content-Type': 'application/json' }
     }).then((response) => {
         const blob = new Blob([response.data], { type: 'application/pdf' });
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
-        link.download = reportData.qcFormName + '质量控制报告.pdf';
+        link.download = reportData.qcFormName + '_report.pdf';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

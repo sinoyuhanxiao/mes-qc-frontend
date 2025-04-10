@@ -1,24 +1,24 @@
 <template>
-  <el-container v-loading="pdfLoading" element-loading-text="正在生成PDF报告..." element-loading-background="rgba(0, 0, 0, 0.4)" class="qcsum-container">
+  <el-container v-loading="pdfLoading" :element-loading-text="translate('FormDataSummary.loadingText')" element-loading-background="rgba(0, 0, 0, 0.4)" class="qcsum-container">
     <el-aside width="25%">
       <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
 
     <el-main width="75%" style="max-height: 100vh; overflow-y: auto;" v-show="isMainDisplayed">
       <div v-if="selectedForm" class="form-header">
-        <h1 style="width: 200px">{{ selectedForm.label }} 汇总</h1>
+        <h1 style="width: 200px">{{ selectedForm.label }} {{ translate('FormDataSummary.summaryTitle') }}</h1>
         <el-date-picker
             style="width: 320px; margin-left: 150px; margin-right: 20px"
             v-model="dateRange"
             type="datetimerange"
             :shortcuts="shortcuts"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            :range-separator="translate('FormDataSummary.dateRangeSeparator')"
+            :start-placeholder="translate('FormDataSummary.startPlaceholder')"
+            :end-placeholder="translate('FormDataSummary.endPlaceholder')"
             @change="refreshChartData"
         />
-        <el-button type="success" style="margin-top: 0;" @click="exportToPdf">生成 PDF</el-button>
-        <el-button type="primary" @click="openQcRecordsDialog" style="margin-top: 0">查看质检记录</el-button>
+        <el-button type="success" style="margin-top: 0;" @click="exportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
+        <el-button type="primary" @click="openQcRecordsDialog" style="margin-top: 0">{{ translate('FormDataSummary.viewRecords') }}</el-button>
       </div>
 
       <el-skeleton v-if="loadingCharts" :rows="6" animated />
@@ -44,26 +44,26 @@
     </el-main>
 
     <!-- Full-Screen Dialog for QC Records Table -->
-    <el-dialog v-model="qcRecordsDialogVisible" :title="`${this.selectedForm?.label} - 提交记录`" fullscreen>
+    <el-dialog v-model="qcRecordsDialogVisible" :title="`${this.selectedForm?.label} - ${translate('FormDataSummary.detailDialog.titleSuffix')}`" fullscreen>
 
       <!-- Search and Date Picker Container -->
       <div class="toolbar">
         <el-input
             v-model="searchQuery"
-            placeholder="搜索..."
+            :placeholder="translate('FormDataSummary.recordTable.searchPlaceholder')"
             clearable
             style="width: 300px; margin-right: 500px"
         />
 
-        <el-button type="success" style="margin-top: 0; margin-right: 20px" @click="exportToExcel">导出 Excel</el-button>
+        <el-button type="success" style="margin-top: 0; margin-right: 20px" @click="exportToExcel">{{ translate('FormDataSummary.recordTable.exportExcel') }}</el-button>
 
         <el-date-picker
             v-model="dateRange"
             type="datetimerange"
             :shortcuts="shortcuts"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            :range-separator="translate('FormDataSummary.dateRangeSeparator')"
+            :start-placeholder="translate('FormDataSummary.startPlaceholder')"
+            :end-placeholder="translate('FormDataSummary.endPlaceholder')"
             @change="handleDateRangeChange"
         />
       </div>
@@ -76,27 +76,27 @@
           style="width: 100%; white-space: nowrap;"
           :scroll-x="true"
       >
-        <el-table-column label="系统提交信息" label-class-name="group-header" fixed>
-          <el-table-column prop="created_by" label="提交人" fixed="left" width="150" sortable>
+        <el-table-column :label="translate('FormDataSummary.recordTable.groupSystemInfo')" label-class-name="group-header" fixed>
+          <el-table-column prop="created_by" :label="translate('FormDataSummary.recordTable.submitter')" fixed="left" width="150" sortable>
             <template #default="scope">
               <span>{{ scope.row['提交人'] }}</span>
             </template>
           </el-table-column>
 
-          <el-table-column prop="created_at" label="提交时间" fixed="left" width="180" sortable>
+          <el-table-column prop="created_at" :label="translate('FormDataSummary.recordTable.submittedAt')" fixed="left" width="180" sortable>
             <template #default="scope">
               <span>{{ formatClientTime(scope.row['提交时间']) }}</span>
             </template>
           </el-table-column>
 
-          <el-table-column prop="_id" label="提交单号" fixed="left" width="220" sortable>
+          <el-table-column prop="_id" :label="translate('FormDataSummary.recordTable.submissionId')" fixed="left" width="220" sortable>
             <template #default="scope">
               <span>{{ scope.row._id }}</span>
             </template>
           </el-table-column>
         </el-table-column>
 
-        <el-table-column label="质检填写记录" label-class-name="group-header">
+        <el-table-column :label="translate('FormDataSummary.recordTable.groupQcDetails')" label-class-name="group-header">
           <el-table-column
             v-for="(header, index) in displayedColumnHeaders"
             :key="index"
@@ -108,10 +108,10 @@
         </el-table-column>
 
         <!-- Fixed 操作 column on the right -->
-        <el-table-column label="操作" fixed="right" width="120">
+        <el-table-column :label="translate('FormDataSummary.recordTable.actions')" fixed="right" width="120">
           <template #default="scope">
-            <el-link type="primary" @click="viewDetails(scope.row)">查看</el-link>
-            <el-link type="danger" style="margin-left: 10px" @click="deleteRecord(scope.row)">删除</el-link>
+            <el-link type="primary" @click="viewDetails(scope.row)">{{ translate('FormDataSummary.recordTable.view') }}</el-link>
+            <el-link type="danger" style="margin-left: 10px" @click="deleteRecord(scope.row)">{{ translate('FormDataSummary.recordTable.delete') }}</el-link>
           </template>
         </el-table-column>
       </el-table>
@@ -126,11 +126,11 @@
       />
 
       <template #footer>
-        <el-button type="primary" @click="closeQcRecordsDialog">关闭</el-button>
+        <el-button type="primary" @click="closeQcRecordsDialog">{{ translate('FormDataSummary.recordTable.closeButton') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog :title="`${this.selectedForm?.label} - 提交记录`" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
+    <el-dialog :title="`${this.selectedForm?.label} - ${translate('FormDataSummary.detailDialog.titleSuffix')}`" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
       <el-scrollbar max-height="500px">
         <div v-for="(fields, category) in groupedDetails" :key="category">
           <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px"> <!-- 这是 divider -->
@@ -141,21 +141,21 @@
         </div>
 
         <!-- Display System Information -->
-        <el-descriptions title="质检提交信息" border style="margin-top: 10px">
-          <el-descriptions-item label="提交人">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
-          <el-descriptions-item label="提交时间">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
+        <el-descriptions :title="translate('FormDataSummary.recordTable.groupSystemInfo')" border style="margin-top: 10px">
+          <el-descriptions-item :label="translate('FormDataSummary.detailDialog.submitter')">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
+          <el-descriptions-item :label="translate('FormDataSummary.detailDialog.submittedAt')">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- Display E-signature if present -->
         <div v-if="eSignature && eSignature.startsWith('data:image')" style="margin-top: 20px;">
-          <h3>质检人签名：</h3>
-          <img :src="eSignature" alt="电子签名" style="width: 300px; height: auto;" />
+          <h3>{{ translate('FormDataSummary.detailDialog.signatureTitle') }}</h3>
+          <img :src="eSignature" alt="e-signature" style="width: 300px; height: auto;" />
         </div>
       </el-scrollbar>
 
       <template #footer>
-        <el-button type="info" @click="closeDetailsDialog">取消</el-button>
-        <el-button type="primary" @click="newExportToPdf">导出</el-button>
+        <el-button type="info" @click="closeDetailsDialog">{{ translate('FormDataSummary.detailDialog.cancelButton') }}</el-button>
+        <el-button type="primary" @click="newExportToPdf">{{ translate('FormDataSummary.detailDialog.exportButton') }}</el-button>
       </template>
     </el-dialog>
 
@@ -176,7 +176,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";  // ✅ Import autoTable plugin explicitly
 import callAddFont from "@/assets/simfang.js";
 import callAddBoldFont from "@/assets/simfang-bold.js";
-import {nextTick} from "vue"; // 添加这行
+import {nextTick} from "vue";
+import {translate, translateWithParams} from "@/utils/i18n"; // 添加这行
 
 export default {
   components: { FormTree, PieChart, LineChart },
@@ -195,7 +196,7 @@ export default {
       eSignature: null,
       shortcuts: [
         {
-          text: '本周',
+          text: translate('FormDataSummary.shortcuts.thisWeek'),
           value: () => {
             const end = new Date();
             const start = new Date();
@@ -204,11 +205,11 @@ export default {
           },
         },
         {
-          text: '本月',
+          text: translate('FormDataSummary.shortcuts.thisMonth'),
           value: () => [this.getStartOfMonth(), this.getEndOfMonth()],
         },
         {
-          text: '上个月',
+          text: translate('FormDataSummary.shortcuts.lastMonth'),
           value: () => {
             const start = new Date(this.getStartOfMonth());
             start.setMonth(start.getMonth() - 1);
@@ -218,7 +219,7 @@ export default {
           },
         },
         {
-          text: '最近三个月',
+          text: translate('FormDataSummary.shortcuts.lastThreeMonths'),
           value: () => {
             const end = new Date();
             const start = new Date();
@@ -301,6 +302,7 @@ export default {
     }
   },
   methods: {
+    translate,
     formatClientTime(utcDateTime) {
       if (!utcDateTime) return "-";
       const utcDate = new Date(utcDateTime + "Z"); // 确保它被解析为 UTC
@@ -323,7 +325,7 @@ export default {
       let y = 10; // 初始的垂直间距
 
       // 添加标题
-      const title = `${this.selectedForm?.label}提交记录`;
+      const title = `${this.selectedForm?.label}${translate('Export.titleSuffix')}`;
       doc.setFontSize(16);
       const pageWidth = doc.internal.pageSize.getWidth();
       const textWidth = doc.getTextWidth(title);
@@ -344,7 +346,7 @@ export default {
 
         autoTable(doc, {
           startY: y,
-          head: [["质检项目", "质检结果"]],
+          head: [translate('Export.tableHead')],
           body: tableData,
           theme: "grid",
           styles: { font: "simfang", fontSize: 10 },
@@ -356,16 +358,16 @@ export default {
 
       // 添加系统信息
       doc.setFontSize(14);
-      doc.text("质检提交信息", 10, y);
+      doc.text(translate('Export.groupTitle'), 10, y);
       y += 6;
 
       autoTable(doc, {
         startY: y,
-        head: [["质检项目", "质检结果"]],
+        head: [translate('Export.tableHead')],
         body: [
-          ["提交人", this.systemInfo.提交人 || " - "],
-          ["提交时间", this.systemInfo.提交时间 || " - "],
-          ["提交单号", this.systemInfo.提交单号 || " - "]
+          [translate('Export.systemInfo.submitter'), this.systemInfo.提交人 || translate('Export.fallback')],
+          [translate('Export.systemInfo.submittedAt'), this.systemInfo.提交时间 || translate('Export.fallback')],
+          [translate('Export.systemInfo.submissionId'), this.systemInfo.提交单号 || translate('Export.fallback')]
         ],
         theme: "grid",
         styles: { font: "simfang", fontSize: 10 },
@@ -375,7 +377,7 @@ export default {
       y = doc.lastAutoTable.finalY + 10;
 
       // 添加电子签名，直接使用已经渲染的 <img> 元素
-      const signatureImg = document.querySelector('img[alt="电子签名"]');
+      const signatureImg = document.querySelector('img[alt="e-signature"]');
       if (signatureImg) {
         const imgWidth = 150;
         const aspectRatio = signatureImg.naturalWidth / signatureImg.naturalHeight;
@@ -389,7 +391,7 @@ export default {
         }
 
         doc.setFontSize(14);
-        doc.text("质检人签名：", 10, y);
+        doc.text(translate('Export.signatureTitle'), 10, y);
         y += 10;
 
         doc.addImage(signatureImg, 'PNG', 10, y, imgWidth, imgHeight);
@@ -397,11 +399,11 @@ export default {
       }
 
       // 保存 PDF
-      doc.save(`${this.selectedForm?.label}-提交记录.pdf`);
+      doc.save(`${this.selectedForm?.label}-submission_records.pdf`);
     },
     async exportToPdf() {
       if (!this.lineChartWidgets.length && !this.pieChartWidgets.length) {
-        this.$message.warning("暂无图表数据可导出!");
+        this.$message.warning(translate('FormDataSummary.messages.noChartData'));
         return;
       }
 
@@ -458,22 +460,23 @@ export default {
         ]
       };
 
+
       console.log("🚀 发送给后端的报告数据:", reportData);
 
       // 调用后端 API 生成 PDF
       try {
         await generateQcReport(reportData);
-        this.$message.success("PDF 下载成功!");
+        this.$message.success(translate('FormDataSummary.messages.exportSuccess'));
       } catch (err) {
         console.error("❌ 生成 PDF 失败:", err);
-        this.$message.error("PDF 生成失败，请重试!");
+        this.$message.error(translate('FormDataSummary.messages.exportFailed'));
       } finally {
         this.pdfLoading = false;
       }
     },
     exportToExcel() {
       if (!this.qcRecords.length) {
-        this.$message.warning("暂无数据可导出");
+        this.$message.warning(translate('FormDataSummary.messages.noExcelData'));
         return;
       }
 
@@ -481,14 +484,14 @@ export default {
       const tableData = this.qcRecords.map(record => {
         const { _id, created_by, ...filteredRecord } = record;
         return {
-          提交时间: record.created_at || "-",
+          [translate('Export.systemInfo.submittedAt')]: record.created_at || "-",
           ...filteredRecord
         };
       });
 
       // Extract headers (excluding `_id` and `created_by`)
       const headers = Object.keys(tableData[0] || {}).map(header =>
-          header === "created_at" ? "提交时间" : header
+          header === "created_at" ? translate('Export.systemInfo.submittedAt') : header
       );
 
       // Convert JSON to Excel format
@@ -499,13 +502,13 @@ export default {
 
       // Create and save workbook
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, this.selectedForm.label + "提交记录");
+      XLSX.utils.book_append_sheet(workbook, worksheet, this.selectedForm.label + translate('Export.titleSuffix'));
 
       const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
       const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-      saveAs(blob, this.selectedForm.label + "提交记录.xlsx");
+      saveAs(blob, this.selectedForm.label + translate('Export.titleSuffix') + ".xlsx");
 
-      this.$message.success("Excel 导出成功！");
+      this.$message.success(translate('FormDataSummary.messages.exportExcelSuccess'));
     },
     formatDate(date) { // convert to the client local time also to the YYYY-MM-DD HH:MM:SS string in 24 hours
       if (!date) return "";
@@ -519,21 +522,25 @@ export default {
     // Add this method inside the methods section
     async deleteRecord(row) {
       try {
-        this.$confirm(`确认删除提交单号 ${row._id} 的记录吗？`, "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        }).then(async () => {
+        this.$confirm(
+            translateWithParams('FormDataSummary.recordTable.deleteConfirmMessage', { id: row._id }),
+            translate('FormDataSummary.recordTable.deleteConfirmTitle'),
+            {
+              confirmButtonText: translate('FormDataSummary.confirm'),
+              cancelButtonText: translate('FormDataSummary.cancel'),
+              type: "warning",
+            }
+        ).then(async () => {
           await deleteTaskSubmissionLog(row._id, this.selectedForm.qcFormTemplateId, row["提交时间"]);
 
           this.qcRecords = this.qcRecords.filter(record => record._id !== row._id);
-          this.$message.success("记录删除成功！");
+          this.$message.success(translate('FormDataSummary.recordTable.deleteSuccess'));
         }).catch(() => {
-          this.$message.info("删除已取消");
+          this.$message.info(translate('FormDataSummary.recordTable.deleteCanceled'));
         });
       } catch (error) {
         console.error("Error deleting record:", error);
-        this.$message.error("删除失败，请重试");
+        this.$message.error(translate('FormDataSummary.recordTable.deleteFailed'));
       }
     },
     async viewDetails(row) {
@@ -650,7 +657,7 @@ export default {
     // TODO: generate the pdf
     async generatePdf(selectedDetails) {
       if (!selectedDetails || !selectedDetails._id) {
-        this.$message.error("请选择要导出的记录!");
+        this.$message.error(translate('FormDataSummary.messages.selectRecordToExport'));
         return;
       }
 

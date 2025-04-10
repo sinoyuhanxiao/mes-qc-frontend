@@ -18,8 +18,8 @@ import { ref } from 'vue';
 import { changeLocale } from '@/utils/i18n';
 
 // Initialize current language from localStorage or default to English
-const currentLanguage = ref(localStorage.getItem('app-language') || 'en');
-const currentLanguageName = ref(currentLanguage.value === 'en' ? 'English' : '中文');
+const currentLanguage = ref(localStorage.getItem('app-language') || 'en-US');
+const currentLanguageName = ref(currentLanguage.value === 'zh-CN' ? '中文' : 'English');
 
 // Function to handle language change
 const handleLanguageChanged = (lang: string) => {
@@ -33,6 +33,8 @@ const handleLanguageChanged = (lang: string) => {
   // Change the i18n locale reactively
   changeLocale(lang);
 
+  // set the current language to local storage
+  localStorage.setItem('app-language', lang);
   // Ensure reactivity for components dependent on language
   document.dispatchEvent(new Event('language-changed'));
 

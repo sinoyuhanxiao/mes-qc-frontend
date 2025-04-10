@@ -1,4 +1,36 @@
 export default {
+    common: {
+        searchPlaceholder: 'Search keyword',
+        refreshTooltip: 'Refresh table',
+        addButton: '+ New',
+        cancel: 'Cancel',
+        confirm: 'Confirm',
+        delete: 'Delete',
+        operationCancelled: 'Operation Cancelled',
+        table: {
+            id: 'ID',
+            name: 'Name',
+            actions: 'Actions',
+            editButton: 'Edit',
+            deleteButton: 'Delete',
+        },
+        addDialog: {
+            title: 'Add',
+            name: 'Name',
+            cancelButton: 'Cancel',
+            confirmButton: 'Confirm',
+        },
+        editDialog: {
+            title: 'Edit',
+            name: 'Name',
+            cancelButton: 'Cancel',
+            confirmButton: 'Confirm',
+        },
+        messages: {
+            saveSuccess: 'Saved successfully!',
+            saveFailed: 'Save failed',
+        }
+    },
     userManagement: {
         title: 'User Management',
         searchPlaceholder: 'Search keyword',
@@ -256,7 +288,9 @@ export default {
         deleteSuccess: 'Deleted successfully!',
         deleteFailed: 'Failed to delete node',
         loadFailed: 'Failed to load data',
-        errorTitle: 'Error'
+        errorTitle: 'Error',
+        pleaseSelectFolder: 'Please select the folder',
+        selectFolder: 'Select Folder'
     },
     FormDisplay: {
         titlePrefix: 'Form',
@@ -287,6 +321,19 @@ export default {
         formLoadSuccess: 'Form loaded successfully!',
         formLoadFailed: 'Failed to load form template!',
         formLoadError: 'Error fetching form template!'
+    },
+    FormDesigner: {
+        saveDialog: {
+            title: 'Save QC Form',
+            formNameLabel: 'QC Form Name',
+            formNamePlaceholder: 'Please enter the QC form name...',
+            cancel: 'Cancel',
+            confirm: 'Save'
+        },
+        validation: {
+            formNameRequired: 'QC form name cannot be empty!',
+            folderRequired: 'Please select a folder.'
+        }
     },
     orderManagement: {
         type: 'Type',
@@ -407,4 +454,66 @@ export default {
     samplingLocationManagement: {
         samplingLocation: 'Sampling Location',
     },
+    FormDataSummary: {
+        loadingText: "Generating PDF report...",
+        summaryTitle: "Summary",
+        dateRangeSeparator: "to",
+        startPlaceholder: "Start Date",
+        endPlaceholder: "End Date",
+        generatePdf: "Generate PDF",
+        viewRecords: "View QC Records",
+        recordTable: {
+            groupSystemInfo: "System Submission Info",
+            submitter: "Submitter",
+            submittedAt: "Submission Time",
+            submissionId: "Submission ID",
+            groupQcDetails: "QC Form Records",
+            actions: "Actions",
+            view: "View",
+            delete: "Delete",
+            deleteConfirmTitle: "Confirm Deletion",
+            deleteConfirmMessage: "Are you sure you want to delete submission ID {id}?",
+            deleteSuccess: "Record deleted successfully!",
+            deleteCanceled: "Deletion canceled",
+            deleteFailed: "Deletion failed. Please try again",
+            exportExcel: "Export to Excel",
+            searchPlaceholder: "Search...",
+            closeButton: "Close"
+        },
+        detailDialog: {
+            titleSuffix: "Submission Records",
+            uncategorized: "Uncategorized",
+            submitter: "Submitter",
+            submittedAt: "Submission Time",
+            signatureTitle: "Inspector Signature:",
+            cancelButton: "Cancel",
+            exportButton: "Export"
+        },
+        shortcuts: {
+            thisWeek: "This Week",
+            thisMonth: "This Month",
+            lastMonth: "Last Month",
+            lastThreeMonths: "Last 3 Months"
+        },
+        messages: {
+            noChartData: "No chart data to export!",
+            exportSuccess: "PDF downloaded successfully!",
+            exportFailed: "PDF generation failed. Please try again!",
+            noExcelData: "No data to export",
+            exportExcelSuccess: "Excel exported successfully!",
+            selectRecordToExport: "Please select a record to export!"
+        }
+    },
+    Export: {
+        titleSuffix: 'Submission Records',
+        groupTitle: 'QC Submission Info',
+        signatureTitle: 'Inspector Signature:',
+        tableHead: ['QC Field', 'QC Result'],
+        fallback: ' - ',
+        systemInfo: {
+            submitter: 'Submitter',
+            submittedAt: 'Submission Time',
+            submissionId: 'Submission ID'
+        }
+    }
 };
