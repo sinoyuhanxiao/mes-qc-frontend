@@ -7,12 +7,12 @@
             v-model="enable_form"
             v-if="switchDisplayed"
             inline-prompt
-            active-text="可用"
-            inactive-text="不可用"
+            :active-text="translate('FormDisplay.available')"
+            :inactive-text="translate('FormDisplay.unavailable')"
         />
       </div>
       <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
-        快速分配此任务
+        {{ translate('FormDisplay.quickDispatch') }}
       </el-button>
 
       <el-countdown
@@ -21,7 +21,7 @@
           format="HH:mm:ss"
       >
         <template #title>
-          <span style="font-weight: bold; font-size: 15px">任务倒计时:</span>
+          <span style="font-weight: bold; font-size: 15px">{{ translate('FormDisplay.countdownTitle') }}</span>
         </template>
       </el-countdown>
 
@@ -32,8 +32,13 @@
       <div>
         <!-- 签名 Buttons and Display -->
         <div style="margin-bottom: 20px; text-align: left;">
-          <el-button type="primary" @click="showSignaturePad = true" :disabled="!(enable_form || enable_common_fields)">电子签名</el-button>
-          <el-button v-if="signatureData !== null" type="info" @click="handleSignatureClear" :disabled="!(enable_form || enable_common_fields)">清空签名</el-button>
+          <el-button type="primary" @click="showSignaturePad = true" :disabled="!(enable_form || enable_common_fields)">
+            {{ translate('FormDisplay.eSignature') }}
+          </el-button>
+
+          <el-button v-if="signatureData !== null" type="info" @click="handleSignatureClear" :disabled="!(enable_form || enable_common_fields)">
+            {{ translate('FormDisplay.clearSignature') }}
+          </el-button>
           <div v-if="signatureData" class="signature-preview">
             <img :src="signatureData" alt="签名图片" class="signature-image"/>
           </div>
@@ -41,8 +46,13 @@
 
         <!-- 提交 和 重置 表单 Buttons (Right-Aligned) -->
         <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-          <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">提交</el-button>
-          <el-button type="warning" v-if="props.usable || enable_form" @click="showClearConfirmation = true">重置</el-button>
+          <el-button type="primary" v-if="props.usable || enable_form" @click="submitForm">
+            {{ translate('FormDisplay.submit') }}
+          </el-button>
+
+          <el-button type="warning" v-if="props.usable || enable_form" @click="showClearConfirmation = true">
+            {{ translate('FormDisplay.reset') }}
+          </el-button>
         </div>
 
         <SignaturePadComponent
@@ -62,7 +72,7 @@
 
   <el-dialog
       v-model="showQuickDispatch"
-      :title="`此表单任务快速派发`"
+      :title="translate('FormDisplay.quickDispatchDialogTitle')"
       width="50%"
       @close="showQuickDispatch = false"
   >
@@ -76,52 +86,52 @@
 
   <el-dialog
       v-model="showConfirmation"
-      title="确认提交"
+      :title="translate('FormDisplay.confirmSubmissionTitle')"
       width="30%"
       :before-close="cancelSubmission"
   >
-    <span>您确定要提交此表单吗？</span>
+    <span>{{ translate('FormDisplay.confirmSubmissionMessage') }}</span>
     <template #footer>
-      <el-button @click="cancelSubmission">取消</el-button>
-      <el-button type="primary" @click="confirmSubmission">确认</el-button>
+      <el-button @click="cancelSubmission">{{ translate('FormDisplay.cancel') }}</el-button>
+      <el-button type="primary" @click="confirmSubmission">{{ translate('FormDisplay.confirm') }}</el-button>
     </template>
   </el-dialog>
 
   <el-dialog
       v-model="showResetConfirmation"
-      title="表单提交成功"
+      :title="translate('FormDisplay.submissionSuccessTitle')"
       width="30%"
       :before-close="cancelReset"
   >
-    <span>您的表单已成功提交。是否需要重置表单？</span>
+    <span>{{ translate('FormDisplay.submissionSuccessMessage') }}</span>
     <template #footer>
-      <el-button @click="cancelReset">否</el-button>
-      <el-button type="primary" @click="confirmReset">是</el-button>
+      <el-button @click="cancelReset">{{ translate('FormDisplay.no') }}</el-button>
+      <el-button type="primary" @click="confirmReset">{{ translate('FormDisplay.yes') }}</el-button>
     </template>
   </el-dialog>
 
   <el-dialog
       v-model="showClearConfirmation"
-      title="确认重置表单"
+      :title="translate('FormDisplay.resetConfirmTitle')"
       width="30%"
       :before-close="cancelClear"
   >
-    <span>您确定要重置表单吗？重置后，所有已填写的内容将被清空！</span>
+    <span>{{ translate('FormDisplay.resetConfirmMessage') }}</span>
     <template #footer>
-      <el-button @click="cancelClear">取消</el-button>
-      <el-button type="warning" @click="confirmClear">确认</el-button>
+      <el-button @click="cancelClear">{{ translate('FormDisplay.cancel') }}</el-button>
+      <el-button type="warning" @click="confirmClear">{{ translate('FormDisplay.confirm') }}</el-button>
     </template>
   </el-dialog>
 
   <el-dialog
       v-model="showCountdownEnded"
-      title="任务结束"
+      :title="translate('FormDisplay.countdownEndedTitle')"
       width="30%"
       :before-close="closeCountdownEnded"
   >
-    <span>任务已结束，窗口即将关闭。</span>
+    <span>{{ translate('FormDisplay.countdownEndedMessage') }}</span>
     <template #footer>
-      <el-button type="warning" @click="closeCountdownEnded">确认</el-button>
+      <el-button type="warning" @click="closeCountdownEnded">{{ translate('FormDisplay.confirm') }}</el-button>
     </template>
   </el-dialog>
 
@@ -129,8 +139,9 @@
 
 <script setup>
 import {ref, reactive, watch, onMounted, onUnmounted, nextTick, computed} from 'vue'
+import {translate, translateWithParams} from "@/utils/i18n";
 import { useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import {ElMessage} from 'element-plus'
 import VFormRender from '@/components/form-render/index'
 import { useRoute } from 'vue-router'
 import testFormJsonData from '@/tests/form_json_data.json'; // Import the JSON data - original code
@@ -215,7 +226,7 @@ const confirmClear = () => {
     vFormRef.value.resetForm(); // Actually reset the form
     // clear the signature and
     signatureData.value = null;
-    ElMessage.success("表单已清空！");
+    ElMessage.success(translate('FormDisplay.formClearedSuccess'))
   }
 };
 
@@ -270,7 +281,8 @@ onUnmounted(() => {
 const clearForm = () => {
   if (vFormRef.value) {
     vFormRef.value.resetForm(); // 调用 VFormRender 内部的 resetForm 方法
-    ElMessage.success("表单已清空！");
+    ElMessage.success(translate('FormDisplay.formClearedSuccess'))
+
   }
 };
 
@@ -351,13 +363,13 @@ const confirmSubmission = async () => {
 
     if (response.status === 200) {
       console.log(response.data);
-      ElMessage.success("表单已成功提交！");
+      ElMessage.success(translate('FormDisplay.formSubmitSuccess'))
       showResetConfirmation.value = true; // Show second popup after success
     } else {
-      ElMessage.error('Failed to insert form data!');
+      ElMessage.error(translate('FormDisplay.formSubmitError'))
     }
   } catch (error) {
-    ElMessage.error('Error inserting form data!');
+    ElMessage.error(translate('FormDisplay.formSubmitError'))
   }
 };
 
@@ -389,13 +401,13 @@ watch(
             vFormRef.value.disableForm();
             enable_common_fields.value = false;
           }
-          ElMessage.success('Form loaded successfully!');
+          ElMessage.success(translate('FormDisplay.formLoadSuccess'))
         } else {
-          ElMessage.error('Failed to load form template!');
+          ElMessage.error(translate('FormDisplay.formLoadFailed'))
         }
       } catch (error) {
         console.error('Error fetching form template:', error);
-        ElMessage.error('Error fetching form template!');
+        ElMessage.error(translate('FormDisplay.formLoadError'))
       }
     },
     { immediate: true } // Trigger immediately for the initial load

@@ -149,7 +149,7 @@
     />
 
     <!-- Shift Info Dialog -->
-    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName} - 信息`" width="800">
+    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName}`" width="800">
       <el-tabs>
         <el-tab-pane :label="translate('shiftManagement.membersTab')">
           <!-- Filter Bar -->
@@ -408,7 +408,7 @@ import {
 import {formatDate} from "@/utils/task-center/dateFormatUtils";
 import {fetchUsers} from "@/services/userService";
 import {getUsersForShift} from "@/services/shiftUserService";
-import {translate} from "@/utils/i18n";
+import {translate, translateWithParams} from "@/utils/i18n";
 import {assignFormsToShift, getFormIdsForShift, removeAllFormsFromShift} from "@/services/shiftFormService";
 import ShiftFormTree from "@/components/dispatch/ShiftFormTree.vue";
 import {openFormPreviewWindow} from "@/utils/dispatch-utils";
@@ -754,10 +754,10 @@ export default {
             // Force reset after successful addition
             this.addDialogVisible = false;
             await this.fetchShiftData();
-            this.$message.success("班组创建成功");
+            this.$message.success(translate('shiftManagement.messages.shiftAddedSuccess'));
           } catch (error) {
             console.error("Error adding shift:", error);
-            this.$message.error("班组创建失败");
+            this.$message.error(translate('shiftManagement.messages.shiftDeletionFailed'));
           } finally {
             this.loadingShift = false;
           }
@@ -784,10 +784,10 @@ export default {
         this.editDialogVisible = false;
 
         await this.fetchShiftData();
-        this.$message.success("班组编辑成功");
+        this.$message.success(translate('shiftManagement.messages.shiftEditedSuccess'));
       } catch (error) {
         console.error("Error updating shift:", error);
-        this.$message.error("班组编辑失败");
+        this.$message.error(translate('shiftManagement.messages.shiftEditedFailed'));
       } finally {
         this.loadingShift = false;
       }
@@ -800,7 +800,7 @@ export default {
           await deactivateShift(id, this.$store.getters.getUser.id);
         }
         await this.fetchShiftData();
-        this.$message.success("激活状态更改成功");
+        this.$message.success(translate('shiftManagement.messages.statusUpdatedSuccess'));
       } catch (error) {
         console.error("Error updating status:", error);
       }
@@ -808,24 +808,24 @@ export default {
     async handleDelete(index, row) {
       try {
         this.$confirm(
-            `您确认要删除班次 "${row.name}" 并解除其与所有成员的关联吗？`,
-            '删除确认',
+            translateWithParams('shiftManagement.messages.deletionConfirmation', {name: row.name}),
+            translate('userManagement.messages.deletionTitle'),
             {
-              confirmButtonText: '确认',
-              cancelButtonText: '取消',
+              confirmButtonText: translate('userManagement.confirm'),
+              cancelButtonText: translate('userManagement.cancel'),
               type: 'warning',
             }
         ).then(async () => {
           await deleteShift(row.id);
           await removeShiftFromAllUsers(row.id);
           await this.fetchShiftData();
-          this.$message.success('班组删除成功');
+          this.$message.success(translate('shiftManagement.messages.shiftDeletedSuccess'));
         }).catch(() => {
-          this.$message.info('班组删除取消');
+          this.$message.info(translate('shiftManagement.messages.shiftDeletionCancelled'));
         });
       } catch (error) {
         console.error('Error deleting shift:', error);
-        this.$message.error('删除班组失败');
+        this.$message.error(translate('shiftManagement.messages.shiftDeletionFailed'));
       }
     },
     handleEdit(index, row) {
