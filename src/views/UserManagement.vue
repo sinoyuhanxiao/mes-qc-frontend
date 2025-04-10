@@ -379,7 +379,7 @@
 
 <script>
 import { Search, Plus, QuestionFilled, RefreshRight } from '@element-plus/icons-vue';
-import { translate } from "@/utils/i18n";
+import {translate, translateWithParams} from "@/utils/i18n";
 import {
   fetchUsers,
   addUser,
@@ -437,13 +437,13 @@ export default {
       newPassword: '', // New password input
       confirmPassword: '', // Confirm password input
       rules: {
-        name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-        role: [{ required: true, message: '请选择角色', trigger: 'change' }],
-        wecomId: [{ required: true, message: '请输入企业微信ID', trigger: 'blur' }],
-        status: [{ required: true, message: '请选择激活状态', trigger: 'change' }],
+        name: [{ required: true, message: translate('userManagement.validation.nameRequired'), trigger: 'blur' }],
+        role: [{ required: true, message: translate('userManagement.validation.roleRequired'), trigger: 'change' }],
+        wecomId: [{ required: true, message: translate('userManagement.validation.wecomIdRequired'), trigger: 'blur' }],
+        status: [{ required: true, message: translate('userManagement.validation.statusRequired'), trigger: 'change' }],
         username: [
-          { required: true, message: '请输入用户名', trigger: 'blur' },
-          { min: 4, message: '用户名不少于四个字符', trigger: 'blur' },
+          { required: true, message: translate('userManagement.validation.usernameRequired'), trigger: 'blur' },
+          { min: 4, message: translate('userManagement.validation.usernameMinLength'), trigger: 'blur' },
           {
             validator: (rule, value, callback) => {
               if (!value) return callback();
@@ -454,7 +454,7 @@ export default {
                   .map(user => user.username.toLowerCase());
 
               if (existingNames.includes(value.toLowerCase())) {
-                return callback(new Error('该用户名已存在'));
+                return callback(new Error(translate('userManagement.validation.usernameExists')));
               }
               callback();
             },
@@ -462,18 +462,18 @@ export default {
           }
         ],
         password: [
-          { required: true, message: '请输入密码', trigger: 'blur' },
-          { min: 4, message: '密码不少于4位数', trigger: 'blur' },
+          { required: true, message: translate('userManagement.validation.passwordRequired'), trigger: 'blur' },
+          { min: 4, message: translate('userManagement.validation.passwordMinLength'), trigger: 'blur' },
         ],
         phone_number: [
           {
             required: true,
-            message: '请输入手机号',
+            message: translate('userManagement.validation.phoneNumberRequired'),
             trigger: 'blur'
           },
           {
             pattern: /^\+?[1-9]\d{1,14}$/,
-            message: '请输入正确的手机号',
+            message: translate('userManagement.validation.phoneNumberInvalid'),
             trigger: 'blur'
           }
         ]
@@ -635,11 +635,11 @@ export default {
       if (userId === currentUserId && newStatus === 0) {
         try {
           await this.$confirm(
-              `你正在注销你自己的账号，确定继续吗？`,
-              "注销自己账号",
+              translate('userManagement.messages.selfDeactivationWarning'),
+              translate('userManagement.messages.selfDeactivationWarning'),
               {
-                confirmButtonText: "确认",
-                cancelButtonText: "取消",
+                confirmButtonText: translate('userManagement.confirm'),
+                cancelButtonText: translate('userManagement.delete'),
                 type: "warning",
               }
           )
@@ -647,16 +647,16 @@ export default {
                 // Proceed with deactivation
                 const payload = { status: newStatus };
                 await updateUser(userId, payload);
-                this.$message.success("你的账号已经成功注销，登出后将无法登入。");
+                this.$message.success(translate('userManagement.validation.selfDeactivationSuccess'));
                 // Handle logout or session cleanup here
               })
               .catch(() => {
-                this.$message.info("操作取消");
+                this.$message.info(translate('userManagement.operationCancelled'));
                 this.fetchUserData(); // Refresh the table data
               });
         } catch (error) {
           console.error("注销用户有误:", error);
-          this.$message.error("注销用户失败");
+          this.$message.error(translate('userManagement.messages.deactivationFailed'));
         }
         return;
       }
@@ -665,11 +665,11 @@ export default {
       try {
         const payload = { status: newStatus };
         await updateUser(userId, payload);
-        this.$message.success("激活状态更新成功");
+        this.$message.success(translate('userManagement.messages.statusUpdatedSuccess'));
         this.fetchUserData(); // Refresh the table data
       } catch (error) {
         console.error("激活状态更新有误", error);
-        this.$message.error("激活状态更新失败");
+        this.$message.error(translate('userManagement.messages.statusUpdatedFailed'));
       }
     },
     getRoleName(roleId) {
@@ -686,7 +686,7 @@ export default {
         if (valid) {
           await this.performAddUser(); // Call the actual method to add the user
         } else {
-          this.$message.error('请修正错误！');
+          this.$message.error(translate("userManagement.messages.pleaseCorrectErrors"));
         }
       });
     },
@@ -716,17 +716,16 @@ export default {
 
         this.addDialogVisible = false;
         await this.fetchUserData();
-        this.$message.success('用户已成功添加！');
+        this.$message.success(translate('userManagement.messages.userAddedSuccess'));
       } catch (error) {
         console.error('Error adding user:', error);
-        this.$message.error('用户添加失败');
+        this.$message.error(translate('userManagement.messages.userAddedSuccess'));
       }
     },
     async handleEditConfirm() {
       this.$refs.editUserForm.validate(async (valid) => {
         if (valid) {
           try {
-            const roleId = this.editUser.role === '管理员' ? 1 : 2; // This 管理员 should not be modified since it now acts as an value, should be modified later
             console.log("Edit User Role", this.editUser.role);
             const payload = {
               name: this.editUser.name,
@@ -743,7 +742,7 @@ export default {
             // Include password if changePassword is checked, in the future integrate to the same validation check
             if (this.changePassword) {
               if (!this.newPassword || this.newPassword !== this.confirmPassword || this.newPassword.length < 4) {
-                this.$message.error('密码不匹配或少于 4 个字符！');
+                this.$message.error(translate('userManagement.messages.passwordNotMatchOrFewerCharacters'));
                 return;
               }
               payload.password = btoa(this.newPassword);
@@ -759,20 +758,20 @@ export default {
                 await assignUserToShifts(this.editUser.id, this.editUser.assignedShifts);
               }
 
-              this.$message.success("班组更新成功");
+              this.$message.success(translate('userManagement.messages.shiftsUpdatedSuccess'));
             } catch (shiftError) {
               console.error("Error updating shifts:", shiftError);
-              this.$message.error("班组更新失败");
+              this.$message.error(translate('userManagement.messages.shiftsUpdateFailed'));
             }
             this.editDialogVisible = false;
             await this.fetchUserData();
-            this.$message.success("用户更新成功");
+            this.$message.success(translate('userManagement.messages.userUpdatedSuccess'));
           } catch (error) {
             console.error("Error editing user:", error);
-            this.$message.error("用户更新失败");
+            this.$message.error(translate('userManagement.messages.userUpdatedFailed'));
           }
         } else {
-          this.$message.error("请修正错误");
+          this.$message.error(translate('userManagement.messages.pleaseCorrectErrors'));
         }
       });
     },
@@ -803,56 +802,56 @@ export default {
         try {
           // Show self-deletion confirmation dialog
           await this.$confirm(
-              `您正在删除自己的账户及其关联的班次。确定要继续吗？`,
-              "删除确认",
+              translate('userManagement.messages.selfDeletionWarning'),
+              translate('userManagement.messages.deletionTitle'),
               {
-                confirmButtonText: "确定",
-                cancelButtonText: "取消",
+                confirmButtonText: translate('userManagement.confirm'),
+                cancelButtonText: translate('userManagement.delete'),
                 type: "warning",
               }
           )
               .then(async () => {
                 // If confirmed, call delete API
                 await deleteUser(row.id);
-                this.$message.success("你的账户已被删除，登出后将无法登入");
+                this.$message.success(translate('userManagement.messages.yourAccountIsDeletedAndUnableToLogin'));
                 await this.fetchUserData(); // Refresh the table data
                 // handle logout or session cleanup: optional for now, give the user chance to wrap up
               })
               .catch(() => {
-                this.$message.info("操作已取消");
+                this.$message.info(translate('userManagement.operationCancelled'));
                 this.fetchUserData(); // Refresh the table data
               });
         } catch (error) {
           console.error("Error deleting user:", error);
-          this.$message.error("删除错误");
+          this.$message.error(translate('userManagement.deletionFailed'));
         }
         return;
       }
 
       // Regular deletion for other users
       try {
-        this.$confirm(
-            `你确认要删除用户 "${row.name}" 以及相关的班组?`,
-            "删除确认",
-            {
-              confirmButtonText: "确认",
-              cancelButtonText: "取消",
-              type: "warning",
-            }
-        )
+          this.$confirm(
+              translateWithParams('userManagement.messages.deletionConfirmation', { name: row.name }),
+              translate('userManagement.messages.deletionTitle'),
+              {
+                confirmButtonText: translate('userManagement.confirm'),
+                cancelButtonText: translate('userManagement.cancel'),
+                type: 'warning',
+              }
+          )
             .then(async () => {
               // If confirmed, call delete API
               await deleteUser(row.id);
               await removeUserFromAllShifts(row.id);
-              this.$message.success("用户已成功删除");
+              this.$message.success(translate('userManagement.messages.userDeletedSuccess'));
               await this.fetchUserData(); // Refresh the table data
             })
             .catch(() => {
-              this.$message.info("操作取消");
+              this.$message.info(translate('userManagement.operationCancelled'));
             });
       } catch (error) {
         console.error("Error deleting user:", error);
-        this.$message.error("删除错误");
+        this.$message.error(translate('userManagement.messages.userDeletedFailed'));
       }
     },
     showAddDialog() {
@@ -879,7 +878,7 @@ export default {
             (item.email && item.email.toLowerCase().includes(searchText)) || // 过滤 Email
             (item.phone_number && item.phone_number.toLowerCase().includes(searchText)) || // 过滤 电话号码
             (item.role_id && this.getRoleName(item.role_id).toLowerCase().includes(searchText)) || // 过滤 角色
-            (item.status !== undefined && (item.status === 1 ? "已激活" : "未激活").includes(searchText)) || // 过滤 状态
+            (item.status !== undefined && (item.status === 1 ? "已激活" : "未激活").includes(searchText)) || // 过滤 状态 TODO: remove hardcoded filtering
             (item.shifts && item.shifts.some(shift => shift.shift_name.toLowerCase().includes(searchText))) // 过滤 所属班组
         );
       });

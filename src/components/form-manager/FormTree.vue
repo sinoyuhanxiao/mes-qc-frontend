@@ -4,13 +4,13 @@
       <el-input
           v-model="filterText"
           style="width: 240px; margin-right: 10px;"
-          placeholder="搜索名称"
+          :placeholder="translate('FormTree.searchPlaceholder')"
       />
       <el-button :type="isEditMode ? 'success' : 'primary'" @click="toggleEditMode" style="margin-top: 0">
-        {{ isEditMode ? '取消编辑' : '编辑' }}
+        {{ isEditMode ? translate('FormTree.cancelEdit') : translate('FormTree.edit') }}
       </el-button>
       <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null, $event)" style="margin-left: 10px; margin-top: 0">
-        + 新建
+        {{ translate('FormTree.addRoot') }}
       </el-button>
     </div>
 
@@ -37,8 +37,10 @@
               </el-text>
             </div>
             <div class="node-actions" v-if="isEditMode">
-              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">添加</a>
-              <a @click="showDeleteConfirmation(node, data, $event)" style="color: #fb8080; cursor: pointer; margin-left: 8px;">删除</a>
+              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">{{ translate('FormTree.add') }}
+              </a>
+              <a @click="showDeleteConfirmation(node, data, $event)" style="color: #fb8080; cursor: pointer; margin-left: 8px;">{{ translate('FormTree.delete') }}
+              </a>
             </div>
           </div>
         </template>
@@ -54,27 +56,28 @@
     />
 
     <!-- Delete Confirmation Dialog -->
-    <el-dialog v-model="deleteDialogVisible" title="删除确认" width="30%">
-      <span>是否确认删除 <strong>{{ nodeToDelete?.nodeData.label }}</strong>?</span>
+    <el-dialog v-model="deleteDialogVisible" :title="translate('FormTree.errorTitle')" width="30%">
+      <span>{{ translate('FormTree.deleteConfirmContent') }} <strong>{{ nodeToDelete?.nodeData.label }}</strong>?</span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" @click="confirmDelete">删除</el-button>
+          <el-button @click="deleteDialogVisible = false">{{ translate('FormTree.cancel') }}</el-button>
+          <el-button type="danger" @click="confirmDelete">{{ translate('FormTree.delete') }}</el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- Append Node Dialog -->
-    <el-dialog v-model="appendDialogVisible" :title="`添加节点到 ${parentDataToAppend?.label || '根目录'}`" width="30%">
-      <el-input v-model="newNodeLabel" placeholder="输入节点名称" style="margin-bottom: 10px;" />
-      <el-select v-model="newNodeType" placeholder="选择节点类型">
-        <el-option label="文件夹" value="folder"></el-option>
-        <el-option label="质检表单" value="document"></el-option>
+    <el-dialog v-model="appendDialogVisible" :title="translateWithParams('FormTree.appendDialogTitle', { parent: parentDataToAppend?.label || 'Root' })"
+               width="30%">
+      <el-input v-model="newNodeLabel" :placeholder="translate('FormTree.namePlaceholder')" style="margin-bottom: 10px;" />
+      <el-select v-model="newNodeType" :placeholder="translate('FormTree.typePlaceholder')">
+        <el-option :label="translate('FormTree.type.folder')" value="folder" />
+        <el-option :label="translate('FormTree.type.document')" value="document" />
       </el-select>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="appendDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="confirmAppend">添加</el-button>
+          <el-button @click="appendDialogVisible = false">{{ translate('FormTree.cancel') }}</el-button>
+          <el-button type="primary" @click="confirmAppend">{{ translate('FormTree.add') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -86,6 +89,7 @@
 import { ref, onMounted, watch, defineEmits } from 'vue'
 import {ElTree, ElAlert, ElButton, ElDialog, ElInput, ElMessage} from 'element-plus'
 import { Folder, Document } from '@element-plus/icons-vue'
+import {translate, translateWithParams} from "@/utils/i18n";
 import {
   fetchFormNodes,
   addTopLevelNode,
@@ -149,7 +153,7 @@ const fetchFormTreeData = async () => {
     const response = await fetchFormNodes();
     data.value = response.data;
   } catch (err) {
-    error.value = err.response?.data?.message || '加载数据失败';
+    error.value = err.response?.data?.message || translate('FormTree.loadFailed');
   }
 };
 
@@ -187,9 +191,9 @@ const confirmDelete = async () => {
     children.splice(index, 1);
     data.value = [...data.value];
     deleteDialogVisible.value = false;
-    ElMessage.success("删除成功！")
+    ElMessage.success(translate('FormTree.deleteSuccess'))
   } catch (err) {
-    error.value = err.response?.data?.message || '删除失败';
+    error.value = err.response?.data?.message || translate('FormTree.deleteFailed');
     deleteDialogVisible.value = false;
   }
 };
@@ -206,7 +210,7 @@ const showAppendPopup = (parentData: Tree | null, event) => {
 const confirmAppend = async () => {
   // no empty string allowed
   if (!newNodeLabel.value.trim()) {
-    ElMessage.warning("名称不能为空！");
+    ElMessage.warning(translate('FormTree.nameRequired'));
     return;
   }
 
@@ -228,12 +232,14 @@ const confirmAppend = async () => {
 
   if (hasDuplicate) {
     ElMessageBox.confirm(
-        "已有重复名称，是否继续创建？",
-        "警告",
-        { confirmButtonText: "继续", cancelButtonText: "取消", type: "warning" }
-    ).then(() => {
-      proceedWithNodeCreation();
-    }).catch(() => {});
+        translate('FormTree.duplicateWarningMessage'),
+        translate('FormTree.duplicateWarningTitle'),
+        {
+          confirmButtonText: translate('FormTree.duplicateContinue'),
+          cancelButtonText: translate('FormTree.duplicateCancel'),
+          type: 'warning'
+        }
+    )
     return;
   }
 
@@ -270,9 +276,9 @@ const proceedWithNodeCreation = async () => {
 
     data.value = [...data.value];
     appendDialogVisible.value = false;
-    ElMessage.success("添加成功！");
+    ElMessage.success(translate('FormTree.addSuccess'))
   } catch (err) {
-    error.value = err.response?.data?.message || '添加节点失败';
+    error.value = err.response?.data?.message || translate('FormTree.addFailed')
     appendDialogVisible.value = false;
   }
 };
