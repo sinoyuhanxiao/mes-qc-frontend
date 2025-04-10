@@ -5,7 +5,7 @@
         @tab-click="handleTabClick">
       <!-- QC Order Form -->
       <el-tab-pane
-          label="定时质检工单"
+          :label="translate('orderManagement.tabTitleQcOrderForm')"
           name="QcOrderForm"
       >
         <qc-order-form
@@ -25,6 +25,7 @@
 <script>
 import QcOrderForm from "@/components/dispatch/QcOrderFormV2.vue";
 import {unnormalizeCronExpression} from "@/utils/dispatch-utils";
+import {translate} from "@/utils/i18n";
 
 export default {
   components: {
@@ -59,6 +60,7 @@ export default {
     };
   },
   methods: {
+    translate,
     handleSubmit(data) {
       this.$emit("on-submit", data);
     },

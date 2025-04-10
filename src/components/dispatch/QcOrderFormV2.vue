@@ -14,31 +14,31 @@
       >
         <!-- QC Order Name -->
         <el-form-item
-            label="工单名称"
+            :label="translate('orderManagement.orderDetailDialog.orderName')"
             required
             prop="name"
         >
           <el-input
               v-model="qcOrderForm.name"
-              placeholder="请输入质检工单名称"
+              :placeholder="translate('orderManagement.orderFormDialog.orderNamePlaceholder')"
               maxlength="255"
           />
         </el-form-item>
 
         <!-- Description -->
         <el-form-item
-            label="工单备注"
+            :label="translate('orderManagement.description')"
         >
           <el-input
               type="textarea"
               v-model="qcOrderForm.description"
-              placeholder="请输入备注"
+              :placeholder="translate('orderManagement.orderFormDialog.descriptionPlaceholder')"
           >
           </el-input>
         </el-form-item>
 
         <!-- Dispatch List -->
-        <el-divider>派发计划列表</el-divider>
+        <el-divider>{{translate('orderManagement.orderDetailDialog.dispatchesDivider')}}</el-divider>
         <div
             v-for="(dispatch, index) in qcOrderForm.dispatches"
             :key="dispatch.id"
@@ -49,7 +49,7 @@
             <template #header>
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;">
                 <span>
-                  派发计划 {{ index + 1 }}
+                  {{ translate('orderManagement.dispatchPlan') }} {{ index + 1 }}
                   <span v-if="dispatch.name"> - {{ dispatch.name }}</span>
                 </span>
                 <div style="display: flex; gap: 8px;">
@@ -59,7 +59,7 @@
                       @click="toggleCollapse(index)"
                       :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'"
                   >
-                    {{ dispatch.collapsed ? '展开' : '收起' }}
+                    {{ dispatch.collapsed ? translate('orderManagement.orderFormDialog.expandButton') : translate('orderManagement.orderFormDialog.collapseButton') }}
                   </el-button>
                   <!-- Remove Dispatch Button -->
                   <el-button
@@ -67,7 +67,7 @@
                       plain
                       @click="removeDispatch(index)"
                   >
-                    删除派发计划
+                    {{ translate('orderManagement.orderFormDialog.deleteDispatchButton') }}
                   </el-button>
                 </div>
               </div>
@@ -77,11 +77,11 @@
             <div v-show="!dispatch.collapsed">
               <!-- Name -->
               <el-form-item
-                  label="派发计划名称">
+                  :label="translate('orderManagement.dispatchPlanName')">
                 <el-input
                     type="text"
                     v-model="dispatch.name"
-                    placeholder="请输入派发计划名称"
+                    :placeholder="translate('orderManagement.orderFormDialog.dispatchPlanNamePlaceholder')"
                     :prop="'dispatches.' + index + '.name'"
                     maxlength="255"
                 />
@@ -89,35 +89,35 @@
 
               <!-- Description -->
               <el-form-item
-                  label="备注"
+                  :label="translate('orderManagement.description')"
                   prop="description">
                 <el-input
                     type="textarea"
                     v-model="dispatch.description"
-                    placeholder="请输入备注"
+                    :placeholder="translate('orderManagement.orderFormDialog.descriptionPlaceholder')"
                 />
               </el-form-item>
 
-              <el-divider>时间调度</el-divider>
+              <el-divider>{{translate('orderManagement.orderDetailDialog.dispatchConfigDivider')}}</el-divider>
 
               <!-- Schedule Type -->
               <el-form-item
-                  label="类型"
+                  :label="translate('orderManagement.type')"
                   required
                   :prop="'dispatches.' + index + '.type'"
               >
                 <el-radio-group
                     v-model="dispatch.type"
                 >
-                  <el-radio value="regular">周期计划</el-radio>
-                  <el-radio value="custom">单次计划</el-radio>
+                  <el-radio value="regular"> {{ translate('orderManagement.orderFormDialog.periodicPlan')}} </el-radio>
+                  <el-radio value="custom"> {{ translate('orderManagement.orderFormDialog.oneTimePlan')}} </el-radio>
                 </el-radio-group>
               </el-form-item>
 
               <!-- Cron Expression -->
               <el-form-item
                   v-if="dispatch.type === 'regular'"
-                  label="执行计划"
+                  :label="translate('orderManagement.orderDetailDialog.executionLogic')"
                   required
                   :prop="'dispatches.' + index + '.cron_expression'"
               >
@@ -126,7 +126,7 @@
                     :button-props="{ type: 'primary' }"
                     :period="dispatch.source === 'shift' ? 'day' : 'hour'"
                     :disabled="dispatch.source === 'shift'"
-                    locale="zh-cn"
+                    :locale="cronLocale"
                 />
               </el-form-item>
 
@@ -594,6 +594,7 @@ import {Avatar, Check} from "@element-plus/icons-vue";
 import {getAllShifts} from "@/services/shiftService";
 import {getFormIdsForShift} from "@/services/shiftFormService";
 import {getUsersForShift} from "@/services/shiftUserService";
+import {translate} from "@/utils/i18n";
 
 
 export default {
@@ -666,6 +667,10 @@ export default {
           user_ids: shift.user_ids || [],
         };
       });
+    },
+    cronLocale() {
+      const currentLang = localStorage.getItem('app-language') || 'en'
+      return currentLang.toLowerCase().startsWith('zh') ? 'zh-cn' : 'en-us'
     }
   },
   mounted() {
@@ -758,6 +763,7 @@ export default {
     }
   },
   methods: {
+    translate,
     disablePastDates(date) {
       return date.getTime() < Date.now() - 86400000; // Disable dates before today
     },
