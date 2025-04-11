@@ -577,7 +577,7 @@ export default {
             finished_at: "Completion Time"
         },
         refreshTableTooltip: "Refresh Table",
-        usableTaskText: "Usable Tasks",
+        usableTaskText: "Doable Tasks",
         allTasksText: "All Tasks",
         alreadyRefreshed:  "Tasks refreshed",
         taskCompletionConfirmation: "If you mark this task as completed, you will not be able to fill the form again.",
