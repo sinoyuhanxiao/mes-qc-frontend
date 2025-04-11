@@ -1,36 +1,37 @@
 <template>
   <div style="overflow-y: hidden">
-    <el-form label-position="left" label-width="140px" style="padding: 10px; max-height: 75vh; overflow-y: auto;">
+    <el-form label-position="left" label-width="200px" style="padding: 10px; max-height: 75vh; overflow-y: auto;">
     <div style="display: flex; justify-content: flex-end;">
       <!-- Action Buttons -->
       <el-button-group>
-        <el-button type="success" @click="handleEditOrder">修改</el-button>
-        <el-button type="danger" @click="handleDeleteOrder">删除</el-button>
+        <el-button type="success" @click="handleEditOrder">{{ translate('orderManagement.edit') }}</el-button>
+        <el-button type="danger" @click="handleDeleteOrder">{{ translate('orderManagement.delete') }}</el-button>
       </el-button-group>
     </div>
 
-    <el-divider>工单详情</el-divider>
+    <el-divider>{{ translate('orderManagement.orderDetailDialog.orderDetailDivider') }}</el-divider>
 
     <el-form-item
-        label="工单名称"
+        :label="translate('orderManagement.orderDetailDialog.orderName')"
         class="wrap-text">
       {{ currentOrder.name }}
     </el-form-item>
 
     <el-form-item
-        label="工单号码">
+        :label="translate('orderManagement.orderId')"
+    >
       {{ currentOrder.id }}
     </el-form-item>
 
     <el-form-item
-        label="工单备注"
+        :label="translate('orderManagement.description')"
         class="wrap-text"
         v-if="currentOrder.description">
       {{ currentOrder.description }}
     </el-form-item>
 
     <el-form-item
-        label="状态">
+        :label="translate('orderManagement.state')">
       <el-tag
           :type="getQcOrderStateTagData(currentOrder.state).type"
           size="small"
@@ -40,30 +41,30 @@
     </el-form-item>
 
     <el-form-item
-        label="创建时间"
+        :label="translate('orderManagement.createdAt')"
         v-if="currentOrder.created_at">
       {{ formatDate(currentOrder.created_at) }}
     </el-form-item>
 
     <el-form-item
-        label="创建者"
+        :label="translate('orderManagement.createdBy')"
         v-if="currentOrder.created_by">
       <UserReference :userId="currentOrder.created_by" />
     </el-form-item>
 
     <el-form-item
-        label="更新时间"
+        :label="translate('orderManagement.updatedAt')"
         v-if="currentOrder.updated_at">
       {{ formatDate(currentOrder.updated_at) }}
     </el-form-item>
 
     <el-form-item
-        label="更新者"
+        :label="translate('orderManagement.updatedBy')"
         v-if="currentOrder.updated_by">
       <UserReference :userId="currentOrder.updated_by" />
     </el-form-item>
 
-    <el-divider>派发计划列表</el-divider>
+    <el-divider>{{translate('orderManagement.dispatchPlanList')}}</el-divider>
     <div v-if="dispatches.length > 0">
       <el-card
           v-for="(dispatch, index) in dispatches"
@@ -72,7 +73,7 @@
       >
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold;">
           <span>
-            派发计划 {{ index + 1 }}
+            {{ translate('orderManagement.dispatchPlan') }} {{ index + 1 }}
             <span v-if="dispatch.name"> - {{ dispatch.name }}</span>
           </span>
           <div
@@ -104,19 +105,20 @@
 
         <div v-show="!dispatch.collapsed">
           <el-form-item
-              label="计划号码">
+              :label="translate('orderManagement.dispatchPlanId')">
             {{ dispatch.id }}
           </el-form-item>
 
           <el-form-item
-              label="计划备注"
+              :label="translate('orderManagement.description')"
               class="wrap-text"
               v-if="dispatch.description">
             {{ dispatch.description }}
           </el-form-item>
 
           <el-form-item
-              label="状态">
+              :label="translate('orderManagement.state')"
+          >
             <el-tag
                 :type="getDispatchStateTagData(dispatch.state).type"
                 size="small"
@@ -125,64 +127,64 @@
             </el-tag>
           </el-form-item>
 
-          <el-divider>时间调度</el-divider>
+          <el-divider> {{translate('orderManagement.orderDetailDialog.dispatchConfigDivider')}}</el-divider>
 
-          <el-form-item label="类型">
+          <el-form-item :label="translate('orderManagement.type')">
             {{ formatScheduleType(dispatch.type) }}
           </el-form-item>
 
-          <el-form-item label="执行计划" v-if="dispatch.cron_expression">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.executionLogic')" v-if="dispatch.cron_expression">
             {{ humanizeCronInChinese(unnormalizeCronExpression(dispatch.cron_expression)) }}
           </el-form-item>
 
-          <el-form-item label="周期开始时间" v-if="dispatch.start_time">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.periodStartTime')" v-if="dispatch.start_time">
             {{ formatDate(dispatch.start_time) }}
           </el-form-item>
 
-          <el-form-item label="周期停止时间" v-if="dispatch.end_time">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.periodEndTime')" v-if="dispatch.end_time">
             {{ formatDate(dispatch.end_time) }}
           </el-form-item>
 
-          <el-form-item label="派发次数上限" v-if="dispatch.type === 'regular'">
-            {{ dispatch.dispatch_limit === -1 ? "无限制" : dispatch.dispatch_limit }}
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.taskDueDateOffset')" v-if="dispatch.type === 'regular'">
+            {{ dispatch.dispatch_limit === -1 ? translate('orderManagement.orderFormDialog.unlimited') : dispatch.dispatch_limit }}
           </el-form-item>
 
-          <el-form-item label="执行时间" v-if="dispatch.custom_time">
+          <el-form-item :label="translate('orderManagement.orderFormDialog.executionTime')" v-if="dispatch.custom_time">
             {{ formatDate(dispatch.custom_time) }}
           </el-form-item>
 
-          <el-form-item label="下次派发时间" v-if="dispatch.nextExecutionTime && dispatch.type === 'regular'">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.nextDispatchTime')" v-if="dispatch.nextExecutionTime && dispatch.type === 'regular'">
             <el-countdown :value="dispatch.nextExecutionTime" format="HH:mm:ss" @finish="handleCountdownFinish(dispatch)"/>
           </el-form-item>
 
-          <el-form-item label="已执行次数">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.executedCount')">
             {{ dispatch.executed_count }}
           </el-form-item>
 
-          <el-form-item label="创建者" v-if="dispatch.created_by">
+          <el-form-item :label="translate('orderManagement.createdBy')" v-if="dispatch.created_by">
             <UserReference :userId="dispatch.created_by" />
           </el-form-item>
 
 
-          <el-form-item label="创建时间" v-if="dispatch.created_at">
+          <el-form-item :label="translate('orderManagement.createdAt')" v-if="dispatch.created_at">
             {{ formatDate(dispatch.created_at) }}
           </el-form-item>
 
-          <el-form-item label="更新者" v-if="dispatch.updated_by">
+          <el-form-item :label="translate('orderManagement.updatedBy')" v-if="dispatch.updated_by">
             <UserReference :userId="dispatch.updated_by"/>
           </el-form-item>
 
-          <el-form-item label="更新时间" v-if="dispatch.updated_at">
+          <el-form-item :label="translate('orderManagement.updatedAt')" v-if="dispatch.updated_at">
             {{ formatDate(dispatch.updated_at) }}
           </el-form-item>
 
-          <el-divider>质检任务配置</el-divider>
+          <el-divider>{{ translate('orderManagement.orderDetailDialog.taskConfigDivider') }}</el-divider>
 
-          <el-form-item label="派发任务时限 (分钟)">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.taskDueDateOffset')">
             {{ dispatch.due_date_offset_minute }}
           </el-form-item>
 
-          <el-form-item label="检测项目" v-if="dispatch.testSubjectDetails.length > 0">
+          <el-form-item :label="translate('testSubjectManagement.testSubject')" v-if="dispatch.testSubjectDetails.length > 0">
             <div class="tags">
               <el-tag v-for="testSubject in dispatch.testSubjectDetails"
                       :key="testSubject.id"
@@ -194,13 +196,13 @@
                     placement="top"
                     width="auto">
                   <template #default>
-                    <div>检测项目号码: {{ testSubject.id }}</div>
-                    <div v-if="testSubject.description">备注: {{ testSubject.description }}</div>
-                    <div v-if="testSubject.status">状态: {{ testSubject.status }}</div>
-                    <div v-if="testSubject.created_by">创建者: {{ testSubject.created_by }}</div>
-                    <div v-if="testSubject.created_at">创建时间: {{ formatDate(testSubject.created_at) }}</div>
-                    <div v-if="testSubject.updated_by">更新者: {{ testSubject.updated_by }}</div>
-                    <div v-if="testSubject.updated_at">更新时间: {{ formatDate(testSubject.updated_at) }}</div>
+                    <div>{{ translate('testSubjectManagement.testSubjectId') }}: {{ testSubject.id }}</div>
+                    <div v-if="testSubject.description">{{ translate('orderManagement.description') }}: {{ testSubject.description }}</div>
+                    <div v-if="testSubject.status">{{ translate('orderManagement.status') }}: {{ testSubject.status }}</div>
+                    <div v-if="testSubject.created_by">{{ translate('orderManagement.createdBy') }}: {{ testSubject.created_by }}</div>
+                    <div v-if="testSubject.created_at">{{ translate('orderManagement.createdAt') }}: {{ formatDate(testSubject.created_at) }}</div>
+                    <div v-if="testSubject.updated_by">{{ translate('orderManagement.updatedBy') }}: {{ testSubject.updated_by }}</div>
+                    <div v-if="testSubject.updated_at">{{ translate('orderManagement.updatedAt') }}: {{ formatDate(testSubject.updated_at) }}</div>
 
                   </template>
                   <template #reference>
@@ -211,7 +213,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="采样点" v-if="dispatch.samplingLocationDetails.length > 0">
+          <el-form-item :label="translate('samplingLocationManagement.samplingLocation')" v-if="dispatch.samplingLocationDetails.length > 0">
             <div class="tags">
               <el-tag v-for="samplingLocation in dispatch.samplingLocationDetails"
                       :key="samplingLocation.id"
@@ -224,13 +226,13 @@
                     placement="top"
                     width="auto">
                   <template #default>
-                    <div>采样点号码: {{ samplingLocation.id }}</div>
-                    <div v-if="samplingLocation.description">备注: {{ samplingLocation.description }}</div>
-                    <div v-if="samplingLocation.status">状态: {{ samplingLocation.status }}</div>
-                    <div v-if="samplingLocation.created_by">创建者: {{ samplingLocation.created_by }}</div>
-                    <div v-if="samplingLocation.created_at">创建时间: {{ formatDate(samplingLocation.created_at) }}</div>
-                    <div v-if="samplingLocation.updated_by">更新者: {{ samplingLocation.updated_by }}</div>
-                    <div v-if="samplingLocation.updated_at">更新时间: {{ formatDate(samplingLocation.updated_at) }}</div>
+                    <div>{{ translate('samplingLocationManagement.samplingLocationId') }}: {{ samplingLocation.id }}</div>
+                    <div v-if="samplingLocation.description">{{ translate('orderManagement.description') }}: {{ samplingLocation.description }}</div>
+                    <div v-if="samplingLocation.status">{{ translate('orderManagement.status') }}: {{ samplingLocation.status }}</div>
+                    <div v-if="samplingLocation.created_by">{{ translate('orderManagement.createdBy') }}: {{ samplingLocation.created_by }}</div>
+                    <div v-if="samplingLocation.created_at">{{ translate('orderManagement.createdAt') }}: {{ formatDate(samplingLocation.created_at) }}</div>
+                    <div v-if="samplingLocation.updated_by">{{ translate('orderManagement.updatedBy') }}: {{ samplingLocation.updated_by }}</div>
+                    <div v-if="samplingLocation.updated_at">{{ translate('orderManagement.updatedAt') }}: {{ formatDate(samplingLocation.updated_at) }}</div>
 
                   </template>
                   <template #reference>
@@ -241,7 +243,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="仪器" v-if="dispatch.instrumentDetails.length > 0">
+          <el-form-item :label="translate('instrumentManagement.instrument')" v-if="dispatch.instrumentDetails.length > 0">
             <div class="tags">
               <el-tag
                   v-for="instrument in dispatch.instrumentDetails"
@@ -256,16 +258,16 @@
                     placement="top"
                     width="auto">
                   <template #default>
-                    <div>仪器号码 : {{ instrument.id }}</div>
-                    <div v-if="instrument.description">备注: {{ instrument.description}}</div>
-                    <div v-if="instrument.model_number">型号: {{ instrument.model_number }}</div>
-                    <div v-if="instrument.manufacturer">制造商: {{ instrument.manufacturer }}</div>
-                    <div v-if="instrument.type">仪器类型: {{ instrument.type }}</div>
-                    <div v-if="instrument.status">状态: {{ instrument.status }}</div>
-                    <div v-if="instrument.created_by">创建者: {{ instrument.created_by }}</div>
-                    <div v-if="instrument.created_at">创建时间: {{ formatDate(instrument.created_at) }}</div>
-                    <div v-if="instrument.updated_by">更新者: {{ instrument.updated_by }}</div>
-                    <div v-if="instrument.updated_at">更新时间: {{ formatDate(instrument.updated_at) }}</div>
+                    <div>{{ translate('instrumentManagement.instrumentId') }} : {{ instrument.id }}</div>
+                    <div v-if="instrument.description">{{ translate('orderManagement.description') }}: {{ instrument.description}}</div>
+                    <div v-if="instrument.model_number">{{ translate('instrumentManagement.modelNumber') }}: {{ instrument.model_number }}</div>
+                    <div v-if="instrument.manufacturer">{{ translate('instrumentManagement.vendor') }}: {{ instrument.manufacturer }}</div>
+                    <div v-if="instrument.type">{{ translate('orderManagement.type') }}: {{ instrument.type }}</div>
+                    <div v-if="instrument.status">{{ translate('orderManagement.status') }}: {{ instrument.status }}</div>
+                    <div v-if="instrument.created_by">{{ translate('orderManagement.createdBy') }}: {{ instrument.created_by }}</div>
+                    <div v-if="instrument.created_at">{{ translate('orderManagement.createdAt') }}: {{ formatDate(instrument.created_at) }}</div>
+                    <div v-if="instrument.updated_by">{{ translate('orderManagement.updatedBy') }}: {{ instrument.updated_by }}</div>
+                    <div v-if="instrument.updated_at">{{ translate('orderManagement.updatedAt') }}: {{ formatDate(instrument.updated_at) }}</div>
 
                   </template>
                   <template #reference>
@@ -276,7 +278,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="检测人员" v-if="dispatch.userDetails.length > 0">
+          <el-form-item :label="translate('orderManagement.orderTable.associatedUsers')" v-if="dispatch.userDetails.length > 0">
             <div
                 v-for="user in dispatch.userDetails"
                 class="tags"
@@ -285,7 +287,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="质检表单" v-if="dispatch.form_ids.length > 0">
+          <el-form-item :label="translate('orderManagement.orderTable.associatedForms')" v-if="dispatch.form_ids.length > 0">
             <div class="tags">
               <el-tag
                   v-for="(formId) in dispatch.form_ids"
@@ -296,8 +298,8 @@
               >
                 <el-popover effect="light" trigger="hover" placement="top" width="auto">
                   <template #default>
-                    <div>号码: {{ formId }}</div>
-                    <div>表单名: {{ getFormById(formId) }}</div>
+                    <div>{{ translate('orderManagement.formNodeId') }}: {{ formId }}</div>
+                    <div>{{ translate('orderManagement.formName') }}: {{ getFormById(formId) }}</div>
                   </template>
                   <template #reference>
                     {{ getFormById(formId) }}
@@ -308,9 +310,9 @@
           </el-form-item>
 
           <!-- System Associations -->
-          <el-divider>系统关联</el-divider>
+          <el-divider>{{ translate('orderManagement.orderDetailDialog.systemAssociationDivider') }}</el-divider>
 
-          <el-form-item label="产品" v-if="dispatch.productDetails.length > 0">
+          <el-form-item :label="translate('orderManagement.orderFormDialog.product')" v-if="dispatch.productDetails.length > 0">
             <div class="tags">
               <el-tag
                   v-for="(product) in dispatch.productDetails"
@@ -326,13 +328,13 @@
                     width="300px">
                   <template #default>
                     <!-- Product Details -->
-                    <div><strong>号码:</strong> {{ product.id }}</div>
-                    <div><strong>代码:</strong> {{ product.product_code }}</div>
-                    <div><strong>描述:</strong> {{ product.description || '无' }}</div>
-                    <div><strong>单位销售价:</strong> {{ product.unit_sales_price || '无'  }}</div>
-                    <div><strong>单位资源成本:</strong> {{ product.unit_resource_cost || '无' }}</div>
-                    <div><strong>生产数量:</strong> {{ product.produced_quantity || '无' }}</div>
-                    <div><strong>更新时间:</strong> {{ formatDate(product.updated_at) || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.Id') }}:</strong> {{ product.id }}</div>
+                    <div><strong>{{ translate('orderManagement.productCode') }}:</strong> {{ product.product_code }}</div>
+                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ product.description || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.unitSalesPrice') }}:</strong> {{ product.unit_sales_price || '无'  }}</div>
+                    <div><strong>{{ translate('orderManagement.unitResourceCost') }}:</strong> {{ product.unit_resource_cost || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.quantity') }}:</strong> {{ product.produced_quantity || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.updatedAt') }}:</strong> {{ formatDate(product.updated_at) || '无' }}</div>
 
                     <!-- Image Display -->
                     <div v-if="product.image_paths">
@@ -352,7 +354,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="原料" v-if="dispatch.rawMaterialDetails.length > 0">
+          <el-form-item :label="translate('orderManagement.orderFormDialog.rawMaterial')" v-if="dispatch.rawMaterialDetails.length > 0">
             <div class="tags">
               <el-tag
                   v-for="material in dispatch.rawMaterialDetails"
@@ -368,16 +370,16 @@
                     width="300px">
                   <template #default>
                     <!-- Raw Material Details -->
-                    <div><strong>号码:</strong> {{ material.id }}</div>
-                    <div><strong>代码:</strong> {{ material.code }}</div>
-                    <div><strong>描述:</strong> {{ material.description || '无' }}</div>
-                    <div><strong>单位价格:</strong> {{ material.unit_price }}</div>
-                    <div><strong>最小库存:</strong> {{ material.minimum_inventory }}</div>
-                    <div><strong>当前库存:</strong> {{ material.current_stock }}</div>
-                    <div><strong>可用库存:</strong> {{ material.available_stock }}</div>
-                    <div><strong>已分配库存:</strong> {{ material.held_stock }}</div>
-                    <div><strong>供应商 ID:</strong> {{ material.vendor_id }}</div>
-                    <div><strong>更新时间:</strong> {{ formatDate(material.updated_at) }}</div>
+                    <div><strong>{{ translate('orderManagement.Id') }}:</strong> {{ material.id }}</div>
+                    <div><strong>{{ translate('orderManagement.code') }}:</strong> {{ material.code }}</div>
+                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ material.description || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.unitPrice') }}:</strong> {{ material.unit_price }}</div>
+                    <div><strong>{{ translate('orderManagement.minimumInventory') }}:</strong> {{ material.minimum_inventory }}</div>
+                    <div><strong>{{ translate('orderManagement.currentStock') }}:</strong> {{ material.current_stock }}</div>
+                    <div><strong>{{ translate('orderManagement.availableStock') }}:</strong> {{ material.available_stock }}</div>
+                    <div><strong>{{ translate('orderManagement.heldStock') }}:</strong> {{ material.held_stock }}</div>
+                    <div><strong>{{ translate('orderManagement.vendorId') }}:</strong> {{ material.vendor_id }}</div>
+                    <div><strong>{{ translate('orderManagement.updatedAt') }}:</strong> {{ formatDate(material.updated_at) }}</div>
 
                     <!-- Image Display -->
                     <div v-if="material.image_path" style="margin-top: 10px;">
@@ -397,7 +399,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="生产工单" v-if="dispatch.productionWorkOrderDetails.length > 0">
+          <el-form-item :label="translate('orderManagement.orderFormDialog.productionWorkOrder')" v-if="dispatch.productionWorkOrderDetails.length > 0">
             <div class="tags">
               <el-tag
                   v-for="workOrder in dispatch.productionWorkOrderDetails"
@@ -413,20 +415,21 @@
                     width="300px">
                   <template #default>
                     <!-- Production Work Order Details -->
-                    <div><strong>工单号码:</strong> {{ workOrder.id }}</div>
-                    <div><strong>代码:</strong> {{ workOrder.code }}</div>
-                    <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
-                    <div><strong>计划数量:</strong> {{ workOrder.wo_quantity }}</div>
-                    <div><strong>未排数量:</strong> {{ workOrder.unscheduled_quantity }}</div>
-                    <div><strong>工单截止日期:</strong> {{ formatDate(workOrder.wo_deadline) }}</div>
-                    <div><strong>产品号码:</strong> {{ workOrder.product_id }}</div>
-                    <div><strong>批准时间:</strong> {{ formatDate(workOrder.approved_at) }}</div>
-                    <div><strong>起始时间:</strong> {{ formatDate(workOrder.start_date) }}</div>
-                    <div><strong>结束时间:</strong> {{ formatDate(workOrder.end_date) }}</div>
-                    <div><strong>预计生产时间:</strong> {{ workOrder.estimated_production_time }} 小时</div>
-                    <div><strong>生产线:</strong> {{ workOrder.production_line }}</div>
-                    <div><strong>更新日期:</strong> {{ formatDate(workOrder.updated_at) }}</div>
-                    <div><strong>工单识别码:</strong> {{ workOrder.recurrence_uuid }}</div>
+                    <div><strong>{{ translate('orderManagement.orderId') }}:</strong> {{ workOrder.id }}</div>
+                    <div><strong>{{ translate('orderManagement.code') }}:</strong> {{ workOrder.code }}</div>
+                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ workOrder.description || translate('orderManagement.orderFormDialog.missing') }}</div>
+                    <div><strong>{{ translate('orderManagement.quantity') }}:</strong> {{ workOrder.wo_quantity }}</div>
+                    <div><strong>{{ translate('orderManagement.unscheduledQuantity') }}:</strong> {{ workOrder.unscheduled_quantity }}</div>
+                    <div><strong>{{ translate('orderManagement.orderDetailDialog.periodEndTime') }}:</strong> {{ formatDate(workOrder.wo_deadline) }}</div>
+                    <div><strong>{{ translate('orderManagement.productCode') }}:</strong> {{ workOrder.product_id }}</div>
+                    <div><strong>{{ translate('orderManagement.approvedAt') }}:</strong> {{ formatDate(workOrder.approved_at) }}</div>
+                    <div><strong>{{ translate('orderManagement.orderDetailDialog.periodStartTime') }}:</strong> {{ formatDate(workOrder.start_date) }}</div>
+                    <div><strong>{{ translate('orderManagement.orderDetailDialog.periodEndTime') }}:</strong> {{ formatDate(workOrder.end_date) }}</div>
+                    <div><strong>{{ translate('orderManagement.estimatedProductionTime') }}:</strong> {{ workOrder.estimated_production_time }} {{translate('orderManagement.hour')}}</div>
+                    <div><strong>{{ translate('orderManagement.productionLine') }}:</strong> {{ workOrder.production_line }}</div>
+                    <div><strong>{{ translate('orderManagement.updatedAt') }}:</strong> {{ formatDate(workOrder.updated_at) }}</div>
+                    <div><strong>{{ translate('orderManagement.recurrenceUuid') }}:</strong> {{ workOrder.recurrence_uuid }}</div>
+
 
                     <!-- Image Display -->
                     <div v-if="workOrder.image_path" style="margin-top: 10px;">
@@ -446,7 +449,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="设备" v-if="dispatch.equipmentDetails.length > 0">
+          <el-form-item :label="translate('orderManagement.orderFormDialog.equipment')" v-if="dispatch.equipmentDetails.length > 0">
             <div class="tags">
               <el-tag
                   v-for="equipment in dispatch.equipmentDetails"
@@ -463,12 +466,13 @@
                   <template #default>
 
                     <!-- Equipment Details -->
-                    <div><strong>设备号码:</strong> {{ equipment.id }}</div>
-                    <div><strong>代码:</strong> {{ equipment.code }}</div>
+                    <div><strong>{{ translate('orderManagement.Id') }}:</strong> {{ equipment.id }}</div>
+                    <div><strong>{{ translate('orderManagement.code') }}:</strong> {{ equipment.code }}</div>
                     <div><strong>PLC:</strong> {{ equipment.plc }}</div>
-                    <div><strong>序列号:</strong> {{ equipment.serial_number }}</div>
-                    <div><strong>供应商号码:</strong> {{ equipment.vendor_id }}</div>
-                    <div><strong>位置号码:</strong> {{ equipment.location_id }}</div>
+                    <div><strong>{{ translate('orderManagement.serialNumber') }}:</strong> {{ equipment.serial_number }}</div>
+                    <div><strong>{{ translate('orderManagement.vendorId') }}:</strong> {{ equipment.vendor_id }}</div>
+                    <div><strong>{{ translate('orderManagement.locationId') }}:</strong> {{ equipment.location_id }}</div>
+
 
                     <!-- Image Display -->
                     <div v-if="equipment.image_path" style="margin-top: 10px;">
@@ -488,7 +492,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="维护工单" v-if="dispatch.maintenanceWorkOrderDetails.length > 0">
+          <el-form-item :label="translate('orderManagement.orderFormDialog.maintenanceWorkOrder')" v-if="dispatch.maintenanceWorkOrderDetails.length > 0">
             <div class="tags">
               <el-tag
                   v-for="workOrder in dispatch.maintenanceWorkOrderDetails"
@@ -504,15 +508,16 @@
                     width="300px">
                   <template #default>
                     <!-- Maintenance Work Order Details -->
-                    <div><strong>维护工单号码:</strong> {{ workOrder.id }}</div>
-                    <div><strong>代码:</strong> {{ workOrder.code }}</div>
-                    <div><strong>描述:</strong> {{ workOrder.description || '无' }}</div>
-                    <div><strong>开始日期:</strong> {{ formatDate(workOrder.start_date) }}</div>
-                    <div><strong>结束日期:</strong> {{ formatDate(workOrder.end_date) }}</div>
-                    <div><strong>工单识别码:</strong> {{ workOrder.recurrence_uuid }}</div>
-                    <div><strong>到期时间:</strong> {{ formatDate(workOrder.due_date) }}</div>
-                    <div><strong>预计分钟数:</strong> {{ workOrder.estimated_minutes }}</div>
-                    <div><strong>生产线号码:</strong> {{ workOrder.production_line_id }}</div>
+                    <div><strong>{{ translate('orderManagement.Id') }}:</strong> {{ workOrder.id }}</div>
+                    <div><strong>{{ translate('orderManagement.code') }}:</strong> {{ workOrder.code }}</div>
+                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ workOrder.description || translate('orderManagement.orderFormDialog.missing') }}</div>
+                    <div><strong>{{ translate('orderManagement.orderDetailDialog.periodStartTime') }}:</strong> {{ formatDate(workOrder.start_date) }}</div>
+                    <div><strong>{{ translate('orderManagement.orderDetailDialog.periodEndTime') }}:</strong> {{ formatDate(workOrder.end_date) }}</div>
+                    <div><strong>{{ translate('orderManagement.recurrenceUuid') }}:</strong> {{ workOrder.recurrence_uuid }}</div>
+                    <div><strong>{{ translate('orderManagement.dueDate') }}:</strong> {{ formatDate(workOrder.due_date) }}</div>
+                    <div><strong>{{ translate('orderManagement.estimatedMinutes') }}:</strong> {{ workOrder.estimated_minutes }}</div>
+                    <div><strong>{{ translate('orderManagement.productionLineId') }}:</strong> {{ workOrder.production_line_id }}</div>
+
 
                     <!-- Image Display -->
                     <div v-if="workOrder.image_path" style="margin-top: 10px;">
@@ -532,7 +537,7 @@
             </div>
           </el-form-item>
 
-          <el-divider>已派发任务</el-divider>
+          <el-divider>{{ translate('orderManagement.orderDetailDialog.dispatchedTasksDivider') }}</el-divider>
           <!-- Dispatched Tasks Table -->
           <DispatchedTasksList
               :dispatch-id="dispatch.id"
@@ -544,7 +549,7 @@
         </div>
       </el-card>
     </div>
-    <div v-else>- 无派发任务 -</div>
+    <div v-else>- {{ translate('orderManagement.noDispatchedTasks') }} -</div>
 
   </el-form>
   </div>
@@ -570,6 +575,7 @@ import {getDispatchNextExecutionTime, pauseDispatch, resumeDispatch} from "@/ser
 import {getTestSubjectById} from "@/services/testSubjectService";
 import {getSamplingLocationById} from "@/services/samplingLocationService";
 import {getInstrumentById} from "@/services/instrumentService";
+import {translate} from "@/utils/i18n";
 
 export default {
   components: {UserReference, DispatchedTasksList},
@@ -596,6 +602,7 @@ export default {
     };
   },
   methods: {
+    translate,
     getDispatchStateTagData,
     getQcOrderStateTagData,
     humanizeCronInChinese,
@@ -680,7 +687,7 @@ export default {
       }
     },
     getFormById(id) {
-      return this.formMap[id] || "未知表单";
+      return this.formMap[id] || translate('orderManagement.orderFormDialog.unknownForm');
     },
     async fetchNextExecutionTime(dispatch) {
       if (!dispatch || !dispatch.id) return;
@@ -707,16 +714,16 @@ export default {
     },
     async handlePauseOrderDispatch(dispatchId) {
       try {
-        await this.$confirm("确定暂停任务吗？", "提示", { type: "warning" });
+        await this.$confirm(translate('orderManagement.messages.pauseDispatchConfirmation'), translate('orderManagement.messages.messageTitle'), { type: "warning" });
 
         const userId = this.$store.getters.getUser.id;
         const response = await pauseDispatch(dispatchId, userId);
 
         if (response && response.status === 200) {
-          this.$message.success("任务已暂停");
+          this.$message.success(translate('orderManagement.messages.dispatchPausedSuccess'));
           this.$emit("refresh-order"); //
         } else {
-          this.$message.error("暂停任务失败，请重试！");
+          this.$message.error(translate('orderManagement.messages.dispatchPausedFailed'));
         }
       } catch (e) {
         console.log("Pause action canceled or failed.");
@@ -724,33 +731,33 @@ export default {
     },
     async handleResumeOrderDispatch(dispatchId) {
       try {
-        await this.$confirm("确定重启任务吗？", "提示", { type: "warning" });
+        await this.$confirm(translate('orderManagement.messages.resumeDispatchConfirmation'), translate('orderManagement.messages.messageTitle'), { type: "warning" });
 
         const userId = this.$store.getters.getUser.id;
         const response = await resumeDispatch(dispatchId, userId);
 
         if (response && response.status === 200) {
-          this.$message.success("任务已重启");
+          this.$message.success(translate('orderManagement.messages.dispatchResumedSuccess'));
           this.$emit("refresh-order"); //
         } else {
-          this.$message.error("重启任务失败，请重试！");
+          this.$message.error(translate('orderManagement.messages.dispatchResumedFailed'));
         }
       } catch (e) {
         console.log("Resume action canceled or failed.");
       }
     },
     async handleEditOrder(){
-      await this.$confirm("确定修改工單吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+      await this.$confirm(translate('orderManagement.messages.editConfirmation'), translate('orderManagement.messages.messageTitle'), {
+        confirmButtonText: translate('orderManagement.confirm'),
+        cancelButtonText: translate('orderManagement.cancel'),
         type: "warning",
       });
       this.$emit('on-edit');
     },
     async handleDeleteOrder(){
-      await this.$confirm("确定删除工單吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+      await this.$confirm(translate('orderManagement.messages.deleteConfirmation'), translate('orderManagement.messages.messageTitle'), {
+        confirmButtonText: translate('orderManagement.confirm'),
+        cancelButtonText: translate('orderManagement.cancel'),
         type: "warning",
       });
       this.$emit('on-delete');
@@ -787,7 +794,6 @@ export default {
 }
 
 .wrap-text {
-  display: block;
   word-break: break-word; /* Ensures text breaks and wraps */
   white-space: normal; /* Allows text to wrap normally */
   overflow-wrap: break-word; /* Ensures long words break correctly */

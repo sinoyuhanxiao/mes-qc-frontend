@@ -4,7 +4,7 @@
     <div style="display: flex; justify-content: flex-end;">
       <el-input
           v-model="searchQuery"
-          placeholder="搜索班次"
+          :placeholder="translate('shiftManagement.searchPlaceholder')"
           clearable
           @input="filterTree"
           style="height: 32px; margin-right: 10px"
@@ -18,7 +18,7 @@
           @click="clearSelection"
           style="height: 32px; width: 80px; line-height: normal; margin: 0"
       >
-        清空选择
+        {{ translate('orderManagement.uncheckAll') }}
       </el-button>
     </div>
 
@@ -44,6 +44,7 @@ import {getAllShifts} from "@/services/shiftService";
 import {getAllShiftUsers} from "@/services/shiftUserService";
 import {fetchUsers} from "@/services/userService";
 import {Search} from "@element-plus/icons-vue";
+import {translate} from "@/utils/i18n";
 
 export default {
   components: {Search},
@@ -60,6 +61,7 @@ export default {
     await this.loadShiftTreeData();
   },
   methods: {
+    translate,
     /** Fetches shifts, shift-user mappings, and users */
     async loadShiftTreeData() {
       try {

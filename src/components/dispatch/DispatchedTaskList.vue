@@ -5,7 +5,7 @@
     <el-input
         v-model="searchInput"
         style="width: 240px; margin: 10px;"
-        placeholder="输入关键字搜索"
+        :placeholder="translate('orderManagement.searchPlaceholder')"
         clearable
         :prefix-icon="Search"
         v-if="showSearchBox"
@@ -14,39 +14,44 @@
 
     <!-- Table -->
     <el-table
+        :fit="true"
         :data="paginatedTasks"
         style="width: 100%"
         :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
         @sort-change="handleSortChange"
     >
       <!-- 查看提交记录 -->
-      <el-table-column label="操作" width="150">
+      <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="220" :fixed="'right'">
         <template #default="scope">
           <el-button
               type="primary"
               v-if="scope.row.dispatched_task_state_id !== 1 && scope.row.dispatched_task_state_id !== 4"
               @click="openTaskLogTab(scope.row)"
           >
-            查看提交记录
+            {{ translate('orderManagement.viewSubmissionRecords') }}
           </el-button>
         </template>
       </el-table-column>
 
       <!-- ID -->
-      <el-table-column prop="id" label="任务号码" width="110" sortable></el-table-column>
+      <el-table-column prop="id" :label="translate('orderManagement.Id')" width="110" sortable></el-table-column>
 
-      <!-- Dispatch ID -->
-      <el-table-column prop="dispatch_id" label="派发计划号码" width="140" sortable></el-table-column>
+      <!-- Dispatch Time -->
+      <el-table-column prop="dispatch_time" :label="translate('orderManagement.dispatchedTaskTable.dispatchTime')" width="180" sortable>
+        <template #default="scope">
+          {{ formatDate(scope.row.dispatch_time) }}
+        </template>
+      </el-table-column>
 
       <!-- Name -->
-      <el-table-column prop="name" label="任务名称" width="150" sortable show-overflow-tooltip>
+      <el-table-column prop="name" :label="translate('orderManagement.dispatchedTaskTable.name')" width="150" sortable show-overflow-tooltip>
         <template #default="scope">
           {{ scope.row.name || "-" }}
         </template>
       </el-table-column>
 
       <!-- Personnel -->
-      <el-table-column prop="user_id" label="人员" width="110" sortable>
+      <el-table-column prop="user_id" :label="translate('orderManagement.dispatchedTaskTable.user')" width="110" sortable>
         <template #default="scope">
           <el-tag
               v-if="getUserById(scope.row.user_id)"
@@ -61,9 +66,9 @@
                 width="auto"
             >
               <template #default>
-                <div>姓名: {{ getUserById(scope.row.user_id).name }}</div>
-                <div>用户名: {{ getUserById(scope.row.user_id).username }}</div>
-                <div>企业微信: {{ getUserById(scope.row.user_id).wecom_id }}</div>
+                <div>{{ translate('userManagement.table.name') }}: {{ getUserById(scope.row.user_id).name }}</div>
+                <div>{{ translate('userManagement.table.username') }}: {{ getUserById(scope.row.user_id).username }}</div>
+                <div>{{ translate('userManagement.table.wecomId') }}: {{ getUserById(scope.row.user_id).wecom_id }}</div>
               </template>
               <template #reference>
                 {{ getUserById(scope.row.user_id).name }}
@@ -75,7 +80,7 @@
       </el-table-column>
 
       <!-- Form -->
-      <el-table-column prop="qc_form_tree_node_id" label="质检表单" width="200" sortable>
+      <el-table-column prop="qc_form_tree_node_id" :label="translate('orderManagement.dispatchedTaskTable.form')" width="200" sortable>
         <template #default="scope">
           <el-tag
               v-if="getFormById(scope.row.qc_form_tree_node_id)"
@@ -90,8 +95,8 @@
                 width="auto"
             >
               <template #default>
-                <div>ID: {{ scope.row.qc_form_tree_node_id }}</div>
-                <div>质检表单名: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
+                <div>{{ translate('orderManagement.dispatchedTaskTable.id') }}: {{ scope.row.qc_form_tree_node_id }}</div>
+                <div>{{ translate('orderManagement.formName') }}: {{ getFormById(scope.row.qc_form_tree_node_id) }}</div>
               </template>
               <template #reference>
                 {{ getFormById(scope.row.qc_form_tree_node_id) }}
@@ -102,7 +107,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="dispatched_task_state_id" label="任务状态" width="120" sortable>
+      <el-table-column prop="dispatched_task_state_id" :label="translate('orderManagement.dispatchedTaskTable.state')" width="120" sortable>
         <template #default="scope">
           <el-tag :type="stateTagType(scope.row.dispatched_task_state_id)">
             {{ stateName(scope.row.dispatched_task_state_id) }}
@@ -110,15 +115,11 @@
         </template>
       </el-table-column>
 
-      <!-- Dispatch Time -->
-      <el-table-column prop="dispatch_time" label="派发时间" width="180" sortable>
-        <template #default="scope">
-          {{ formatDate(scope.row.dispatch_time) }}
-        </template>
-      </el-table-column>
+      <!-- Dispatch ID -->
+      <el-table-column prop="dispatch_id" :label="translate('orderManagement.dispatchPlanId')" width="170" sortable></el-table-column>
 
       <!-- Due Date -->
-      <el-table-column prop="due_date" label="剩余时间" width="150" sortable>
+      <el-table-column prop="due_date" :label="translate('orderManagement.dispatchedTaskTable.remainingTime')" width="170" sortable>
         <template #default="scope">
           <el-tag style="font-weight: bold" :type="remainingTimeTag(scope.row['due_date'])">
             {{ calculateRemainingTime(scope.row['due_date']) }}
@@ -127,12 +128,11 @@
       </el-table-column>
 
       <!-- Notes -->
-      <el-table-column prop="notes" label="备注" width="200" show-overflow-tooltip>
+      <el-table-column prop="notes" :label="translate('orderManagement.description')" width="200" show-overflow-tooltip>
         <template #default="scope">
           {{ scope.row.notes || "-" }}
         </template>
       </el-table-column>
-
 
     </el-table>
 
@@ -148,7 +148,6 @@
         :current-page="currentPage"
         @size-change="handleSizeChange"
         @current-change="handlePageChange"
-
     />
   </div>
 </template>
@@ -157,6 +156,7 @@
 import dayjs from "dayjs";
 import {Search} from "@element-plus/icons-vue";
 import { getAllDispatchedTasks, getAllDispatchedTasksByDispatchId } from "@/services/taskCenterService"
+import {translate} from "@/utils/i18n";
 
 
 export default {
@@ -222,6 +222,7 @@ export default {
     },
   },
   methods: {
+    translate,
     formatDate(dateString) {
       return dateString ? dayjs(dateString).format("YYYY-MM-DD HH:mm:ss") : "-";
     },

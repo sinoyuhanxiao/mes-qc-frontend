@@ -4,11 +4,11 @@
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center;">
         <!-- Title Label -->
-        <h2>任务派发管理</h2>
+        <h2>{{ translate('orderManagement.title') }}</h2>
         <!-- Search Box -->
         <el-input
             v-model="searchInput"
-            placeholder="搜索关键字"
+            :placeholder="translate('orderManagement.searchPlaceholder')"
             clearable
             style="width: 300px; margin-left: 20px"
         >
@@ -23,7 +23,7 @@
       </div>
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
-        <el-tooltip content="刷新列表" placement="top">
+        <el-tooltip :content="translate('orderManagement.refreshList')" placement="top">
           <el-button
               class="refresh-button"
               type="primary"
@@ -38,12 +38,12 @@
 
         <!-- New QC Order Button -->
         <el-button type="primary" @click="handleNewQcOrderButtonClick">
-          + 新增
+          {{ translate('orderManagement.addButton') }}
         </el-button>
 
         <!-- View All Tasks Button -->
         <el-button type="info" @click="openViewDispatchedTestsDialog">
-          查看全部派发任务
+          {{ translate('orderManagement.viewDispatchedTaskButton') }}
         </el-button>
 
         <!-- Delete Button -->
@@ -52,7 +52,7 @@
             type="danger"
             @click="confirmDeleteSelectedRows"
         >
-          删除
+          {{ translate('orderManagement.delete') }}
         </el-button>
       </div>
     </div>
@@ -110,7 +110,7 @@
 
     <!-- Dispatched Tasks Dialog -->
     <el-dialog
-        title="已派发任务"
+        :title="translate('orderManagement.orderDetailDialog.dispatchedTasksDivider')"
         top="5vh"
         v-model="isDispatchedTestsDialogVisible"
         width="70%"
@@ -147,6 +147,7 @@ import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 import {getAllShifts} from "@/services/shiftService";
 import {getUsersForShift} from "@/services/shiftUserService";
 import {getFormIdsForShift} from "@/services/shiftFormService";
+import {translate} from "@/utils/i18n";
 
 export default {
   components: {
@@ -175,12 +176,13 @@ export default {
   computed: {
     dialogTitle() {
       if (this.isEditMode) {
-        return this.currentOrder ? "编辑工单" : "新增工单";
+        return this.currentOrder ? translate('orderManagement.editOrder') : translate('orderManagement.addOrder');
       }
-      return this.currentOrder ? "工单详情" : "新增工单";
+      return this.currentOrder ? translate('orderManagement.orderDetail') : translate('orderManagement.addOrder');
     }
   },
   methods: {
+    translate,
     async loadAllQcOrders() {
       try {
         const response = await getAllQcOrders();
@@ -190,7 +192,7 @@ export default {
           this.qcOrders = [];
         }
       } catch (error) {
-        this.$message.error("无法加载QC工单列表，请重试。");
+        this.$message.error(translate('orderManagement.messages.errorLoadingOrderList'));
       }
     },
     handleNewQcOrderButtonClick() {
@@ -208,39 +210,39 @@ export default {
       try {
         let response = null;
         if (this.currentOrder && this.currentOrder.id != null) {
-          // update call
           response = await updateQcOrder(this.currentOrder.id, order);
           if (response && response.status === 200) {
-            this.$message.success("工单已更新！");
+            this.$message.success(translate('orderManagement.messages.orderUpdatedSuccess'));
           }
         } else {
-          // create call
           response = await createQcOrder(order);
           if (response && response.status === 200) {
-            this.$message.success("工单已创建！");
+            this.$message.success(translate('orderManagement.messages.orderAddedSuccess'));
           }
         }
           await this.loadAllQcOrders();
           this.closeAndResetDetailsDialog();
       } catch (error) {
-        this.$message.error("创建/更新 工单失败。请重试。");
+        this.$message.error(translate('orderManagement.messages.errorHandlingOrderSubmission'));
       }
     },
     confirmDeleteSelectedRows() {
       if (this.selectedRows.length === 0) {
-        this.$message.warning("请选择至少一个工单进行删除！");
+        this.$message.warning(translate('orderManagement.messages.selectAtLeastOneOrderToDelete'));
         return;
       }
-      this.$confirm("确认删除选中的工单吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
+      this.$confirm(translate('orderManagement.messages.deleteConfirmation'),
+          translate('orderManagement.messages.messageTitle'),
+          {
+            confirmButtonText: translate('orderManagement.confirm'),
+            cancelButtonText: translate('orderManagement.cancel'),
+            type: "warning",
+          })
           .then(async () => {
             const userId = this.$store.getters.getUser.id;
             const idsToDelete = this.selectedRows.map((row) => row.id);
             await Promise.all(idsToDelete.map((id) => deleteQcOrder(id, userId)));
-            this.$message.success("选中的工单已删除！");
+            this.$message.success(translate('orderManagement.messages.orderDeletedSuccess'));
             await this.loadAllQcOrders();
             this.selectedRows = [];
           })
@@ -267,7 +269,7 @@ export default {
         console.log('handleDeleteQcOrder');
         const response = await deleteQcOrder(this.currentOrder.id, this.$store.getters.getUser.id);
         if (response && response.status === 200) {
-          this.$message.success("选中的工单已删除");
+          this.$message.success(translate('orderManagement.messages.orderDeletedSuccess'));
           await this.loadAllQcOrders();
           this.isDetailsDialogVisible = false;
         }
@@ -290,7 +292,7 @@ export default {
 
       } catch (error) {
         console.error("Failed to refresh current order:", error);
-        this.$message.error("无法更新工单信息，请重试！");
+        this.$message.error(translate('orderManagement.messages.errorLoadingAllData'));
       }
     },
     filterAndSortList(list, filterFn, sortFields) {
@@ -331,7 +333,7 @@ export default {
           this.formMap = updatedFormMap;
         }
       } catch (error) {
-        this.$message.error("无法加载表单，请重试。");
+        this.$message.error(translate('orderManagement.messages.errorLoadingFormTree'));
       }
     },
     async loadUserMap() {
@@ -346,7 +348,7 @@ export default {
           this.userMap = updatedUserMap;
         }
       } catch (error) {
-        this.$message.error("无法加载人员信息，请重试。");
+        this.$message.error(translate('orderManagement.messages.errorLoadingUsersData'));
       }
     },
     async loadShiftMap() {
@@ -380,7 +382,7 @@ export default {
         }
       } catch (error) {
         console.error("Failed to load Shift Map:", error);
-        this.$message.error("无法加载班组信息，请重试。");
+        this.$message.error(translate('orderManagement.messages.errorLoadingShiftData'));
       }
     },
     openViewDispatchedTestsDialog() {
@@ -393,8 +395,8 @@ export default {
       this.searchQuery = "";
       await this.loadAllData()
       this.$notify({
-        title: "提示",
-        message: "列表已更新。",
+        title: translate('orderManagement.messages.messageTitle'),
+        message: translate('orderManagement.messages.listRefreshed'),
         type: "success",
       });
     },

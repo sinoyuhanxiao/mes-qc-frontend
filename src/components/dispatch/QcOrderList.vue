@@ -11,12 +11,15 @@
       v-loading="loading"
   >
     <!-- Row Selection -->
-    <el-table-column type="selection" width="55"></el-table-column>
+    <el-table-column
+        type="selection"
+        width="55">
+    </el-table-column>
 
     <!-- QC Order Name -->
     <el-table-column
         prop="name"
-        label="工单名称"
+        :label="translate('orderManagement.orderDetailDialog.orderName')"
         width="200"
         sortable
     >
@@ -28,10 +31,21 @@
     </el-table-column>
 
     <!-- Order ID -->
-    <el-table-column prop="id" label="工单号码" width="110" sortable></el-table-column>
+    <el-table-column
+        prop="id"
+        :label="translate('orderManagement.orderId')"
+        width="110"
+        sortable
+    >
+    </el-table-column>
 
     <!-- Order State -->
-    <el-table-column prop="state" label="工单状态" width="170" sortable>
+    <el-table-column
+        prop="state"
+        :label="translate('orderManagement.orderTable.state')"
+        width="170"
+        sortable
+    >
       <template #default="scope">
         <el-tag :type="getQcOrderStateTagData(scope.row.state).type" size="small" >
           {{ getQcOrderStateTagData(scope.row.state).label }}
@@ -40,7 +54,11 @@
     </el-table-column>
 
     <!-- Assigned User -->
-    <el-table-column prop="assignedUsersCount" label="关联用户" width="200">
+    <el-table-column
+        prop="assignedUsersCount"
+        :label="translate('orderManagement.orderTable.associatedUsers')"
+        width="200"
+    >
       <template #default="scope">
         <div >
           <el-tag
@@ -61,7 +79,11 @@
     </el-table-column>
 
     <!-- Assigned Form -->
-    <el-table-column prop="assignedFormsCount" label="关联表单" width="200" >
+    <el-table-column
+        prop="assignedFormsCount"
+        :label="translate('orderManagement.orderTable.associatedForms')"
+        width="200"
+    >
       <template #default="scope">
         <div>
           <el-tag
@@ -81,7 +103,11 @@
       </template>
     </el-table-column>
 
-    <el-table-column prop="dispatch_ids" label="派发计划号码" width="250" >
+    <el-table-column
+        prop="dispatch_ids"
+        :label="translate('orderManagement.dispatchPlanId')"
+        width="200"
+    >
       <template #default="scope">
         <div v-if="scope.row.dispatches.length > 0">
           <el-tag
@@ -99,21 +125,36 @@
     </el-table-column>
 
     <!-- Dispatch Count -->
-    <el-table-column prop="dispatches.length" label="计划数量" width="120" sortable>
+    <el-table-column
+        prop="dispatches.length"
+        :label="translate('orderManagement.orderTable.planCount')"
+        width="140"
+        sortable
+    >
       <template #default="scope">
         {{ scope.row.dispatches.length }}
       </template>
     </el-table-column>
 
     <!-- Created At -->
-    <el-table-column prop="created_at" label="创建时间" width="180" sortable>
+    <el-table-column
+        prop="created_at"
+        :label="translate('orderManagement.createdAt')"
+        width="180"
+        sortable
+    >
       <template #default="scope">
         <time-slot :value="scope.row.created_at" />
       </template>
     </el-table-column>
 
     <!-- Created By -->
-    <el-table-column prop="created_by" label="创建者" width="180" sortable>
+    <el-table-column
+        prop="created_by"
+        :label="translate('orderManagement.createdBy')"
+        width="180"
+        sortable
+    >
       <template #default="scope">
         <UserReference :user-id="scope.row.created_by"/>
       </template>
@@ -140,6 +181,7 @@
 import {formatDate, getQcOrderStateTagData} from "@/utils/dispatch-utils";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
 import UserReference from "@/components/dispatch/UserReference.vue";
+import {translate} from "@/utils/i18n";
 
 export default {
   emits: ["order-clicked", "selection-change"],
@@ -180,6 +222,7 @@ export default {
     }
   },
   methods: {
+    translate,
     getQcOrderStateTagData,
     clickedNameColumn(row) {
       this.$emit("order-clicked", row);

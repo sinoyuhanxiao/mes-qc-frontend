@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import * as formNodeService from "@/services/formNodeService";
 import {Base64} from "js-base64";
+import {translate} from "@/utils/i18n";
 
 
 // Extracts time in HH:mm format from different time structures
@@ -44,11 +45,11 @@ export function formatDate(dateString) {
 export function formatScheduleType(type) {
     switch (type) {
         case "regular":
-            return "周期计划";
+            return translate('orderManagement.orderFormDialog.periodicPlan');
         case "custom":
-            return "单次计划";
+            return translate('orderManagement.orderFormDialog.oneTimePlan');
         default:
-            return "未知";
+            return translate('orderManagement.unknownPlan');
     }
 }
 
@@ -226,3 +227,5 @@ export async function openFormPreviewWindow(nodeId, vueInstance) {
         vueInstance.$message.error("加载表单模板时出错，请稍后重试。");
     }
 }
+
+export const getCurrentLanguage = () => localStorage.getItem('app-language') || 'en';
