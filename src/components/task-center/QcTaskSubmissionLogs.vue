@@ -35,7 +35,7 @@
 <!--          </el-tooltip>-->
           <el-input
               v-model="searchTerm"
-              placeholder="搜索ID或单号"
+              :placeholder="translate('qcTaskSubmissionLogs.searchPlaceholder')"
               clearable
               style="width: 300px;"
               @input="applyFilter"
@@ -63,7 +63,7 @@
         </el-table-column>
 
         <!-- Operations -->
-        <el-table-column fixed="right" label="操作" width="120px">
+        <el-table-column fixed="right" :label="translate('common.table.actions')" width="120px">
           <template #default="scope">
             <el-button
                 link
@@ -71,7 +71,7 @@
                 size="small"
                 @click="viewDetails(scope.row)"
             >
-              查看
+              {{ translate('common.view') }}
             </el-button>
           </template>
         </el-table-column>
@@ -100,18 +100,18 @@
           </el-descriptions-item>
         </el-descriptions>
       </div>
-      <el-descriptions title="质检提交信息" border style="margin-top: 10px">
-        <el-descriptions-item label="提交人">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
-        <el-descriptions-item label="提交时间">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
+      <el-descriptions :title="translate('qcTaskSubmissionLogs.systemInfoGroupTitle')" border style="margin-top: 10px">
+        <el-descriptions-item :label="translate('qcTaskSubmissionLogs.submitter')">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
+        <el-descriptions-item :label="translate('qcTaskSubmissionLogs.submittedAt')">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
       </el-descriptions>
       <div v-if="eSignature && eSignature.startsWith('data:image')" style="margin-top: 20px;">
-        <h3>质检人签名：</h3>
-        <img :src="eSignature" alt="电子签名" style="width: 300px; height: auto;" />
+        <h3>{{ translate('qcTaskSubmissionLogs.signatureTitle') }}</h3>
+        <img :src="eSignature" alt="e-signature" style="width: 300px; height: auto;" />
       </div>
     </el-scrollbar>
     <template #footer>
-      <el-button type="info" @click="closeDetailsDialog">取消</el-button>
-      <el-button type="primary" @click="newExportToPdf">导出</el-button>
+      <el-button type="info" @click="closeDetailsDialog">{{ translate('qcTaskSubmissionLogs.cancelButton') }}</el-button>
+      <el-button type="primary" @click="newExportToPdf">{{ translate('qcTaskSubmissionLogs.exportButton') }}</el-button>
     </template>
   </el-dialog>
 
@@ -131,6 +131,7 @@ import { getUserById } from "@/services/userService";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import callAddBoldFont from "@/assets/simfang-bold.js";
+import {translate} from "@/utils/i18n";
 
 export default {
   name: "QcTaskSubmissionLogs",
@@ -156,7 +157,7 @@ export default {
   },
   data() {
     return {
-      title: this.taskName + " - 提交记录",
+      title: this.taskName,
       selectedIds: {
         qc_form_template_id: null,
         submission_id: null,
@@ -182,14 +183,14 @@ export default {
         // "status",
       ],
       columnHeaders: {
-        id: "ID",
-        submission_id: "提交单号",
-        created_at: "提交时间",
-        created_by: "提交人号码",
-        comment: "备注",
-        dispatched_task_id: "任务号码",
-        qc_form_template_id: "质检表单ID",
-        status: "状态"
+        id: translate("qcTaskSubmissionLogs.tableHeaders.id"),
+        submission_id: translate("qcTaskSubmissionLogs.tableHeaders.submission_id"),
+        created_at: translate("qcTaskSubmissionLogs.tableHeaders.created_at"),
+        created_by: translate("qcTaskSubmissionLogs.tableHeaders.created_by"),
+        comment: translate("qcTaskSubmissionLogs.tableHeaders.comment"),
+        dispatched_task_id: translate("qcTaskSubmissionLogs.tableHeaders.dispatched_task_id"),
+        qc_form_template_id: translate("qcTaskSubmissionLogs.tableHeaders.qc_form_template_id"),
+        status: translate("qcTaskSubmissionLogs.tableHeaders.status")
       },
       columnWidths: {
         id: "100px",
@@ -228,6 +229,7 @@ export default {
     },
   },
   methods: {
+    translate,
     async newExportToPdf() {
       try {
         const doc = new jsPDF();
@@ -254,7 +256,7 @@ export default {
 
           autoTable(doc, {
             startY: y,
-            head: [["质检项目", "质检结果"]],
+            head: [[translate("qcTaskSubmissionLogs.exportPdf.tableHead.0"), translate("qcTaskSubmissionLogs.exportPdf.tableHead.1")]],
             body: tableData,
             theme: "grid",
             styles: { font: "simfang", fontSize: 10 },
@@ -265,16 +267,16 @@ export default {
         });
 
         doc.setFontSize(14);
-        doc.text("质检提交信息", 10, y);
+        doc.text(translate("qcTaskSubmissionLogs.exportPdf.groupTitle"), 10, y);
         y += 6;
 
         autoTable(doc, {
           startY: y,
-          head: [["质检项目", "质检结果"]],
+          head: [[translate("qcTaskSubmissionLogs.exportPdf.tableHead.0"), translate("qcTaskSubmissionLogs.exportPdf.tableHead.1")]],
           body: [
-            ["提交人", this.systemInfo.提交人 || " - "],
-            ["提交时间", this.systemInfo.提交时间 || " - "],
-            ["提交单号", this.systemInfo.提交单号 || " - "]
+            [translate("qcTaskSubmissionLogs.exportPdf.submitter"), this.systemInfo.提交人 || " - "],
+            [translate("qcTaskSubmissionLogs.exportPdf.submittedAt"), this.systemInfo.提交时间 || " - "],
+            [translate("qcTaskSubmissionLogs.exportPdf.submissionId"), this.systemInfo.提交单号 || " - "]
           ],
           theme: "grid",
           styles: { font: "simfang", fontSize: 10 },
@@ -284,7 +286,7 @@ export default {
         y = doc.lastAutoTable.finalY + 10;
 
         // 添加电子签名，直接使用已经渲染的 <img> 元素
-        const signatureImg = document.querySelector('img[alt="电子签名"]');
+        const signatureImg = document.querySelector('img[alt="e-signature"]');
         if (signatureImg) {
           const imgWidth = 150;
           const aspectRatio = signatureImg.naturalWidth / signatureImg.naturalHeight;
@@ -298,7 +300,7 @@ export default {
           }
 
           doc.setFontSize(14);
-          doc.text("质检人签名：", 10, y);
+          doc.text(translate("qcTaskSubmissionLogs.exportPdf.signatureTitle"), 10, y);
           y += 10;
 
           doc.addImage(signatureImg, 'PNG', 10, y, imgWidth, imgHeight);
@@ -306,10 +308,10 @@ export default {
         }
 
         doc.save(`${this.title}.pdf`);
-        this.$message.success("PDF 导出成功!");
+        this.$message.success(translate("qcTaskSubmissionLogs.exportPdf.successMessage"));
       } catch (err) {
         console.error("PDF 生成失败:", err);
-        this.$message.error("PDF 生成失败，请重试!");
+        this.$message.error(translate("qcTaskSubmissionLogs.exportPdf.failMessage"));
       }
     },
     async fetchTableData() {

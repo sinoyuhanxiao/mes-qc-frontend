@@ -1,4 +1,39 @@
 export default {
+    common: {
+        searchPlaceholder: 'Search keyword',
+        refreshTooltip: 'Refresh table',
+        addButton: '+ New',
+        cancel: 'Cancel',
+        confirm: 'Confirm',
+        delete: 'Delete',
+        warn: 'Warning',
+        info: "Information",
+        operationCancelled: 'Operation Cancelled',
+        view: "View",
+        table: {
+            id: 'ID',
+            name: 'Name',
+            actions: 'Actions',
+            editButton: 'Edit',
+            deleteButton: 'Delete',
+        },
+        addDialog: {
+            title: 'Add',
+            name: 'Name',
+            cancelButton: 'Cancel',
+            confirmButton: 'Confirm',
+        },
+        editDialog: {
+            title: 'Edit',
+            name: 'Name',
+            cancelButton: 'Cancel',
+            confirmButton: 'Confirm',
+        },
+        messages: {
+            saveSuccess: 'Saved successfully!',
+            saveFailed: 'Save failed',
+        }
+    },
     userManagement: {
         title: 'User Management',
         searchPlaceholder: 'Search keyword',
@@ -256,7 +291,9 @@ export default {
         deleteSuccess: 'Deleted successfully!',
         deleteFailed: 'Failed to delete node',
         loadFailed: 'Failed to load data',
-        errorTitle: 'Error'
+        errorTitle: 'Error',
+        pleaseSelectFolder: 'Please select the folder',
+        selectFolder: 'Select Folder'
     },
     FormDisplay: {
         titlePrefix: 'Form',
@@ -287,6 +324,19 @@ export default {
         formLoadSuccess: 'Form loaded successfully!',
         formLoadFailed: 'Failed to load form template!',
         formLoadError: 'Error fetching form template!'
+    },
+    FormDesigner: {
+        saveDialog: {
+            title: 'Save QC Form',
+            formNameLabel: 'QC Form Name',
+            formNamePlaceholder: 'Please enter the QC form name...',
+            cancel: 'Cancel',
+            confirm: 'Save'
+        },
+        validation: {
+            formNameRequired: 'QC form name cannot be empty!',
+            folderRequired: 'Please select a folder.'
+        }
     },
     orderManagement: {
         Id: 'ID',
@@ -479,4 +529,246 @@ export default {
         samplingLocation: 'Sampling Location',
         samplingLocationId: 'Sampling Location ID',
     },
+    FormDataSummary: {
+        loadingText: "Generating PDF report...",
+        summaryTitle: "Summary",
+        dateRangeSeparator: "to",
+        startPlaceholder: "Start Date",
+        endPlaceholder: "End Date",
+        generatePdf: "Generate PDF",
+        viewRecords: "View QC Records",
+        recordTable: {
+            groupSystemInfo: "System Submission Info",
+            submitter: "Submitter",
+            submittedAt: "Submission Time",
+            submissionId: "Submission ID",
+            groupQcDetails: "QC Form Records",
+            actions: "Actions",
+            view: "View",
+            delete: "Delete",
+            deleteConfirmTitle: "Confirm Deletion",
+            deleteConfirmMessage: "Are you sure you want to delete submission ID {id}?",
+            deleteSuccess: "Record deleted successfully!",
+            deleteCanceled: "Deletion canceled",
+            deleteFailed: "Deletion failed. Please try again",
+            exportExcel: "Export to Excel",
+            searchPlaceholder: "Search...",
+            closeButton: "Close"
+        },
+        detailDialog: {
+            titleSuffix: "Submission Records",
+            uncategorized: "Uncategorized",
+            submitter: "Submitter",
+            submittedAt: "Submission Time",
+            signatureTitle: "Inspector Signature:",
+            cancelButton: "Cancel",
+            exportButton: "Export"
+        },
+        shortcuts: {
+            thisWeek: "This Week",
+            thisMonth: "This Month",
+            lastMonth: "Last Month",
+            lastThreeMonths: "Last 3 Months"
+        },
+        messages: {
+            noChartData: "No chart data to export!",
+            exportSuccess: "PDF downloaded successfully!",
+            exportFailed: "PDF generation failed. Please try again!",
+            noExcelData: "No data to export",
+            exportExcelSuccess: "Excel exported successfully!",
+            selectRecordToExport: "Please select a record to export!"
+        }
+    },
+    Export: {
+        titleSuffix: 'Submission Records',
+        groupTitle: 'QC Submission Info',
+        signatureTitle: 'Inspector Signature:',
+        tableHead: ['QC Field', 'QC Result'],
+        fallback: ' - ',
+        systemInfo: {
+            submitter: 'Submitter',
+            submittedAt: 'Submission Time',
+            submissionId: 'Submission ID'
+        }
+    },
+    TaskCenterDashboard: {
+        pageTitle: "{name}'s Task Dashboard",
+        newButton: "New",
+        filterButton: "Filter",
+        developingMessageTitle: "Notice",
+        developingMessageContent: "This feature is under development. Thank you for your click.",
+        confirmButton: "OK",
+        todayTasksTitle: 'My Today Tasks',
+        todayTasksTooltip: 'Number of tasks today',
+        futureTasksTitle: 'My Future Tasks',
+        futureTasksTooltip: 'Number of future tasks',
+        historicalTasksTitle: 'My Historical Tasks',
+        overdueTasksTitle: 'My Overdue Tasks',
+        comparedToYesterday: 'Compared to yesterday',
+        percentageChange: 'Percentage Change',
+        navigateTo: 'Navigate to',
+        taskCardTooltip: 'Task card details',
+        statisticFooterText: 'Compared to yesterday',
+        noData: 'No data available'
+    },
+    TaskCenter: {
+        quarterlyTaskCountLabel: 'Quarterly Task Assignment Count',
+        taskStatusLabels: ['Pending', 'In Progress', 'Completed'],
+        notAvailable: 'Not Available Yet',
+        pageTitle: "{name}'s Task Dashboard",
+        newButton: "+ New",
+        filterButton: "Filter",
+        developingMessageContent: "This feature is under development. Thank you for your click.",
+        developingMessageTitle: "Feature Under Development",
+        confirmButton: "OK",
+        futureTasksTitle: "Future Tasks",  // New title for future tasks
+        historicalTasksTitle: "Historical Tasks",  // New title for historical tasks
+        overdueTasksTitle: "Overdue Tasks",  // New title for overdue tasks
+        todayTasksTitle: "Today's Tasks"  // New title for today's tasks
+    },
+    MyTaskTable: {
+        taskListTitle: "Task List",
+        columnNames: {
+            qc_form_tree_node_id: "Task Form",
+            dispatched_task_state_id: "Task Status",
+            name: "Task Name",
+            remaining_time: "Remaining",
+            due_date: "Due Date",
+            description: "Task Description",
+            notes: "Notes",
+            dispatch_time: "Dispatch Time",
+            user_id: "Assigned To",
+            created_at: "Creation Time",
+            created_by: "Dispatched By",
+            updated_at: "Last Updated Time",
+            updated_by: "Updated By",
+            status: "Archived Status",
+            id: "Task Number",
+            dispatch_id: "Dispatch Plan Number",
+            is_overdue: "Is Overdue",
+            finished_at: "Completion Time"
+        },
+        refreshTableTooltip: "Refresh Table",
+        usableTaskText: "Usable Tasks",
+        allTasksText: "All Tasks",
+        alreadyRefreshed:  "Tasks refreshed",
+        taskCompletionConfirmation: "If you mark this task as completed, you will not be able to fill the form again.",
+        taskCompletionConfirmationTitle: "Confirm Completion",
+        taskMarkedCompleted: "Task has been marked as completed",
+        taskCompletionCancelled: "Task completion cancelled",
+        taskNotFillable: "This task is not fillable",
+        filterPlaceholder: "Search by Task Form Name",
+        featureDevelopementMessage:  "This feature is under development. Thank you for your click.",
+        unableToLoad: "Unable to load, please retry",
+        taskUpdateSuccess: "Status updated",
+        taskCompletionStatus: {
+            pending: "Pending",
+            inProgress: "In Progress",
+            completed: "Completed",
+            canceled: "Canceled",
+            overdue: "Overdue"
+        },
+        taskDetails: "Details",
+        taskEdit: "Edit",
+        markComplete: "Complete",
+        taskStateInfo: "The following three situations will prevent you from filling the task:",
+        overdueMessage: "Task has expired",
+        dueSoonMessage: "Task's due time is more than 60 minutes in the future",
+        completedMessage: "Task is already completed",
+        unknownForm: "Unknown form",
+        messages: {
+            reachDeadlineSoon: "You have {count} tasks due soon.",
+            totalTasksNotice: "You have {count} tasks for today."
+        },
+        time: {
+            day: 'day',
+            hour: 'hour',
+            minute: 'minute',
+            second: 'second'
+        }
+    },
+    signature: {
+        title: 'Signature',
+        submit: 'Submit',
+        reset: 'Reset',
+        empty_alert: 'Signature cannot be blank. Please sign first!'
+    },
+    qcTaskSubmissionLogs: {
+        searchPlaceholder: 'Search ID or Submission ID',
+        title: 'Submission Details',
+        systemInfoGroupTitle: 'QC Submission Info',
+        submitter: 'Submitter',
+        submittedAt: 'Submission Time',
+        signatureTitle: 'Inspector Signature:',
+        cancelButton: 'Cancel',
+        exportButton: 'Export',
+        submissionRecordSuffix: ' - Submission Records',
+        tableHeaders: {
+            id: 'ID',
+            submission_id: 'Submission ID',
+            created_at: 'Submission Time',
+            created_by: 'Submitter ID',
+            comment: 'Comment',
+            dispatched_task_id: 'Task ID',
+            qc_form_template_id: 'QC Form ID',
+            status: 'Status'
+        },
+        exportPdf: {
+            titleSuffix: ' - Submission Record',
+            tableHead: ['QC Field', 'QC Result'],
+            groupTitle: 'QC Submission Info',
+            submitter: 'Submitter',
+            submittedAt: 'Submission Time',
+            submissionId: 'Submission ID',
+            signatureTitle: 'Inspector Signature:',
+            successMessage: 'PDF exported successfully!',
+            failMessage: 'Failed to export PDF. Please try again!'
+        }
+    },
+    TaskDetail: {
+        viewSubmissionLog: 'View Submission Log',
+        taskName: 'Task Name',
+        unnamedTask: 'Unnamed Task',
+        description: 'Description',
+        noDescription: 'No Description',
+        dispatchPlanId: 'Dispatch Plan ID',
+        formName: 'Task Form',
+        formId: 'Node ID',
+        assignee: 'Assignee',
+        dispatchTime: 'Dispatch Time',
+        taskStatus: 'Task Status',
+        notes: 'Notes',
+        createdAt: 'Created At',
+        createdBy: 'Created By',
+        updatedAt: 'Updated At',
+        updatedBy: 'Updated By',
+        dueDate: 'Due Date',
+        finishTime: 'Finished At',
+        notFinished: 'Not Finished',
+        testSubject: 'Test Subjects',
+        samplingLocation: 'Sampling Locations',
+        instrument: 'Instruments',
+        unknownForm: 'Unknown Form',
+        unknownUser: 'Unknown Personnel',
+        status: {
+            1: 'Pending',
+            2: 'In Progress',
+            3: 'Completed',
+            4: 'Canceled',
+            5: 'Overdue',
+            unknown: 'Unknown'
+        },
+        popover: {
+            id: 'ID',
+            description: 'Comment',
+            status: 'Status',
+            createdBy: 'Created By',
+            createdAt: 'Created At',
+            updatedBy: 'Updated By',
+            updatedAt: 'Updated At',
+            modelNumber: 'Model Number',
+            manufacturer: 'Manufacturer',
+            type: 'Instrument Type'
+        }
+    }
 };

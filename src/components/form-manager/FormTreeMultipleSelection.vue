@@ -1,10 +1,10 @@
 <template>
   <div class="form-tree-multi-select">
-    选择文件夹
+    {{ translate('FormTree.selectFolder') }}
     <el-tree-select
         v-model="selectedValues"
         :data="treeData"
-        placeholder="请选择文件夹"
+        :placeholder="translate('FormTree.pleaseSelectFolder')"
         multiple
         filterable
         :render-after-expand="false"
@@ -20,6 +20,7 @@
 <script setup>
   import { ref, onMounted, watch, defineEmits } from 'vue';
   import { fetchFormNodes } from '@/services/formNodeService.js';
+  import { translate } from "@/utils/i18n";
 
   const emit = defineEmits(['update:selectedFolders']); // Define emit
   const selectedValues = ref([]); // Stores the selected node values

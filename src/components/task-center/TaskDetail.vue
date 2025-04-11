@@ -8,7 +8,7 @@
             :disabled="false"
             @click="showDevelopmentPopup"
         >
-          查看提交记录
+          {{ translate("TaskDetail.viewSubmissionLog") }}
         </el-button>
 <!--        <el-button-->
 <!--            type="info"-->
@@ -30,61 +30,61 @@
 
     </div>
 
-    <el-form-item label="任务名称">
-      {{ task.name || "未命名任务" }}
+    <el-form-item :label="translate('TaskDetail.taskName')">
+      {{ task.name || translate('TaskDetail.unnamedTask') }}
     </el-form-item>
 
-    <el-form-item label="描述">
-      {{ task.description || "无描述" }}
+    <el-form-item :label="translate('TaskDetail.description')">
+      {{ task.description || translate('TaskDetail.noDescription') }}
     </el-form-item>
 
-    <el-form-item label="派发计划ID">
-      {{ task.dispatch_id || "无" }}
+    <el-form-item :label="translate('TaskDetail.dispatchPlanId')">
+      {{ task.dispatch_id || "N/A" }}
     </el-form-item>
 
-    <el-form-item label="任务表单">
+    <el-form-item :label="translate('TaskDetail.formName')">
       {{ getFormNameById(task.qc_form_tree_node_id) }}
     </el-form-item>
 
-    <el-form-item label="节点编号">
+    <el-form-item :label="translate('TaskDetail.formId')">
       {{ task.qc_form_tree_node_id }}
     </el-form-item>
 
-    <el-form-item label="派发对象">
-      {{ getUserById(task.user_id)?.name || "未知人员" }}
+    <el-form-item :label="translate('TaskDetail.assignee')">
+      {{ getUserById(task.user_id)?.name || "N/A" }}
     </el-form-item>
 
-    <el-form-item label="派发时间">
+    <el-form-item :label="translate('TaskDetail.dispatchTime')">
       {{ formatDate(task.dispatch_time) }}
     </el-form-item>
 
-    <el-form-item label="任务状态">
+    <el-form-item :label="translate('TaskDetail.taskStatus')">
       <el-tag :type="stateTagType(task.dispatched_task_state_id)">
         {{ stateName(task.dispatched_task_state_id) }}
       </el-tag>
     </el-form-item>
 
-    <el-form-item label="备注">
+    <el-form-item :label="translate('TaskDetail.notes')">
       {{ task.notes || "-" }}
     </el-form-item>
 
-    <el-form-item label="创建时间">
+    <el-form-item :label="translate('TaskDetail.createdAt')">
       {{ formatDate(task.created_at) }}
     </el-form-item>
 
-    <el-form-item label="创建者">
-      {{ task.created_by || "无" }}
+    <el-form-item :label="translate('TaskDetail.createdBy')">
+      {{ task.created_by || "N/A" }}
     </el-form-item>
 
-    <el-form-item label="更新时间">
+    <el-form-item :label="translate('TaskDetail.updatedAt')">
       {{ formatDate(task.updated_at) }}
     </el-form-item>
 
-    <el-form-item label="更新者">
-      {{ task.updated_by || "无" }}
+    <el-form-item :label="translate('TaskDetail.updatedBy')">
+      {{ task.updated_by || "N/A" }}
     </el-form-item>
 
-    <el-form-item label="截止时间">
+    <el-form-item :label="translate('TaskDetail.dueDate')">
       {{ formatDate(task.due_date) }}
     </el-form-item>
 
@@ -94,12 +94,12 @@
 <!--      </el-tag>-->
 <!--    </el-form-item>-->
 
-    <el-form-item label="完成时间">
-      {{ formatDate(task.finished_at) || "未完成" }}
+    <el-form-item :label="translate('TaskDetail.finishTime')">
+      {{ formatDate(task.finished_at) || translate("TaskDetail.notFinished") }}
     </el-form-item>
 
     <!-- Additional dispatch details: Test Subjects -->
-    <el-form-item label="检测项目" v-if="dispatch && dispatch.testSubjectDetails && dispatch.testSubjectDetails.length">
+    <el-form-item :label="translate('TaskDetail.testSubject')" v-if="dispatch && dispatch.testSubjectDetails && dispatch.testSubjectDetails.length">
       <div class="tags">
         <el-tag v-for="testSubject in dispatch.testSubjectDetails"
                 :key="testSubject.id"
@@ -107,13 +107,13 @@
                 size="small">
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>
-              <div>ID: {{ testSubject.id }}</div>
-              <div v-if="testSubject.description">备注: {{ testSubject.description }}</div>
-              <div v-if="testSubject.status">状态: {{ testSubject.status }}</div>
-              <div v-if="testSubject.created_by">创建者: {{ testSubject.created_by }}</div>
-              <div v-if="testSubject.created_at">创建时间: {{ formatDate(testSubject.created_at) }}</div>
-              <div v-if="testSubject.updated_by">更新者: {{ testSubject.updated_by }}</div>
-              <div v-if="testSubject.updated_at">更新时间: {{ formatDate(testSubject.updated_at) }}</div>
+              <div>{{ translate('TaskDetail.popover.id') }}: {{ testSubject.id }}</div>
+              <div v-if="testSubject.description">{{ translate('TaskDetail.popover.description') }}: {{ testSubject.description }}</div>
+              <div v-if="testSubject.status">{{ translate('TaskDetail.popover.status') }}: {{ testSubject.status }}</div>
+              <div v-if="testSubject.created_by">{{ translate('TaskDetail.popover.createdBy') }}: {{ testSubject.created_by }}</div>
+              <div v-if="testSubject.created_at">{{ translate('TaskDetail.popover.createdAt') }}: {{ formatDate(testSubject.created_at) }}</div>
+              <div v-if="testSubject.updated_by">{{ translate('TaskDetail.popover.updatedBy') }}: {{ testSubject.updated_by }}</div>
+              <div v-if="testSubject.updated_at">{{ translate('TaskDetail.popover.updatedAt') }}: {{ formatDate(testSubject.updated_at) }}</div>
             </template>
             <template #reference>
               {{ testSubject.name }}
@@ -124,7 +124,7 @@
     </el-form-item>
 
     <!-- Additional dispatch details: Sampling Locations -->
-    <el-form-item label="采样位置" v-if="dispatch && dispatch.samplingLocationDetails && dispatch.samplingLocationDetails.length">
+    <el-form-item :label="translate('TaskDetail.samplingLocation')" v-if="dispatch && dispatch.samplingLocationDetails && dispatch.samplingLocationDetails.length">
       <div class="tags">
         <el-tag v-for="samplingLocation in dispatch.samplingLocationDetails"
                 :key="samplingLocation.id"
@@ -133,13 +133,13 @@
                 effect="light">
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>
-              <div>ID: {{ samplingLocation.id }}</div>
-              <div v-if="samplingLocation.description">备注: {{ samplingLocation.description }}</div>
-              <div v-if="samplingLocation.status">状态: {{ samplingLocation.status }}</div>
-              <div v-if="samplingLocation.created_by">创建者: {{ samplingLocation.created_by }}</div>
-              <div v-if="samplingLocation.created_at">创建时间: {{ formatDate(samplingLocation.created_at) }}</div>
-              <div v-if="samplingLocation.updated_by">更新者: {{ samplingLocation.updated_by }}</div>
-              <div v-if="samplingLocation.updated_at">更新时间: {{ formatDate(samplingLocation.updated_at) }}</div>
+              <div>{{ translate('TaskDetail.popover.id') }}: {{ samplingLocation.id }}</div>
+              <div v-if="samplingLocation.description">{{ translate('TaskDetail.popover.description') }}: {{ samplingLocation.description }}</div>
+              <div v-if="samplingLocation.status">{{ translate('TaskDetail.popover.status') }}: {{ samplingLocation.status }}</div>
+              <div v-if="samplingLocation.created_by">{{ translate('TaskDetail.popover.createdBy') }}: {{ samplingLocation.created_by }}</div>
+              <div v-if="samplingLocation.created_at">{{ translate('TaskDetail.popover.createdAt') }}: {{ formatDate(samplingLocation.created_at) }}</div>
+              <div v-if="samplingLocation.updated_by">{{ translate('TaskDetail.popover.updatedBy') }}: {{ samplingLocation.updated_by }}</div>
+              <div v-if="samplingLocation.updated_at">{{ translate('TaskDetail.popover.updatedAt') }}: {{ formatDate(samplingLocation.updated_at) }}</div>
             </template>
             <template #reference>
               {{ samplingLocation.name }}
@@ -150,7 +150,7 @@
     </el-form-item>
 
     <!-- Additional dispatch details: Instruments -->
-    <el-form-item label="仪器" v-if="dispatch && dispatch.instrumentDetails && dispatch.instrumentDetails.length">
+    <el-form-item :label="translate('TaskDetail.instrument')" v-if="dispatch && dispatch.instrumentDetails && dispatch.instrumentDetails.length">
       <div class="tags">
         <el-tag v-for="instrument in dispatch.instrumentDetails"
                 :key="instrument.id"
@@ -159,16 +159,16 @@
                 effect="light">
           <el-popover effect="light" trigger="hover" placement="top" width="auto">
             <template #default>
-              <div>ID: {{ instrument.id }}</div>
-              <div v-if="instrument.description">备注: {{ instrument.description }}</div>
-              <div v-if="instrument.model_number">型号: {{ instrument.model_number }}</div>
-              <div v-if="instrument.manufacturer">制造商: {{ instrument.manufacturer }}</div>
-              <div v-if="instrument.type">仪器类型: {{ instrument.type }}</div>
-              <div v-if="instrument.status">状态: {{ instrument.status }}</div>
-              <div v-if="instrument.created_by">创建者: {{ instrument.created_by }}</div>
-              <div v-if="instrument.created_at">创建时间: {{ formatDate(instrument.created_at) }}</div>
-              <div v-if="instrument.updated_by">更新者: {{ instrument.updated_by }}</div>
-              <div v-if="instrument.updated_at">更新时间: {{ formatDate(instrument.updated_at) }}</div>
+              <div>{{ translate('TaskDetail.popover.id') }}: {{ instrument.id }}</div>
+              <div v-if="instrument.description">{{ translate('TaskDetail.popover.description') }}: {{ instrument.description }}</div>
+              <div v-if="instrument.model_number">{{ translate('TaskDetail.popover.modelNumber') }}: {{ instrument.model_number }}</div>
+              <div v-if="instrument.manufacturer">{{ translate('TaskDetail.popover.manufacturer') }}: {{ instrument.manufacturer }}</div>
+              <div v-if="instrument.type">{{ translate('TaskDetail.popover.type') }}: {{ instrument.type }}</div>
+              <div v-if="instrument.status">{{ translate('TaskDetail.popover.status') }}: {{ instrument.status }}</div>
+              <div v-if="instrument.created_by">{{ translate('TaskDetail.popover.createdBy') }}: {{ instrument.created_by }}</div>
+              <div v-if="instrument.created_at">{{ translate('TaskDetail.popover.createdAt') }}: {{ formatDate(instrument.created_at) }}</div>
+              <div v-if="instrument.updated_by">{{ translate('TaskDetail.popover.updatedBy') }}: {{ instrument.updated_by }}</div>
+              <div v-if="instrument.updated_at">{{ translate('TaskDetail.popover.updatedAt') }}: {{ formatDate(instrument.updated_at) }}</div>
             </template>
             <template #reference>
               {{ instrument.name }}
@@ -186,6 +186,7 @@ import {getDispatchByDispatchedTaskId} from "@/services/dispatchService";
 import {getTestSubjectById} from "@/services/testSubjectService";
 import {getSamplingLocationById} from "@/services/samplingLocationService";
 import {getInstrumentById} from "@/services/instrumentService";
+import {translate} from "@/utils/i18n";
 
 export default {
   props: {
@@ -208,8 +209,9 @@ export default {
     };
   },
   methods: {
+    translate,
     getFormNameById(formId) {
-      return this.formMap[formId] || "未知表单";
+      return this.formMap[formId] || "N/A";
     },
     getUserById(personnelId) {
       return this.personnelMap[personnelId] || null;
@@ -242,11 +244,11 @@ export default {
     },
     stateName(stateId) {
       const stateMap = {
-        1: "待处理",
-        2: "进行中",
-        3: "已完成",
-        4: "已取消",
-        5: "已逾期",
+        1: translate('TaskDetail.status.1'),
+        2: translate('TaskDetail.status.2'),
+        3: translate('TaskDetail.status.3'),
+        4: translate('TaskDetail.status.4'),
+        5: translate('TaskDetail.status.5'),
       };
       return stateMap[stateId] || "Unknown";
     },
