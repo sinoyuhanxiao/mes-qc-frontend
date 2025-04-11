@@ -158,7 +158,6 @@ import {Search} from "@element-plus/icons-vue";
 import { getAllDispatchedTasks, getAllDispatchedTasksByDispatchId } from "@/services/taskCenterService"
 import {translate} from "@/utils/i18n";
 
-
 export default {
   props: {
     dispatchId: {
@@ -266,13 +265,13 @@ export default {
     },
     stateName(stateId) {
       const stateMap = {
-        1: "待处理",
-        2: "进行中",
-        3: "已完成",
-        4: "已取消",
-        5: "已过期",
+        1: translate('MyTaskTable.taskCompletionStatus.pending'),
+        2: translate('MyTaskTable.taskCompletionStatus.inProgress'),
+        3: translate('MyTaskTable.taskCompletionStatus.completed'),
+        4: translate('MyTaskTable.taskCompletionStatus.canceled'),
+        5: translate('MyTaskTable.taskCompletionStatus.overdue'),
       };
-      return stateMap[stateId] || "Unknown"; // Default to 'Unknown' if stateId is undefined
+      return stateMap[stateId] || translate('orderManagement.unknownState'); // Default to 'Unknown' if stateId is undefined
     },
     calculateRemainingTime(dueDate) {
       if (!dueDate) return "-";
@@ -281,18 +280,18 @@ export default {
       const due = dayjs(dueDate);
       const diffInMinutes = due.diff(now, "minute");
 
-      if (diffInMinutes <= 0) return "已过期";
+      if (diffInMinutes <= 0) return translate('MyTaskTable.taskCompletionStatus.overdue');
 
       const days = Math.floor(diffInMinutes / (60 * 24));
       const hours = Math.floor((diffInMinutes % (60 * 24)) / 60);
       const minutes = diffInMinutes % 60;
 
       if (days > 0) {
-        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+        return `${days} ${translate('MyTaskTable.time.day')} ${hours} ${translate('MyTaskTable.time.hour')} ${minutes} ${translate('MyTaskTable.time.minute')}`;
       } else if (hours > 0) {
-        return `${hours} 小时 ${minutes} 分钟`;
+        return `${hours} ${translate('MyTaskTable.time.hour')} ${minutes} ${translate('MyTaskTable.time.minute')}`;
       } else {
-        return `${minutes} 分钟`;
+        return `${minutes} ${translate('MyTaskTable.time.minute')}`;
       }
     },
     remainingTimeTag(dueDate) {

@@ -43,7 +43,7 @@
     <el-table-column
         prop="state"
         :label="translate('orderManagement.orderTable.state')"
-        width="170"
+        width="230"
         sortable
     >
       <template #default="scope">

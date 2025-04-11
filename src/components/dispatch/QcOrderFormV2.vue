@@ -126,7 +126,7 @@
                     :button-props="{ type: 'primary' }"
                     :period="dispatch.source === 'shift' ? 'day' : 'hour'"
                     :disabled="dispatch.source === 'shift'"
-                    :locale="'en-us'"
+                    :locale="currentLanguage"
                 />
               </el-form-item>
 
@@ -296,7 +296,7 @@
               <!-- User Selection -->
               <el-form-item
                   v-if="dispatch.source !== 'shift'"
-                  :label="translate('orderManagement.dispatchedTaskTable.user')"
+                  :label="translate('orderManagement.orderTable.associatedUsers')"
                   :prop="'dispatches.' + index + '.user_ids'"
                   required
                   :rules="[{
@@ -517,7 +517,7 @@
 <script>
 import DispatchFormTreeSelect from "@/components/dispatch/DispatchFormTreeSelect.vue";
 import {CronElementPlus} from "@vue-js-cron/element-plus";
-import {normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
+import {getCurrentLanguage, normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
 import {getAllProductionWorkOrders, getAllProducts, getAllRawMaterials} from "@/services/productionService";
 import {getAllEquipments, getAllMaintenanceWorkOrders} from "@/services/maintenanceService";
 import {getAllInstruments} from "@/services/instrumentService";
@@ -603,17 +603,13 @@ export default {
         };
       });
     },
-    cronLocale() {
-      const currentLang = localStorage.getItrem('app-language') || 'en';
-      console.log(currentLang);
-      return currentLang.toLowerCase().startsWith('zh') ? 'zh-cn' : 'en-us'
-    }
   },
   mounted() {
     this.loadAllOptions()
   },
   data() {
     return {
+      currentLanguage: getCurrentLanguage(),
       isSubmitted: false,
       dateFormat: "YYYY-MM-DD HH:mm:ss",
       valueFormat: "YYYY-MM-DDTHH:mm:ssZ",
@@ -699,6 +695,7 @@ export default {
     }
   },
   methods: {
+    getCurrentLanguage,
     translate,
     disablePastDates(date) {
       return date.getTime() < Date.now() - 86400000; // Disable dates before today

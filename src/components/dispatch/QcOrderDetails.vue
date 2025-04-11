@@ -85,20 +85,20 @@
                 :link="true"
                 @click="toggleCollapse(index)"
                 :icon="dispatch.collapsed ? 'el-icon-arrow-down' : 'el-icon-arrow-up'">
-              {{ dispatch.collapsed ? '展开' : '收起' }}
+              {{ dispatch.collapsed ? translate('orderManagement.orderFormDialog.collapseButton') : translate('orderManagement.orderFormDialog.expandButton') }}
             </el-button>
 
             <el-button
                 v-if="dispatch.type === 'regular' && dispatch.state === 1"
                 type="info"
                 @click="handlePauseOrderDispatch(dispatch.id)">
-              暂停
+              {{ translate('orderManagement.pauseDispatch') }}
             </el-button>
             <el-button
                 v-if="dispatch.type === 'regular' && dispatch.state === 5"
                 type="info"
                 @click="handleResumeOrderDispatch(dispatch.id)">
-              重启
+              {{ translate('orderManagement.resumeDispatch') }}
             </el-button>
           </div>
         </div>
@@ -134,7 +134,9 @@
           </el-form-item>
 
           <el-form-item :label="translate('orderManagement.orderDetailDialog.executionLogic')" v-if="dispatch.cron_expression">
-            {{ humanizeCronInChinese(unnormalizeCronExpression(dispatch.cron_expression)) }}
+            {{
+              formatCronExpression(dispatch.cron_expression)
+            }}
           </el-form-item>
 
           <el-form-item :label="translate('orderManagement.orderDetailDialog.periodStartTime')" v-if="dispatch.start_time">
@@ -561,8 +563,8 @@ import {
   formatScheduleType,
   unnormalizeCronExpression,
   getQcOrderStateTagData,
-  getDispatchStateTagData
-
+  getDispatchStateTagData,
+  getCurrentLanguage
 } from "@/utils/dispatch-utils";
 import { humanizeCronInChinese } from "cron-chinese";
 import { getUserById } from "@/services/userService";
@@ -576,8 +578,15 @@ import {getTestSubjectById} from "@/services/testSubjectService";
 import {getSamplingLocationById} from "@/services/samplingLocationService";
 import {getInstrumentById} from "@/services/instrumentService";
 import {translate} from "@/utils/i18n";
+import cronstrue from "cronstrue";
+
 
 export default {
+  computed: {
+    cronstrue() {
+      return cronstrue
+    }
+  },
   components: {UserReference, DispatchedTasksList},
   props: {
     currentOrder: {
@@ -602,6 +611,7 @@ export default {
     };
   },
   methods: {
+    getCurrentLanguage,
     translate,
     getDispatchStateTagData,
     getQcOrderStateTagData,
@@ -711,6 +721,18 @@ export default {
     toggleCollapse(index) {
       this.dispatches[index].collapsed =
           !this.dispatches[index].collapsed;
+    },
+    formatCronExpression(cron) {
+      if (!cron) return translate('orderManagement.orderFormDialog.unknownExecutionLogic');
+      try {
+        if (getCurrentLanguage() === 'en-US'){
+          return cronstrue.toString(unnormalizeCronExpression(cron))
+        } else {
+          return humanizeCronInChinese(unnormalizeCronExpression(cron));
+        }
+      } catch {
+        return translate('orderManagement.orderFormDialog.unknownExecutionLogic');
+      }
     },
     async handlePauseOrderDispatch(dispatchId) {
       try {

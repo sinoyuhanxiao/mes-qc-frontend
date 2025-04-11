@@ -3,11 +3,11 @@
     <!-- Title, Search Box -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
       <div style="display: flex; align-items: center;">
-        <h2>检测项目管理</h2>
+        <h2>{{ translate('testSubjectManagement.title') }}</h2>
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
-            placeholder="搜索关键字"
+            :placeholder="translate('common.searchPlaceholder')"
             clearable
             style="width: 300px; margin-left: 20px;"
         >
@@ -18,7 +18,7 @@
       </div>
       <!-- Refresh Button -->
       <div style="display: flex; gap: 10px;">
-        <el-tooltip content="刷新列表" placement="top">
+        <el-tooltip :content="translate('orderManagement.refreshList')" placement="top">
           <el-button
               class="refresh-button"
               type="primary"
@@ -31,7 +31,7 @@
           </el-button>
         </el-tooltip>
         <el-button type="primary" @click="openDialog()">
-          + 新增
+          {{ translate('common.addButton') }}
         </el-button>
       </div>
     </div>
@@ -48,7 +48,7 @@
     <!-- Dialog for Create / Edit -->
     <el-dialog
         v-model="dialogVisible"
-        :title="isEditMode ? '编辑检测项目' : '新增检测项目'"
+        :title="isEditMode ? translate('testSubjectManagement.editTestSubject') : translate('testSubjectManagement.addTestSubject')"
         :close-on-click-modal="false"
     >
       <TestSubjectForm
@@ -72,6 +72,7 @@ import {RefreshRight, Search} from "@element-plus/icons-vue";
 import TestSubjectList from "@/components/test-subject/TestSubjectList.vue";
 import TestSubjectForm from "@/components/test-subject/TestSubjectForm.vue";
 import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
+import {translate, translateWithParams} from "@/utils/i18n";
 
 export default {
   components: {RefreshRight, SamplingLocationList, Search, TestSubjectList, TestSubjectForm },
@@ -89,6 +90,7 @@ export default {
     };
   },
   methods: {
+    translate,
     async loadTestSubjects() {
       try {
         const response = await getAllTestSubjects();
@@ -125,9 +127,9 @@ export default {
     },
     async confirmDelete(id) {
       try {
-        await this.$confirm("确定删除该检测项目吗？", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
+        await this.$confirm(translate('orderManagement.deleteConfirmation'), translate('orderManagement.messages.messageTitle'), {
+          confirmButtonText: translate('orderManagement.confirm'),
+          cancelButtonText: translate('orderManagement.cancel'),
           type: "warning",
         });
         await deleteTestSubject(id, 1);
@@ -140,8 +142,8 @@ export default {
       this.searchQuery = "";
       await this.loadTestSubjects()
       this.$notify({
-        title: "提示",
-        message: "列表已更新。",
+        title: translate('orderManagement.messages.messageTitle'),
+        message: translate('orderManagement.messages.listRefreshed'),
         type: "success",
       });
     },

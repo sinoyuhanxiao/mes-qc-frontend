@@ -340,6 +340,7 @@ export default {
     },
     orderManagement: {
         Id: 'ID',
+        name: 'Name',
         status: 'Status',
         type: 'Type',
         createdAt: 'Created At',
@@ -355,6 +356,8 @@ export default {
         cancel: 'Cancel',
         edit: 'Edit',
         confirm: 'Confirm',
+        pauseDispatch: 'Pause Dispatch',
+        resumeDispatch: 'Resume Dispatch',
         delete: 'Delete',
         reset: 'Reset',
         dispatchPlan: 'Dispatch Plan',
@@ -478,6 +481,22 @@ export default {
             associatedFormCount: 'Associated forms count',
             associatedUserCount: 'Associated users count',
         },
+        qcOrderState: {
+            active: 'Active (Dispatch plans running)',
+            inactive: 'Inactive (No active dispatch plans)',
+            allExpired: 'All dispatch plans expired',
+            allLimitsReached: 'All plans reached dispatch limit',
+            allPaused: 'All dispatch plans paused',
+            invalid: 'Invalid (Some plans are invalid)'
+        },
+        dispatchPlanState: {
+            running: 'Running',
+            inactive: 'Inactive',
+            expired: 'Expired',
+            limitReached: 'Dispatch limit reached',
+            paused: 'Paused',
+            invalid: 'Invalid'
+        },
         validation: {
             orderNameRequired: 'Order name is required',
             executionPeriodRequired: 'Execution period is required',
@@ -516,18 +535,46 @@ export default {
         },
     },
     instrumentManagement: {
+        title: 'Instrument Management',
         instrument: 'Instrument',
         instrumentId: 'Instrument ID',
+        type: 'Instrument Type',
+        typePlaceholder: 'Please input instrument type',
         modelNumber: 'Model Number',
+        modelNumberPlaceholder: 'Please input model number',
         vendor: 'Vendor',
+        vendorPlaceholder: 'Please input vendor',
+        editInstrument: 'Edit Instrument',
+        addInstrument: 'Add Instrument',
+        namePlaceholder: 'Please input instrument name',
+        descriptionPlaceholder: 'Please input instrument description',
+        validation: {
+            nameRequired: 'Instrument name is required',
+        }
     },
     testSubjectManagement: {
+        title: 'Test Subject Management',
         testSubject: 'Test Subject',
         testSubjectId: 'Test Subject ID',
+        editTestSubject: 'Edit Test Subject',
+        addTestSubject: 'Add Test Subject',
+        namePlaceholder: 'Please input test subject name',
+        descriptionPlaceholder: 'Please input test subject description',
+        validation: {
+            nameRequired: 'Test subject name is required',
+        }
     },
     samplingLocationManagement: {
+        title: 'Sampling Location Management',
         samplingLocation: 'Sampling Location',
         samplingLocationId: 'Sampling Location ID',
+        editSamplingLocation: 'Edit Sampling Location',
+        addSamplingLocation: 'Add Sampling Location',
+        namePlaceholder: 'Please input sampling location name',
+        descriptionPlaceholder: 'Please input sampling location description',
+        validation: {
+            nameRequired: 'Sampling location name is required'
+        }
     },
     FormDataSummary: {
         loadingText: "Generating PDF report...",

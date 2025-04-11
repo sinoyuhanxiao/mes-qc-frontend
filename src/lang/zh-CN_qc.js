@@ -340,6 +340,7 @@ export default {
     },
     orderManagement: {
         Id: '号码',
+        name: '名称',
         status: '状态',
         type: '类型',
         createdAt: '创建时间',
@@ -352,10 +353,13 @@ export default {
         addButton: '+ 新增',
         viewDispatchedTaskButton: '查看已派发任务',
         state: '状态',
+        unknownState: '未知状态',
         cancel: '取消',
         edit: '编辑',
         confirm: '确认',
         delete: '删除',
+        pauseDispatch: '暂停派发',
+        resumeDispatch: '重启派发',
         reset: '重置',
         plan: '计划',
         dispatchPlan: '派发计划',
@@ -468,7 +472,7 @@ export default {
             taskDueDateOffset: '任务时限: {input} 分钟',
             missing: '无',
             unknownShift: '未知班组',
-            unknownUser: '未知用户',
+            unknownUser: '未知人员',
             unknownForm: '未知表单',
             unknownExecutionLogic: '无效执行频率',
         },
@@ -479,6 +483,22 @@ export default {
             shiftPlanDueDate: '任务时限：24小时',
             associatedFormCount: '关联表单数',
             associatedUserCount: '关联人员数',
+        },
+        qcOrderState: {
+            active: '活跃(有运行中的派发计划)',
+            inactive: '非活跃(无运行中的派发计划)',
+            allExpired: '所有派发计划已过期',
+            allLimitsReached: '所有派发计划达上限',
+            allPaused: '所有派发计划已暂停',
+            invalid: '无效(有派发计划失效)'
+        },
+        dispatchPlanState: {
+            running: '运行中',
+            inactive: '非活跃',
+            expired: '已过期',
+            limitReached: '已达派发上限',
+            paused: '暂停',
+            invalid: '失效'
         },
         validation: {
             orderNameRequired: '工单名称为必填项',
@@ -518,18 +538,46 @@ export default {
         },
     },
     instrumentManagement: {
+        title: '仪器管理',
         instrument: '仪器',
         instrumentId: '仪器号码',
+        type: '仪器类型',
+        typePlaceholder: '输入仪器类型',
         modelNumber: '型号',
+        modelNumberPlaceholder: '输入型号',
         vendor: '制造商',
+        vendorPlaceholder: '输入制造商',
+        editInstrument: '编辑仪器',
+        addInstrument: '新增仪器',
+        namePlaceholder: '输入仪器名称',
+        descriptionPlaceholder: '输入仪器描述',
+        validation: {
+            nameRequired: '仪器名称是必填项'
+        }
     },
     testSubjectManagement: {
+        title: '检测项目管理',
         testSubject: '检测项目',
         testSubjectId: '检测项目号码',
+        editTestSubject: '编辑检测项目',
+        addTestSubject: '新增检测项目',
+        namePlaceholder: '输入检测项目名称',
+        descriptionPlaceholder: '输入检测项目描述',
+        validation: {
+            nameRequired: '检测项目名称是必填项'
+        }
     },
     samplingLocationManagement: {
+        title: '采样点管理',
         samplingLocation: '采样点',
         samplingLocationId: '采样点号码',
+        editSamplingLocation: '编辑采样点',
+        addSamplingLocation: '新增采样点',
+        namePlaceholder: '输入采样点名称',
+        descriptionPlaceholder: '输入采样点描述',
+        validation: {
+            nameRequired: '采样点名称是必填项'
+        }
     },
     FormDataSummary: {
         loadingText: "正在生成PDF报告...",

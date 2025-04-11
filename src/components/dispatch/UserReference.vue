@@ -2,16 +2,16 @@
     <el-tag type="primary" size="small" effect="light">
       <el-popover effect="light" trigger="hover" placement="top" width="auto">
         <template #default>
-          <div><strong>用户 ID:</strong> {{ userDetail.id }}</div>
-          <div><strong>姓名:</strong> {{ userDetail.name || "无" }}</div>
-          <div><strong>用户名:</strong> {{ userDetail.username || "无" }}</div>
-          <div><strong>角色:</strong> {{ getRoleName(userDetail.role_id) }}</div>
-          <div><strong>企业微信:</strong> {{ userDetail.wecom_id || "无" }}</div>
-          <div><strong>邮箱:</strong> {{ userDetail.email || "无" }}</div>
-          <div><strong>电话:</strong> {{ userDetail.phone_number || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.id') }}:</strong> {{ userDetail.id }}</div>
+          <div><strong>{{ translate('userManagement.table.name') }}:</strong> {{ userDetail.name || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.username') }}:</strong> {{ userDetail.username || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.role') }}:</strong> {{ getRoleName(userDetail.role_id) }}</div>
+          <div><strong>{{ translate('userManagement.table.wecomId') }}:</strong> {{ userDetail.wecom_id || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.email') }}:</strong> {{ userDetail.email || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.phoneNumber') }}:</strong> {{ userDetail.phone_number || "无" }}</div>
         </template>
         <template #reference>
-          {{ userDetail.name || "未知" }}
+          {{ userDetail.name || translate('userManagement.orderFormDialog.unknownUser') }}
         </template>
       </el-popover>
     </el-tag>
@@ -19,6 +19,7 @@
 
 <script>
 import { getUserById } from "@/services/userService";
+import {translate} from "@/utils/i18n";
 
 export default {
   props: {
@@ -33,6 +34,7 @@ export default {
     };
   },
   methods: {
+    translate,
     async fetchUserDetail() {
       if (!this.userId) return;
       try {
@@ -46,10 +48,10 @@ export default {
     },
     getRoleName(roleId) {
       const roleMap = {
-        1: "管理员",
-        2: "质检人员",
+        1: translate('userManagement.role.admin'),
+        2: translate('userManagement.role.qcWorker'),
       };
-      return roleMap[roleId] || "未知角色";
+      return roleMap[roleId] || translate('userManagement.role.unknown');
     },
   },
   watch: {

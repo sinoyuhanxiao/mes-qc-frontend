@@ -6,26 +6,26 @@
       :default-sort="{ prop: 'id', order: 'descending' }"
       :height = "tableHeight"
   >
-    <el-table-column prop="id" label="号码" width="80" sortable/>
-    <el-table-column prop="name" label="名称" width="180" sortable show-overflow-tooltip/>
-    <el-table-column prop="type" label="类型" width="120" sortable show-overflow-tooltip/>
-    <el-table-column prop="manufacturer" label="制造商" width="180" sortable show-overflow-tooltip/>
-    <el-table-column prop="modelNumber" label="型号" width="150" sortable show-overflow-tooltip/>
-    <el-table-column prop="description" label="描述" sortable show-overflow-tooltip/>
-    <el-table-column prop="created_at" label="创建时间" width="180" sortable>
+    <el-table-column prop="id" :label="translate('orderManagement.Id')" width="80" sortable/>
+    <el-table-column prop="name" :label="translate('orderManagement.name')" width="180" sortable show-overflow-tooltip/>
+    <el-table-column prop="type" :label="translate('orderManagement.type')" width="120" sortable show-overflow-tooltip/>
+    <el-table-column prop="manufacturer" :label="translate('instrumentManagement.vendor')" width="180" sortable show-overflow-tooltip/>
+    <el-table-column prop="modelNumber" :label="translate('instrumentManagement.modelNumber')" width="150" sortable show-overflow-tooltip/>
+    <el-table-column prop="description" :label="translate('orderManagement.description')" sortable show-overflow-tooltip/>
+    <el-table-column prop="created_at" :label="translate('orderManagement.createdAt')" width="180" sortable>
       <template #default="scope">
         <time-slot :value="scope.row.created_at" />
       </template>
     </el-table-column>
-    <el-table-column prop="created_by" label="创建者" width="180" sortable>
+    <el-table-column prop="created_by" :label="translate('orderManagement.createdBy')" width="180" sortable>
       <template #default="scope">
         <UserReference :user-id="scope.row.created_by"/>
       </template>
     </el-table-column>
-    <el-table-column label="操作" width="250">
+    <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="250">
       <template #default="scope">
-        <el-button size="small" @click="$emit('edit-instrument', scope.row)">修改</el-button>
-        <el-button type="danger" size="small" @click="$emit('delete-instrument', scope.row.id)">删除</el-button>
+        <el-button size="small" @click="$emit('edit-instrument', scope.row)">{{ translate('orderManagement.edit') }}</el-button>
+        <el-button type="danger" size="small" @click="$emit('delete-instrument', scope.row.id)">{{ translate('orderManagement.delete') }}</el-button>
       </template>
     </el-table-column>
   </el-table>
@@ -50,6 +50,7 @@
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
 import UserReference from "@/components/dispatch/UserReference.vue";
 import {getQcOrderStateTagData} from "@/utils/dispatch-utils";
+import {translate} from "@/utils/i18n";
 
 export default {
   components: {UserReference, TimeSlot},
@@ -97,6 +98,7 @@ export default {
     }
   },
   methods: {
+    translate,
     filterTable(input) {
       const searchText = input.toLowerCase();
       this.filteredList = this.originalList.filter((item) => {

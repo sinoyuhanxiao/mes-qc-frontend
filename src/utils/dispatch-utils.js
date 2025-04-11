@@ -177,26 +177,26 @@ export function calculateRemainingTime(date) {
 
 export function getQcOrderStateTagData(state) {
     const stateMap = {
-        1: { label: "活跃(有运行中的任务)", type: "success" },
-        2: { label: "非活跃(无运行中的任务)", type: "info" },
-        3: { label: "所有任务已过期", type: "danger" },
-        4: { label: "所有任务达上限", type: "warning" },
-        5: { label: "所有任务已暂停", type: "primary" },
-        6: { label: "无效(有任务失效)", type: "danger" },
+        1: { label: translate('orderManagement.qcOrderState.active'), type: 'success' },
+        2: { label: translate('orderManagement.qcOrderState.inactive'), type: 'info' },
+        3: { label: translate('orderManagement.qcOrderState.allExpired'), type: 'danger' },
+        4: { label: translate('orderManagement.qcOrderState.allLimitsReached'), type: 'warning' },
+        5: { label: translate('orderManagement.qcOrderState.allPaused'), type: 'primary' },
+        6: { label: translate('orderManagement.qcOrderState.invalid'), type: 'danger' },
     };
-    return stateMap[state] || { label: "未知", type: "default" };
+    return stateMap[state] || { label: translate('orderManagement.unknownState'), type: "default" };
 }
 
 export function getDispatchStateTagData(state) {
     const stateMap = {
-        1: { label: "运行中", type: "success" },
-        2: { label: "非活跃", type: "info" },
-        3: { label: "已过期", type: "danger" },
-        4: { label: "已达派发上限", type: "warning" },
-        5: { label: "暂停", type: "primary" },
-        6: { label: "失效", type: "danger" },
+        1: { label: translate('orderManagement.dispatchPlanState.running'), type: 'success' },
+        2: { label: translate('orderManagement.dispatchPlanState.inactive'), type: 'info' },
+        3: { label: translate('orderManagement.dispatchPlanState.expired'), type: 'danger' },
+        4: { label: translate('orderManagement.dispatchPlanState.limitReached'), type: 'warning' },
+        5: { label: translate('orderManagement.dispatchPlanState.paused'), type: 'primary' },
+        6: { label: translate('orderManagement.dispatchPlanState.invalid'), type: 'danger' },
     };
-    return stateMap[state] || { label: "未知", type: "default" };
+    return stateMap[state] || { label: translate('orderManagement.unknownState'), type: "default" };
 }
 
 export async function openFormPreviewWindow(nodeId, vueInstance) {
@@ -228,4 +228,4 @@ export async function openFormPreviewWindow(nodeId, vueInstance) {
     }
 }
 
-export const getCurrentLanguage = () => localStorage.getItem('app-language') || 'en';
+export const getCurrentLanguage = () => localStorage.getItem('app-language') || 'en-US';

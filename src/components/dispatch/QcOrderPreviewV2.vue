@@ -127,9 +127,7 @@ export default {
     formatCronExpression(cron) {
       if (!cron) return translate('orderManagement.orderFormDialog.unknownExecutionLogic');
       try {
-        console.log('language')
-        console.log(getCurrentLanguage());
-        if (getCurrentLanguage() === 'en'){
+        if (getCurrentLanguage() === 'en-US'){
           return cronstrue.toString(cron)
         } else {
           return humanizeCronInChinese(cron);
