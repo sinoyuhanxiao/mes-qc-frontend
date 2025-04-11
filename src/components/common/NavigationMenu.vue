@@ -124,12 +124,12 @@
       <div v-if="!isCollapsed" class="user-info">
         <el-divider />
         <div class="user-details">
-          <el-tooltip :content="translate('navigationMenu.editUserToolTip')" placement="top">
-            <el-icon class="edit-icon-wrapper" @click="openEditDialog" :size="20">
-              <Edit />
-            </el-icon>
-          </el-tooltip>
-          <!--        <el-icon size="20px"><User /></el-icon>-->
+<!--          <el-tooltip content="Edit User" placement="top">-->
+<!--            <el-icon class="edit-icon-wrapper" @click="openEditDialog" :size="20">-->
+<!--              <Edit />-->
+<!--            </el-icon>-->
+<!--          </el-tooltip>-->
+          <el-icon size="20px"><User /></el-icon>
           <span class="username">{{ user.name }}</span>
         </div>
         <div class="user-role">{{ roleName }}</div>

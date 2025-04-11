@@ -1,6 +1,6 @@
 <template>
   <MyTaskTable
-      title="逾期任务"
+      :title="translate('TaskCenter.overdueTasksTitle')"
       :columnList="columnList"
       :userId="userId"
       :type="type"
@@ -9,8 +9,10 @@
 
 <script>
 import MyTaskTable from "@/components/task-center/MyTaskTable.vue";
+import {translate} from "@/utils/i18n";
 
 export default {
+  methods: {translate},
   components: {
     MyTaskTable,
   },

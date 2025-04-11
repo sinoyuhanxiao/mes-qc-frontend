@@ -9,7 +9,8 @@
 import Chart from 'primevue/chart';
 import { ref, onMounted } from "vue";
 import { fetchQuarterlyTaskStatistics } from "@/services/taskStats";
-import store from "@/store";  // Add this import
+import store from "@/store";
+import {translate} from "@/utils/i18n";  // Add this import
 
 onMounted(async () => {  // Move API call inside onMounted
   const userId = store.getters.getUser.id;
@@ -33,7 +34,7 @@ const setChartData = (quarterlyData) => {  // Accept parameter
     labels: ['Q1', 'Q2', 'Q3', 'Q4'],
     datasets: [
       {
-        label: '季度任务安排数量',
+        label: translate('TaskCenter.quarterlyTaskCountLabel'),
         data: [quarterlyData.Q1, quarterlyData.Q2, quarterlyData.Q3, quarterlyData.Q4],  // Fix duplicated Q1 values
         backgroundColor: ['rgba(249, 115, 22, 0.2)', 'rgba(6, 182, 212, 0.2)', 'rgb(107, 114, 128, 0.2)', 'rgba(139, 92, 246, 0.2)'],
         borderColor: ['rgb(249, 115, 22)', 'rgb(6, 182, 212)', 'rgb(107, 114, 128)', 'rgb(139, 92, 246)'],

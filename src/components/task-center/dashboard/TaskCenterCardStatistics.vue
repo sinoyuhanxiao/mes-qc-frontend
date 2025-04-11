@@ -5,10 +5,10 @@
         <el-statistic :value="myTodayTasksValue" @click="navigateTo('/current-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              我的今日任务
+              {{ translate('TaskCenterDashboard.todayTasksTitle') }}
               <el-tooltip
                   effect="dark"
-                  content="今日任务数量"
+                  :content="translate('TaskCenterDashboard.todayTasksTooltip')"
                   placement="top"
               >
                 <el-icon style="margin-left: 4px" :size="12">
@@ -20,7 +20,7 @@
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>相比昨天</span>
+            <span>{{ translate('TaskCenterDashboard.comparedToYesterday') }}</span>
             <span :class="todayTaskChange >= 0 ? 'green' : 'red'">
               {{ todayTaskChange }}%
               <el-icon>
@@ -41,10 +41,10 @@
         <el-statistic :value="myFutureTasksValue" @click="navigateTo('/future-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              我的未来任务
+              {{ translate('TaskCenterDashboard.futureTasksTitle') }}
               <el-tooltip
                   effect="dark"
-                  content="未来任务数量"
+                  :content="translate('TaskCenterDashboard.futureTasksTooltip')"
                   placement="top"
               >
                 <el-icon style="margin-left: 4px" :size="12">
@@ -56,7 +56,7 @@
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>相比昨天</span>
+            <span>{{ translate('TaskCenterDashboard.statisticFooterText') }}</span>
             <span :class="futureTaskChange >= 0 ? 'green' : 'red'">
               {{ futureTaskChange }}%
               <el-icon>
@@ -77,13 +77,13 @@
         <el-statistic :value="myhistoricalTasksValue" title="New transactions today" @click="navigateTo('/history-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              我的历史任务
+              {{ translate('TaskCenterDashboard.historicalTasksTitle') }}
             </div>
           </template>
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>相比昨天</span>
+            <span>{{ translate('TaskCenterDashboard.statisticFooterText') }}</span>
             <span :class="historicalTaskChange >= 0 ? 'green' : 'red'">
               {{ historicalTaskChange }}%
             <el-icon>
@@ -104,13 +104,13 @@
         <el-statistic :value="myOverdueTasksValue" title="New transactions today" @click="navigateTo('/overdue-tasks')">
           <template #title>
             <div style="display: inline-flex; align-items: center">
-              我的逾期任务
+              {{ translate('TaskCenterDashboard.overdueTasksTitle') }}
             </div>
           </template>
         </el-statistic>
         <div class="statistic-footer">
           <div class="footer-item">
-            <span>相比昨天</span>
+            <span>{{ translate('TaskCenterDashboard.statisticFooterText') }}</span>
             <span :class="overdueTaskChange >= 0 ? 'green' : 'red'">
               {{ overdueTaskChange }}%
               <el-icon>
@@ -141,7 +141,8 @@
   import { useRouter } from 'vue-router'
   import { fetchTaskStatistics } from '@/services/taskStats'
   import { useStore } from 'vuex'
-  import { onMounted } from 'vue'
+  import { onMounted } from 'vue';
+  import { translateWithParams, translate } from "@/utils/i18n"
 
   // task numbers
   const todayTaskSource = ref(0)

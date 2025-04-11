@@ -1,6 +1,6 @@
 <template>
   <MyTaskTable
-      title="未来任务"
+      :title="translate('TaskCenter.futureTasksTitle')"
       :columnList="columnList"
       :userId="userId"
       :type="type"
@@ -9,8 +9,10 @@
 
 <script>
 import MyTaskTable from "@/components/task-center/MyTaskTable.vue";
+import { translate } from "@/utils/i18n";
 
 export default {
+  methods: {translate},
   components: {
     MyTaskTable,
   },
