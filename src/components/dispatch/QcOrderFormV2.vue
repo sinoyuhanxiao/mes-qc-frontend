@@ -126,19 +126,19 @@
                     :button-props="{ type: 'primary' }"
                     :period="dispatch.source === 'shift' ? 'day' : 'hour'"
                     :disabled="dispatch.source === 'shift'"
-                    :locale="cronLocale"
+                    :locale="currentLanguage"
                 />
               </el-form-item>
 
               <!-- Start/End Time for CRON -->
               <el-form-item
                   v-if="dispatch.type === 'regular'"
-                  label="执行周期"
+                  :label="translate('orderManagement.orderFormDialog.executionPeriod')"
                   required
                   :prop="'dispatches.' + index + '.date_range'"
                   :rules="[{
                     required: true,
-                    message: '请选择派发计划执行周期',
+                    message: translate('orderManagement.validation.executionPeriodRequired'),
                     trigger: ['change'],
                     }]"
               >
@@ -146,8 +146,8 @@
                     v-model="dispatch.date_range"
                     type="datetimerange"
                     range-separator="To"
-                    start-placeholder="开始时间"
-                    end-placeholder="停止时间"
+                    :start-placeholder="translate('orderManagement.orderDetailDialog.periodStartTime')"
+                    :end-placeholder="translate('orderManagement.orderDetailDialog.periodEndTime')"
                     :format="dateFormat"
                     :value-format="valueFormat"
                     :disabled-date="disablePastDates"
@@ -157,15 +157,15 @@
               <!-- Single Execution Date -->
               <el-form-item
                   v-else
-                  label="执行时间"
+                  :label="translate('orderManagement.orderFormDialog.executionTime')"
                   required
                   :prop="'dispatches.' + index + '.custom_time'"
-                  :rules="[{required: true, message: '请选择执行时间', trigger: 'change'},]"
+                  :rules="[{required: true, message: translate('orderManagement.validation.executionTimeRequired'), trigger: 'change'},]"
               >
                 <el-date-picker
                     v-model="dispatch.custom_time"
                     type="datetime"
-                    placeholder="请选择执行时间"
+                    :placeholder="translate('orderManagement.orderFormDialog.executionTimePlaceholder')"
                     :format="dateFormat"
                     :value-format="valueFormat"
                     :disabled-date="disablePastDates"
@@ -175,22 +175,16 @@
               <!-- Dispatch Limit -->
               <el-form-item
                   v-if="dispatch.type === 'regular' && dispatch.source !== 'shift'"
-                  label="派发次数上限"
-                  required
+                  :label="translate('orderManagement.orderDetailDialog.dispatchLimit')"
               >
                 <el-col :span="12">
                   <el-form-item
-                      :prop="'dispatches.' + index + '.isUnlimited'"
-                      :rules="[{
-                        required: true,
-                        message: '请选择有无限制派发上限',
-                        trigger: ['change'],
-                        }]">
+                      :prop="'dispatches.' + index + '.isUnlimited'">
                     <el-radio-group
                         v-model="dispatch.isUnlimited"
                     >
-                      <el-radio :value="true">无限制</el-radio>
-                      <el-radio :value="false">限制</el-radio>
+                      <el-radio :value="true">{{ translate('orderManagement.orderFormDialog.unlimited') }}</el-radio>
+                      <el-radio :value="false">{{ translate('orderManagement.orderFormDialog.limited') }}</el-radio>
                     </el-radio-group>
                   </el-form-item>
                 </el-col>
@@ -200,7 +194,7 @@
                       :prop="'dispatches.' + index + '.dispatch_limit'"
                       :rules="[{
                         required: true,
-                        message: '请输入派发次数上限',
+                        message: translate('orderManagement.validation.dispatchLimitInputRequired'),
                         trigger: ['change'],
                       }]"
                   >
@@ -210,23 +204,21 @@
                         :max="9999"
                         :precision="0"
                         style="margin-left: 10px;"
-                        placeholder="请输入派发上限"
-
                     />
                   </el-form-item>
                 </el-col>
               </el-form-item>
 
-              <el-divider>质检任务配置</el-divider>
+              <el-divider>{{ translate('orderManagement.orderDetailDialog.taskConfigDivider') }}</el-divider>
               <!-- Due Date Offset -->
               <el-form-item
                   v-if="dispatch.source !== 'shift'"
-                  label="派发任务时限(分钟)"
+                  :label="translate('orderManagement.orderDetailDialog.taskDueDateOffset')"
                   required
                   :prop="'dispatches.' + index + '.due_date_offset_minute'"
                   :rules="[{
                         required: true,
-                        message: '请输入派发任务时限',
+                        message: translate('orderManagement.validation.dueDateOffsetMinuteRequired'),
                         trigger: ['change'],
                         }]"
               >
@@ -304,12 +296,12 @@
               <!-- User Selection -->
               <el-form-item
                   v-if="dispatch.source !== 'shift'"
-                  label="质检人员"
+                  :label="translate('orderManagement.orderTable.associatedUsers')"
                   :prop="'dispatches.' + index + '.user_ids'"
                   required
                   :rules="[{
                       required: true,
-                      message: '请选择至少一名人员或班次',
+                      message: translate('orderManagement.validation.userRequired'),
                       trigger: ['change'],
                       }]"
               >
@@ -317,7 +309,7 @@
                     v-model="dispatch.dropdownUserIds"
                     multiple
                     filterable
-                    placeholder="请选择人员"
+                    :placeholder="translate('orderManagement.orderFormDialog.userSelectPlaceholder')"
                     :fit-input-width="true"
                     :options="userOptions"
                     @change="addUniqueUserIdsToDispatch($event, index)"
@@ -343,14 +335,14 @@
                   @on-node-clicked="handleFormNodeClicked"
               />
 
-              <el-divider>生产模块关联</el-divider>
+              <el-divider>{{ translate('orderManagement.orderFormDialog.productionModuleDivider') }}</el-divider>
 
               <!-- Product Selection -->
-              <el-form-item label="产品">
+              <el-form-item :label="translate('orderManagement.orderFormDialog.product')">
                 <el-select v-model="dispatch.product_ids"
                            multiple
                            filterable
-                           placeholder="请选择产品"
+                           :placeholder="translate('orderManagement.orderFormDialog.productPlaceholder')"
                            :fit-input-width="true"
                 >
                   <el-option v-for="product in productOptions"
@@ -361,11 +353,11 @@
               </el-form-item>
 
               <!-- Production Work Order Selection -->
-              <el-form-item label="生产工单">
+              <el-form-item :label="translate('orderManagement.orderFormDialog.productionWorkOrder')">
                 <el-select v-model="dispatch.production_work_order_ids"
                            multiple
                            filterable
-                           placeholder="请选择生产工单"
+                           :placeholder="translate('orderManagement.orderFormDialog.productionWorkOrderPlaceholder')"
                            :fit-input-width="true"
                 >
                   <el-option v-for="workOrder in productionWorkOrderOptions"
@@ -376,11 +368,11 @@
               </el-form-item>
 
               <!-- Raw Material Selection -->
-              <el-form-item label="原料">
+              <el-form-item :label="translate('orderManagement.orderFormDialog.rawMaterial')">
                 <el-select v-model="dispatch.raw_material_ids"
                            multiple
                            filterable
-                           placeholder="请选择原料"
+                           :placeholder="translate('orderManagement.orderFormDialog.rawMaterialPlaceholder')"
                            :fit-input-width="true"
                 >
                   <el-option v-for="material in rawMaterialOptions"
@@ -390,13 +382,13 @@
                 </el-select>
               </el-form-item>
 
-              <el-divider>维护模块关联</el-divider>
+              <el-divider>{{ translate('orderManagement.orderFormDialog.maintenanceModuleDivider') }}</el-divider>
               <!-- Maintenance Work Order Selection -->
-              <el-form-item label="维护工单">
+              <el-form-item :label="translate('orderManagement.orderFormDialog.maintenanceWorkOrder')">
                 <el-select v-model="dispatch.maintenance_work_order_ids"
                            multiple
                            filterable
-                           placeholder="请选择维护工单"
+                           :placeholder="translate('orderManagement.orderFormDialog.maintenanceWorkOrderPlaceholder')"
                            :fit-input-width="true"
                 >
                   <el-option v-for="workOrder in maintenanceWorkOrderOptions"
@@ -407,11 +399,11 @@
               </el-form-item>
 
               <!-- Equipment Selection -->
-              <el-form-item label="设备">
+              <el-form-item :label="translate('orderManagement.orderFormDialog.equipment')">
                 <el-select v-model="dispatch.equipment_ids"
                            multiple
                            filterable
-                           placeholder="请选择设备"
+                           :placeholder="translate('orderManagement.orderFormDialog.equipmentPlaceholder')"
                            :fit-input-width="true"
                 >
                   <el-option v-for="equipment in equipmentOptions"
@@ -433,79 +425,22 @@
             plain
             @click="() => addDispatch()"
         >
-          新增派发计划
+          {{ translate('orderManagement.orderFormDialog.addDispatchButton') }}
         </el-button>
+
         <!-- Add Plan By Shift  -->
-<!--        <el-popover-->
-<!--            style="box-sizing: border-box;-->
-<!--              max-height: 400px;-->
-<!--              overflow-y: auto;-->
-<!--              padding: 10px;"-->
-<!--            placement="top-start"-->
-<!--            width="300"-->
-<!--            trigger="click"-->
-<!--            v-model:visible="isPlanPopulateByShiftVisible"-->
-<!--            :teleported="false"-->
-<!--        >-->
-<!--          &lt;!&ndash; Content shown when toggled &ndash;&gt;-->
-<!--          <div style="display: flex; flex-direction: column; gap: 10px;">-->
-<!--            <el-select-v2-->
-<!--                v-model="selectedShiftId"-->
-<!--                placeholder="选择班组"-->
-<!--                placement="top-start"-->
-<!--                multiple-->
-<!--                filterable-->
-<!--                :options="shiftOptions"-->
-<!--                clearable-->
-<!--                style="width: 100%;"-->
-<!--            />-->
-
-<!--            &lt;!&ndash; Description Display for Selected Shifts &ndash;&gt;-->
-<!--            <div v-if="selectedShiftDetails.length" style="max-height: 200px; overflow-y: auto; padding: 5px; border-top: 1px solid #ebeef5;">-->
-<!--              <div v-for="shift in selectedShiftDetails" :key="shift.id" style="margin-bottom: 8px; font-size: 13px; color: #606266;">-->
-<!--                <strong>{{ shift.name }}</strong>-->
-<!--                <ul style="padding-left: 18px; margin: 4px 0;">-->
-<!--                  <li>执行频率：每天 00:00</li>-->
-<!--                  <li>任务时限：24小时</li>-->
-<!--                  <li>关联表单数：{{ shift.formCount }}</li>-->
-<!--                  <li>关联人员数：{{ shift.userCount }}</li>-->
-<!--                </ul>-->
-<!--              </div>-->
-<!--            </div>-->
-
-<!--            <el-button-->
-<!--                type="primary"-->
-<!--                :icon="Check"-->
-<!--                size="small"-->
-<!--                :disabled="!selectedShiftId || selectedShiftId.length === 0"-->
-<!--                @click="handlePopulateDispatchAndClose"-->
-<!--            >-->
-<!--            </el-button>-->
-<!--          </div>-->
-<!--          &lt;!&ndash; Trigger &ndash;&gt;-->
-<!--          <template #reference>-->
-<!--            <el-button-->
-<!--                type="primary"-->
-<!--                plain-->
-<!--                style="margin-right: 12px"-->
-<!--            >-->
-<!--              班次生成计划-->
-<!--            </el-button>-->
-<!--          </template>-->
-<!--        </el-popover>-->
-        <!-- Trigger Button -->
         <el-button
             type="primary"
             plain
             style="margin-right: 12px"
             @click="isPlanPopulateByShiftVisible = true"
         >
-          班次生成计划
+          {{ translate('orderManagement.orderFormDialog.addDispatchByShiftButton') }}
         </el-button>
 
         <!-- Dialog Modal -->
         <el-dialog
-            title="选择班组生成派发计划"
+            :title="translate('orderManagement.shiftPopulatePlanDialog.title')"
             v-model="isPlanPopulateByShiftVisible"
             width="400px"
             :close-on-click-modal="false"
@@ -514,7 +449,7 @@
             <!-- Shift Selector -->
             <el-select-v2
                 v-model="selectedShiftId"
-                placeholder="选择班组"
+                :placeholder="translate('orderManagement.shiftPopulatePlanDialog.selectShiftPlaceholder')"
                 multiple
                 filterable
                 :options="shiftOptions"
@@ -534,10 +469,10 @@
               >
                 <strong>{{ shift.name }}</strong>
                 <ul style="padding-left: 18px; margin: 4px 0;">
-                  <li>执行频率：每天 00:00</li>
-                  <li>任务时限：24小时</li>
-                  <li>关联表单数：{{ shift.form_ids.length }}</li>
-                  <li>关联人员数：{{ shift.user_ids.length }}</li>
+                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.shiftPlanExecutionLogic') }}</li>
+                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.shiftPlanDueDate') }}</li>
+                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.associatedFormCount') }}：{{ shift.form_ids.length }}</li>
+                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.associatedUserCount') }}：{{ shift.user_ids.length }}</li>
                 </ul>
               </div>
             </div>
@@ -545,13 +480,13 @@
 
           <!-- Footer -->
           <template #footer>
-            <el-button @click="isPlanPopulateByShiftVisible = false">取消</el-button>
+            <el-button @click="isPlanPopulateByShiftVisible = false">{{ translate('orderManagement.cancel') }}</el-button>
             <el-button
                 type="primary"
                 :disabled="!selectedShiftId || selectedShiftId.length === 0"
                 @click="handlePopulateDispatchAndClose"
             >
-              确认添加
+              {{ translate('orderManagement.confirm') }}
             </el-button>
           </template>
         </el-dialog>
@@ -561,10 +496,10 @@
             :disabled="!isFormModified"
             @click="submitForm"
         >
-          提交
+          {{ translate('orderManagement.confirm') }}
         </el-button>
-        <el-button type="warning" @click="resetForm">重置</el-button>
-        <el-button @click="$emit('on-cancel')">取消</el-button>
+        <el-button type="warning" @click="resetForm">{{ translate('orderManagement.reset') }}</el-button>
+        <el-button @click="$emit('on-cancel')">{{ translate('orderManagement.cancel') }}</el-button>
       </div>
     </el-main>
     <!-- Right Section - Preview -->
@@ -582,7 +517,7 @@
 <script>
 import DispatchFormTreeSelect from "@/components/dispatch/DispatchFormTreeSelect.vue";
 import {CronElementPlus} from "@vue-js-cron/element-plus";
-import {normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
+import {getCurrentLanguage, normalizeCronExpression, openFormPreviewWindow} from "@/utils/dispatch-utils";
 import {getAllProductionWorkOrders, getAllProducts, getAllRawMaterials} from "@/services/productionService";
 import {getAllEquipments, getAllMaintenanceWorkOrders} from "@/services/maintenanceService";
 import {getAllInstruments} from "@/services/instrumentService";
@@ -668,16 +603,13 @@ export default {
         };
       });
     },
-    cronLocale() {
-      const currentLang = localStorage.getItem('app-language') || 'en'
-      return currentLang.toLowerCase().startsWith('zh') ? 'zh-cn' : 'en-us'
-    }
   },
   mounted() {
     this.loadAllOptions()
   },
   data() {
     return {
+      currentLanguage: getCurrentLanguage(),
       isSubmitted: false,
       dateFormat: "YYYY-MM-DD HH:mm:ss",
       valueFormat: "YYYY-MM-DDTHH:mm:ssZ",
@@ -685,7 +617,7 @@ export default {
       originalQcOrderForm: null, // Store the original order for comparison
       validationRules: {
         name: [
-          {required: true, message: "请输入工单名称", trigger: "blur"},
+          {required: true, message: translate('orderManagement.validation.orderNameRequired'), trigger: "blur"},
           {max: 255, message: "工单名称不能超过255个字符", trigger: "blur"}
         ],
       },
@@ -763,6 +695,7 @@ export default {
     }
   },
   methods: {
+    getCurrentLanguage,
     translate,
     disablePastDates(date) {
       return date.getTime() < Date.now() - 86400000; // Disable dates before today
@@ -805,16 +738,16 @@ export default {
             if (payload.id == null) {
               payload.created_by = this.$store.getters.getUser.id;
               payload.created_at = new Date().toISOString();
-              message = "确定提交工单吗?";
+              message = translate('orderManagement.messages.submitConfirmation');
             } else {
               payload.updated_by = this.$store.getters.getUser.id;
               payload.updated_at = new Date().toISOString();
-              message = "确认提交工单吗? 所有未开始任务将被取消,并按照新设置重新派发.";
+              message = translate('orderManagement.messages.submitEditedOrderConfirmation');
             }
 
-            await this.$confirm(message, "提示", {
-              confirmButtonText: "确定",
-              cancelButtonText: "取消",
+            await this.$confirm(message, translate('orderManagement.messages.messageTitle'), {
+              confirmButtonText: translate('orderManagement.confirm'),
+              cancelButtonText: translate('orderManagement.cancel'),
               type: "warning",
             });
 
@@ -822,17 +755,17 @@ export default {
           } catch (error) {
           }
         } else {
-          await this.$alert("请填写所有必填字段后再提交。", "提示", {
-            confirmButtonText: "确定",
+          await this.$alert(translate('orderManagement.messages.missingRequiredField'), translate('orderManagement.messages.messageTitle'), {
+            confirmButtonText: translate('orderManagement.confirm'),
             type: "error",
           });
         }
       });
     },
     async resetForm() {
-      await this.$confirm("确定重置工单吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+      await this.$confirm(translate('orderManagement.messages.resetConfirmation'), translate('orderManagement.messages.messageTitle'), {
+        confirmButtonText: translate('orderManagement.confirm'),
+        cancelButtonText: translate('orderManagement.cancel'),
         type: "warning",
       });
       this.$emit("reset-form");
@@ -1074,7 +1007,7 @@ export default {
 
         d.source = 'shift';
         d.cron_expression = '0 0 * * *';
-        d.name = (shift? shift.name : '') + '计划';
+        d.name = (shift? shift.name : '') + translate('orderManagement.plan');
         d.collapsed = true;
         d.shift_id = shiftId;
         d.due_date_offset_minute = 1440;

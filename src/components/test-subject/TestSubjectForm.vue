@@ -7,19 +7,19 @@
   >
     <!-- Name (Required) -->
     <el-form-item
-        label="名称"
+        :label="translate('orderManagement.name')"
         prop="name"
         maxlength="255"
     >
-      <el-input v-model="testSubject.name" placeholder="输入检测项目名称" />
+      <el-input v-model="testSubject.name" :placeholder="translate('testSubjectManagement.namePlaceholder')" />
     </el-form-item>
 
     <!-- Description (Optional) -->
-    <el-form-item label="描述">
+    <el-form-item :label="translate('orderManagement.description')">
       <el-input
           type="textarea"
           v-model="testSubject.description"
-          placeholder="输入检测项目描述" />
+          :placeholder="translate('testSubjectManagement.descriptionPlaceholder')" />
     </el-form-item>
 
     <!-- Buttons -->
@@ -28,16 +28,18 @@
           type="primary"
           @click="validateAndSubmit"
       >
-        提交
+        {{ translate('orderManagement.confirm') }}
       </el-button>
       <el-button @click="$emit('cancel')">
-        取消
+        {{ translate('orderManagement.cancel') }}
       </el-button>
     </el-form-item>
   </el-form>
 </template>
 
 <script>
+import {translate} from "@/utils/i18n";
+
 export default {
   props: {
     testSubject: {
@@ -52,11 +54,12 @@ export default {
   data() {
     return {
       validationRules: {
-        name: [{ required: true, message: "请输入检测项目名称", trigger: "blur" }],
+        name: [{ required: true, message: translate('testSubjectManagement.validation.nameRequired'), trigger: "blur" }],
       },
     };
   },
   methods: {
+    translate,
     validateAndSubmit() {
       this.$refs.testSubjectFormRef.validate((valid) => {
         if (valid) {

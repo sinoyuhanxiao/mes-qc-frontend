@@ -4,11 +4,11 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
       <!-- Title, Search Box -->
       <div style="display: flex; align-items: center;">
-        <h2>仪器管理</h2>
+        <h2>{{ translate('instrumentManagement.title') }}</h2>
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
-            placeholder="搜索关键字"
+            :placeholder="translate('common.searchPlaceholder')"
             clearable
             style="width: 300px; margin-left: 20px;"
         >
@@ -20,7 +20,7 @@
       <!-- Refresh, Add Button -->
       <div style="display: flex; gap: 10px;">
         <el-tooltip
-            content="刷新列表"
+            :content="translate('orderManagement.refreshList')"
             placement="top">
           <el-button
               class="refresh-button"
@@ -38,7 +38,7 @@
             type="primary"
             @click="openDialog()"
         >
-          + 新增
+          {{ translate('common.addButton') }}
         </el-button>
       </div>
     </div>
@@ -54,7 +54,7 @@
     <!-- Dialog for Create / Edit -->
     <el-dialog
         v-model="dialogVisible"
-        :title="isEditMode ? '编辑仪器' : '新增仪器'"
+        :title="isEditMode ? translate('instrumentManagement.editInstrument') : translate('instrumentManagement.addInstrument')"
         :close-on-click-modal="false"
     >
       <InstrumentForm
@@ -72,6 +72,7 @@ import { getAllInstruments, createInstrument, updateInstrument, deleteInstrument
 import {RefreshRight, Search} from "@element-plus/icons-vue";
 import InstrumentList from "@/components/instrument/instrumentList.vue";
 import InstrumentForm from "@/components/instrument/instrumentForm.vue";
+import {translate, translateWithParams} from "@/utils/i18n";
 
 export default {
   components: { RefreshRight, Search, InstrumentList, InstrumentForm },
@@ -92,6 +93,7 @@ export default {
     };
   },
   methods: {
+    translate,
     async loadInstruments() {
       try {
         const response = await getAllInstruments();

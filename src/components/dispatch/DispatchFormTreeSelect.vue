@@ -2,7 +2,7 @@
   <div class="search-container">
     <el-input
         v-model="filterText"
-        placeholder="搜索表单"
+        :placeholder="translate('orderManagement.orderFormDialog.searchFormPlaceholder')"
         clearable
         style="margin-right: 10px; height: 32px; max-width: 395px"
     >
@@ -15,12 +15,12 @@
         @click="clearFormSelection"
         style="height: 32px; width: 80px; line-height: normal; margin: 0"
     >
-      清空选择
+      {{translate('orderManagement.uncheckAll')}}
     </el-button>
   </div>
   <div class="form-container" :class="{ 'error-border': hasError }">
     <el-form-item
-        label="质检表单"
+        :label="translate('orderManagement.orderTable.associatedForms')"
         required
         :prop="propName"
         :rules="[{ validator: validateSelectedForms, trigger: 'change' }]"
@@ -50,7 +50,7 @@
         </template>
       </el-tree>
       <div v-if="hasError" class="el-form-item__error">
-        请选择至少一个表单
+        {{ translate('orderManagement.validation.formRequired') }}
       </div>
     </el-form-item>
 
@@ -66,8 +66,9 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, defineEmits } from 'vue'
-import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
+import { ElTree, ElAlert, ElButton, ElInput } from 'element-plus'
 import { Folder, Document, Search } from '@element-plus/icons-vue'
+import {translate} from "@/utils/i18n";
 import {
   fetchFormNodes,
   addTopLevelNode,

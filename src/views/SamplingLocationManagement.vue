@@ -3,11 +3,11 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; ">
       <!-- Top Section -->
       <div style="display: flex; align-items: center;">
-        <h2>采样点管理</h2>
+        <h2>{{ translate('samplingLocationManagement.title') }}</h2>
         <!-- Search Bar -->
         <el-input
             v-model="searchQuery"
-            placeholder="搜索关键字"
+            :placeholder="translate('common.searchPlaceholder')"
             clearable
             style="width: 300px; margin-left: 20px;"
         >
@@ -19,7 +19,7 @@
 
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
-        <el-tooltip content="刷新列表" placement="top">
+        <el-tooltip :content="translate('orderManagement.refreshList')" placement="top">
           <el-button
               class="refresh-button"
               type="primary"
@@ -36,7 +36,7 @@
             type="primary"
             @click="openDialog()"
         >
-          + 新增
+          {{ translate('common.addButton') }}
         </el-button>
       </div>
     </div>
@@ -54,7 +54,7 @@
     <!-- Dialog for Create / Edit -->
     <el-dialog
         v-model="dialogVisible"
-        :title="isEditMode ? '编辑采样点' : '新增采样点'"
+        :title="isEditMode ? translate('samplingLocationManagement.editSamplingLocation') : translate('samplingLocationManagement.addSamplingLocation')"
         :close-on-click-modal="false"
     >
       <SamplingLocationForm
@@ -78,6 +78,7 @@ import {RefreshRight, Search} from "@element-plus/icons-vue";
 import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 import SamplingLocationForm from "@/components/sampling-location/SamplingLocationForm.vue";
 import samplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
+import {translate, translateWithParams} from "@/utils/i18n";
 
 export default {
   components: { RefreshRight, Search, SamplingLocationList, SamplingLocationForm },
@@ -95,6 +96,7 @@ export default {
     };
   },
   methods: {
+    translate,
     async loadLocations() {
       try {
         const response = await getAllSamplingLocations();
