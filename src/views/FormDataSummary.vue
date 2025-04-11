@@ -460,7 +460,6 @@ export default {
         ]
       };
 
-
       console.log("🚀 发送给后端的报告数据:", reportData);
 
       // 调用后端 API 生成 PDF

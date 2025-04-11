@@ -9,6 +9,7 @@ import Chart from 'primevue/chart';
 import {ref, onMounted} from "vue";
 import {fetchTaskStateStatistics} from "@/services/taskStats";
 import {useStore} from "vuex";
+import {translate} from "@/utils/i18n";
 
 const store = useStore();
 const chartData = ref();
@@ -33,7 +34,7 @@ onMounted(async () => {
 
 const setChartData = (pending, inProgress, completed) => {
   return {
-    labels: ['待处理', '进行中', '已完成'],
+    labels: translate('TaskCenter.taskStatusLabels'),
     datasets: [
       {
         data: [pending, inProgress, completed], // Dynamically set data from backend response

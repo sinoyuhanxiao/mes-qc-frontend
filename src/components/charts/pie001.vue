@@ -10,7 +10,7 @@ export default {
   props: {
     chartTitle: {
       type: String,
-      default: "质检产品合格率",
+      default: "QC pie",
     },
     chartData: {
       type: Array,

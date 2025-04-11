@@ -7,7 +7,7 @@
           <h2 style="margin-right: 20px;">{{ title }}</h2>
           <el-input
               v-model="formFilter"
-              placeholder="搜索关键字"
+              :placeholder="translate('common.searchPlaceholder')"
               clearable
               style="width: 300px;"
               @input="applyFilter"
@@ -36,8 +36,8 @@
               inline-prompt
               size="large"
               style="--el-switch-off-color: grey; --el-switch-on-color: #409eff; margin-top: 10px"
-              active-text="可做任务"
-              inactive-text="所有任务"
+              :active-text="translate('MyTaskTable.usableTaskText')"
+              :inactive-text="translate('MyTaskTable.allTasksText')"
               @change="applyFilter"
           />
 <!--          <el-tooltip content="请求新任务给我做" placement="top">-->
@@ -69,11 +69,11 @@
                   {{ keyMap[key] || key }}
                   <el-tooltip placement="top">
                       <template #content>
-                          <div>以下三种情况，您将无法填写任务：</div>
+                          <div>{{ translate('MyTaskTable.taskStateInfo') }}</div>
                           <ul style="margin: 0; padding-left: 16px;">
-                              <li>任务已过期</li>
-                              <li>任务的到期时间在未来60分钟之后</li>
-                              <li>任务已完成</li>
+                              <li>{{ translate('MyTaskTable.overdueMessage') }}</li>
+                              <li>{{ translate('MyTaskTable.dueSoonMessage') }}</li>
+                              <li>{{ translate('MyTaskTable.completedMessage') }}</li>
                           </ul>
                       </template>
                       <el-icon><QuestionFilled /></el-icon>
@@ -92,8 +92,8 @@
                   }"
                   @click="handleFormNameClick(scope.row[key], scope.row)"
               >
-                {{ getFormNameById(scope.row[key]) || '未知表单' }}
-                 <span v-if="isTaskUsable(scope.row.due_date, scope.row.dispatched_task_state_id)"> (任务可做)</span>
+                {{ getFormNameById(scope.row[key]) || translate('MyTaskTable.unknownForm') }}
+                 <span v-if="isTaskUsable(scope.row.due_date, scope.row.dispatched_task_state_id)"> ({{ translate('MyTaskTable.usableTaskText') }})</span>
               </span>
             </span>
             <span v-else-if="key === 'dispatched_task_state_id'">
@@ -116,19 +116,19 @@
 <!--            </span>-->
             <span v-else-if="key === 'status'">
               <el-tag :type="scope.row[key] === 0 ? 'info' : 'primary'">
-                {{ scope.row[key] === 0 ? '是' : '否' }}
+                {{ scope.row[key] === 0 ? 'Y' : 'N' }}
               </el-tag>
             </span>
             <span v-else-if="key === 'created_by' || key === 'updated_by' || key === 'user_id'">
               <el-popover effect="light" trigger="hover" placement="top" width="auto">
                 <template #default>
-                  <div>姓名: {{ personnelMap[scope.row[key]]?.name || '未知' }}</div>
-                  <div>企业微信: {{ personnelMap[scope.row[key]]?.wecom_id || '未知' }}</div>
+                  <div>{{ translate('userManagement.table.name') }}: {{ personnelMap[scope.row[key]]?.name || 'N/A' }}</div>
+                  <div>{{ translate('userManagement.table.wecomId') }}: {{ personnelMap[scope.row[key]]?.wecom_id || 'N/A' }}</div>
 <!--                  <div>角色: {{ personnelMap[scope.row[key]]?.role || '未知' }}</div>-->
                 </template>
                 <template #reference>
                   <el-tag type="primary">
-                    {{ personnelMap[scope.row[key]]?.name || '未知' }}
+                    {{ personnelMap[scope.row[key]]?.name || 'N/A' }}
                   </el-tag>
                 </template>
               </el-popover>
@@ -140,13 +140,13 @@
         </el-table-column>
 
         <!-- Operations -->
-        <el-table-column fixed="right" label="操作" min-width="200">
+        <el-table-column fixed="right" :label="translate('common.table.actions')" min-width="200">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="showDetails(scope.row)">
-              详情
+              {{ translate('MyTaskTable.taskDetails') }}
             </el-button>
             <el-button link type="info" size="small" style="cursor: not-allowed" disabled @click="editTask(scope.row)">
-              修改
+              {{ translate('MyTaskTable.taskEdit') }}
             </el-button>
             <el-button
                 link
@@ -156,7 +156,7 @@
                 :disabled="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id))"
                 @click="['3', '4', '5'].includes(String(scope.row.dispatched_task_state_id)) ? null : completeTask(scope.row)"
             >
-              完成
+              {{ translate('MyTaskTable.markComplete') }}
             </el-button>
 
           </template>
@@ -178,7 +178,7 @@
 
       <!-- Popup for Details -->
       <el-dialog
-          title="任务详情"
+          :title="translate('MyTaskTable.taskDetails')"
           v-model="isDetailsDialogVisible"
           width="50%"
           @close="closeDetailsDialog"
@@ -214,6 +214,7 @@ import { Base64 } from 'js-base64';
 import isTaskUsable from "@/utils/task-center/taskUtils.js";
 import {ElNotification} from "element-plus";
 import {calculateRemainingTime} from "@/utils/dispatch-utils";
+import {translate, translateWithParams} from "@/utils/i18n";
 
 export default {
   name: "MyTaskTable",
@@ -272,33 +273,34 @@ export default {
     },
     keyMap() {
       return {
-        qc_form_tree_node_id: "质检任务表单",
-        dispatched_task_state_id: "任务状态",
-        name: "任务名称",
-        remaining_time: "剩余时间",
-        due_date: "到期时间",
-        description: "任务描述",
-        notes: "备注",
-        dispatch_time: "派发时间",
-        user_id: "派发给",
-        created_at: "创建时间",
-        created_by: "派发人",
-        updated_at: "最新更新时间",
-        updated_by: "更新人",
-        status: "归档状态",
-        id: "任务号码",
-        dispatch_id: "派发计划号码",
-        is_overdue: "是否过期",
-        finished_at: "完成时间"
+        qc_form_tree_node_id: translate('MyTaskTable.columnNames.qc_form_tree_node_id'),
+        dispatched_task_state_id: translate('MyTaskTable.columnNames.dispatched_task_state_id'),
+        name: translate('MyTaskTable.columnNames.name'),
+        remaining_time: translate('MyTaskTable.columnNames.remaining_time'),
+        due_date: translate('MyTaskTable.columnNames.due_date'),
+        description: translate('MyTaskTable.columnNames.description'),
+        notes: translate('MyTaskTable.columnNames.notes'),
+        dispatch_time: translate('MyTaskTable.columnNames.dispatch_time'),
+        user_id: translate('MyTaskTable.columnNames.user_id'),
+        created_at: translate('MyTaskTable.columnNames.created_at'),
+        created_by: translate('MyTaskTable.columnNames.created_by'),
+        updated_at: translate('MyTaskTable.columnNames.updated_at'),
+        updated_by: translate('MyTaskTable.columnNames.updated_by'),
+        status: translate('MyTaskTable.columnNames.status'),
+        id: translate('MyTaskTable.columnNames.id'),
+        dispatch_id: translate('MyTaskTable.columnNames.dispatch_id'),
+        is_overdue: translate('MyTaskTable.columnNames.is_overdue'),
+        finished_at: translate('MyTaskTable.columnNames.finished_at')
       };
     },
   },
   methods: {
+    translate,
     sortByRemainingTime(a, b) {
       return this.calculateRemainingSeconds(a.due_date) - this.calculateRemainingSeconds(b.due_date);
     },
     async refreshTable() {
-        this.$message.success("任务列表已刷新");
+        this.$message.success(translate('MyTaskTable.alreadyRefreshed'));
         this.showUsableOnly = false;
         await this.fetchDispatchedTasks();
       },
@@ -318,7 +320,7 @@ export default {
     showFeatureDevelopmentMessage() {
       this.$message({
         type: 'info',
-        message: '此功能正在开发中，感谢您的点击。',
+        message: translate('MyTaskTable.featureDevelopmentMessage'),
       });
     },
     async fetchDispatchedTasks() {
@@ -355,7 +357,7 @@ export default {
 
       } catch (error) {
         console.error("Error fetching dispatched tasks:", error);
-        this.$message.error("无法加载任务列表，请重试。");
+        this.$message.error(translate('MyTaskTable.unableToLoad'));
       }
     },
     async fetchPersonnelMap() {
@@ -368,7 +370,7 @@ export default {
         console.log("Personnel Map:", this.personnelMap);
       } catch (error) {
         console.error("Error fetching personnel data:", error);
-        this.$message.error("无法加载人员信息，请重试。");
+        this.$message.error(translate('MyTaskTable.unableToLoad'));
       }
     },
     handleSortChange({ prop, order }) {
@@ -464,7 +466,7 @@ export default {
 
       } catch (error) {
         console.error("Error fetching form nodes:", error);
-        this.$message.error("无法加载表单信息，请重试。");
+        this.$message.error(translate('MyTaskTable.unableToLoad'));
       }
     },
     async handleFormNameClick(nodeId, row) {
@@ -473,12 +475,12 @@ export default {
       // Determine if the task is not usable
       let taskUsable = isTaskUsable(row.due_date, row.dispatched_task_state_id);
       if (!taskUsable) {
-        this.$message.warning("任务不可填写。");
+        this.$message.warning(translate('MyTaskTable.taskNotFillable'));
       } else {
         if (row.dispatched_task_state_id !== 2) {
           await updateDispatchedTask(row.id, { dispatched_task_state_id: 2 });
           row.dispatched_task_state_id = 2;
-          this.$message.success("任务状态已更新为进行中。");
+          this.$message.success(translate('MyTaskTable.taskUpdateSuccess'));
         }
       }
 
@@ -488,7 +490,7 @@ export default {
 
         if (!qcFormTemplateId) {
           console.error("Failed to fetch qcFormTemplateId for nodeId:", nodeId);
-          this.$message.error("无法加载表单模板，请重试。");
+          this.$message.error(translate('MyTaskTable.unableToLoad'));
           return;
         }
 
@@ -516,7 +518,7 @@ export default {
         window.open(newTabUrl, '_blank');
       } catch (error) {
         console.error("Error fetching qcFormTemplateId for nodeId:", nodeId, error);
-        this.$message.error("加载表单模板时出错，请稍后重试。");
+        this.$message.error(translate('MyTaskTable.unableToLoad'));
       }
     },
     notifyDueSoonTasks() {
@@ -528,8 +530,8 @@ export default {
 
       if (dueSoonTasks.length > 0) {
         ElNotification({
-          title: "警告",
-          message: `您有 ${dueSoonTasks.length} 个任务即将到期！`,
+          title: translate('common.warn'),
+          message: translateWithParams('MyTaskTable.messages.reachDeadlineSoon', { count: dueSoonTasks.length }),
           type: "warning",
           duration: 5000,
         });
@@ -546,8 +548,8 @@ export default {
 
       if (todayTasks.length > 0) {
         ElNotification({
-          title: "信息",
-          message: `您今天一共有 ${todayTasks.length} 个任务。`,
+          title: translate('common.info'),
+          message: translateWithParams('MyTaskTable.messages.totalTasksNotice', { count: todayTasks.length }),
           type: "info",
           offset: 100,
           duration: 5000,
@@ -569,11 +571,11 @@ export default {
     },
     stateName(stateId) {
       const stateMap = {
-        1: "待处理",
-        2: "进行中",
-        3: "已完成",
-        4: "已取消",
-        5: "已逾期",
+        1: translate('MyTaskTable.taskCompletionStatus.pending'),
+        2: translate('MyTaskTable.taskCompletionStatus.inProgress'),
+        3: translate('MyTaskTable.taskCompletionStatus.completed'),
+        4: translate('MyTaskTable.taskCompletionStatus.canceled'),
+        5: translate('MyTaskTable.taskCompletionStatus.overdue'),
       };
       return stateMap[stateId] || "Unknown"; // Default to 'Unknown' if stateId is undefined
     },
@@ -584,18 +586,18 @@ export default {
       const due = dayjs(dueDate);
       const diffInMinutes = due.diff(now, "minute");
 
-      if (diffInMinutes <= 0) return "已过期";
+      if (diffInMinutes <= 0) return translate('MyTaskTable.taskCompletionStatus.overdue');
 
       const days = Math.floor(diffInMinutes / (60 * 24));
       const hours = Math.floor((diffInMinutes % (60 * 24)) / 60);
       const minutes = diffInMinutes % 60;
 
       if (days > 0) {
-        return `${days} 天 ${hours} 小时 ${minutes} 分钟`;
+        return `${days} ${translate('MyTaskTable.time.day')} ${hours} ${translate('MyTaskTable.time.hour')} ${minutes} ${translate('MyTaskTable.time.minute')}`;
       } else if (hours > 0) {
-        return `${hours} 小时 ${minutes} 分钟`;
+        return `${hours} ${translate('MyTaskTable.time.hour')} ${minutes} ${translate('MyTaskTable.time.minute')}`;
       } else {
-        return `${minutes} 分钟`;
+        return `${minutes} ${translate('MyTaskTable.time.minute')}`;
       }
     },
     calculateRemainingSeconds(dueDate) {
@@ -625,7 +627,7 @@ export default {
       }
     },
     getFormNameById(formId) {
-      return this.formMap[formId] || "未知表单";
+      return this.formMap[formId] || "N/A";
     },
     showDetails(row) {
       this.currentTask = row;
@@ -639,11 +641,11 @@ export default {
 
       // Show a confirmation popup
       this.$confirm(
-          "如果你选择完成此任务，你将无法再次填写表单。",
-          "确认完成",
+          translate('MyTaskTable.taskCompletionConfirmation'),
+          translate('MyTaskTable.taskCompletionConfirmationTitle'),
           {
-            confirmButtonText: "确认",
-            cancelButtonText: "取消",
+            confirmButtonText: translate('common.confirm'),
+            cancelButtonText: translate('common.cancel'),
             type: "warning",
           }
       )
@@ -652,7 +654,7 @@ export default {
             await updateDispatchedTask(row.id, {dispatched_task_state_id: 3}) // mark this task as complete, add error handling in the future
             // Refresh table
             await this.fetchDispatchedTasks();
-            this.$message.success("任务已标记为完成");
+            this.$message.success(translate('MyTaskTable.taskMarkedCompleted'));
           })
           .catch(() => {
             console.log("Task completion canceled.");

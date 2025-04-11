@@ -3,7 +3,7 @@
   <div v-if="visible" class="overlay">
     <div class="popup">
       <div class="popup-header">
-        <h2>签名</h2>
+        <h2>{{ translate('signature.title') }}</h2>
         <button class="close-btn" @click="closePopup">×</button>
       </div>
       <div class="popup-content">
@@ -13,8 +13,8 @@
             class="signature-pad"
         />
         <div class="buttons">
-          <el-button type="primary" @click="saveSignature">提交</el-button>
-          <el-button type="warning" @click="clearSignature">重置</el-button>
+          <el-button type="primary" @click="saveSignature">{{ translate('signature.submit') }}</el-button>
+          <el-button type="warning" @click="clearSignature">{{ translate('signature.reset') }}</el-button>
         </div>
       </div>
     </div>
@@ -24,6 +24,7 @@
 <script setup>
 import { ref } from 'vue';
 import { VueSignaturePad } from 'vue-signature-pad';
+import {translate} from "@/utils/i18n";
 
 const signaturePad = ref(null);
 const props = defineProps({
@@ -48,7 +49,7 @@ const saveSignature = () => {
   const { isEmpty, data } = result;
 
   if (isEmpty) {
-    alert('无法提供空白签名，你得签！');
+    alert(translate('signature.empty_alert'));
     return;
   }
 

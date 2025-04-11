@@ -7,6 +7,9 @@ export default {
         confirm: '确认',
         delete: '删除',
         operationCancelled: '操作已取消',
+        warn: '警告',
+        info: '信息',
+        view: '查看',
         table: {
             id: '编号',
             name: '名称',
@@ -512,6 +515,185 @@ export default {
             submittedAt: '提交时间',
             submissionId: '提交单号'
         }
+    },
+    TaskCenterDashboard: {
+        pageTitle: "{name}的个人任务看板",
+        newButton: "新建",
+        filterButton: "过滤器",
+        developingMessageTitle: "提示",
+        developingMessageContent: "此功能正在开发中，感谢您的点击",
+        confirmButton: "确定",
+        todayTasksTitle: '我的今日任务',
+        todayTasksTooltip: '今日任务数量',
+        futureTasksTitle: '我的未来任务',
+        futureTasksTooltip: '未来任务数量',
+        historicalTasksTitle: '我的历史任务',
+        overdueTasksTitle: '我的逾期任务',
+        comparedToYesterday: '相比昨天',
+        percentageChange: '百分比变化',
+        navigateTo: '跳转到',
+        taskCardTooltip: '任务卡片详情',
+        statisticFooterText: '相比昨天',
+        noData: '暂无数据'
+    },
+    TaskCenter: {
+        quarterlyTaskCountLabel: '季度任务安排数量',
+        taskStatusLabels: ['待处理', '进行中', '已完成'],
+        notAvailable: '暂不可用',
+        pageTitle: "{name}的个人任务看板",
+        newButton: "+ 新建",
+        filterButton: "过滤器",
+        developingMessageContent: "此功能正在开发中，感谢您的点击",
+        developingMessageTitle: "功能开发中",
+        confirmButton: "确定",
+        futureTasksTitle: "未来任务",  // New title for future tasks
+        historicalTasksTitle: "历史任务",  // New title for historical tasks
+        overdueTasksTitle: "逾期任务",  // New title for overdue tasks
+        todayTasksTitle: "今日任务",  // New title for today's tasks
+    },
+    MyTaskTable: {
+        taskListTitle: "任务表",
+        columnNames: {
+            qc_form_tree_node_id: "质检任务表单",
+            dispatched_task_state_id: "任务状态",
+            name: "任务名称",
+            remaining_time: "剩余时间",
+            due_date: "到期时间",
+            description: "任务描述",
+            notes: "备注",
+            dispatch_time: "派发时间",
+            user_id: "派发给",
+            created_at: "创建时间",
+            created_by: "派发人",
+            updated_at: "最新更新时间",
+            updated_by: "更新人",
+            status: "归档状态",
+            id: "任务号码",
+            dispatch_id: "派发计划号码",
+            is_overdue: "是否过期",
+            finished_at: "完成时间"
+        },
+        refreshTableTooltip: "刷新表格",
+        usableTaskText: "可做任务",
+        allTasksText: "所有任务",
+        alreadyRefreshed: "任务列表已刷新",
+        taskCompletionConfirmation: "如果你选择完成此任务，你将无法再次填写表单。",
+        taskCompletionConfirmationTitle: "确认完成",
+        taskMarkedCompleted: "任务已标记为完成",
+        taskCompletionCancelled: "任务完成取消",
+        taskNotFillable: "任务不可填写",
+        filterPlaceholder: "搜索任务表单名称",
+        featureDevelopementMessage: "此功能正在开发中，感谢您的点击",
+        unableToLoad: "无法加载, 请重试",
+        taskUpdateSuccess: "任务状态已更新",
+        taskCompletionStatus: {
+            pending: "待处理",
+            inProgress: "进行中",
+            completed: "已完成",
+            canceled: "已取消",
+            overdue: "已逾期"
+        },
+        taskDetails: "详情",
+        taskEdit: "修改",
+        markComplete: "完成",
+        taskStateInfo: "以下三种情况，您将无法填写任务：",
+        overdueMessage: "任务已过期",
+        dueSoonMessage: "任务的到期时间在未来60分钟之后",
+        completedMessage: "任务已完成",
+        unknownForm: "未知表单",
+        messages: {
+            reachDeadlineSoon: "您一共有 {count} 个任务即将过期。",
+            totalTasksNotice: "您今天一共有 {count} 个任务。"
+        },
+        time: {
+            day: '天',
+            hour: '小时',
+            minute: '分钟',
+            second: '秒'
+        }
+    },
+    signature: {
+        title: '签名',
+        submit: '提交',
+        reset: '重置',
+        empty_alert: '无法提供空白签名，你得签！'
+    },
+    qcTaskSubmissionLogs: {
+        searchPlaceholder: '搜索编号或提交编号',
+        title: '提交详情',
+        systemInfoGroupTitle: '质检提交信息',
+        submitter: '提交人',
+        submittedAt: '提交时间',
+        signatureTitle: '质检人签名：',
+        cancelButton: '取消',
+        exportButton: '导出',
+        submissionRecordSuffix: ' - 提交记录',
+        tableHeaders: {
+            id: 'ID',
+            submission_id: '提交单号',
+            created_at: '提交时间',
+            created_by: '提交人号码',
+            comment: '备注',
+            dispatched_task_id: '任务号码',
+            qc_form_template_id: '质检表单ID',
+            status: '状态'
+        },
+        exportPdf: {
+            titleSuffix: ' - 提交记录',
+            tableHead: ['质检项目', '质检结果'],
+            groupTitle: '质检提交信息',
+            submitter: '提交人',
+            submittedAt: '提交时间',
+            submissionId: '提交单号',
+            signatureTitle: '质检人签名：',
+            successMessage: 'PDF 下载成功!',
+            failMessage: 'PDF 下载失败，请重试!'
+        }
+    },
+    TaskDetail: {
+        viewSubmissionLog: '查看提交记录',
+        taskName: '任务名称',
+        unnamedTask: '未命名任务',
+        description: '描述',
+        noDescription: '无描述',
+        dispatchPlanId: '派发计划ID',
+        formName: '任务表单',
+        formId: '节点编号',
+        assignee: '派发对象',
+        dispatchTime: '派发时间',
+        taskStatus: '任务状态',
+        notes: '备注',
+        createdAt: '创建时间',
+        createdBy: '创建者',
+        updatedAt: '更新时间',
+        updatedBy: '更新者',
+        dueDate: '截止时间',
+        finishTime: '完成时间',
+        notFinished: '未完成',
+        testSubject: '检测项目',
+        samplingLocation: '采样位置',
+        instrument: '仪器',
+        unknownForm: '未知表单',
+        unknownUser: '未知人员',
+        status: {
+            1: '待处理',
+            2: '进行中',
+            3: '已完成',
+            4: '已取消',
+            5: '已逾期',
+            unknown: '未知'
+        },
+        popover: {
+            id: 'ID',
+            description: '备注',
+            status: '状态',
+            createdBy: '创建者',
+            createdAt: '创建时间',
+            updatedBy: '更新者',
+            updatedAt: '更新时间',
+            modelNumber: '型号',
+            manufacturer: '制造商',
+            type: '仪器类型'
+        }
     }
-
 };
