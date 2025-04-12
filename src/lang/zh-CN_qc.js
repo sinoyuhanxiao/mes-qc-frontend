@@ -34,6 +34,24 @@ export default {
             saveFailed: '保存失败',
         }
     },
+    loginPage: {
+        loginTitle: 'FPS质量管理系统',
+        usernamePlaceholder: '用户名',
+        passwordPlaceholder: '密码',
+        captchaPlaceholder: '验证码',
+        rememberMe: '记住我',
+        loginButton: '登录',
+        refreshCaptchaTooltip: '刷新验证码',
+        errorCaptcha: '验证码错误，请重新输入',
+        errorNoPermission: '该用户无权登录',
+        errorUserInfoFailed: '获取用户信息失败，请稍后重试',
+        errorInvalidCredentials: '用户名或密码错误',
+        errorGeneric: '登录时发生错误，请稍后重试',
+        loginSuccess: '登录成功！',
+        usernameMessage: '请输入用户名',
+        passwordMessage: '请输入密码',
+        copyright: '© 2024-2025 FPS. Quality Control for MES. All rights reserved.'
+    },
     userManagement: {
         title: '用户管理',
         searchPlaceholder: '搜索关键字',
@@ -171,7 +189,11 @@ export default {
         formDataSummary: '质检汇总',
         logout: "登出",
         userRole: "用户角色",
-        username: "用户名"
+        username: "用户名",
+        collapse: "收起",
+        expand: "展开",
+        logoutConfirmationMessage: "你确定要登出质量管理系统吗？",
+        logoutConfirmationTitle: "登出确认"
     },
     shiftManagement: {
         title: '班组管理',

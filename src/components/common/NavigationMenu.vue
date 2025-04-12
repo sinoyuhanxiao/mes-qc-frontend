@@ -16,7 +16,7 @@
             <el-icon><HomeFilled /></el-icon>
             <template v-if="!isCollapsed" #title>{{ translate('navigationMenu.home') }}</template>
             <el-tooltip
-                content="收起"
+                :content="translate('navigationMenu.collapse')"
                 placement="right"
                 :hide-after="0"
             >
@@ -135,7 +135,7 @@
         <div class="user-role">{{ roleName }}</div>
 
         <!-- Logout Button with Tooltip and Hover Effect -->
-        <el-tooltip :content="translate('navigationMenu.logOutToolTip')" placement="top">
+        <el-tooltip :content="translate('navigationMenu.logout')" placement="top">
           <el-icon class="logout-icon" @click="handleLogout">
             <SwitchButton />
           </el-icon>
@@ -145,7 +145,7 @@
     </el-menu>
 
     <el-tooltip
-      content="展开"
+      :content="translate('navigationMenu.expand')"
       placement="right"
       :hide-after="0"
       :disabled="!showExpandButton"
@@ -172,8 +172,8 @@
         <!-- ✅ Hide Role Selection if the user is not 管理员 -->
         <el-form-item v-if="user.role.id !== 2" :label="translate('userManagement.editDialog.role')" prop="role">
           <el-select v-model="editUser.role.id">
-            <el-option :label="translate('userManagement.role.admin')" value="管理员" />
-            <el-option :label="translate('userManagement.role.qcWorker')" value="质检人员" />
+            <el-option :label="translate('userManagement.role.admin')" :value="translate('userManagement.role.admin')" />
+            <el-option :label="translate('userManagement.role.qcWorker')" :value="translate('userManagement.role.qcWorker')" />
           </el-select>
         </el-form-item>
 
@@ -300,29 +300,6 @@ export default {
         this.showExpandButton = false;
       }
     },
-    async openEditDialog() {
-      try {
-        const response = await getUserById(this.user.id);
-        if (response.data.status === '200') {
-          this.editUser = {
-            id: response.data.data.id,
-            name: response.data.data.name,
-            role: response.data.data.role.id === 1 ? '管理员' : '质检人员',
-            wecomId: response.data.data.wecom_id,
-            username: response.data.data.username,
-            email: response.data.data.email,
-            phone_number: response.data.data.phone_number,
-            status: response.data.data.status,
-          };
-          this.editDialogVisible = true;
-        } else {
-          this.$message.error('用户信息获取失败');
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        this.$message.error('用户信息获取失败');
-      }
-    },
 
     async handleEditConfirm() {
       this.$refs.editUserForm.validate(async (valid) => {
@@ -416,18 +393,18 @@ export default {
     },
     handleLogout() {
       this.$confirm(
-          "你确定要登出质量管理系统吗？",
-          "确认登出",
+          translate("navigationMenu.logoutConfirmationMessage"),
+          translate("navigationMenu.logoutConfirmationTitle"),
           {
-            confirmButtonText: "确认",
-            cancelButtonText: "取消",
+            confirmButtonText: translate("common.editDialog.confirmButton"),
+            cancelButtonText: translate("common.editDialog.cancelButton"),
             type: "warning",
           }
       ).then(() => {
         this.logoutUser(); // Clear user information from Vuex
         this.$router.push('/LoginPage'); // Redirect to the login page
       }).catch(() => {
-        this.$message.info("已取消登出");
+        this.$message.info(translate("common.operationCancelled"));
       });
     },
     translate(key) {
