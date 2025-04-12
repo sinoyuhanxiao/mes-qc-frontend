@@ -2,7 +2,7 @@
   <div class="search-container">
     <el-input
         v-model="filterText"
-        placeholder="搜索表单"
+        :placeholder="translate('orderManagement.orderFormDialog.searchFormPlaceholder')"
         clearable
         style="margin-right: 10px; height: 32px; max-width: 395px"
     >
@@ -16,7 +16,7 @@
         @click="clearFormSelection"
         style="height: 32px; width: 80px; line-height: normal; margin: 0"
     >
-      清空选择
+      {{ translate('orderManagement.orderFormDialog.uncheckAll') }}
     </el-button>
   </div>
   <div class="form-container">
@@ -51,6 +51,7 @@ import {defineEmits, onMounted, ref, watch} from 'vue'
 import {ElButton, ElInput, ElTree} from 'element-plus'
 import {Document, Folder, Search} from '@element-plus/icons-vue'
 import {fetchFormNodes,} from '@/services/formNodeService.js';
+import {translate} from "@/utils/i18n";
 
 interface Tree {
   id: string;

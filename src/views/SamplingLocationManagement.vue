@@ -134,9 +134,9 @@ export default {
     },
     async confirmDelete(id) {
       try {
-        await this.$confirm("确定删除该采样点吗？", "提示", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
+        await this.$confirm(translate('orderManagement.messages.deleteConfirmation'), translate('orderManagement.messages.messageTitle'), {
+          confirmButtonText: translate('orderManagement.confirm'),
+          cancelButtonText: translate('orderManagement.cancel'),
           type: "warning",
         });
         await deleteSamplingLocation(id, 1);
@@ -149,8 +149,8 @@ export default {
       this.searchQuery = "";
       await this.loadLocations()
       this.$notify({
-        title: "提示",
-        message: "列表已更新。",
+        title: translate('orderManagement.messages.messageTitle'),
+        message: translate('orderManagement.messages.listRefreshed'),
         type: "success",
       });
     },
