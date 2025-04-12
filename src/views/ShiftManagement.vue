@@ -155,7 +155,7 @@
           <!-- Filter Bar -->
           <el-input
               v-model="searchUserQuery"
-              placeholder="搜索成员"
+              :placeholder="translate('orderManagement.orderFormDialog.searchUserPlaceholder')"
               clearable
               @input="filterShiftUsers"
               style="margin-bottom: 10px; width: 300px;"
@@ -167,19 +167,19 @@
 
       <!-- Table with Sorting -->
       <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
-        <el-table-column prop="id" label="ID" width="100" sortable />
-        <el-table-column prop="name" label="名称" width="180" sortable />
-        <el-table-column prop="role" label="角色" width="150" sortable>
+        <el-table-column prop="id" :label="translate('userManagement.table.id')" width="100" sortable />
+        <el-table-column prop="name" :label="translate('userManagement.table.name')" width="180" sortable />
+        <el-table-column prop="role" :label="translate('userManagement.table.role')" width="150" sortable>
           <template #default="scope">
             <el-tag :type="scope.row.role?.el_tag_type || 'info'">
-              {{ scope.row.role?.name || '未知角色' }}
+              {{ scope.row.role?.name || translate('userManagement.role.unknown') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="wecom_id" label="企业微信ID" width="180" sortable />
-        <el-table-column prop="username" label="用户名" width="180" sortable />
-        <el-table-column prop="email" label="邮箱" width="220" sortable />
-        <el-table-column prop="phone_number" label="电话号码" width="180" sortable>
+        <el-table-column prop="wecom_id" :label="translate('userManagement.table.wecomId')" width="180" sortable />
+        <el-table-column prop="username" :label="translate('userManagement.table.username')" width="180" sortable />
+        <el-table-column prop="email" :label="translate('userManagement.table.email')" width="220" sortable />
+        <el-table-column prop="phone_number" :label="translate('userManagement.table.phoneNumber')" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.phone_number || '-' }}</span>
           </template>

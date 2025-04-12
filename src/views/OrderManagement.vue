@@ -12,12 +12,10 @@
             clearable
             style="width: 300px; margin-left: 20px"
         >
-          <template #append>
-            <el-button>
+          <template #prefix>
               <el-icon>
                 <Search />
               </el-icon>
-            </el-button>
           </template>
         </el-input>
       </div>
