@@ -2,11 +2,11 @@
   <div class="page-container">
     <div class="login-container">
       <div class="login-box">
-        <h2 class="login-title">FPS质量管理系统</h2>
+        <h2 class="login-title">{{ translate('loginPage.loginTitle') }}</h2>
         <el-form :model="form" :rules="rules" ref="loginForm" class="login-form" @keydown.enter="handleLogin">
           <!-- Username Input -->
           <el-form-item prop="username">
-            <el-input v-model="form.username" placeholder="用户名">
+            <el-input v-model="form.username" :placeholder="translate('loginPage.usernamePlaceholder')">
               <template #prefix>
                 <el-icon><User /></el-icon>
               </template>
@@ -15,7 +15,7 @@
 
           <!-- Password Input -->
           <el-form-item prop="password">
-            <el-input v-model="form.password" type="password" placeholder="密码" show-password>
+            <el-input v-model="form.password" type="password" :placeholder="translate('loginPage.passwordPlaceholder')" show-password>
               <template #prefix>
                 <el-icon><Lock /></el-icon>
               </template>
@@ -26,13 +26,13 @@
             <el-input
                 v-model="form.userInputIdentifyCodes"
                 type="text"
-                placeholder="验证码"
+                :placeholder="translate('loginPage.captchaPlaceholder')"
             >
               <template #prefix>
                 <el-icon><Checked /></el-icon>
               </template>
             </el-input>
-            <el-tooltip content="刷新验证码" placement="bottom">
+            <el-tooltip :content="translate('loginPage.refreshCaptchaTooltip')" placement="bottom">
               <SIdentify
                   style="margin-top: 4px; cursor: pointer;"
                   :identifyCode="identifyCode"
@@ -46,12 +46,12 @@
 
           <!-- Remember Me Checkbox -->
           <el-form-item>
-            <el-checkbox v-model="form.rememberMe">记住我</el-checkbox>
+            <el-checkbox v-model="form.rememberMe">{{ translate('loginPage.rememberMe') }}</el-checkbox>
           </el-form-item>
 
           <!-- Login Button -->
           <el-form-item>
-            <el-button type="primary" class="login-button" @click="handleLogin" :loading="loading">登录</el-button>
+            <el-button type="primary" class="login-button" @click="handleLogin" :loading="loading">{{ translate('loginPage.loginButton') }}</el-button>
           </el-form-item>
 
           <!-- Error Message Display -->
@@ -73,6 +73,7 @@ import { mapActions } from 'vuex';
 import { validateUser, fetchUserInfo } from '@/services/userService.js';
 import api from '@/services/api.js';
 import SIdentify from "@/components/user/SIdentify.vue";
+import {translate} from "@/utils/i18n";
 
 export default {
   name: 'LoginPage',
@@ -91,8 +92,8 @@ export default {
         rememberMe: false,
       },
       rules: {
-        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-        password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+        username: [{ required: true, message: translate('loginPage.usernameMessage'), trigger: 'blur' }],
+        password: [{ required: true, message: translate('loginPage.passwordMessage'), trigger: 'blur' }],
       },
       errorMessage: '', // To store any error messages
       loading: false,   // To track loading state
@@ -114,6 +115,7 @@ export default {
     this.makeIdentifyCode(4);
   },
   methods: {
+    translate,
     ...mapActions(['loginUser']), // Map the loginUser action from Vuex
 
     // 刷新验证码
@@ -128,13 +130,6 @@ export default {
             this.identifyCodes[this.randomNum(0, this.identifyCodes.length)];
       }
     },
-    submitCode() {
-      if (this.userInput === this.identifyCode) {
-        this.message = "验证成功！"; // Success message
-      } else {
-        this.message = "验证码错误！"; // Error message
-      }
-    },
     // 生成单个验证码
     randomNum(min, max) {
       return Math.floor(Math.random() * (max - min) + min);
@@ -147,7 +142,7 @@ export default {
         if (!valid) return;
 
         if (this.form.userInputIdentifyCodes !== this.identifyCode) {
-          this.errorMessage = '验证码错误，请重新输入';
+          this.errorMessage = translate('loginPage.errorUserInfoFailed');
           return;
         }
 
@@ -179,7 +174,7 @@ export default {
                   localStorage.removeItem("rememberedUsername");
                 }
 
-                ElMessage.success('登录成功！');
+                ElMessage.success(translate('loginPage.loginSuccess'));
 
                 if (userRole === 4) {
                   this.$router.push('/user-management');
@@ -187,16 +182,16 @@ export default {
                   this.$router.push('/');
                 }
               } else {
-                this.errorMessage = '该用户无权登录';  // Show error message in Chinese
+                this.errorMessage = translate('loginPage.errorNoPermission');  // Show error message in Chinese
               }
             } else {
-              this.errorMessage = '获取用户信息失败，请稍后重试';
+              this.errorMessage = translate('loginPage.errorUserInfoFailed');
             }
           } else {
-            this.errorMessage = '用户名或密码错误';
+            this.errorMessage = translate('loginPage.errorInvalidCredentials');
           }
         } catch (error) {
-          this.errorMessage = error.response?.data?.message || '登录时发生错误，请稍后重试';
+          this.errorMessage = error.response?.data?.message ||  translate('loginPage.errorGeneric');
         } finally {
           this.loading = false;
         }

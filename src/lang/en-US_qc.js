@@ -34,6 +34,24 @@ export default {
             saveFailed: 'Save failed',
         }
     },
+    loginPage: {
+        loginTitle: 'FPS Quality Control',
+        usernamePlaceholder: 'Username',
+        passwordPlaceholder: 'Password',
+        captchaPlaceholder: 'Captcha',
+        rememberMe: 'Remember Me',
+        loginButton: 'Login',
+        refreshCaptchaTooltip: 'Refresh Captcha',
+        errorCaptcha: 'Incorrect captcha, please try again.',
+        errorNoPermission: 'This user does not have permission to log in.',
+        errorUserInfoFailed: 'Failed to retrieve user info. Please try again.',
+        errorInvalidCredentials: 'Incorrect username or password.',
+        errorGeneric: 'An error occurred during login. Please try again later.',
+        loginSuccess: 'Login successful!',
+        usernameMessage: 'Please input username',
+        passwordMessage: 'Please input password',
+        copyright: '© 2024-2025 FPS. Quality Control for MES. All rights reserved.'
+    },
     userManagement: {
         title: 'User Management',
         searchPlaceholder: 'Search keyword',
@@ -171,7 +189,11 @@ export default {
         formDataSummary: "Form Data Summary",
         logout: "Logout",
         userRole: "User Role",
-        username: "Username"
+        username: "Username",
+        collapse: "Collapse",
+        expand: "expand",
+        logoutConfirmationMessage: "Are you sure to logout?",
+        logoutConfirmationTitle: "Logout Confirmation"
     },
     shiftManagement: {
         title: 'Shift Management',

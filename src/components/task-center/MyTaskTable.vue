@@ -20,7 +20,7 @@
 
         <!-- Right Section: Search Input, Tooltip, and Refresh Button -->
         <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-          <el-tooltip content="Refresh table" placement="top">
+          <el-tooltip :content="translate('MyTaskTable.refreshTableTooltip')" placement="top">
             <el-button
                 class="refresh-button"
                 type="primary"

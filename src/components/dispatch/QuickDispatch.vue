@@ -44,7 +44,7 @@ export default {
         }));
       } catch (error) {
         console.error("Error fetching users:", error);
-        this.$message.error("无法加载人员列表，请稍后重试。");
+        this.$message.error("Unable to load users.");
       } finally {
         this.isLoadingPersonnel = false;
       }
@@ -65,19 +65,19 @@ export default {
     async handleDispatch() {
       console.log("Dispatching task:", this.taskName, this.taskDescription, this.selectedPersonnel, this.dateTimeSelections)
       if (!this.taskName) {
-        this.$message.error("任务派发名称不能为空！");
+        this.$message.error("Cannot be empty!");
         return;
       }
       if (!this.taskDescription) {
-        this.$message.error("任务描述不能为空！");
+        this.$message.error("Cannot be empty!");
         return;
       }
       if (!this.selectedPersonnel.length) {
-        this.$message.error("请选择人员！");
+        this.$message.error("Please choose users.");
         return;
       }
       if (!this.dateTimeSelections.length) {
-        this.$message.error("请设置派发日期和截止日期！");
+        this.$message.error("Please set the time.");
         return;
       }
 
@@ -103,13 +103,13 @@ export default {
         for (let task of tasks) {
           await insertDispatchedTasks(task, this.selectedPersonnel); // Call API for each task
         }
-        this.$message.success("任务派发成功！");
+        this.$message.success("Task dispatched");
         this.$emit("dispatch", tasks); // Emit success event
         this.resetFields(); // Clear fields after successful dispatch
         this.$emit("close"); // Emit close event to close the dialog
       } catch (error) {
         console.error("Error dispatching task:", error);
-        this.$message.error("任务派发失败，请稍后重试！");
+        this.$message.error("Failed to dispatch");
       }
 
       this.$emit("dispatch", tasks);
@@ -124,21 +124,21 @@ export default {
 <template>
   <el-form label-width="120px">
     <!-- Task Name -->
-    <el-form-item label="任务派发名称" required>
-      <el-input v-model="taskName" placeholder="请输入任务派发名称"></el-input>
+    <el-form-item label="Task name" required>
+      <el-input v-model="taskName" placeholder="Please enter task name"></el-input>
     </el-form-item>
 
     <!-- Select Personnel -->
-    <el-form-item label="选择人员" required>
+    <el-form-item label="Assignee" required>
       <el-select
           v-model="selectedPersonnel"
           filterable
           multiple
-          placeholder="请选择人员"
+          placeholder="Please choose assignees..."
           :loading="isLoadingPersonnel"
           @focus="loadPersonnelOptions"
       >
-        <el-option v-if="isLoadingPersonnel" disabled label="加载中..." />
+        <el-option v-if="isLoadingPersonnel" disabled label="Loading..." />
         <el-option
             v-for="option in personnelOptions"
             :key="option.value"
@@ -148,7 +148,7 @@ export default {
       </el-select>
     </el-form-item>
 
-    <el-form-item label="派发时间段" required>
+    <el-form-item label="Time Ranges" required>
       <div v-for="(item, index) in dateTimeSelections" :key="index" style="display: flex; align-items: center; gap: 10px;">
 <!--        &lt;!&ndash; Date Picker &ndash;&gt;-->
 <!--        <el-date-picker-->
@@ -188,18 +188,18 @@ export default {
       </el-button>
     </el-form-item>
 
-    <el-form-item label="任务描述" required>
+    <el-form-item label="Description" required>
       <el-input
           v-model="taskDescription"
           type="textarea"
-          placeholder="请输入任务描述"
+          placeholder="Please input descriptions.."
           rows="4"
       ></el-input>
     </el-form-item>
 
     <!-- Actions -->
     <el-form-item>
-      <el-button type="primary" @click="handleDispatch">派发任务</el-button>
+      <el-button type="primary" @click="handleDispatch">Dispatch Task</el-button>
     </el-form-item>
 
   </el-form>
