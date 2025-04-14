@@ -3,15 +3,15 @@
       <el-popover effect="light" trigger="hover" placement="top" width="auto">
         <template #default>
           <div><strong>{{ translate('userManagement.table.id') }}:</strong> {{ userDetail.id }}</div>
-          <div><strong>{{ translate('userManagement.table.name') }}:</strong> {{ userDetail.name || "无" }}</div>
-          <div><strong>{{ translate('userManagement.table.username') }}:</strong> {{ userDetail.username || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.name') }}:</strong> {{ userDetail.name || translate('orderManagement.orderFormDialog.missing') }}</div>
+          <div><strong>{{ translate('userManagement.table.username') }}:</strong> {{ userDetail.username || translate('orderManagement.orderFormDialog.missing') }}</div>
           <div><strong>{{ translate('userManagement.table.role') }}:</strong> {{ getRoleName(userDetail.role_id) }}</div>
-          <div><strong>{{ translate('userManagement.table.wecomId') }}:</strong> {{ userDetail.wecom_id || "无" }}</div>
-          <div><strong>{{ translate('userManagement.table.email') }}:</strong> {{ userDetail.email || "无" }}</div>
-          <div><strong>{{ translate('userManagement.table.phoneNumber') }}:</strong> {{ userDetail.phone_number || "无" }}</div>
+          <div><strong>{{ translate('userManagement.table.wecomId') }}:</strong> {{ userDetail.wecom_id || translate('orderManagement.orderFormDialog.missing') }}</div>
+          <div><strong>{{ translate('userManagement.table.email') }}:</strong> {{ userDetail.email || translate('orderManagement.orderFormDialog.missing') }}</div>
+          <div><strong>{{ translate('userManagement.table.phoneNumber') }}:</strong> {{ userDetail.phone_number || translate('orderManagement.orderFormDialog.missing') }}</div>
         </template>
         <template #reference>
-          {{ userDetail.name || translate('userManagement.orderFormDialog.unknownUser') }}
+          {{ userDetail.name || translate('orderManagement.orderFormDialog.unknownUser') }}
         </template>
       </el-popover>
     </el-tag>

@@ -332,11 +332,11 @@
                     <!-- Product Details -->
                     <div><strong>{{ translate('orderManagement.Id') }}:</strong> {{ product.id }}</div>
                     <div><strong>{{ translate('orderManagement.productCode') }}:</strong> {{ product.product_code }}</div>
-                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ product.description || '无' }}</div>
-                    <div><strong>{{ translate('orderManagement.unitSalesPrice') }}:</strong> {{ product.unit_sales_price || '无'  }}</div>
-                    <div><strong>{{ translate('orderManagement.unitResourceCost') }}:</strong> {{ product.unit_resource_cost || '无' }}</div>
-                    <div><strong>{{ translate('orderManagement.quantity') }}:</strong> {{ product.produced_quantity || '无' }}</div>
-                    <div><strong>{{ translate('orderManagement.updatedAt') }}:</strong> {{ formatDate(product.updated_at) || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ product.description || translate('orderManagement.orderFormDialog.missing') }}</div>
+                    <div><strong>{{ translate('orderManagement.unitSalesPrice') }}:</strong> {{ product.unit_sales_price || translate('orderManagement.orderFormDialog.missing')  }}</div>
+                    <div><strong>{{ translate('orderManagement.unitResourceCost') }}:</strong> {{ product.unit_resource_cost || translate('orderManagement.orderFormDialog.missing') }}</div>
+                    <div><strong>{{ translate('orderManagement.quantity') }}:</strong> {{ product.produced_quantity || translate('orderManagement.orderFormDialog.missing') }}</div>
+                    <div><strong>{{ translate('orderManagement.updatedAt') }}:</strong> {{ formatDate(product.updated_at) || translate('orderManagement.orderFormDialog.missing') }}</div>
 
                     <!-- Image Display -->
                     <div v-if="product.image_paths">
@@ -374,7 +374,7 @@
                     <!-- Raw Material Details -->
                     <div><strong>{{ translate('orderManagement.Id') }}:</strong> {{ material.id }}</div>
                     <div><strong>{{ translate('orderManagement.code') }}:</strong> {{ material.code }}</div>
-                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ material.description || '无' }}</div>
+                    <div><strong>{{ translate('orderManagement.description') }}:</strong> {{ material.description || translate('orderManagement.orderFormDialog.missing') }}</div>
                     <div><strong>{{ translate('orderManagement.unitPrice') }}:</strong> {{ material.unit_price }}</div>
                     <div><strong>{{ translate('orderManagement.minimumInventory') }}:</strong> {{ material.minimum_inventory }}</div>
                     <div><strong>{{ translate('orderManagement.currentStock') }}:</strong> {{ material.current_stock }}</div>

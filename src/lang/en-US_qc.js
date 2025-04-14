@@ -494,6 +494,10 @@ export default {
             shift: 'Shift',
             taskDueDateOffset: 'Task deadline: {input} minutes',
             missing: 'missing',
+            unknownShift: 'Unknown Shift',
+            unknownUser: 'Unknown User',
+            unknownForm: 'Unknown Form',
+            unknownExecutionLogic: 'Unknown Dispatching Frequency',
         },
         shiftPopulatePlanDialog: {
             title: 'Please select shift to populate dispatch plan',

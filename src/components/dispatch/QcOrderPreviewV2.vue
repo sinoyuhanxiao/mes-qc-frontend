@@ -99,7 +99,7 @@ export default {
     // Format a date range (Order summary helper)
     formatDateRange(range) {
       if (!Array.isArray(range) || range.length !== 2) return translate('orderManagement.orderFormDialog.missing');
-      return `${this.formatDate(range[0])} 至 ${this.formatDate(range[1])}`;
+      return `${this.formatDate(range[0])} ${translate('FormDataSummary.dateRangeSeparator')} ${this.formatDate(range[1])}`;
     },
     formatShift(shiftId) {
       if (!shiftId) {
