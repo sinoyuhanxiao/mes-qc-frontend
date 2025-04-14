@@ -8,11 +8,13 @@
     "serve:staging": "vite --mode staging",
     "serve:prod": "vite --mode production",
     "serve:test": "vite --mode test",
+    "serve:sgb": "vite --mode sgb",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "build:staging": "vite build --mode staging",
     "build:prod": "vite build --mode production",
     "build:test": "vite build --mode test",
+    "build:sgb": "vite build --mode sgb",
     "lib": "vite build --config vite-lib.config.js",
     "lib-render": "vite build --config vite-lib-render.config.js",
     "preview": "vite preview"
