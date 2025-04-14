@@ -50,7 +50,6 @@
               <template #default>
                 <p>{{ translate('userManagement.table.name') }}: {{ scope.row.name }}</p>
                 <p>{{ translate('userManagement.table.wecomId') }}: {{ scope.row.wecom_id }}</p>
-                <p>{{ translate('userManagement.table.role') }}: {{ getRoleName(scope.row.role_id) }}</p>
               </template>
               <template #reference>
                 <el-tag size="medium">{{ scope.row.name }}</el-tag>

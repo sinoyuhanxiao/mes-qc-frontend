@@ -5,7 +5,7 @@
       <div class="chart-wrapper">
         <Chart type="line" :data="chartData" :options="chartOptions" class="h-[30rem] chart-overlay" />
         <div class="overlay-text" v-if="isUnavailable">
-          暂不可用
+          {{ translate('TaskCenter.notAvailable') }}
         </div>
       </div>
     </div>
@@ -15,6 +15,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import Chart from 'primevue/chart';
+import { translate } from "@/utils/i18n";
 
 const isUnavailable = ref(true); // 控制是否显示“Unavailable for now”
 
