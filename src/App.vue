@@ -1,5 +1,29 @@
 <template>
   <div class="container">
+
+    <div
+        v-if="leftHoverDotPoint"
+        class="dot"
+        :style="{
+            top: `${leftHoverDotPoint.y}px`,
+            left: `${leftHoverDotPoint.x}px`
+         }"
+    />
+
+    <div
+        v-if="rightHoverDotPoint"
+        class="dot"
+        :style="{
+            top: `${rightHoverDotPoint.y}px`,
+            left: `${rightHoverDotPoint.x}px`
+          }"
+    />
+
+    <div v-if="leftHoverDotPoint && rightHoverDotPoint" class="connector-line" :style="connectorLineStyle"></div>
+
+    <!-- 灰色遮罩层 -->
+    <div class="recipe-mask" v-show="windowMaskVisible"></div>
+
     <!-- Conditionally render the navigation menu -->
     <NavigationMenu v-if="showNavBar" class="nav-menu" />
     <div :class="['content', { 'full-width': !showNavBar, 'content-hidden': isFormDataSummary }]">
@@ -16,9 +40,19 @@ import NavigationMenu from '@/components/common/NavigationMenu.vue';
 import LanguageSwitch from "@/components/lang/LanguageSwitch.vue";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { ref } from 'vue'
+import { windowMaskVisible } from '@/globals/mask'
+import {connectorLineStyle, leftHoverDotPoint, rightHoverDotPoint} from '@/globals/line'
+import { watch } from 'vue'
 
 export default {
   name: 'App',
+  computed: {
+    connectorLineStyle() {
+      return connectorLineStyle
+    }
+  },
+  methods: {leftHoverDotPoint},
   components: {
     LanguageSwitch,
     NavigationMenu,
@@ -32,7 +66,13 @@ export default {
     // Check if the current route is FormDataSummary.vue
     const isFormDataSummary = computed(() => route.name === "FormDataSummary" || route.name === "QualityFormManagement");
 
-    return { showNavBar, isFormDataSummary };
+    watch(leftHoverDotPoint, (val) => {
+      if (val) {
+        console.log('[App.vue] 🔵 dotPoint updated:', val)
+      }
+    })
+
+    return { showNavBar, isFormDataSummary, windowMaskVisible, leftHoverDotPoint, rightHoverDotPoint, connectorLineStyle };
   }
 };
 </script>
@@ -68,8 +108,29 @@ export default {
 
 .floating-language-switch {
   position: fixed;
-  bottom: 20px; /* 距离底部 */
-  right: 20px; /* 距离右侧 */
-  z-index: 1000; /* 确保层级在最上方 */
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
 }
+
+.recipe-mask {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  z-index: 999;
+  pointer-events: none;
+}
+
+.dot {
+  position: fixed;
+  width: 3px;
+  height: 3px;
+  background-color: var(--el-color-danger);
+  border-radius: 50%;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(64, 158, 255, 0.6);
+}
+
 </style>

@@ -15,7 +15,7 @@
       <div>
 
         <el-button type="success" v-if="switchDisplayed" @click="showRecipeDrawer = true">
-          警戒值
+          设置警戒值
         </el-button>
 
         <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
@@ -175,7 +175,7 @@ import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
-
+import { windowMaskVisible } from '@/globals/mask'
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
@@ -522,6 +522,10 @@ watch(remainingTime, (newTime) => {
     }
   });
 });
+
+watch(showRecipeDrawer, (val) => {
+  windowMaskVisible.value = val
+})
 
 </script>
 
