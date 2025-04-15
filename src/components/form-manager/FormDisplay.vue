@@ -11,9 +11,18 @@
             :inactive-text="translate('FormDisplay.unavailable')"
         />
       </div>
-      <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
-        {{ translate('FormDisplay.quickDispatch') }}
-      </el-button>
+
+      <div>
+
+        <el-button type="success" v-if="switchDisplayed" @click="showRecipeDrawer = true">
+          警戒值
+        </el-button>
+
+        <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
+          {{ translate('FormDisplay.quickDispatch') }}
+        </el-button>
+
+      </div>
 
       <el-countdown
           v-if="remainingTime > 0"
@@ -135,6 +144,19 @@
     </template>
   </el-dialog>
 
+  <el-drawer
+      v-model="showRecipeDrawer"
+      title="设置警戒值"
+      direction="ltr"
+      size="100%"
+      :with-header="true"
+      :close-on-click-modal="false"
+      :modal="false"
+      id="recipe_setting"
+  >
+    <RecipeSetting />
+  </el-drawer>
+
 </template>
 
 <script setup>
@@ -154,7 +176,11 @@ import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 
+
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
+import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
+
+const showRecipeDrawer = ref(false);
 
 const route = useRoute()
 const rt = ref(parseInt(route.query.rt, 10) || 0);
@@ -271,6 +297,13 @@ watch(() => props.currentForm?.qcFormTemplateId, (newFormId, oldFormId) => {
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
   startCountdown();
+  // 等待 DOM 渲染完成
+  setTimeout(() => {
+    const drawer = document.getElementById('recipe_setting');
+    if (drawer && drawer.parentElement) {
+      drawer.parentElement.style.width = '35%';
+    }
+  }, 0);
 });
 
 // ✅ Clean up the interval when unmounted
