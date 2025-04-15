@@ -214,7 +214,7 @@ export default {
       return statusMap[status] || "info";
     },
     getFormById(formId) {
-      return this.formMap[formId] || "未知表单";
+      return this.formMap[formId] || translate('orderManagement.orderFormDialog.unknownForm');
     },
     getUserById(userId) {
       return this.userMap[userId] || null;
