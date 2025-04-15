@@ -48,6 +48,7 @@
         @edit-location="openDialog"
         @delete-location="confirmDelete"
         :search-input="searchQuery"
+        :user-map="userMap"
     />
 
 
@@ -79,6 +80,7 @@ import SamplingLocationList from "@/components/sampling-location/SamplingLocatio
 import SamplingLocationForm from "@/components/sampling-location/SamplingLocationForm.vue";
 import samplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 import {translate, translateWithParams} from "@/utils/i18n";
+import {fetchUsers} from "@/services/userService";
 
 export default {
   components: { RefreshRight, Search, SamplingLocationList, SamplingLocationForm },
@@ -93,6 +95,7 @@ export default {
         name: "",
         description: "",
       },
+      userMap: {},
     };
   },
   methods: {
@@ -108,6 +111,21 @@ export default {
       } catch (error) {
         console.error("Failed to load sampling locations:", error);
         this.locations = [];
+      }
+    },
+    async loadUserMap() {
+      try {
+        const response = await fetchUsers();
+        const updatedUserMap = response.data.data.reduce((map, user) => {
+          map[user.id] = user;
+          return map;
+        }, {});
+
+        if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
+          this.userMap = updatedUserMap;
+        }
+      } catch (error) {
+        this.$message.error(translate('orderManagement.messages.errorLoadingUsersData'));
       }
     },
     openDialog(location = null) {
@@ -157,6 +175,7 @@ export default {
   },
   mounted() {
     this.loadLocations();
+    this.loadUserMap();
   },
 };
 </script>

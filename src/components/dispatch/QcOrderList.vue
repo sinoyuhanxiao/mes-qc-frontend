@@ -60,17 +60,12 @@
         width="200"
     >
       <template #default="scope">
-        <div >
-          <el-tag
-              v-for="(user, index) in getAssignedUsers(scope.row).slice(0, 3)"
-              :key="user.id"
-              type="primary"
-              size="small"
-              effect="light"
-              class="tab-container"
-          >
-            {{ user.name }}
-          </el-tag>
+        <div class="tags">
+          <UserTagHoverForDetail
+            v-for="(userId, index) in getAssignedUsers(scope.row).slice(0,3)"
+            :key="userId"
+            :user="userMap[userId]"
+          />
           <el-tag v-if="getAssignedUsers(scope.row).length > 3" type="info" size="small">
             +{{ getAssignedUsers(scope.row).length - 3 }}
           </el-tag>
@@ -156,7 +151,7 @@
         sortable
     >
       <template #default="scope">
-        <UserReference :user-id="scope.row.created_by"/>
+        <UserTagHoverForDetail :user="userMap[scope.row.created_by]"/>
       </template>
     </el-table-column>
   </el-table>
@@ -180,13 +175,13 @@
 <script>
 import {formatDate, getQcOrderStateTagData} from "@/utils/dispatch-utils";
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
-import UserReference from "@/components/dispatch/UserReference.vue";
 import {translate} from "@/utils/i18n";
+import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.vue";
 
 export default {
   emits: ["order-clicked", "selection-change"],
   components: {
-    UserReference,
+    UserTagHoverForDetail,
     TimeSlot,
   },
   data() {
@@ -234,14 +229,11 @@ export default {
       return formatDate(date);
     },
     getAssignedUsers(order) {
-      if (!order.dispatches || !this.userMap) return [];
+      if (!order.dispatches || !this.userMap) {
+        return [];
+      }
 
-      // Get unique user IDs from all dispatches
-      const userIds = [...new Set(order.dispatches.flatMap(dispatch => dispatch.user_ids || []))];
-      // Ensure userMap is structured correctly and fetch names
-      return userIds
-          .map(id => ({id, name: this.userMap[id]?.name?.trim() || `用户${id}`}))
-          .filter(user => user.name);  // Remove any invalid entries
+      return [...new Set(order.dispatches.flatMap(dispatch => dispatch.user_ids || []))]
     },
     getUniqueUserIds(o) {
       if (!o || !Array.isArray(o.dispatches)) return [];
@@ -289,7 +281,7 @@ export default {
 
         // Get assigned usernames as a single string
         const assignedUsers = this.getAssignedUsers(item)
-            .map(user => user.name.toLowerCase())
+            .map(userId => this.userMap[userId]?.name.toLowerCase())
             .join(" ");
 
         // Get assigned form names as a single string
@@ -463,5 +455,11 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle;
+}
+
+.tags {
+  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
 }
 </style>

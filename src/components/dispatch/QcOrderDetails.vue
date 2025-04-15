@@ -49,7 +49,7 @@
     <el-form-item
         :label="translate('orderManagement.createdBy')"
         v-if="currentOrder.created_by">
-      <UserReference :userId="currentOrder.created_by" />
+      <UserTagHoverForDetail :user="userMap[currentOrder.created_by]"/>
     </el-form-item>
 
     <el-form-item
@@ -61,7 +61,7 @@
     <el-form-item
         :label="translate('orderManagement.updatedBy')"
         v-if="currentOrder.updated_by">
-      <UserReference :userId="currentOrder.updated_by" />
+      <UserTagHoverForDetail :user="userMap[currentOrder.updated_by]"/>
     </el-form-item>
 
     <el-divider>{{translate('orderManagement.dispatchPlanList')}}</el-divider>
@@ -164,7 +164,7 @@
           </el-form-item>
 
           <el-form-item :label="translate('orderManagement.createdBy')" v-if="dispatch.created_by">
-            <UserReference :userId="dispatch.created_by" />
+            <UserTagHoverForDetail :user="userMap[dispatch.created_by]"/>
           </el-form-item>
 
 
@@ -173,7 +173,7 @@
           </el-form-item>
 
           <el-form-item :label="translate('orderManagement.updatedBy')" v-if="dispatch.updated_by">
-            <UserReference :userId="dispatch.updated_by"/>
+            <UserTagHoverForDetail :user="userMap[dispatch.updated_by]"/>
           </el-form-item>
 
           <el-form-item :label="translate('orderManagement.updatedAt')" v-if="dispatch.updated_at">
@@ -285,7 +285,7 @@
                 v-for="user in dispatch.userDetails"
                 class="tags"
             >
-              <UserReference :userId="user.id"/>
+              <UserTagHoverForDetail :user="userMap[user.id]"/>
             </div>
           </el-form-item>
 
@@ -570,7 +570,6 @@ import { humanizeCronInChinese } from "cron-chinese";
 import { getUserById } from "@/services/userService";
 import {getProductById, getProductionWorkOrderById, getRawMaterialById} from "@/services/productionService";
 import {getEquipmentById, getMaintenanceWorkOrderById} from "@/services/maintenanceService";
-import UserReference from "@/components/dispatch/UserReference.vue";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
 
 import {getDispatchNextExecutionTime, pauseDispatch, resumeDispatch} from "@/services/dispatchService";
@@ -579,6 +578,7 @@ import {getSamplingLocationById} from "@/services/samplingLocationService";
 import {getInstrumentById} from "@/services/instrumentService";
 import {translate} from "@/utils/i18n";
 import cronstrue from "cronstrue";
+import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.vue";
 
 
 export default {
@@ -587,7 +587,7 @@ export default {
       return cronstrue
     }
   },
-  components: {UserReference, DispatchedTasksList},
+  components: {UserTagHoverForDetail, DispatchedTasksList},
   props: {
     currentOrder: {
       type: Object,

@@ -42,6 +42,7 @@
         @edit-test-subject="openDialog"
         @delete-test-subject="confirmDelete"
         :search-input="searchQuery"
+        :user-map="userMap"
     />
 
 
@@ -73,6 +74,7 @@ import TestSubjectList from "@/components/test-subject/TestSubjectList.vue";
 import TestSubjectForm from "@/components/test-subject/TestSubjectForm.vue";
 import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 import {translate, translateWithParams} from "@/utils/i18n";
+import {fetchUsers} from "@/services/userService";
 
 export default {
   components: {RefreshRight, SamplingLocationList, Search, TestSubjectList, TestSubjectForm },
@@ -87,6 +89,7 @@ export default {
         name: "",
         description: "",
       },
+      userMap: {},
     };
   },
   methods: {
@@ -102,6 +105,21 @@ export default {
       } catch (error) {
         console.error("Failed to load test subjects:", error);
         this.testSubjects = [];
+      }
+    },
+    async loadUserMap() {
+      try {
+        const response = await fetchUsers();
+        const updatedUserMap = response.data.data.reduce((map, user) => {
+          map[user.id] = user;
+          return map;
+        }, {});
+
+        if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
+          this.userMap = updatedUserMap;
+        }
+      } catch (error) {
+        this.$message.error(translate('orderManagement.messages.errorLoadingUsersData'));
       }
     },
     openDialog(testSubject = null) {
@@ -127,7 +145,7 @@ export default {
     },
     async confirmDelete(id) {
       try {
-        await this.$confirm(translate('orderManagement.deleteConfirmation'), translate('orderManagement.messages.messageTitle'), {
+        await this.$confirm(translate('orderManagement.messages.deleteConfirmation'), translate('orderManagement.messages.messageTitle'), {
           confirmButtonText: translate('orderManagement.confirm'),
           cancelButtonText: translate('orderManagement.cancel'),
           type: "warning",
@@ -150,6 +168,7 @@ export default {
   },
   mounted() {
     this.loadTestSubjects();
+    this.loadUserMap();
   },
 };
 </script>

@@ -16,7 +16,7 @@
     </el-table-column>
     <el-table-column prop="created_by" :label="translate('orderManagement.createdBy')" width="180" sortable>
       <template #default="scope">
-        <UserReference :user-id="scope.row.created_by"/>
+        <UserTagHoverForDetail :user="userMap[scope.row.created_by]"/>
       </template>
     </el-table-column>
     <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="250">
@@ -49,12 +49,11 @@
 
 <script>
 import TimeSlot from "@/components/dispatch/TimeSlot.vue";
-import UserReference from "@/components/dispatch/UserReference.vue";
-import {getQcOrderStateTagData} from "@/utils/dispatch-utils";
 import {translate} from "@/utils/i18n";
+import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.vue";
 
 export default {
-  components: {UserReference, TimeSlot},
+  components: {UserTagHoverForDetail, TimeSlot},
   props: {
     testSubjects: {
       type: Array,
@@ -63,7 +62,11 @@ export default {
     searchInput: {
       type: String,
       required: true,
-    }
+    },
+    userMap: {
+      type: Object,
+      required: true,
+    },
   },
   watch : {
     testSubjects: {
