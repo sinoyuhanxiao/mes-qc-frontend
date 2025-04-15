@@ -107,7 +107,7 @@ const error = ref<string | null>(null)
 // Custom Validation Method
 const validateSelectedForms = (rule, value, callback) => {
   if (!props.selectedFormIds || props.selectedFormIds.length === 0) {
-    callback(new Error("请选择至少一个表单"));
+    callback(new Error(translate('orderManagement.validation.formRequired')));
   } else {
     callback();
   }
