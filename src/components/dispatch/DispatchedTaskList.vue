@@ -53,29 +53,7 @@
       <!-- Personnel -->
       <el-table-column prop="user_id" :label="translate('orderManagement.dispatchedTaskTable.user')" width="110" sortable>
         <template #default="scope">
-          <el-tag
-              v-if="getUserById(scope.row.user_id)"
-              type="primary"
-              size="small"
-              effect="light"
-          >
-            <el-popover
-                effect="light"
-                trigger="hover"
-                placement="top"
-                width="auto"
-            >
-              <template #default>
-                <div>{{ translate('userManagement.table.name') }}: {{ getUserById(scope.row.user_id).name }}</div>
-                <div>{{ translate('userManagement.table.username') }}: {{ getUserById(scope.row.user_id).username }}</div>
-                <div>{{ translate('userManagement.table.wecomId') }}: {{ getUserById(scope.row.user_id).wecom_id }}</div>
-              </template>
-              <template #reference>
-                {{ getUserById(scope.row.user_id).name }}
-              </template>
-            </el-popover>
-          </el-tag>
-          <span v-else>-</span>
+          <UserTagHoverForDetail :user="userMap[scope.row.user_id]"/>
         </template>
       </el-table-column>
 
@@ -157,6 +135,7 @@ import dayjs from "dayjs";
 import {Search} from "@element-plus/icons-vue";
 import { getAllDispatchedTasks, getAllDispatchedTasksByDispatchId } from "@/services/taskCenterService"
 import {translate} from "@/utils/i18n";
+import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.vue";
 
 export default {
   props: {
@@ -177,6 +156,7 @@ export default {
       required: true,
     },
   },
+  components: {UserTagHoverForDetail},
   data() {
     return {
       currentPage: 1,

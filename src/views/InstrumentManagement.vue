@@ -49,6 +49,7 @@
         @edit-instrument="openDialog"
         @delete-instrument="confirmDelete"
         :search-input="searchQuery"
+        :user-map="userMap"
     />
 
     <!-- Dialog for Create / Edit -->
@@ -73,6 +74,7 @@ import {RefreshRight, Search} from "@element-plus/icons-vue";
 import InstrumentList from "@/components/instrument/instrumentList.vue";
 import InstrumentForm from "@/components/instrument/instrumentForm.vue";
 import {translate, translateWithParams} from "@/utils/i18n";
+import {fetchUsers} from "@/services/userService";
 
 export default {
   components: { RefreshRight, Search, InstrumentList, InstrumentForm },
@@ -90,6 +92,7 @@ export default {
         modelNumber: "",
         description: "",
       },
+      userMap: {},
     };
   },
   methods: {
@@ -105,6 +108,21 @@ export default {
       } catch (error) {
         console.error("Failed to load instruments:", error);
         this.instruments = []; // Fallback to an empty array in case of error
+      }
+    },
+    async loadUserMap() {
+      try {
+        const response = await fetchUsers();
+        const updatedUserMap = response.data.data.reduce((map, user) => {
+          map[user.id] = user;
+          return map;
+        }, {});
+
+        if (JSON.stringify(this.userMap) !== JSON.stringify(updatedUserMap)) {
+          this.userMap = updatedUserMap;
+        }
+      } catch (error) {
+        this.$message.error(translate('orderManagement.messages.errorLoadingUsersData'));
       }
     },
   openDialog(instrument = null) {
@@ -158,6 +176,7 @@ export default {
   },
   mounted() {
     this.loadInstruments();
+    this.loadUserMap();
   }
 };
 </script>
