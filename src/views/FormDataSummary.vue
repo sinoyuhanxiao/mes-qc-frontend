@@ -269,7 +269,7 @@ export default {
     reorderedColumnHeaders() {
       let headers = Object.keys(this.qcRecords[0] || {});
       headers = headers.filter(header => header !== "created_by" && header !== "created_at");
-      headers.unshift("created_at", "created_by"); // 确保这两个字段在最前
+      headers.unteam("created_at", "created_by"); // 确保这两个字段在最前
       headers = headers.map(header => (header === "created_at" ? "提交时间" : header));
       return headers;
     },

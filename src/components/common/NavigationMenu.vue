@@ -37,9 +37,9 @@
                 <el-icon><User /></el-icon>
                 <span>{{ translate('navigationMenu.userManagement') }}</span>
               </el-menu-item>
-              <el-menu-item index="/shift-management">
+              <el-menu-item index="/team-management">
                 <el-icon><User /></el-icon>
-                <span>{{ translate('navigationMenu.shiftManagement') }}</span>
+                <span>{{ translate('navigationMenu.teamManagement') }}</span>
               </el-menu-item>
             </el-sub-menu>
 

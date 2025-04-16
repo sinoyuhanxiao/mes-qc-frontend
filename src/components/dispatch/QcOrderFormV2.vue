@@ -124,8 +124,8 @@
                 <cron-element-plus
                     v-model="dispatch.cron_expression"
                     :button-props="{ type: 'primary' }"
-                    :period="dispatch.source === 'shift' ? 'day' : 'hour'"
-                    :disabled="dispatch.source === 'shift'"
+                    :period="dispatch.source === 'team' ? 'day' : 'hour'"
+                    :disabled="dispatch.source === 'team'"
                     :locale="currentLanguage"
                 />
               </el-form-item>
@@ -174,7 +174,7 @@
 
               <!-- Dispatch Limit -->
               <el-form-item
-                  v-if="dispatch.type === 'regular' && dispatch.source !== 'shift'"
+                  v-if="dispatch.type === 'regular' && dispatch.source !== 'team'"
                   :label="translate('orderManagement.orderDetailDialog.dispatchLimit')"
               >
                 <el-col :span="12">
@@ -212,7 +212,7 @@
               <el-divider>{{ translate('orderManagement.orderDetailDialog.taskConfigDivider') }}</el-divider>
               <!-- Due Date Offset -->
               <el-form-item
-                  v-if="dispatch.source !== 'shift'"
+                  v-if="dispatch.source !== 'team'"
                   :label="translate('orderManagement.orderDetailDialog.taskDueDateOffset')"
                   required
                   :prop="'dispatches.' + index + '.due_date_offset_minute'"
@@ -295,7 +295,7 @@
 
               <!-- User Selection -->
               <el-form-item
-                  v-if="dispatch.source !== 'shift'"
+                  v-if="dispatch.source !== 'team'"
                   :label="translate('orderManagement.orderTable.associatedUsers')"
                   :prop="'dispatches.' + index + '.user_ids'"
                   required
@@ -317,13 +317,13 @@
                 />
               </el-form-item>
 
-              <!-- Shift User Tree Selection -->
+              <!-- Team User Tree Selection -->
               <el-form-item
                   :prop="'dispatches.' + index + '.user_ids'"
               >
-                <UserShiftTree
-                    :shiftIdArray="[dispatch.shift_id]"
-                    @update-selected-users="(users) => handleUserShiftTreeSelection(users, index)"
+                <UserTeamTree
+                    :teamIdArray="[dispatch.team_id]"
+                    @update-selected-users="(users) => handleUserTeamTreeSelection(users, index)"
                 />
               </el-form-item>
 
@@ -428,51 +428,51 @@
           {{ translate('orderManagement.orderFormDialog.addDispatchButton') }}
         </el-button>
 
-        <!-- Add Plan By Shift  -->
+        <!-- Add Plan By Team  -->
         <el-button
             type="primary"
             plain
             style="margin-right: 12px"
-            @click="isPlanPopulateByShiftVisible = true"
+            @click="isPlanPopulateByTeamVisible = true"
         >
-          {{ translate('orderManagement.orderFormDialog.addDispatchByShiftButton') }}
+          {{ translate('orderManagement.orderFormDialog.addDispatchByTeamButton') }}
         </el-button>
 
         <!-- Dialog Modal -->
         <el-dialog
-            :title="translate('orderManagement.shiftPopulatePlanDialog.title')"
-            v-model="isPlanPopulateByShiftVisible"
+            :title="translate('orderManagement.teamPopulatePlanDialog.title')"
+            v-model="isPlanPopulateByTeamVisible"
             width="400px"
             :close-on-click-modal="false"
         >
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Shift Selector -->
+            <!-- Team Selector -->
             <el-select-v2
-                v-model="selectedShiftId"
-                :placeholder="translate('orderManagement.shiftPopulatePlanDialog.selectShiftPlaceholder')"
+                v-model="selectedTeamId"
+                :placeholder="translate('orderManagement.teamPopulatePlanDialog.selectTeamPlaceholder')"
                 multiple
                 filterable
-                :options="shiftOptions"
+                :options="teamOptions"
                 clearable
                 style="width: 100%;"
             />
 
-            <!-- Selected Shift Description -->
+            <!-- Selected Team Description -->
             <div
-                v-if="selectedShiftDetails.length"
+                v-if="selectedTeamDetails.length"
                 style="max-height: 200px; overflow-y: auto; border-top: 1px solid #ebeef5; padding-top: 10px;"
             >
               <div
-                  v-for="shift in selectedShiftDetails"
-                  :key="shift.id"
+                  v-for="team in selectedTeamDetails"
+                  :key="team.id"
                   style="margin-bottom: 10px; font-size: 13px; color: #606266;"
               >
-                <strong>{{ shift.name }}</strong>
+                <strong>{{ team.name }}</strong>
                 <ul style="padding-left: 18px; margin: 4px 0;">
-                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.shiftPlanExecutionLogic') }}</li>
-                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.shiftPlanDueDate') }}</li>
-                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.associatedFormCount') }}：{{ shift.form_ids.length }}</li>
-                  <li>{{ translate('orderManagement.shiftPopulatePlanDialog.associatedUserCount') }}：{{ shift.user_ids.length }}</li>
+                  <li>{{ translate('orderManagement.teamPopulatePlanDialog.teamPlanExecutionLogic') }}</li>
+                  <li>{{ translate('orderManagement.teamPopulatePlanDialog.teamPlanDueDate') }}</li>
+                  <li>{{ translate('orderManagement.teamPopulatePlanDialog.associatedFormCount') }}：{{ team.form_ids.length }}</li>
+                  <li>{{ translate('orderManagement.teamPopulatePlanDialog.associatedUserCount') }}：{{ team.user_ids.length }}</li>
                 </ul>
               </div>
             </div>
@@ -480,10 +480,10 @@
 
           <!-- Footer -->
           <template #footer>
-            <el-button @click="isPlanPopulateByShiftVisible = false">{{ translate('orderManagement.cancel') }}</el-button>
+            <el-button @click="isPlanPopulateByTeamVisible = false">{{ translate('orderManagement.cancel') }}</el-button>
             <el-button
                 type="primary"
-                :disabled="!selectedShiftId || selectedShiftId.length === 0"
+                :disabled="!selectedTeamId || selectedTeamId.length === 0"
                 @click="handlePopulateDispatchAndClose"
             >
               {{ translate('orderManagement.confirm') }}
@@ -508,7 +508,7 @@
           :qc-order-form="qcOrderForm"
           :form-map="formMap"
           :user-map="userMap"
-          :shift-map="shiftMap"
+          :team-map="teamMap"
       />
     </el-aside>
   </el-container>
@@ -524,16 +524,16 @@ import {getAllInstruments} from "@/services/instrumentService";
 import {getAllTestSubjects} from "@/services/testSubjectService";
 import {getAllSamplingLocations} from "@/services/samplingLocationService";
 import QcOrderPreview from "@/components/dispatch/QcOrderPreviewV2.vue"
-import UserShiftTree from "@/components/dispatch/UserShiftTree.vue";
+import UserTeamTree from "@/components/dispatch/UserTeamTree.vue";
 import {Avatar, Check} from "@element-plus/icons-vue";
-import {getAllShifts} from "@/services/shiftService";
-import {getFormIdsForShift} from "@/services/shiftFormService";
-import {getUsersForShift} from "@/services/shiftUserService";
+import {getAllTeams} from "@/services/teamService";
+import {getFormIdsForTeam} from "@/services/teamFormService";
+import {getUsersForTeam} from "@/services/teamUserService";
 import {translate} from "@/utils/i18n";
 
 
 export default {
-  components: { DispatchFormTreeSelect, UserShiftTree, CronElementPlus, QcOrderPreview },
+  components: { DispatchFormTreeSelect, UserTeamTree, CronElementPlus, QcOrderPreview },
   props: {
     currentOrder: {
       type: Object,
@@ -547,7 +547,7 @@ export default {
       type: Object,
       required: true,
     },
-    shiftMap: {
+    teamMap: {
       type: Object,
       required: true,
     }
@@ -563,8 +563,8 @@ export default {
         }
       },
     },
-    selectedShiftId: {
-      handler: 'fetchSelectedShiftDetails',
+    selectedTeamId: {
+      handler: 'fetchSelectedTeamDetails',
       immediate: true,
     },
   },
@@ -584,22 +584,22 @@ export default {
         value: user.id
       }));
     },
-    shiftOptions() {
-      return this.shiftSelectOptions
-          .filter(shift => shift.status === 1)
-          .map(shift => (
+    teamOptions() {
+      return this.teamSelectOptions
+          .filter(team => team.status === 1)
+          .map(team => (
           {
-            value: shift.id,
-            label:shift.name
+            value: team.id,
+            label:team.name
           }))
     },
-    selectedShiftDetails() {
-      return this.selectedShiftId.map(id => {
-        const shift = this.shiftMap[id] || {};
+    selectedTeamDetails() {
+      return this.selectedTeamId.map(id => {
+        const team = this.teamMap[id] || {};
         return {
-          ...shift,
-          form_ids: shift.form_ids || [],
-          user_ids: shift.user_ids || [],
+          ...team,
+          form_ids: team.form_ids || [],
+          user_ids: team.user_ids || [],
         };
       });
     },
@@ -629,7 +629,7 @@ export default {
       productionWorkOrderOptions: [],
       equipmentOptions: [],
       maintenanceWorkOrderOptions: [],
-      isPlanPopulateByShiftVisible: false,
+      isPlanPopulateByTeamVisible: false,
       emptyDispatchTemplate: {
         id: null,
         type: "regular",
@@ -657,11 +657,11 @@ export default {
         collapsed: false,
         isUnlimited: true,
         dropdownUserIds: [],
-        shiftTreeUserIds: [],
+        teamTreeUserIds: [],
         source: 'manual',
       },
-      shiftSelectOptions: [],
-      selectedShiftId: [],
+      teamSelectOptions: [],
+      selectedTeamId: [],
       cronFields: [
         {
           id: 'day',
@@ -819,8 +819,8 @@ export default {
 
       return payload;
     },
-    togglePlanPopulateByShift(){
-      this.isPlanPopulateByShiftVisible = !this.isPlanPopulateByShiftVisible;
+    togglePlanPopulateByTeam(){
+      this.isPlanPopulateByTeamVisible = !this.isPlanPopulateByTeamVisible;
     },
     async loadProductOptions() {
       try {
@@ -918,14 +918,14 @@ export default {
         console.error("Failed to load sampling location:", error);
       }
     },
-    async loadShiftSelectOptions() {
+    async loadTeamSelectOptions() {
       try {
-        const response = await getAllShifts();
+        const response = await getAllTeams();
         if (response.data.status === "200") {
-          this.shiftSelectOptions = response.data?.data || [];
+          this.teamSelectOptions = response.data?.data || [];
         }
       } catch (error) {
-        console.error("Failed to load shift select:", error);
+        console.error("Failed to load team select:", error);
       }
     },
     async loadAllOptions() {
@@ -938,13 +938,13 @@ export default {
         this.loadInstrumentOptions(),
         this.loadSamplingLocationOptions(),
         this.loadTestSubjectOptions(),
-        this.loadShiftSelectOptions(),
+        this.loadTeamSelectOptions(),
       ]);
     },
     async handleFormNodeClicked(formTemplateId) {
       await openFormPreviewWindow(formTemplateId, this)
     },
-    async handleUserShiftTreeSelection(userIdsFromTree, index) {
+    async handleUserTeamTreeSelection(userIdsFromTree, index) {
       const dispatch = this.qcOrderForm.dispatches[index];
 
       if (!dispatch) {
@@ -952,10 +952,10 @@ export default {
         return;
       }
 
-      dispatch.shiftTreeUserIds = userIdsFromTree;
+      dispatch.teamTreeUserIds = userIdsFromTree;
 
       // Merge `dispatch.user_ids` (el-select) and `userIdsFromTree`
-      dispatch.user_ids = [...new Set([...dispatch.dropdownUserIds, ...dispatch.shiftTreeUserIds])]; // OR: Array.from(mergedUserIds);
+      dispatch.user_ids = [...new Set([...dispatch.dropdownUserIds, ...dispatch.teamTreeUserIds])]; // OR: Array.from(mergedUserIds);
     },
     addUniqueUserIdsToDispatch(newUserIds, index) {
       console.log("AddUniqueUserIdsToDispatch", index);
@@ -966,50 +966,50 @@ export default {
         return;
       }
 
-      if (!dispatch.shiftTreeUserIds) {
-        dispatch.shiftTreeUserIds = [];
+      if (!dispatch.teamTreeUserIds) {
+        dispatch.teamTreeUserIds = [];
       }
 
-      // Merge `dropdownUserIds` (new selection) and `shiftTreeUserIds`
-      const mergedUserIds = new Set([...newUserIds, ...dispatch.shiftTreeUserIds]);
+      // Merge `dropdownUserIds` (new selection) and `teamTreeUserIds`
+      const mergedUserIds = new Set([...newUserIds, ...dispatch.teamTreeUserIds]);
 
       // Convert Set to Array and update `user_ids`
       dispatch.user_ids = [...mergedUserIds];
     },
     async handlePopulateDispatchAndClose() {
       await this.handlePopulateDispatch(); // existing function
-      this.isPlanPopulateByShiftVisible = false; // close the popover
+      this.isPlanPopulateByTeamVisible = false; // close the popover
     },
     async handlePopulateDispatch() {
-      for (const shiftId of this.selectedShiftId) {
-        const shift = this.shiftSelectOptions.find((shift) => shift.id === shiftId);
+      for (const teamId of this.selectedTeamId) {
+        const team = this.teamSelectOptions.find((team) => team.id === teamId);
         let d = this.cloneEmptyDispatchTemplate();
 
-        let response = await getUsersForShift(shiftId);
+        let response = await getUsersForTeam(teamId);
         console.log('response');
         console.log(response);
         if (response.status === 200) {
           d.user_ids = response.data.data.map((user) => user.id);
           // TODO: Clean up
-          console.log('set dispatch plan user id to users under shift')
+          console.log('set dispatch plan user id to users under team')
         } else {
           d.user_ids = [];
           // TODO: Clean up
           console.log('set dispatch plan user id to empty')
         }
 
-        response = await getFormIdsForShift(shiftId);
+        response = await getFormIdsForTeam(teamId);
         if (response.status === 200) {
           d.form_ids = response.data?.data
         } else {
           d.form_ids = [];
         }
 
-        d.source = 'shift';
+        d.source = 'team';
         d.cron_expression = '0 0 * * *';
-        d.name = (shift? shift.name : '') + translate('orderManagement.plan');
+        d.name = (team? team.name : '') + translate('orderManagement.plan');
         d.collapsed = true;
-        d.shift_id = shiftId;
+        d.team_id = teamId;
         d.due_date_offset_minute = 1440;
 
 
@@ -1017,7 +1017,7 @@ export default {
       }
 
       // Reset after populating plans.
-      this.selectedShiftId = [];
+      this.selectedTeamId = [];
     },
     cloneEmptyDispatchTemplate() {
       return JSON.parse(JSON.stringify(this.emptyDispatchTemplate));

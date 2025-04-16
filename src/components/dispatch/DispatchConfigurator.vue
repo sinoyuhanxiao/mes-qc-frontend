@@ -12,7 +12,7 @@
             :current-order="qcOrderForm"
             :form-map="formMap"
             :user-map="userMap"
-            :shift-map="shiftMap"
+            :team-map="teamMap"
             @on-submit="handleSubmit"
             @on-cancel="handleCancel"
             @reset-form="handleReset"/>
@@ -48,7 +48,7 @@ export default {
       type: Object,
       required: true,
     },
-    shiftMap: {
+    teamMap: {
       type: Object,
       required: true,
     }
@@ -132,7 +132,7 @@ export default {
           updated_at: dispatch.updated_at || null,
           updated_by: dispatch.updated_by || null,
           dropdownUserIds: dispatch.user_ids || [],
-          shiftTreeUserIds: [],
+          teamTreeUserIds: [],
         })),
       };
     }

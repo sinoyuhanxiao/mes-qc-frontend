@@ -881,7 +881,7 @@ export function createDesigner(vueInstance) {
 
     emitHistoryChange() {
       if (this.historyData.index === this.historyData.maxStep - 1) {
-        this.historyData.steps.shift()
+        this.historyData.steps.team()
       } else {
         this.historyData.index++
       }

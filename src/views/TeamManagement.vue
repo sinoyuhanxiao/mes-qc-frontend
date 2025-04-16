@@ -3,10 +3,10 @@
     <!-- Toolbar with Search Bar and Add Button -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>{{ translate("shiftManagement.title") }}</h2>
+        <h2>{{ translate("teamManagement.title") }}</h2>
         <el-input
             v-model="searchQuery"
-            :placeholder="translate('shiftManagement.searchPlaceholder')"
+            :placeholder="translate('teamManagement.searchPlaceholder')"
             clearable
             @input="filterTable"
             style="width: 300px; margin-left: 20px"
@@ -19,68 +19,68 @@
 
       <div style="display: flex; gap: 10px;">
         <!-- Refresh Button -->
-        <el-tooltip :content="translate('shiftManagement.refreshTooltip')" placement="top">
+        <el-tooltip :content="translate('teamManagement.refreshTooltip')" placement="top">
           <el-button
               class="refresh-button"
               type="primary"
               circle
-              @click="fetchShiftData"
+              @click="fetchTeamData"
           >
             <el-icon style="color: #004085;"><RefreshRight /></el-icon>
           </el-button>
         </el-tooltip>
 
         <!-- Add Button -->
-        <el-button type="primary" @click="showAddDialog">{{ translate("shiftManagement.addButton") }}</el-button>
+        <el-button type="primary" @click="showAddDialog">{{ translate("teamManagement.addButton") }}</el-button>
       </div>
     </div>
 
     <!-- Table -->
     <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
-      <el-table :data="paginatedShifts" style="width: 100%" @sort-change="handleSortChange" :height="tableHeight">
+      <el-table :data="paginatedTeams" style="width: 100%" @sort-change="handleSortChange" :height="tableHeight">
         <el-table-column label="ID" width="100" prop="id" sortable>
           <template #default="scope">
             <span>{{ scope.row.id }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('shiftManagement.table.name')" prop="name" width="180" sortable>
+        <el-table-column :label="translate('teamManagement.table.name')" prop="name" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.name }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('shiftManagement.table.type')" prop="type" width="180" sortable>
+        <el-table-column :label="translate('teamManagement.table.type')" prop="type" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.type }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('shiftManagement.table.leader')" prop="leader_id" width="180" sortable>
+        <el-table-column :label="translate('teamManagement.table.leader')" prop="leader_id" width="180" sortable>
           <template #default="scope">
             <span>{{ scope.row.leader?.name || " - " }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('shiftManagement.table.startTime')" prop="start_time" width="180" sortable>
+        <el-table-column :label="translate('teamManagement.table.startTime')" prop="start_time" width="180" sortable>
           <template #default="scope">
             <span>{{ formatTime(scope.row.start_time) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('shiftManagement.table.endTime')" prop="end_time" width="180" sortable>
+        <el-table-column :label="translate('teamManagement.table.endTime')" prop="end_time" width="180" sortable>
           <template #default="scope">
             <span>{{ formatTime(scope.row.end_time) }}</span>
           </template>
         </el-table-column>
 
         <el-table-column
-            :label="translate('shiftManagement.table.status')" prop="status" width="180" sortable
+            :label="translate('teamManagement.table.status')" prop="status" width="180" sortable
         >
           <template #header>
             <span>
-              {{ translate('shiftManagement.table.status') }}
-              <el-tooltip :content="translate('shiftManagement.table.statusTooltip')" placement="top">
+              {{ translate('teamManagement.table.status') }}
+              <el-tooltip :content="translate('teamManagement.table.statusTooltip')" placement="top">
                 <el-icon><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
@@ -95,7 +95,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('shiftManagement.table.description')" prop="description" width="360" sortable>
+        <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="360" sortable>
           <template #default="scope">
             <span>{{ scope.row.description }}</span>
           </template>
@@ -107,7 +107,7 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-        <el-table-column :label="translate('shiftManagement.table.createdAt')" prop="created_at" width="180" sortable>
+        <el-table-column :label="translate('teamManagement.table.createdAt')" prop="created_at" width="180" sortable>
           <template #default="scope">
             <span>{{ formatDate(scope.row.created_at) }}</span>
           </template>
@@ -125,11 +125,11 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-        <el-table-column :title="translate('shiftManagement.table.actions')" align="right" header-align="right" width="230" fixed="right">
+        <el-table-column :title="translate('teamManagement.table.actions')" align="right" header-align="right" width="230" fixed="right">
           <template #default="scope">
-            <el-button size="small" type="primary" @click="openShiftInfoDialog(scope.row)">{{ translate('shiftManagement.table.viewShift') }}</el-button>
-            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate('shiftManagement.edit') }}</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate('shiftManagement.delete') }}</el-button>
+            <el-button size="small" type="primary" @click="openTeamInfoDialog(scope.row)">{{ translate('teamManagement.table.viewTeam') }}</el-button>
+            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate('teamManagement.edit') }}</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate('teamManagement.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -148,16 +148,16 @@
         :hide-on-single-page="true"
     />
 
-    <!-- Shift Info Dialog -->
-    <el-dialog v-model="dialogTableVisible" :title="`${selectedShiftName}`" width="800">
+    <!-- Team Info Dialog -->
+    <el-dialog v-model="dialogTableVisible" :title="`${selectedTeamName}`" width="800">
       <el-tabs>
-        <el-tab-pane :label="translate('shiftManagement.membersTab')">
+        <el-tab-pane :label="translate('teamManagement.membersTab')">
           <!-- Filter Bar -->
           <el-input
               v-model="searchUserQuery"
               :placeholder="translate('orderManagement.orderFormDialog.searchUserPlaceholder')"
               clearable
-              @input="filterShiftUsers"
+              @input="filterTeamUsers"
               style="margin-bottom: 10px; width: 300px;"
           >
             <template #prefix>
@@ -166,7 +166,7 @@
           </el-input>
 
       <!-- Table with Sorting -->
-      <el-table v-loading="loadingUsers" :data="paginatedShiftUsers" @sort-change="handleUserSortChange">
+      <el-table v-loading="loadingUsers" :data="paginatedTeamUsers" @sort-change="handleUserSortChange">
         <el-table-column prop="id" :label="translate('userManagement.table.id')" width="100" sortable />
         <el-table-column prop="name" :label="translate('userManagement.table.name')" width="180" sortable />
         <el-table-column prop="role" :label="translate('userManagement.table.role')" width="150" sortable>
@@ -195,47 +195,47 @@
               :page-size="userPageSize"
               :page-sizes="[10, 20, 30, 50]"
               layout="total, sizes, prev, pager, next"
-              :total="filteredShiftUsers.length"
+              :total="filteredTeamUsers.length"
               :hide-on-single-page="true"
           />
         </el-tab-pane>
 
-        <el-tab-pane :label="translate('shiftManagement.formsTab')">
+        <el-tab-pane :label="translate('teamManagement.formsTab')">
             <div class="popup-container">
               <el-form>
-                <shift-form-tree
-                    :selectedFormIds="shiftForms"
+                <team-form-tree
+                    :selectedFormIds="teamForms"
                     :showOnlySelectedNode="true"
                     @on-node-clicked="handleFormNodeClicked"
                 >
-                </shift-form-tree>
+                </team-form-tree>
               </el-form>
             </div>
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
 
-    <!-- Add Shift Dialog -->
-    <el-dialog :title="translate('shiftManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddShift">
-      <div v-loading="loadingShift" class="popup-container">
-        <el-form ref="addShiftForm" :model="newShift" :rules="rules" label-width="140px">
-          <el-form-item :label="translate('shiftManagement.addDialog.name')" prop="name">
-            <el-input v-model="newShift.name" />
+    <!-- Add Team Dialog -->
+    <el-dialog :title="translate('teamManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddTeam">
+      <div v-loading="loadingTeam" class="popup-container">
+        <el-form ref="addTeamForm" :model="newTeam" :rules="rules" label-width="140px">
+          <el-form-item :label="translate('teamManagement.addDialog.name')" prop="name">
+            <el-input v-model="newTeam.name" />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.type')" prop="type">
-            <el-input v-model="newShift.type" />
+          <el-form-item :label="translate('teamManagement.addDialog.type')" prop="type">
+            <el-input v-model="newTeam.type" />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.leader')" prop="leader_id">
+          <el-form-item :label="translate('teamManagement.addDialog.leader')" prop="leader_id">
             <el-select
-                v-model="newShift.leader_id"
+                v-model="newTeam.leader_id"
                 filterable
-                :placeholder="translate('shiftManagement.addDialog.selectLeaderPlaceholder')"
+                :placeholder="translate('teamManagement.addDialog.selectLeaderPlaceholder')"
                 style="width: 480px"
             >
               <el-option
-                  v-for="user in shiftLeaderOptions"
+                  v-for="user in teamLeaderOptions"
                   :key="user.id"
                   :label="user.name"
                   :value="user.id"
@@ -243,26 +243,26 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.startTime')" prop="start_time">
+          <el-form-item :label="translate('teamManagement.addDialog.startTime')" prop="start_time">
             <el-time-picker
-                v-model="newShift.start_time"
-                :placeholder="translate('shiftManagement.addDialog.startTime')"
+                v-model="newTeam.start_time"
+                :placeholder="translate('teamManagement.addDialog.startTime')"
             />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.endTime')" prop="end_time">
+          <el-form-item :label="translate('teamManagement.addDialog.endTime')" prop="end_time">
             <el-time-picker
-                v-model="newShift.end_time"
-                :placeholder="translate('shiftManagement.addDialog.endTime')"
+                v-model="newTeam.end_time"
+                :placeholder="translate('teamManagement.addDialog.endTime')"
             />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.members')" prop="selectedUsers">
+          <el-form-item :label="translate('teamManagement.addDialog.members')" prop="selectedUsers">
             <el-select
                 v-model="newUser.selectedUsers"
                 multiple
                 filterable
-                :placeholder="translate('shiftManagement.addDialog.selectMembers')"
+                :placeholder="translate('teamManagement.addDialog.selectMembers')"
                 style="width: 100%;"
             >
               <el-option
@@ -274,23 +274,23 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.forms')" prop="selectedForms">
-            <shift-form-tree
+          <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
+            <team-form-tree
                 :showOnlySelectedNode="false"
                 @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
                 @on-node-clicked="handleFormNodeClicked"
             >
-            </shift-form-tree>
+            </team-form-tree>
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.description')" prop="description">
-            <el-input type="textarea" v-model="newShift.description" />
+          <el-form-item :label="translate('teamManagement.addDialog.description')" prop="description">
+            <el-input type="textarea" v-model="newTeam.description" />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.addDialog.status')" prop="status">
-            <el-select v-model="newShift.status" :placeholder="translate('shiftManagement.addDialog.selectStatus')">
-              <el-option :label="translate('shiftManagement.status.active')" :value="1" />
-              <el-option :label="translate('shiftManagement.status.inactive')" :value="0" />
+          <el-form-item :label="translate('teamManagement.addDialog.status')" prop="status">
+            <el-select v-model="newTeam.status" :placeholder="translate('teamManagement.addDialog.selectStatus')">
+              <el-option :label="translate('teamManagement.status.active')" :value="1" />
+              <el-option :label="translate('teamManagement.status.inactive')" :value="0" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -298,28 +298,28 @@
 
       <template #footer>
         <div class="popup-container">
-          <el-button @click="addDialogVisible = false">{{ translate('shiftManagement.addDialog.cancelButton') }}</el-button>
-          <el-button type="primary" @click="validateAndAddShift">{{ translate('shiftManagement.addDialog.confirmButton') }}</el-button>
+          <el-button @click="addDialogVisible = false">{{ translate('teamManagement.addDialog.cancelButton') }}</el-button>
+          <el-button type="primary" @click="validateAndAddTeam">{{ translate('teamManagement.addDialog.confirmButton') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
-    <!-- Edit Shift Dialog -->
-    <el-dialog :title="translate('shiftManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
-      <div v-loading="loadingShift" class="popup-container">
-        <el-form ref="editShiftForm" :model="editShift" :rules="rules" label-width="140px">
-          <el-form-item :label="translate('shiftManagement.editDialog.name')" prop="name">
-            <el-input v-model="editShift.name" />
+    <!-- Edit Team Dialog -->
+    <el-dialog :title="translate('teamManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
+      <div v-loading="loadingTeam" class="popup-container">
+        <el-form ref="editTeamForm" :model="editTeam" :rules="rules" label-width="140px">
+          <el-form-item :label="translate('teamManagement.editDialog.name')" prop="name">
+            <el-input v-model="editTeam.name" />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.type')" prop="type">
-            <el-input v-model="editShift.type" />
+          <el-form-item :label="translate('teamManagement.editDialog.type')" prop="type">
+            <el-input v-model="editTeam.type" />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.leader')" prop="leader_id">
-            <el-select v-model="editShift.leader_id" filterable :placeholder="translate('shiftManagement.editDialog.selectLeaderPlaceholder')" style="width: 480px">
+          <el-form-item :label="translate('teamManagement.editDialog.leader')" prop="leader_id">
+            <el-select v-model="editTeam.leader_id" filterable :placeholder="translate('teamManagement.editDialog.selectLeaderPlaceholder')" style="width: 480px">
               <el-option
-                  v-for="user in shiftLeaderOptions"
+                  v-for="user in teamLeaderOptions"
                   :key="user.id"
                   :label="user.name"
                   :value="user.id"
@@ -327,26 +327,26 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.startTime')" prop="start_time">
+          <el-form-item :label="translate('teamManagement.editDialog.startTime')" prop="start_time">
             <el-time-picker
-                v-model="editShift.start_time"
-                :placeholder="translate('shiftManagement.editDialog.startTime')"
+                v-model="editTeam.start_time"
+                :placeholder="translate('teamManagement.editDialog.startTime')"
             />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.endTime')" prop="end_time">
+          <el-form-item :label="translate('teamManagement.editDialog.endTime')" prop="end_time">
             <el-time-picker
-                v-model="editShift.end_time"
-                :placeholder="translate('shiftManagement.editDialog.endTime')"
+                v-model="editTeam.end_time"
+                :placeholder="translate('teamManagement.editDialog.endTime')"
             />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.members')" prop="assignedUsers">
+          <el-form-item :label="translate('teamManagement.editDialog.members')" prop="assignedUsers">
             <el-select
                 v-model="editUser.assignedUsers"
                 multiple
                 filterable
-                :placeholder="translate('shiftManagement.editDialog.selectMembersPlaceholder')"
+                :placeholder="translate('teamManagement.editDialog.selectMembersPlaceholder')"
                 style="width: 100%;"
             >
               <el-option
@@ -358,24 +358,24 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.forms')">
-            <shift-form-tree
+          <el-form-item :label="translate('teamManagement.editDialog.forms')">
+            <team-form-tree
                 :selectedFormIds="editForm.assignedForms"
                 :showOnlySelectedNode="false"
                 @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
                 @on-node-clicked="handleFormNodeClicked"
             >
-            </shift-form-tree>
+            </team-form-tree>
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.description')" prop="description">
-            <el-input type="textarea" v-model="editShift.description" />
+          <el-form-item :label="translate('teamManagement.editDialog.description')" prop="description">
+            <el-input type="textarea" v-model="editTeam.description" />
           </el-form-item>
 
-          <el-form-item :label="translate('shiftManagement.editDialog.status')" prop="status">
-            <el-select v-model="editShift.status" :placeholder="translate('shiftManagement.editDialog.selectStatusPlaceholder')">
-              <el-option :label="translate('shiftManagement.status.active')" :value="1" />
-              <el-option :label="translate('shiftManagement.status.inactive')" :value="0" />
+          <el-form-item :label="translate('teamManagement.editDialog.status')" prop="status">
+            <el-select v-model="editTeam.status" :placeholder="translate('teamManagement.editDialog.selectStatusPlaceholder')">
+              <el-option :label="translate('teamManagement.status.active')" :value="1" />
+              <el-option :label="translate('teamManagement.status.inactive')" :value="0" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -383,8 +383,8 @@
 
       <template #footer>
         <div class="popup-container">
-          <el-button @click="editDialogVisible = false">{{ translate('shiftManagement.editDialog.cancelButton') }}</el-button>
-          <el-button type="primary" @click="handleEditConfirm">{{ translate('shiftManagement.editDialog.confirmButton') }}</el-button>
+          <el-button @click="editDialogVisible = false">{{ translate('teamManagement.editDialog.cancelButton') }}</el-button>
+          <el-button type="primary" @click="handleEditConfirm">{{ translate('teamManagement.editDialog.confirmButton') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -393,33 +393,33 @@
 
 <script>
 import { Search, Plus, QuestionFilled, RefreshRight } from "@element-plus/icons-vue";
-import {assignUsersToShift, removeShiftFromAllUsers} from '@/services/shiftUserService';
+import {assignUsersToTeam, removeTeamFromAllUsers} from '@/services/teamUserService';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import {
-  getAllShifts,
-  createShift,
-  updateShift,
-  activateShift,
-  deactivateShift,
-  deleteShift
-} from "@/services/shiftService.js";
+  getAllTeams,
+  createTeam,
+  updateTeam,
+  activateTeam,
+  deactivateTeam,
+  deleteTeam
+} from "@/services/teamService.js";
 import {formatDate} from "@/utils/task-center/dateFormatUtils";
 import {fetchUsers} from "@/services/userService";
-import {getUsersForShift} from "@/services/shiftUserService";
+import {getUsersForTeam} from "@/services/teamUserService";
 import {translate, translateWithParams} from "@/utils/i18n";
-import {assignFormsToShift, getFormIdsForShift, removeAllFormsFromShift} from "@/services/shiftFormService";
-import ShiftFormTree from "@/components/dispatch/ShiftFormTree.vue";
+import {assignFormsToTeam, getFormIdsForTeam, removeAllFormsFromTeam} from "@/services/teamFormService";
+import TeamFormTree from "@/components/dispatch/TeamFormTree.vue";
 import {openFormPreviewWindow} from "@/utils/dispatch-utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export default {
-  name: "ShiftManagement",
+  name: "TeamManagement",
   components: {
-    ShiftFormTree,
+    TeamFormTree,
     Search,
     Plus,
     QuestionFilled,
@@ -428,28 +428,28 @@ export default {
   data() {
     return {
       tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
-      loadingShift: false,
+      loadingTeam: false,
       searchUserQuery: "", // Search input value for users
       userCurrentPage: 1, // Current page for members
       userPageSize: 10, // Page size for members
-      filteredShiftUsers: [], // Filtered users for pagination
+      filteredTeamUsers: [], // Filtered users for pagination
       userSortSettings: { prop: "", order: "" }, // Sort settings
       tableData: [], // Original data
       filteredData: [], // Filtered data for display
       userOptions: [], // Dropdown options for all users
-      shiftLeaderOptions: [], // Dropdown options for shift leaders
+      teamLeaderOptions: [], // Dropdown options for team leaders
       currentPage: 1, // Current page number
       pageSize: 15, // Number of items per page
       searchQuery: "", // Search input value
       addDialogVisible: false, // Add dialog visibility
       editDialogVisible: false, // Edit dialog visibility
-      shiftUsers: [], // Stores users assigned to the shift
-      shiftForms: [], // Stores forms assigned to the shift
+      teamUsers: [], // Stores users assigned to the team
+      teamForms: [], // Stores forms assigned to the team
       dialogTableVisible: false, // Controls the visibility of the table dialog
       loadingUsers: false, // Loading state for the user list
       sortSettings: { prop: "", order: "" },
-      selectedShiftName: "", // store the selected shift for showing users
-      newShift: {
+      selectedTeamName: "", // store the selected team for showing users
+      newTeam: {
         name: "",
         type: "",
         leader_id: null,
@@ -458,7 +458,7 @@ export default {
         description: "",
         status: 1, // Default null
       },
-      editShift: {
+      editTeam: {
         id: null,
         name: "",
         type: "",
@@ -481,21 +481,21 @@ export default {
         selectedForms: [],
       },
       rules: {
-        name: [{ required: true, message: translate("shiftManagement.validation.nameRequired"), trigger: "blur" }],
-        type: [{ required: true, message: translate("shiftManagement.validation.typeRequired"), trigger: "blur" }],
-        leader_id: [{ required: true, message: translate("shiftManagement.validation.leaderRequired"), trigger: "blur" }],
-        start_time: [{ required: true, message: translate("shiftManagement.validation.startTimeRequired"), trigger: "blur" }],
-        end_time: [{ required: true, message: translate("shiftManagement.validation.endTimeRequired"), trigger: "blur" }],
+        name: [{ required: true, message: translate("teamManagement.validation.nameRequired"), trigger: "blur" }],
+        type: [{ required: true, message: translate("teamManagement.validation.typeRequired"), trigger: "blur" }],
+        leader_id: [{ required: true, message: translate("teamManagement.validation.leaderRequired"), trigger: "blur" }],
+        start_time: [{ required: true, message: translate("teamManagement.validation.startTimeRequired"), trigger: "blur" }],
+        end_time: [{ required: true, message: translate("teamManagement.validation.endTimeRequired"), trigger: "blur" }],
       },
     };
   },
   created() {
-    this.fetchShiftData();
+    this.fetchTeamData();
     this.fetchUserOptions();
   },
   computed: {
-    paginatedShiftUsers() {
-      const sortedData = [...this.filteredShiftUsers].sort((a, b) => {
+    paginatedTeamUsers() {
+      const sortedData = [...this.filteredTeamUsers].sort((a, b) => {
         const { prop, order } = this.userSortSettings;
         if (!prop || !order) return 0;
         const valueA = a[prop];
@@ -506,7 +506,7 @@ export default {
       const start = (this.userCurrentPage - 1) * this.userPageSize;
       return sortedData.slice(start, start + this.userPageSize);
     },
-    paginatedShifts() {
+    paginatedTeams() {
       const sortedData = [...this.filteredData].sort((a, b) => {
         const { prop, order } = this.sortSettings;
         if (!prop || !order) return 0;
@@ -535,9 +535,9 @@ export default {
   },
   methods: {
     translate,
-    filterShiftUsers() {
+    filterTeamUsers() {
       const searchText = this.searchUserQuery.toLowerCase();
-      this.filteredShiftUsers = this.shiftUsers.filter(user =>
+      this.filteredTeamUsers = this.teamUsers.filter(user =>
           Object.values(user).some(value => String(value).toLowerCase().includes(searchText))
       );
     },
@@ -587,33 +587,33 @@ export default {
       const date = new Date(`1970-01-01T${time}`);
       return date.toLocaleTimeString('en-US', {hour12: false}); // Format to HH:mm:ss
     },
-    async openShiftInfoDialog(shift) {
+    async openTeamInfoDialog(team) {
       this.dialogTableVisible = true;
       this.loadingUsers = true;
-      this.selectedShiftName = shift.name;
+      this.selectedTeamName = team.name;
 
       try {
-        let response = await getUsersForShift(shift.id);
+        let response = await getUsersForTeam(team.id);
         if (response.data.status === "200") {
-          this.shiftUsers = response.data.data;
-          this.filteredShiftUsers = [...this.shiftUsers];
+          this.teamUsers = response.data.data;
+          this.filteredTeamUsers = [...this.teamUsers];
         } else {
-          this.shiftUsers = [];
-          this.filteredShiftUsers = [];
+          this.teamUsers = [];
+          this.filteredTeamUsers = [];
         }
 
-        // Load forms of this shift
-        response = await getFormIdsForShift(shift.id);
+        // Load forms of this team
+        response = await getFormIdsForTeam(team.id);
         if (response.data.status === "200") {
-          this.shiftForms = [...response.data.data];
+          this.teamForms = [...response.data.data];
         } else {
-          this.shiftForms = [];
+          this.teamForms = [];
         }
       } catch (error) {
-        console.error("Error fetching shift association", error);
-        this.shiftUsers = [];
-        this.filteredShiftUsers = [];
-        this.shiftForms = [];
+        console.error("Error fetching team association", error);
+        this.teamUsers = [];
+        this.filteredTeamUsers = [];
+        this.teamForms = [];
       } finally {
         this.loadingUsers = false;
       }
@@ -625,8 +625,8 @@ export default {
       return roleId === 1 ? "管理员" : "质检人员";
     },
     closeEditDialog() {
-      // Reset the editShift object to prevent data conflicts
-      this.editShift = {
+      // Reset the editTeam object to prevent data conflicts
+      this.editTeam = {
         id: null,
         name: "",
         type: "",
@@ -649,7 +649,7 @@ export default {
           }));
 
           // ✅ Filter only 班长 (role.id === 3)
-          this.shiftLeaderOptions = response.data.data
+          this.teamLeaderOptions = response.data.data
               .filter(user => user.role && user.role.id === 3)
               .map(user => ({
                 id: user.id,
@@ -657,42 +657,42 @@ export default {
               }));
         } else {
           this.userOptions = [];
-          this.shiftLeaderOptions = []; // Ensure empty state
+          this.teamLeaderOptions = []; // Ensure empty state
         }
       } catch (error) {
         console.error("Error fetching user options:", error);
         this.userOptions = [];
-        this.shiftLeaderOptions = [];
+        this.teamLeaderOptions = [];
       }
     },
-    async updateUsersForShift(shiftId) {
-      this.loadingShift = true;
+    async updateUsersForTeam(teamId) {
+      this.loadingTeam = true;
       try {
-        await removeShiftFromAllUsers(shiftId); // Remove all users from shift
+        await removeTeamFromAllUsers(teamId); // Remove all users from team
         if (this.editUser.assignedUsers.length > 0) {
-          await assignUsersToShift(shiftId, this.editUser.assignedUsers);
+          await assignUsersToTeam(teamId, this.editUser.assignedUsers);
         }
-        this.loadingShift = false;
+        this.loadingTeam = false;
       } catch (error) {
-        console.error('Error updating users for shift:', error);
+        console.error('Error updating users for team:', error);
         this.$message.error('人员更新失败');
-        this.loadingShift = false;
+        this.loadingTeam = false;
       }
     },
-    async updateFormsForShift(shiftId) {
+    async updateFormsForTeam(teamId) {
       try {
-        await removeAllFormsFromShift(shiftId);
+        await removeAllFormsFromTeam(teamId);
         if (this.editForm.assignedForms.length > 0) {
-          await assignFormsToShift(shiftId, this.editForm.assignedForms);
+          await assignFormsToTeam(teamId, this.editForm.assignedForms);
         }
       } catch (error) {
-        console.error('Error updating forms for shift:', error);
+        console.error('Error updating forms for team:', error);
         this.$message.error('表单更新失败');
       }
     },
-    async fetchShiftData() {
+    async fetchTeamData() {
       try {
-        const response = await getAllShifts(); // API call
+        const response = await getAllTeams(); // API call
         if (response.data.status === '200') {
           this.tableData = response.data.data || []; // Assign data
           this.filteredData = [...this.tableData]; // Initialize filtered data
@@ -701,7 +701,7 @@ export default {
           this.filteredData = [];
         }
       } catch (error) {
-        console.error('Error fetching shift data:', error);
+        console.error('Error fetching team data:', error);
         this.tableData = [];
         this.filteredData = [];
       }
@@ -727,80 +727,80 @@ export default {
     handleCurrentChange(page) {
       this.currentPage = page;
     },
-    async validateAndAddShift() {
-      this.loadingShift = true;
-      this.$refs.addShiftForm.validate(async (valid) => {
+    async validateAndAddTeam() {
+      this.loadingTeam = true;
+      this.$refs.addTeamForm.validate(async (valid) => {
         if (valid) {
           try {
             const createdBy = this.$store.getters.getUser.id;
             // Avoid modifying reactive properties repeatedly
-            const startTime = this.toOffsetTime(this.newShift.start_time);
-            const endTime = this.toOffsetTime(this.newShift.end_time);
+            const startTime = this.toOffsetTime(this.newTeam.start_time);
+            const endTime = this.toOffsetTime(this.newTeam.end_time);
 
-            const payload = { ...this.newShift, start_time: startTime, end_time: endTime };
-            console.log("Creating shift:", payload)
-            const response = await createShift(payload, createdBy);
-            const shiftId = response.data.data.id;
-            console.log("Shift created:", response.data.data)
+            const payload = { ...this.newTeam, start_time: startTime, end_time: endTime };
+            console.log("Creating team:", payload)
+            const response = await createTeam(payload, createdBy);
+            const teamId = response.data.data.id;
+            console.log("Team created:", response.data.data)
             if (this.newUser.selectedUsers.length > 0) {
-              await assignUsersToShift(shiftId, this.newUser.selectedUsers);
+              await assignUsersToTeam(teamId, this.newUser.selectedUsers);
             }
 
             if (this.newForm.selectedForms.length > 0) {
-              await assignFormsToShift(shiftId, this.newForm.selectedForms);
+              await assignFormsToTeam(teamId, this.newForm.selectedForms);
             }
 
-            await this.$nextTick(() => this.resetNewShiftForm());
+            await this.$nextTick(() => this.resetNewTeamForm());
             // Force reset after successful addition
             this.addDialogVisible = false;
-            await this.fetchShiftData();
-            this.$message.success(translate('shiftManagement.messages.shiftAddedSuccess'));
+            await this.fetchTeamData();
+            this.$message.success(translate('teamManagement.messages.teamAddedSuccess'));
           } catch (error) {
-            console.error("Error adding shift:", error);
-            this.$message.error(translate('shiftManagement.messages.shiftDeletionFailed'));
+            console.error("Error adding team:", error);
+            this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
           } finally {
-            this.loadingShift = false;
+            this.loadingTeam = false;
           }
         } else {
-          this.loadingShift = false;
+          this.loadingTeam = false;
         }
       });
     },
     async handleEditConfirm() {
-      this.loadingShift = true;
+      this.loadingTeam = true;
       await this.$nextTick();
       try {
-        const payload = {...this.editShift}; // 浅拷贝原始对象
+        const payload = {...this.editTeam}; // 浅拷贝原始对象
         delete payload.leader; // 去掉 `leader` 键值对
 
         // Format start_time and end_time
         payload.start_time = this.toOffsetTime(payload.start_time);
         payload.end_time = this.toOffsetTime(payload.end_time);
 
-        await updateShift(payload.id, payload, this.$store.getters.getUser.id);
-        // deal with shift members update
-        await this.updateUsersForShift(payload.id);
-        await this.updateFormsForShift(payload.id);
+        await updateTeam(payload.id, payload, this.$store.getters.getUser.id);
+        // deal with team members update
+        await this.updateUsersForTeam(payload.id);
+        await this.updateFormsForTeam(payload.id);
         this.editDialogVisible = false;
 
-        await this.fetchShiftData();
-        this.$message.success(translate('shiftManagement.messages.shiftEditedSuccess'));
+        await this.fetchTeamData();
+        this.$message.success(translate('teamManagement.messages.teamEditedSuccess'));
       } catch (error) {
-        console.error("Error updating shift:", error);
-        this.$message.error(translate('shiftManagement.messages.shiftEditedFailed'));
+        console.error("Error updating team:", error);
+        this.$message.error(translate('teamManagement.messages.teamEditedFailed'));
       } finally {
-        this.loadingShift = false;
+        this.loadingTeam = false;
       }
     },
     async handleStatusChange(id, status) {
       try {
         if (status === 1) {
-          await activateShift(id, this.$store.getters.getUser.id);
+          await activateTeam(id, this.$store.getters.getUser.id);
         } else {
-          await deactivateShift(id, this.$store.getters.getUser.id);
+          await deactivateTeam(id, this.$store.getters.getUser.id);
         }
-        await this.fetchShiftData();
-        this.$message.success(translate('shiftManagement.messages.statusUpdatedSuccess'));
+        await this.fetchTeamData();
+        this.$message.success(translate('teamManagement.messages.statusUpdatedSuccess'));
       } catch (error) {
         console.error("Error updating status:", error);
       }
@@ -808,7 +808,7 @@ export default {
     async handleDelete(index, row) {
       try {
         this.$confirm(
-            translateWithParams('shiftManagement.messages.deletionConfirmation', {name: row.name}),
+            translateWithParams('teamManagement.messages.deletionConfirmation', {name: row.name}),
             translate('userManagement.messages.deletionTitle'),
             {
               confirmButtonText: translate('userManagement.confirm'),
@@ -816,16 +816,16 @@ export default {
               type: 'warning',
             }
         ).then(async () => {
-          await deleteShift(row.id);
-          await removeShiftFromAllUsers(row.id);
-          await this.fetchShiftData();
-          this.$message.success(translate('shiftManagement.messages.shiftDeletedSuccess'));
+          await deleteTeam(row.id);
+          await removeTeamFromAllUsers(row.id);
+          await this.fetchTeamData();
+          this.$message.success(translate('teamManagement.messages.teamDeletedSuccess'));
         }).catch(() => {
-          this.$message.info(translate('shiftManagement.messages.shiftDeletionCancelled'));
+          this.$message.info(translate('teamManagement.messages.teamDeletionCancelled'));
         });
       } catch (error) {
-        console.error('Error deleting shift:', error);
-        this.$message.error(translate('shiftManagement.messages.shiftDeletionFailed'));
+        console.error('Error deleting team:', error);
+        this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
       }
     },
     handleEdit(index, row) {
@@ -835,8 +835,8 @@ export default {
 
       // Wait for the next DOM update to reopen the dialog
       this.$nextTick(async () => {
-        // Map all relevant fields from the selected row to editShift
-        this.editShift = {
+        // Map all relevant fields from the selected row to editTeam
+        this.editTeam = {
           id: row.id || null,
           name: row.name || "",
           type: row.type || "",
@@ -850,8 +850,8 @@ export default {
           description: row.description || "",
           status: row.status
         };
-        this.editUser.assignedUsers = (await getUsersForShift(row.id)).data.data.map(user => user.id);
-        this.editForm.assignedForms = [...(await getFormIdsForShift(row.id)).data.data];
+        this.editUser.assignedUsers = (await getUsersForTeam(row.id)).data.data.map(user => user.id);
+        this.editForm.assignedForms = [...(await getFormIdsForTeam(row.id)).data.data];
         // Fetch user options for the dropdown
         await this.fetchUserOptions();
 
@@ -865,11 +865,11 @@ export default {
       this.fetchUserOptions(); // Fetch the user list
       this.addDialogVisible = true; // Open the dialog
       // this.$nextTick(() => {
-      //   this.resetNewShiftForm(); // Reset the form after rendering : has bug but I do not know why
+      //   this.resetNewTeamForm(); // Reset the form after rendering : has bug but I do not know why
       // });
     },
-    resetNewShiftForm() {
-      this.newShift = {
+    resetNewTeamForm() {
+      this.newTeam = {
         name: "",
         type: "",
         leader_id: null,
@@ -888,7 +888,7 @@ export default {
     addDialogVisible(newVal) {
       if (!newVal) {
         // this.$nextTick(() => {
-        //   this.resetNewShiftForm(); // Reset form after dialog closes
+        //   this.resetNewTeamForm(); // Reset form after dialog closes
         // });
       }
     },

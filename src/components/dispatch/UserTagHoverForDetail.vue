@@ -19,9 +19,9 @@
       <div><strong>{{ translate('userManagement.table.wecomId') }}:</strong> {{ user.wecom_id || translate('orderManagement.orderFormDialog.missing') }}</div>
       <div><strong>{{ translate('userManagement.table.email') }}:</strong> {{ user.email || translate('orderManagement.orderFormDialog.missing') }}</div>
       <div><strong>{{ translate('userManagement.table.phoneNumber') }}:</strong> {{ user.phone_number || translate('orderManagement.orderFormDialog.missing') }}</div>
-      <div v-if="user.shifts?.length">
-        <strong>{{ translate('userManagement.table.shifts') }}:</strong>
-        {{ user.shifts.map(shift => shift.shift_name).join(', ') }}
+      <div v-if="user.teams?.length">
+        <strong>{{ translate('userManagement.table.teams') }}:</strong>
+        {{ user.teams.map(team => team.team_name).join(', ') }}
       </div>
     </template>
 

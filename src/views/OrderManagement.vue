@@ -98,7 +98,7 @@
               :is-edit-mode="isEditMode"
               :form-map="formMap"
               :user-map="userMap"
-              :shift-map="shiftMap"
+              :team-map="teamMap"
               @on-submit="handleOrderSubmit"
               @on-cancel="closeAndResetDetailsDialog"
           />
@@ -117,7 +117,7 @@
       <DispatchedTasksList
           :form-map="formMap"
           :user-map="userMap"
-          :shift-map="shiftMap"
+          :team-map="teamMap"
           :show-search-box="true"
       />
     </el-dialog>
@@ -142,9 +142,9 @@ import {fetchFormNodes} from "@/services/formNodeService";
 import {generateFormMap} from "@/utils/dispatch-utils";
 import {fetchUsers} from "@/services/userService";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
-import {getAllShifts} from "@/services/shiftService";
-import {getUsersForShift} from "@/services/shiftUserService";
-import {getFormIdsForShift} from "@/services/shiftFormService";
+import {getAllTeams} from "@/services/teamService";
+import {getUsersForTeam} from "@/services/teamUserService";
+import {getFormIdsForTeam} from "@/services/teamFormService";
 import {translate} from "@/utils/i18n";
 
 export default {
@@ -166,7 +166,7 @@ export default {
       searchInput: "",
       formMap: [],
       userMap: {},
-      shiftMap: {},
+      teamMap: {},
       qcOrders: [],
       loading: false,
     };
@@ -313,7 +313,7 @@ export default {
           this.loadAllQcOrders(),
           this.loadFormNodes(),
           this.loadUserMap(),
-          this.loadShiftMap(),
+          this.loadTeamMap(),
         ]);
 
       } catch (error) {
@@ -349,38 +349,38 @@ export default {
         this.$message.error(translate('orderManagement.messages.errorLoadingUsersData'));
       }
     },
-    async loadShiftMap() {
+    async loadTeamMap() {
       try {
-        const response = await getAllShifts();
-        const shifts = response.data?.data || [];
+        const response = await getAllTeams();
+        const teams = response.data?.data || [];
 
-        const updatedShiftMap = {};
+        const updatedTeamMap = {};
 
-        for (const shift of shifts) {
-          const shiftId = shift.id;
+        for (const team of teams) {
+          const teamId = team.id;
 
           // Fetch associated form_ids
-          const formResponse = await getFormIdsForShift(shiftId);
+          const formResponse = await getFormIdsForTeam(teamId);
           const formIds = formResponse.status === 200 ? formResponse.data.data : [];
 
           // Fetch associated user_ids
-          const userResponse = await getUsersForShift(shiftId);
+          const userResponse = await getUsersForTeam(teamId);
           const userIds = userResponse.status === 200 ? userResponse.data.data.map(user => user.id) : [];
 
-          // Add to shift object
-          updatedShiftMap[shiftId] = {
-            ...shift,
+          // Add to team object
+          updatedTeamMap[teamId] = {
+            ...team,
             form_ids: formIds,
             user_ids: userIds,
           };
         }
 
-        if (JSON.stringify(this.shiftMap) !== JSON.stringify(updatedShiftMap)) {
-          this.shiftMap = updatedShiftMap;
+        if (JSON.stringify(this.teamMap) !== JSON.stringify(updatedTeamMap)) {
+          this.teamMap = updatedTeamMap;
         }
       } catch (error) {
-        console.error("Failed to load Shift Map:", error);
-        this.$message.error(translate('orderManagement.messages.errorLoadingShiftData'));
+        console.error("Failed to load Team Map:", error);
+        this.$message.error(translate('orderManagement.messages.errorLoadingTeamData'));
       }
     },
     openViewDispatchedTestsDialog() {

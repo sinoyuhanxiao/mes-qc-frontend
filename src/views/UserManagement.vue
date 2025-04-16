@@ -64,11 +64,11 @@
           </template>
         </el-table-column>
 
-        <el-table-column :label="translate('userManagement.table.shifts')" prop="shifts" width="280">
+        <el-table-column :label="translate('userManagement.table.teams')" prop="teams" width="280">
           <template #default="scope">
             <div>
               <el-tag
-                  v-for="(shift, index) in scope.row.shifts"
+                  v-for="(team, index) in scope.row.teams"
                   :key="index"
                   size="small"
                   style="margin-right: 5px;"
@@ -76,12 +76,12 @@
               >
                 <el-popover trigger="hover" placement="top">
                   <template #default>
-                    <p>ID: {{ shift.id }}</p>
-                    <p>{{ translate('userManagement.table.shifts') }}: {{ shift.shift_name }}</p>
-                    <p>{{ translate('userManagement.table.leader') }}: {{ shift.leader_name }}</p>
+                    <p>ID: {{ team.id }}</p>
+                    <p>{{ translate('userManagement.table.teams') }}: {{ team.team_name }}</p>
+                    <p>{{ translate('userManagement.table.leader') }}: {{ team.leader_name }}</p>
                   </template>
                   <template #reference>
-                    {{ shift.shift_name }}
+                    {{ team.team_name }}
                   </template>
                 </el-popover>
               </el-tag>
@@ -223,21 +223,21 @@
             <el-input v-model="newUser.phone_number" />
           </el-form-item>
 
-          <el-form-item :label="translate('userManagement.addDialog.assignedShifts')" prop="assignedShifts">
+          <el-form-item :label="translate('userManagement.addDialog.assignedTeams')" prop="assignedTeams">
             <el-select
-                v-model="newUser.assignedShifts"
+                v-model="newUser.assignedTeams"
                 multiple
                 filterable
-                :placeholder="translate('userManagement.addDialog.assignedShiftPlaceHolder')"
+                :placeholder="translate('userManagement.addDialog.assignedTeamPlaceHolder')"
                 style="width: 100%;"
             >
               <el-option
-                  v-for="shift in shiftsOptions"
-                  :key="shift.id"
-                  :label="shift.label"
-                  :value="shift.id"
+                  v-for="team in teamsOptions"
+                  :key="team.id"
+                  :label="team.label"
+                  :value="team.id"
               >
-                <span style="float: left">{{ shift.label }}</span>
+                <span style="float: left">{{ team.label }}</span>
                 <span
                     style="
                         float: right;
@@ -245,7 +245,7 @@
                         font-size: 13px;
                      "
                 >
-                    {{ translate('userManagement.table.leader') + ": " + shift.value }}
+                    {{ translate('userManagement.table.leader') + ": " + team.value }}
                 </span>
               </el-option>
             </el-select>
@@ -313,21 +313,21 @@
             <el-input v-model="editUser.phone_number" />
           </el-form-item>
 
-          <el-form-item :label="translate('userManagement.editDialog.assignedShifts')" prop="assignedShifts">
+          <el-form-item :label="translate('userManagement.editDialog.assignedTeams')" prop="assignedTeams">
             <el-select
-                v-model="editUser.assignedShifts"
+                v-model="editUser.assignedTeams"
                 multiple
                 filterable
-                :placeholder="translate('userManagement.editDialog.assignedShifts')"
+                :placeholder="translate('userManagement.editDialog.assignedTeams')"
                 style="width: 100%;"
             >
               <el-option
-                  v-for="shift in shiftsOptions"
-                  :key="shift.value"
-                  :label="shift.label"
-                  :value="shift.id"
+                  v-for="team in teamsOptions"
+                  :key="team.value"
+                  :label="team.label"
+                  :value="team.id"
               >
-                <span style="float: left">{{ shift.label }}</span>
+                <span style="float: left">{{ team.label }}</span>
                 <span
                     style="
                   float: right;
@@ -335,7 +335,7 @@
                   font-size: 13px;
                 "
                 >
-              {{ translate('userManagement.table.leader') + ": " + shift.value }}
+              {{ translate('userManagement.table.leader') + ": " + team.value }}
             </span>
               </el-option>
             </el-select>
@@ -385,8 +385,8 @@ import {
   updateUser,
   deleteUser,
 } from '@/services/userService.js';
-import {getAllShifts} from "@/services/shiftService";
-import {assignUserToShifts, removeUserFromAllShifts} from "@/services/shiftUserService";
+import {getAllTeams} from "@/services/teamService";
+import {assignUserToTeams, removeUserFromAllTeams} from "@/services/teamUserService";
 import {fetchRoles} from "@/services/roleService";
 
 export default {
@@ -399,7 +399,7 @@ export default {
   },
   data() {
     return {
-      shiftsOptions: [],
+      teamsOptions: [],
       tableData: [], // Original data
       loading: false, // Loading state for the table
       filteredData: [], // Filtered data for display
@@ -419,7 +419,7 @@ export default {
         phone_number: '',
         status: 1, // Default to Active
         password: '',
-        assignedShifts: []
+        assignedTeams: []
       },
       editUser: {
         id: null,
@@ -430,7 +430,7 @@ export default {
         email: '',
         phone_number: '',
         status: null,
-        assignedShifts: [], // Array to hold selected shifts
+        assignedTeams: [], // Array to hold selected teams
       },
       changePassword: false, // Checkbox state for edit dialog
       newPassword: '', // New password input
@@ -507,10 +507,10 @@ export default {
     };
   },
   watch: {
-    // Watch for changes in assignedShifts and log its content
-    "editUser.assignedShifts": {
+    // Watch for changes in assignedTeams and log its content
+    "editUser.assignedTeams": {
       handler(newValue, oldValue) {
-        console.log("Assigned Shifts changed:", {
+        console.log("Assigned Teams changed:", {
           newValue,
           oldValue,
         });
@@ -530,7 +530,7 @@ export default {
   },
   created() {
     this.fetchUserData();
-    this.fetchShiftOptions();
+    this.fetchTeamOptions();
     this.fetchRoles();
   },
   computed: {
@@ -610,21 +610,21 @@ export default {
         this.loading = false;
       }
     },
-    async fetchShiftOptions() {
+    async fetchTeamOptions() {
       try {
-        const response = await getAllShifts();
+        const response = await getAllTeams();
         if (response.data.status === "200") {
-          this.shiftsOptions = response.data.data.map(shift => ({
-            value: shift.leader?.name || "-", // Shift Name
-            label: shift.name, // Shift Leader Name
-            id: shift.id
+          this.teamsOptions = response.data.data.map(team => ({
+            value: team.leader?.name || "-", // Team Name
+            label: team.name, // Team Leader Name
+            id: team.id
           }));
         } else {
-          this.shiftsOptions = [];
+          this.teamsOptions = [];
         }
       } catch (error) {
-        console.error("Error fetching shifts:", error);
-        this.shiftsOptions = [];
+        console.error("Error fetching teams:", error);
+        this.teamsOptions = [];
       }
     },
     async handleStatusChange(userId, newStatus) {
@@ -707,10 +707,10 @@ export default {
         };
 
         const addUserResponse = await addUser(payload);
-        // Assign the created user to the selected shifts
+        // Assign the created user to the selected teams
         const createdUserId = addUserResponse.data.data.id;
-        if (this.newUser.assignedShifts && this.newUser.assignedShifts.length > 0) {
-          await assignUserToShifts(createdUserId, this.newUser.assignedShifts);
+        if (this.newUser.assignedTeams && this.newUser.assignedTeams.length > 0) {
+          await assignUserToTeams(createdUserId, this.newUser.assignedTeams);
         }
 
         this.addDialogVisible = false;
@@ -748,19 +748,19 @@ export default {
             }
 
             await updateUser(this.editUser.id, payload);
-            // Update the shifts for the user
+            // Update the teams for the user
             try {
-              // Remove the user from all current shifts
-              await removeUserFromAllShifts(this.editUser.id);
+              // Remove the user from all current teams
+              await removeUserFromAllTeams(this.editUser.id);
 
-              if (this.editUser.assignedShifts && this.editUser.assignedShifts.length > 0) {
-                await assignUserToShifts(this.editUser.id, this.editUser.assignedShifts);
+              if (this.editUser.assignedTeams && this.editUser.assignedTeams.length > 0) {
+                await assignUserToTeams(this.editUser.id, this.editUser.assignedTeams);
               }
 
-              this.$message.success(translate('userManagement.messages.shiftsUpdatedSuccess'));
-            } catch (shiftError) {
-              console.error("Error updating shifts:", shiftError);
-              this.$message.error(translate('userManagement.messages.shiftsUpdateFailed'));
+              this.$message.success(translate('userManagement.messages.teamsUpdatedSuccess'));
+            } catch (teamError) {
+              console.error("Error updating teams:", teamError);
+              this.$message.error(translate('userManagement.messages.teamsUpdateFailed'));
             }
             this.editDialogVisible = false;
             await this.fetchUserData();
@@ -784,8 +784,8 @@ export default {
         email: row.email,
         phone_number: row.phone_number,
         status: row.status,
-        assignedShifts: row.shifts
-            ? row.shifts.map(shift => shift.id) // Only map shift.id
+        assignedTeams: row.teams
+            ? row.teams.map(team => team.id) // Only map team.id
             : [],
       };
       this.changePassword = false; // Reset checkbox
@@ -841,7 +841,7 @@ export default {
             .then(async () => {
               // If confirmed, call delete API
               await deleteUser(row.id);
-              await removeUserFromAllShifts(row.id);
+              await removeUserFromAllTeams(row.id);
               this.$message.success(translate('userManagement.messages.userDeletedSuccess'));
               await this.fetchUserData(); // Refresh the table data
             })
@@ -878,7 +878,7 @@ export default {
             (item.phone_number && item.phone_number.toLowerCase().includes(searchText)) || // 过滤 电话号码
             (item.role_id && this.getRoleName(item.role_id).toLowerCase().includes(searchText)) || // 过滤 角色
             (item.status !== undefined && (item.status === 1 ? "已激活" : "未激活").includes(searchText)) || // 过滤 状态 TODO: remove hardcoded filtering
-            (item.shifts && item.shifts.some(shift => shift.shift_name.toLowerCase().includes(searchText))) // 过滤 所属班组
+            (item.teams && item.teams.some(team => team.team_name.toLowerCase().includes(searchText))) // 过滤 所属班组
         );
       });
 

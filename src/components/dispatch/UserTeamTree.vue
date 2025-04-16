@@ -4,7 +4,7 @@
     <div style="display: flex; justify-content: flex-end;">
       <el-input
           v-model="searchQuery"
-          :placeholder="translate('shiftManagement.searchPlaceholder')"
+          :placeholder="translate('teamManagement.searchPlaceholder')"
           clearable
           @input="filterTree"
           style="height: 32px; margin-right: 10px"
@@ -40,8 +40,8 @@
 </template>
 
 <script>
-import {getAllShifts} from "@/services/shiftService";
-import {getAllShiftUsers} from "@/services/shiftUserService";
+import {getAllTeams} from "@/services/teamService";
+import {getAllTeamUsers} from "@/services/teamUserService";
 import {fetchUsers} from "@/services/userService";
 import {Search} from "@element-plus/icons-vue";
 import {translate} from "@/utils/i18n";
@@ -51,41 +51,41 @@ export default {
   data() {
     return {
       searchQuery: "",
-      shiftTreeData: [], // Full shift-user tree
+      teamTreeData: [], // Full team-user tree
       filteredTreeData: [], // Tree with search filter applied
       selectedUserIds: new Set(), // Unique selected user IDs
       userToNodesMap: new Map(), // Maps userId → all occurrences in tree
     };
   },
   async mounted() {
-    await this.loadShiftTreeData();
+    await this.loadTeamTreeData();
   },
   methods: {
     translate,
-    /** Fetches shifts, shift-user mappings, and users */
-    async loadShiftTreeData() {
+    /** Fetches teams, team-user mappings, and users */
+    async loadTeamTreeData() {
       try {
-        const [shiftsRes, shiftUserRes, usersRes] = await Promise.all([
-          getAllShifts(),
-          getAllShiftUsers(),
+        const [teamsRes, teamUserRes, usersRes] = await Promise.all([
+          getAllTeams(),
+          getAllTeamUsers(),
           fetchUsers(),
         ]);
 
-        const shifts = (shiftsRes.data?.data || []).filter(user => user.status !== 0);
-        const shiftUserMappings = shiftUserRes.data?.data || [];
+        const teams = (teamsRes.data?.data || []).filter(user => user.status !== 0);
+        const teamUserMappings = teamUserRes.data?.data || [];
         const users = (usersRes.data?.data || []).filter(user => user.status !== 0);
 
         // Build lookup maps
         const userMap = new Map(users.map(user => [user.id, user]));
-        const shiftUserMap = new Map();
+        const teamUserMap = new Map();
 
-        // Build shift-user relationships
-        shiftUserMappings.forEach(({shift_id, user_id}) => {
-          if (!shiftUserMap.has(shift_id)) shiftUserMap.set(shift_id, []);
+        // Build team-user relationships
+        teamUserMappings.forEach(({team_id, user_id}) => {
+          if (!teamUserMap.has(team_id)) teamUserMap.set(team_id, []);
           const user = userMap.get(user_id);
           if (user) {
-            const userNode = {id: user.id, name: user.name, nodeId: `${user.id}-${shift_id}`};
-            shiftUserMap.get(shift_id).push(userNode);
+            const userNode = {id: user.id, name: user.name, nodeId: `${user.id}-${team_id}`};
+            teamUserMap.get(team_id).push(userNode);
 
             if (!this.userToNodesMap.has(user.id)) this.userToNodesMap.set(user.id, []);
             this.userToNodesMap.get(user.id).push(userNode.nodeId);
@@ -93,26 +93,26 @@ export default {
         });
 
         // Build tree structure
-        this.shiftTreeData = shifts.map(shift => ({
-          id: `shift-${shift.id}`,
-          name: shift.name,
-          children: shiftUserMap.get(shift.id) || [],
-        })).filter(shift => shift.children.length > 0);
+        this.teamTreeData = teams.map(team => ({
+          id: `team-${team.id}`,
+          name: team.name,
+          children: teamUserMap.get(team.id) || [],
+        })).filter(team => team.children.length > 0);
 
-        // Add standalone users (users not in shifts)
+        // Add standalone users (users not in teams)
         users.forEach(user => {
-          if (!shiftUserMappings.some(mapping => mapping.user_id === user.id)) {
+          if (!teamUserMappings.some(mapping => mapping.user_id === user.id)) {
             const userNode = {id: user.id, name: user.name, nodeId: `user-${user.id}`};
             if (!this.userToNodesMap.has(user.id)) this.userToNodesMap.set(user.id, []);
             this.userToNodesMap.get(user.id).push(userNode.nodeId);
-            this.shiftTreeData.push(userNode);
+            this.teamTreeData.push(userNode);
           }
         });
 
         // Store filtered tree data and sync selections
-        this.filteredTreeData = [...this.shiftTreeData];
+        this.filteredTreeData = [...this.teamTreeData];
       } catch (error) {
-        console.error("Failed to load shifts and users:", error);
+        console.error("Failed to load teams and users:", error);
       }
     },
     /** Handles tree node selection and updates selected user IDs */
@@ -131,8 +131,8 @@ export default {
         let extractedId = null;
         if (nodeId.startsWith("user-")) {
           extractedId = nodeId.replace("user-", ""); // Extract standalone user ID
-        } else if (!nodeId.startsWith("shift-")) {
-          extractedId = nodeId.split("-")[0]; // Extract user ID from shift-user composite key
+        } else if (!nodeId.startsWith("team-")) {
+          extractedId = nodeId.split("-")[0]; // Extract user ID from team-user composite key
         }
 
         if (extractedId !== null) {
@@ -140,7 +140,7 @@ export default {
         }
       });
 
-      // If a shift node is selected, include all users under that shift
+      // If a team node is selected, include all users under that team
       if (!node.isLeaf && checked) {
         node.children?.forEach(child => {
           if (child.isLeaf) {
@@ -158,9 +158,9 @@ export default {
 
     /** Extracts the actual user ID from a nodeId */
     extractUserId(nodeId) {
-      if (nodeId.startsWith("shift-")) return null; // Ignore shift nodes
+      if (nodeId.startsWith("team-")) return null; // Ignore team nodes
       if (nodeId.startsWith("user-")) return nodeId.replace("user-", ""); // Standalone users
-      return nodeId.split("-")[0]; // Extract user ID from shift-user composite key
+      return nodeId.split("-")[0]; // Extract user ID from team-user composite key
     },
 
 
@@ -171,10 +171,10 @@ export default {
     /** Filters the tree based on search input */
     filterTree() {
       if (!this.searchQuery) {
-        this.filteredTreeData = [...this.shiftTreeData];
+        this.filteredTreeData = [...this.teamTreeData];
         return;
       }
-      this.filteredTreeData = this.filterTreeNodes(this.shiftTreeData, this.searchQuery.toLowerCase());
+      this.filteredTreeData = this.filterTreeNodes(this.teamTreeData, this.searchQuery.toLowerCase());
     },
 
     /** Recursively filters tree nodes based on search query */
