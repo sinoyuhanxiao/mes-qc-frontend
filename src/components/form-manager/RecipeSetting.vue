@@ -1,7 +1,7 @@
 <template>
+  <el-skeleton v-if="loading" :rows="6" animated />
   <div class="setting-container">
-    <h2 class="title">设置配方警戒值</h2>
-
+<!--    <h2 class="title">设置配方警戒值</h2>-->
     <el-card
         v-for="(item, key) in controlLimits"
         :key="key"
@@ -13,7 +13,7 @@
       <span class="border-anim right"></span>
       <span class="border-anim bottom"></span>
       <span class="border-anim left"></span>
-      <div class="row">
+      <div class="row" style="justify-content: space-evenly">
         <div class="key-name">{{ item.label }}</div>
 
         <div class="input-group">
@@ -27,6 +27,14 @@
               :precision="2"
               placeholder="上限"
           />
+          <div style="width: 100%; text-align: center;">
+            <span
+                v-if="item.upper_control_limit !== originalControlLimits[key]?.upper_control_limit"
+                class="original-value"
+            >
+              原始值：{{ originalControlLimits[key]?.upper_control_limit }}
+            </span>
+          </div>
         </div>
 
         <div class="input-group">
@@ -40,14 +48,38 @@
               :precision="2"
               placeholder="下限"
           />
+          <div style="width: 100%; text-align: center;">
+            <span
+                v-if="item.lower_control_limit !== originalControlLimits[key]?.lower_control_limit"
+                class="original-value"
+            >
+              原始值：{{ originalControlLimits[key]?.lower_control_limit }}
+            </span>
+          </div>
         </div>
       </div>
     </el-card>
 
     <div style="margin-top: 20px; text-align: center;">
-      <el-button type="primary" @click="saveSettings">保存设置</el-button>
+      <el-button type="primary" @click="saveSettings">保存</el-button>
+      <el-button type="warning" @click="resetToOriginal" style="margin-left: 12px;">重置</el-button>
     </div>
+
   </div>
+
+  <el-dialog
+      v-model="showSaveConfirm"
+      title="确认保存"
+      width="30%"
+      :before-close="() => (showSaveConfirm.value = false)"
+  >
+    <span>是否确定保存当前配方警戒值？</span>
+    <template #footer>
+      <el-button @click="showSaveConfirm.value = false">取消</el-button>
+      <el-button type="primary" @click="pendingSave && pendingSave()">确认</el-button>
+    </template>
+  </el-dialog>
+
 </template>
 
 <script setup>
@@ -55,7 +87,12 @@ import { nextTick, reactive, ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { windowMaskVisible } from '@/globals/mask'
 import { leftHoverDotPoint, rightHoverDotPoint } from '@/globals/line'
-import { fetchControlLimitsByTemplateId } from '@/services/recipeService'
+import { fetchControlLimitsByTemplateId, updateControlLimits  } from '@/services/recipeService'
+
+const showSaveConfirm = ref(false);
+const loading = ref(false)
+let pendingSave = null;
+
 
 const props = defineProps({
   qcFormTemplateId: {
@@ -67,14 +104,24 @@ const props = defineProps({
 watch(
     () => props.qcFormTemplateId,
     async (newId) => {
-      console.log('[RecipeSetting] qcFormTemplateId changed →', newId)
-      await fetchData(newId)
+      if (newId) {
+        console.log('[RecipeSetting] qcFormTemplateId changed →', newId)
+        await fetchData(newId)
+      }
     },
     { immediate: true }
 )
+
+// This deal with the initial click on the setting button
+onMounted(() => {
+  fetchData(props.qcFormTemplateId)
+})
+
 const controlLimits = reactive({})
+const originalControlLimits = reactive({})
 
 const fetchData = async (templateId) => {
+  loading.value = true
   try {
 
     // Clear old keys before loading new ones
@@ -86,26 +133,60 @@ const fetchData = async (templateId) => {
     const data = response.data?.data.control_limits
     if (data) {
       Object.keys(data).forEach(key => {
+        // Editable reactive value
         controlLimits[key] = {
           upper_control_limit: data[key].upper_control_limit,
           lower_control_limit: data[key].lower_control_limit,
           label: data[key].label || 'No Label'
+        }
+
+        // Copy for original comparison
+        originalControlLimits[key] = {
+          upper_control_limit: data[key].upper_control_limit,
+          lower_control_limit: data[key].lower_control_limit
         }
       })
     }
   } catch (error) {
     console.error('Error fetching control limits:', error)
     ElMessage.error('获取配方警戒值失败')
+  } finally {
+    loading.value = false
   }
 }
 
-onMounted(() => {
-  fetchData()
-})
-
 const saveSettings = () => {
-  console.log('Saving control limits:', controlLimits)
-  ElMessage.success('配方警戒值已保存！')
+  showSaveConfirm.value = true
+
+  pendingSave = async () => {
+    loading.value = true
+    try {
+      const payload = {
+        qc_form_template_id: props.qcFormTemplateId,
+        control_limits: {}
+      }
+
+      for (const key in controlLimits) {
+        payload.control_limits[key] = {
+          upper_control_limit: controlLimits[key].upper_control_limit,
+          lower_control_limit: controlLimits[key].lower_control_limit,
+          label: controlLimits[key].label
+        }
+      }
+
+      await updateControlLimits(payload)
+      ElMessage.success('配方警戒值已保存！')
+
+      // refetch 并更新 originalControlLimits
+      await fetchData(props.qcFormTemplateId)
+    } catch (err) {
+      console.error('更新失败', err)
+      ElMessage.error('保存失败，请重试')
+    } finally {
+      showSaveConfirm.value = false
+      loading.value = false
+    }
+  }
 }
 
 const highlightField = (key) => {
@@ -159,6 +240,17 @@ const logCardRight = (key) => {
     })
   })
 }
+
+const resetToOriginal = () => {
+  for (const key in originalControlLimits) {
+    if (controlLimits[key]) {
+      controlLimits[key].upper_control_limit = originalControlLimits[key].upper_control_limit
+      controlLimits[key].lower_control_limit = originalControlLimits[key].lower_control_limit
+    }
+  }
+  ElMessage.success('已重置为原始值')
+}
+
 </script>
 
 
@@ -349,4 +441,17 @@ const logCardRight = (key) => {
 :global(.highlighted-field .el-form-item__label) {
   background-color: white;
 }
+
+.original-value {
+  color: var(--el-color-danger);
+  font-size: 12px;
+  margin-top: 4px;
+  margin-right: 13px;
+  text-align: center;
+}
+
+.changed {
+  color: var(--el-color-primary);
+}
+
 </style>

@@ -133,4 +133,12 @@ export default {
   box-shadow: 0 0 8px rgba(64, 158, 255, 0.6);
 }
 
+#recipe_setting > header {
+  margin-bottom: 0 !important;
+}
+
+#recipe_setting > header > span {
+  font-size: 20px !important;
+}
+
 </style>

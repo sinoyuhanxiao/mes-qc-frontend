@@ -14,7 +14,7 @@
 
       <div>
 
-        <el-button type="success" v-if="switchDisplayed" @click="showRecipeDrawer = true">
+        <el-button type="success" v-if="switchDisplayed" @click="openRecipeDrawer">
           设置警戒值
         </el-button>
 
@@ -332,6 +332,20 @@ const scrollBarHeight = ref(`${window.innerHeight-140}px`);
 const updateScrollBarHeight = () => {
   scrollBarHeight.value = `${window.innerHeight-140}px`;
 };
+
+const openRecipeDrawer = () => {
+  const ready = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
+  if (!ready) {
+    console.warn('配方尚未准备好，稍后重试...');
+    return;
+  }
+
+  // 等待下一个 DOM tick，确保 RecipeSetting 能接收到 props
+  nextTick(() => {
+    showRecipeDrawer.value = true;
+  });
+};
+
 
 onMounted(() => {
   startCountdown();
