@@ -11,9 +11,18 @@
             :inactive-text="translate('FormDisplay.unavailable')"
         />
       </div>
-      <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
-        {{ translate('FormDisplay.quickDispatch') }}
-      </el-button>
+
+      <div>
+
+        <el-button type="success" v-if="switchDisplayed" @click="openRecipeDrawer">
+          设置警戒值
+        </el-button>
+
+        <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
+          {{ translate('FormDisplay.quickDispatch') }}
+        </el-button>
+
+      </div>
 
       <el-countdown
           v-if="remainingTime > 0"
@@ -135,6 +144,20 @@
     </template>
   </el-dialog>
 
+  <el-drawer
+      v-model="showRecipeDrawer"
+      title="设置警戒值"
+      direction="ltr"
+      size="100%"
+      :with-header="true"
+      :close-on-click-modal="false"
+      :modal="false"
+      id="recipe_setting"
+  >
+    <RecipeSetting :qcFormTemplateId="props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId" />
+
+  </el-drawer>
+
 </template>
 
 <script setup>
@@ -153,8 +176,12 @@ import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
+import { windowMaskVisible } from '@/globals/mask'
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
+import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
+
+const showRecipeDrawer = ref(false);
 
 const route = useRoute()
 const rt = ref(parseInt(route.query.rt, 10) || 0);
@@ -271,6 +298,13 @@ watch(() => props.currentForm?.qcFormTemplateId, (newFormId, oldFormId) => {
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
   startCountdown();
+  // 等待 DOM 渲染完成
+  setTimeout(() => {
+    const drawer = document.getElementById('recipe_setting');
+    if (drawer && drawer.parentElement) {
+      drawer.parentElement.style.width = '35%';
+    }
+  }, 0);
 });
 
 // ✅ Clean up the interval when unmounted
@@ -298,6 +332,20 @@ const scrollBarHeight = ref(`${window.innerHeight-140}px`);
 const updateScrollBarHeight = () => {
   scrollBarHeight.value = `${window.innerHeight-140}px`;
 };
+
+const openRecipeDrawer = () => {
+  const ready = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
+  if (!ready) {
+    console.warn('配方尚未准备好，稍后重试...');
+    return;
+  }
+
+  // 等待下一个 DOM tick，确保 RecipeSetting 能接收到 props
+  nextTick(() => {
+    showRecipeDrawer.value = true;
+  });
+};
+
 
 onMounted(() => {
   startCountdown();
@@ -489,6 +537,10 @@ watch(remainingTime, (newTime) => {
     }
   });
 });
+
+watch(showRecipeDrawer, (val) => {
+  windowMaskVisible.value = val
+})
 
 </script>
 
