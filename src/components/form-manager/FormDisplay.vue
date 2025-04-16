@@ -154,7 +154,8 @@
       :modal="false"
       id="recipe_setting"
   >
-    <RecipeSetting />
+    <RecipeSetting :qcFormTemplateId="props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId" />
+
   </el-drawer>
 
 </template>

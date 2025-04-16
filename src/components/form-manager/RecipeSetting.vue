@@ -6,15 +6,15 @@
         v-for="(item, key) in controlLimits"
         :key="key"
         class="limit-card"
-        @mouseenter="highlightField(key); logCardRight(key)"
-        @mouseleave="removeHighlightField(key)"
+        @mouseenter="highlightField(item.label); logCardRight(item.label)"
+        @mouseleave="removeHighlightField(item.label)"
     >
       <span class="border-anim top"></span>
       <span class="border-anim right"></span>
       <span class="border-anim bottom"></span>
       <span class="border-anim left"></span>
       <div class="row">
-        <div class="key-name">{{ key }}</div>
+        <div class="key-name">{{ item.label }}</div>
 
         <div class="input-group">
           <div class="input-label">上线</div>
@@ -51,22 +51,56 @@
 </template>
 
 <script setup>
-import {nextTick, reactive} from 'vue'
+import { nextTick, reactive, ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { windowMaskVisible } from '@/globals/mask'
-import { leftHoverDotPoint } from '@/globals/line'
-import { rightHoverDotPoint } from '@/globals/line'
+import { leftHoverDotPoint, rightHoverDotPoint } from '@/globals/line'
+import { fetchControlLimitsByTemplateId } from '@/services/recipeService'
 
-// 模拟数据（后续可由 props 传入）
-const controlLimits = reactive({
-  数字警戒0 : { upper_control_limit: 98.3, lower_control_limit: 23.7 },
-  数字警戒1: { upper_control_limit: 76.5, lower_control_limit: 15.2 },
-  数字警戒2: { upper_control_limit: 64.0, lower_control_limit: 12.8 },
-  数字警戒3: { upper_control_limit: 88.9, lower_control_limit: 30.5 },
-  数字警戒4: { upper_control_limit: 70.4, lower_control_limit: 18.6 },
-  数字警戒5: { upper_control_limit: 92.1, lower_control_limit: 35.0 },
-  数字警戒6: { upper_control_limit: 84.7, lower_control_limit: 28.4 },
-  数字警戒7: { upper_control_limit: 79.2, lower_control_limit: 22.3 }
+const props = defineProps({
+  qcFormTemplateId: {
+    type: [String, Number],
+    required: true
+  }
+})
+
+watch(
+    () => props.qcFormTemplateId,
+    async (newId) => {
+      console.log('[RecipeSetting] qcFormTemplateId changed →', newId)
+      await fetchData(newId)
+    },
+    { immediate: true }
+)
+const controlLimits = reactive({})
+
+const fetchData = async (templateId) => {
+  try {
+
+    // Clear old keys before loading new ones
+    for (const key in controlLimits) {
+      delete controlLimits[key];
+    }
+
+    const response = await fetchControlLimitsByTemplateId(templateId)
+    const data = response.data?.data.control_limits
+    if (data) {
+      Object.keys(data).forEach(key => {
+        controlLimits[key] = {
+          upper_control_limit: data[key].upper_control_limit,
+          lower_control_limit: data[key].lower_control_limit,
+          label: data[key].label || 'No Label'
+        }
+      })
+    }
+  } catch (error) {
+    console.error('Error fetching control limits:', error)
+    ElMessage.error('获取配方警戒值失败')
+  }
+}
+
+onMounted(() => {
+  fetchData()
 })
 
 const saveSettings = () => {
@@ -83,7 +117,6 @@ const highlightField = (key) => {
       console.log(`[HIGHLIGHT] match: ${label}`);
       field.classList.add('highlighted-field');
 
-      // 计算右边字段的位置
       const el = field.querySelector('.el-form-item');
       if (el) {
         const rect = el.getBoundingClientRect();
@@ -126,8 +159,8 @@ const logCardRight = (key) => {
     })
   })
 }
-
 </script>
+
 
 <style scoped>
 .setting-container {
