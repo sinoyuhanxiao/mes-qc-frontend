@@ -6,6 +6,7 @@
         <el-switch
             v-model="enable_form"
             v-if="switchDisplayed"
+            v-show="!props.accessByTeam"
             inline-prompt
             :active-text="translate('FormDisplay.available')"
             :inactive-text="translate('FormDisplay.unavailable')"
@@ -14,13 +15,15 @@
 
       <div>
 
-        <el-button type="success" v-if="switchDisplayed" @click="openRecipeDrawer">
+      <template v-if="switchDisplayed" v-show="!props.accessByTeam">
+        <el-button type="success" @click="openRecipeDrawer">
           设置警戒值
         </el-button>
 
         <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
           {{ translate('FormDisplay.quickDispatch') }}
         </el-button>
+      </template>
 
       </div>
 
@@ -224,6 +227,11 @@ const props = defineProps({
   formSwitched: { // Add formSwitched prop to detect switching
     type: Boolean,
     default: false,
+  },
+  accessByTeam: {
+    type: Number,
+    required: false,
+    default: null,
   }
 });
 
@@ -297,6 +305,10 @@ watch(() => props.currentForm?.qcFormTemplateId, (newFormId, oldFormId) => {
 
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
+  if (props.accessByTeam) {
+    enable_form.value = true; // Auto-enable
+    switchDisplayed.value = false; // Hide switch
+  }
   startCountdown();
   // 等待 DOM 渲染完成
   setTimeout(() => {

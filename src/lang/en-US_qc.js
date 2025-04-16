@@ -181,6 +181,7 @@ export default {
         dataSummary: "Data Summary",
         taskCenter: "My Task Center",
         taskDashboard: "Dashboard",
+        pendingTasks: "Pending Tasks",
         todayTasks: "Today's Tasks",
         futureTasks: "Future Tasks",
         historyTasks: "History Tasks",

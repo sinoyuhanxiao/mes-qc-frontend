@@ -181,6 +181,7 @@ export default {
         dataSummary: "数据汇总",
         taskCenter: "任务中心",
         taskDashboard: "任务看板",
+        pendingTasks: "待办任务",
         todayTasks: "今日任务",
         futureTasks: "未来任务",
         historyTasks: "历史任务",

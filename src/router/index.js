@@ -19,6 +19,7 @@ import InstrumentManagement from "@/views/InstrumentManagement.vue";
 import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
 import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
 import TeamManagement from "@/views/TeamManagement.vue";
+import PendingTasks from "@/views/TaskCenter/PendingTasks.vue";
 
 const routes = [
     {
@@ -59,6 +60,11 @@ const routes = [
         path: '/task-assignment',
         name: 'TaskAssignment',
         component: OrderManagement,
+    },
+    {
+        path: '/pending-tasks',
+        name: 'PendingTasks',
+        component: PendingTasks
     },
     {
         path: '/current-tasks',
@@ -137,15 +143,14 @@ const router = createRouter({
 
 // Global navigation guard to restrict routes based on user role
 router.beforeEach((to, from, next) => {
-    const userRole = store.state.user.role;
+    const userRole = store.state.user.role.id;
+    console.log('[Router] userRole:', userRole);
 
-    // Allow access to the login page for everyone
     if (to.path === '/LoginPage') {
         next();
     } else if (userRole === 0) {
-        // If role is 0, redirect to the login page
         next('/LoginPage');
-    } else if (userRole === 2 && [
+    } else if (userRole === 3 && [
         '/form-designer',
         '/user-management',
         '/team-management',
@@ -156,10 +161,9 @@ router.beforeEach((to, from, next) => {
         '/sampling-location-management',
         '/test-subject-management'
     ].includes(to.path)) {
-        // If user role is 2, restrict access to these routes
-        next('/task-center-dashboard'); // Redirect to a safe page
+        next('/task-center-dashboard');
     } else {
-        next(); // Allow navigation if no restrictions apply
+        next();
     }
 });
 
