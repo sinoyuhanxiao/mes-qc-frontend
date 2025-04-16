@@ -36,7 +36,7 @@ export const extractWidgetDataWithCounts = (formTemplateId, startDateTime, endDa
         // Create a Date object in the **local timezone**
         const localDate = new Date(year, month - 1, day, hour, minute, second);
 
-        // Fix: getTimezoneOffset() is in minutes and is negative for UTC-8, so we ADD it to shift forward.
+        // Fix: getTimezoneOffset() is in minutes and is negative for UTC-8, so we ADD it to team forward.
         const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
 
         // Ensure 24-hour format and return in "YYYY-MM-DD HH:MM:SS"

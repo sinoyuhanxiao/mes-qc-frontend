@@ -18,7 +18,7 @@ import FormDataSummary from "@/views/FormDataSummary.vue";
 import InstrumentManagement from "@/views/InstrumentManagement.vue";
 import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
 import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
-import ShiftManagement from "@/views/ShiftManagement.vue";
+import TeamManagement from "@/views/TeamManagement.vue";
 
 const routes = [
     {
@@ -36,9 +36,9 @@ const routes = [
         component: UserManagement,
     },
     {
-        path: '/shift-management',
-        name: 'ShiftManagement',
-        component: ShiftManagement,
+        path: '/team-management',
+        name: 'TeamManagement',
+        component: TeamManagement,
     },
     {
         path: '/LoginPage',
@@ -148,7 +148,7 @@ router.beforeEach((to, from, next) => {
     } else if (userRole === 2 && [
         '/form-designer',
         '/user-management',
-        '/shift-management',
+        '/team-management',
         '/quality-form-management',
         '/form-data-summary',
         '/task-assignment',

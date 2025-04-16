@@ -319,12 +319,12 @@
                 </el-select>
               </el-form-item>
 
-              <!-- Shift User Tree Selection -->
+              <!-- Team User Tree Selection -->
               <el-form-item
                   :prop="'dispatches.' + index + '.user_ids'"
               >
-                <UserShiftTree
-                    @update-selected-users="(users) => handleUserShiftTreeSelection(users, index)"
+                <UserTeamTree
+                    @update-selected-users="(users) => handleUserTeamTreeSelection(users, index)"
                 />
               </el-form-item>
 
@@ -451,10 +451,10 @@ import {getAllInstruments} from "@/services/instrumentService";
 import {getAllTestSubjects} from "@/services/testSubjectService";
 import {getAllSamplingLocations} from "@/services/samplingLocationService";
 import QcOrderPreview from "@/components/dispatch/QcOrderPreview.vue"
-import UserShiftTree from "@/components/dispatch/UserShiftTree.vue";
+import UserTeamTree from "@/components/dispatch/UserTeamTree.vue";
 
 export default {
-  components: { DispatchFormTreeSelect, UserShiftTree, CronElementPlus, QcOrderPreview },
+  components: { DispatchFormTreeSelect, UserTeamTree, CronElementPlus, QcOrderPreview },
   props: {
     currentOrder: {
       type: Object,
@@ -550,7 +550,7 @@ export default {
         collapsed: false,
         isUnlimited: true,
         dropdownUserIds: [],
-        shiftTreeUserIds: [],
+        teamTreeUserIds: [],
       };
       this.qcOrderForm.dispatches.push(newDispatch);
     },
@@ -786,7 +786,7 @@ export default {
     async handleFormNodeClicked(formTemplateId) {
       await openFormPreviewWindow(formTemplateId, this)
     },
-    async handleUserShiftTreeSelection(userIdsFromTree, index) {
+    async handleUserTeamTreeSelection(userIdsFromTree, index) {
       // Retrieve the dispatch object at the given index
       const dispatch = this.qcOrderForm.dispatches[index];
 
@@ -795,10 +795,10 @@ export default {
         return;
       }
 
-      dispatch.shiftTreeUserIds = userIdsFromTree;
+      dispatch.teamTreeUserIds = userIdsFromTree;
 
       // Merge `dispatch.user_ids` (el-select) and `userIdsFromTree`
-      dispatch.user_ids = [...new Set([...dispatch.dropdownUserIds, ...dispatch.shiftTreeUserIds])]; // OR: Array.from(mergedUserIds);
+      dispatch.user_ids = [...new Set([...dispatch.dropdownUserIds, ...dispatch.teamTreeUserIds])]; // OR: Array.from(mergedUserIds);
     },
     addUniqueUserIdsToDispatch(newUserIds, index) {
       console.log("AddUniqueUserIdsToDispatch", index);
@@ -809,13 +809,13 @@ export default {
         return;
       }
 
-      // Ensure shiftTreeUserIds exists
-      if (!dispatch.shiftTreeUserIds) {
-        dispatch.shiftTreeUserIds = [];
+      // Ensure teamTreeUserIds exists
+      if (!dispatch.teamTreeUserIds) {
+        dispatch.teamTreeUserIds = [];
       }
 
-      // Merge `dropdownUserIds` (new selection) and `shiftTreeUserIds`
-      const mergedUserIds = new Set([...newUserIds, ...dispatch.shiftTreeUserIds]);
+      // Merge `dropdownUserIds` (new selection) and `teamTreeUserIds`
+      const mergedUserIds = new Set([...newUserIds, ...dispatch.teamTreeUserIds]);
 
       // Convert Set to Array and update `user_ids`
       dispatch.user_ids = [...mergedUserIds];

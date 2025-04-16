@@ -26,18 +26,18 @@
         <li v-else>
           <strong>{{ translate('orderManagement.orderFormDialog.executionTime') }} </strong> {{ formatDate(dispatch.custom_time) }}
         </li>
-        <li v-if="dispatch.type === 'regular' && dispatch.source !== 'shift'">
+        <li v-if="dispatch.type === 'regular' && dispatch.source !== 'team'">
           <strong>{{ translate('orderManagement.orderDetailDialog.dispatchLimit') }}: </strong>
           {{ dispatch.isUnlimited === true ? translate('orderManagement.orderFormDialog.unlimited') : dispatch.dispatch_limit }}
         </li>
-        <li v-if="dispatch.type === 'regular' && dispatch.source !== 'shift'">
+        <li v-if="dispatch.type === 'regular' && dispatch.source !== 'team'">
           {{translateWithParams('orderManagement.orderFormDialog.taskDueDateOffset', {input: dispatch.due_date_offset_minute})}}
         </li>
-        <li v-if="dispatch.source === 'shift'">
-          <strong>{{translate('orderManagement.shiftPopulatePlanDialog.shiftPlanDueDate')}}</strong>
+        <li v-if="dispatch.source === 'team'">
+          <strong>{{translate('orderManagement.teamPopulatePlanDialog.teamPlanDueDate')}}</strong>
         </li>
         <li>
-          <strong>{{ translate('orderManagement.orderFormDialog.shift') }}: </strong> {{ formatShift(dispatch.shift_id) }}
+          <strong>{{ translate('orderManagement.orderFormDialog.team') }}: </strong> {{ formatTeam(dispatch.team_id) }}
         </li>
         <li>
           <strong>{{ translate('orderManagement.dispatchedTaskTable.user') }}: </strong>
@@ -76,7 +76,7 @@ export default {
       type: Object,
       required:true,
     },
-    shiftMap: {
+    teamMap: {
       type: Object,
       required:true,
     }
@@ -101,12 +101,12 @@ export default {
       if (!Array.isArray(range) || range.length !== 2) return translate('orderManagement.orderFormDialog.missing');
       return `${this.formatDate(range[0])} ${translate('FormDataSummary.dateRangeSeparator')} ${this.formatDate(range[1])}`;
     },
-    formatShift(shiftId) {
-      if (!shiftId) {
+    formatTeam(teamId) {
+      if (!teamId) {
         return translate('orderManagement.orderFormDialog.missing');
       }
 
-      return this.shiftMap[shiftId]?.name || translate('orderManagement.orderFormDialog.unknownShift');
+      return this.teamMap[teamId]?.name || translate('orderManagement.orderFormDialog.unknownTeam');
     },
     // Format user list (Order summary helper)
     formatUsers(userIds) {

@@ -59,7 +59,7 @@ export default {
       type: Object,
       required:true,
     },
-    shiftMap: {
+    teamMap: {
       type: Object,
       required:true,
     }
