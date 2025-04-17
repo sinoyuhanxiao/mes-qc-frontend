@@ -78,3 +78,14 @@ export const deleteTeam = (id) => {
 export const getTeamByTeamLeadId = (id) => {
     return api.get(`${BASE_URL}/lead/${id}`);
 };
+
+
+/**
+ * Fetch a list of all current team leader user IDs.
+ * Useful for role-based filtering, permission assignment, or team setup validation.
+ *
+ * @returns {Promise} API response containing an array of user IDs who are team leaders.
+ */
+export const getCurrentLeaderIds = () => {
+    return api.get(`${BASE_URL}/leaders`);
+};
