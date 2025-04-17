@@ -25,6 +25,10 @@
         </el-button>
       </template>
 
+      <el-button type="success" v-if="props.accessByTeam" @click="openQcRecordsDialog" style="margin-left: 10px">
+        {{ translate('FormDataSummary.viewRecords') }}
+      </el-button>
+
       </div>
 
       <el-countdown
@@ -161,6 +165,21 @@
 
   </el-drawer>
 
+  <QcRecordsTable
+      v-if="props.accessByTeam"
+      :visible="qcRecordsDialogVisible"
+      :loading="loadingQcRecords"
+      :form-label="props.currentForm?.label"
+      :paginated-qc-records="qcRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize)"
+      :displayed-column-headers="reorderedColumnHeaders"
+      :total="qcRecords.length"
+      v-model:visible="qcRecordsDialogVisible"
+      :shortcuts="[]"
+      :table-height="800"
+      @close="qcRecordsDialogVisible = false"
+      @page-change="currentPage = $event"
+  />
+
 </template>
 
 <script setup>
@@ -178,13 +197,21 @@ import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
+import QcRecordsTable from "@/components/tables/QcRecordsTable.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 import { windowMaskVisible } from '@/globals/mask'
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
+import { fetchQcRecords } from "@/services/qcReportingService"; // make sure this is imported
 
-const showRecipeDrawer = ref(false);
+const showRecipeDrawer = ref(false)
+const qcRecordsDialogVisible = ref(false);
+const qcRecords = ref([]);
+const reorderedColumnHeaders = ref([]);
+const loadingQcRecords = ref(true);
+const currentPage = ref(1);
+const pageSize = 15;
 
 const route = useRoute()
 const rt = ref(parseInt(route.query.rt, 10) || 0);
@@ -532,6 +559,44 @@ const audio = new Audio(soundEffect);
 //     await new Promise((resolve) => setTimeout(resolve, interval));
 //   }
 // }
+
+const openQcRecordsDialog = async () => {
+  qcRecordsDialogVisible.value = true;
+  loadingQcRecords.value = true;
+
+  const formTemplateId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
+  const startDateTime = "2025-04-01 00:00:00";
+  const endDateTime = "2025-05-01 23:59:59";
+
+  try {
+    const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
+    qcRecords.value = response.data;
+
+    if (qcRecords.value.length > 0) {
+      let headers = Object.keys(qcRecords.value[0]);
+      headers = headers.filter(h => h !== "_id" && h !== "created_by").map(h => h === "created_at" ? "提交时间" : h);
+      headers.push("_id");
+      reorderedColumnHeaders.value = headers;
+
+      qcRecords.value = qcRecords.value.map(r => {
+        if (r.created_at) {
+          const localDate = new Date(r.created_at);
+          r["提交时间"] = localDate.toLocaleString("zh-CN", {
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+          }).replace(/\//g, "-");
+          delete r.created_at;
+        }
+        return r;
+      });
+    }
+  } catch (err) {
+    console.error("Error fetching records:", err);
+  } finally {
+    loadingQcRecords.value = false;
+  }
+};
+
 
 watch(remainingTime, (newTime) => {
   nextTick(() => {
