@@ -147,7 +147,7 @@
             {{ formatDate(dispatch.end_time) }}
           </el-form-item>
 
-          <el-form-item :label="translate('orderManagement.orderDetailDialog.taskDueDateOffset')" v-if="dispatch.type === 'regular'">
+          <el-form-item :label="translate('orderManagement.orderDetailDialog.dispatchLimit')" v-if="dispatch.type === 'regular'">
             {{ dispatch.dispatch_limit === -1 ? translate('orderManagement.orderFormDialog.unlimited') : dispatch.dispatch_limit }}
           </el-form-item>
 

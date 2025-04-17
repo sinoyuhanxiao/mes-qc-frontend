@@ -157,7 +157,8 @@ export default {
           cancelButtonText: translate('orderManagement.cancel'),
           type: "warning",
         });
-        await deleteSamplingLocation(id, 1);
+        const currentUserId = this.$store.getters.getUser.id; // Get logged-in user ID
+        await deleteSamplingLocation(id, currentUserId);
         await this.loadLocations();
       } catch (error) {
         console.error("Error deleting sampling location:", error);

@@ -19,6 +19,7 @@ import InstrumentManagement from "@/views/InstrumentManagement.vue";
 import SamplingLocationManagement from "@/views/SamplingLocationManagement.vue";
 import TestSubjectManagement from "@/views/TestSubjectManagement.vue";
 import TeamManagement from "@/views/TeamManagement.vue";
+import ShiftManagement from "@/views/shiftManagement.vue";
 
 const routes = [
     {
@@ -39,6 +40,11 @@ const routes = [
         path: '/team-management',
         name: 'TeamManagement',
         component: TeamManagement,
+    },
+    {
+        path: '/shift-management',
+        name: 'ShiftManagement',
+        component: ShiftManagement,
     },
     {
         path: '/LoginPage',
