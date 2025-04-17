@@ -157,7 +157,8 @@ export default {
           cancelButtonText: translate('orderManagement.cancel'),
           type: "warning",
         });
-        await deleteInstrument(id, 1);
+        const currentUserId = this.$store.getters.getUser.id; // Get logged-in user ID
+        await deleteInstrument(id, currentUserId);
         await this.loadInstruments();
       } catch (error) {
         console.error("Error deleting instrument:", error);

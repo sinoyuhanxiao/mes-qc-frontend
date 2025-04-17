@@ -172,6 +172,7 @@ export default {
         systemManagement: "System Management",
         userManagement: "User",
         teamManagement: "Team",
+        shiftManagement: "Shift",
         qualityManagement: "Quality Management",
         formManagement: "Form Tree",
         formDesigner: "Form Designer",
@@ -285,6 +286,28 @@ export default {
             statusUpdatedSuccess: 'Status updated successfully',
             statusUpdatedFailed:  'Failed to update status'
         },
+    },
+    shiftManagement: {
+        title: 'Shift Management',
+        searchPlaceholder: 'Search shifts',
+        refreshTooltip: 'Refresh shift table',
+        shift: 'Shift',
+        shiftId: 'Shift ID',
+        graceMinute: 'Grace Period',
+        graceTimeMinute: 'Grace Period (Minute)',
+        editShift: 'Edit Shift',
+        addShift: 'Add New Shift',
+        namePlaceholder: 'Enter shift name',
+        descriptionPlaceholder: 'Enter shift description',
+        startTime: 'Start Time',
+        endTime: 'End Time',
+        startTimePlaceholder: 'Select shift start time',
+        endTimePlaceholder: 'Select shift end time',
+        validation: {
+            nameRequired: 'Shift name is required',
+            startTimeRequired: 'Start time is required',
+            endTimeRequired: 'End time is required',
+        }
     },
     FormTree: {
         title: 'Form Tree',

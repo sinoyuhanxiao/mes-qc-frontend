@@ -150,7 +150,8 @@ export default {
           cancelButtonText: translate('orderManagement.cancel'),
           type: "warning",
         });
-        await deleteTestSubject(id, 1);
+        const currentUserId = this.$store.getters.getUser.id; // Get logged-in user ID
+        await deleteTestSubject(id, currentUserId);
         await this.loadTestSubjects();
       } catch (error) {
         console.error("Error deleting test subject:", error);
