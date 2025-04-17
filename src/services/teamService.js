@@ -68,3 +68,13 @@ export const activateTeam = (id, updatedBy) => {
 export const deleteTeam = (id) => {
     return api.delete(`${BASE_URL}/delete/${id}`);
 };
+
+
+/**
+ * Fetch a team by the team lead ID.
+ * @param {number} id - The ID of the team lead.
+ * @returns {Promise} API response with the team details.
+ */
+export const getTeamByTeamLeadId = (id) => {
+    return api.get(`${BASE_URL}/lead/${id}`);
+};

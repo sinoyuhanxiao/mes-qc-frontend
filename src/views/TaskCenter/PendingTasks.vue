@@ -2,7 +2,8 @@
   <el-container>
     <el-aside width="25%">
       <FormTree
-          :accessByTeam="1"
+          v-if="teamId !== null"
+          :accessByTeam="teamId"
           @select-form="selectForm"
           @add-form="addForm"
           @is-deletion="handleDeletion"
@@ -22,8 +23,15 @@
 <script>
 import FormTree from '@/components/form-manager/FormTree.vue';
 import FormDisplay from '@/components/form-manager/FormDisplay.vue';
+import {getTeamByTeamLeadId} from "@/services/teamService";
+import store from "@/store";
 
 export default {
+  computed: {
+    store() {
+      return store
+    }
+  },
   components: {
     FormTree,
     FormDisplay,
@@ -31,9 +39,11 @@ export default {
   data() {
     return {
       selectedForm: null,
+      teamId: null
     };
   },
   methods: {
+    getTeamByTeamLeadId,
     selectForm(form) {
       this.selectedForm = form;
     },
@@ -48,5 +58,14 @@ export default {
       this.selectedForm = null;
     },
   },
+  mounted: async function () {
+    try {
+      const response = await getTeamByTeamLeadId(this.$store.getters.getUser.id);
+      this.teamId = response.data.data.id;
+      console.log("teamId", this.teamId);
+    } catch (err) {
+      console.error("Failed to fetch team by lead ID:", err);
+    }
+  }
 };
 </script>
