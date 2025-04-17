@@ -175,7 +175,7 @@
       :total="qcRecords.length"
       v-model:visible="qcRecordsDialogVisible"
       :shortcuts="[]"
-      :table-height="800"
+      :table-height="qcRecordsTableHeight"
       @close="qcRecordsDialogVisible = false"
       @page-change="currentPage = $event"
   />
@@ -219,6 +219,8 @@ const showCountdownEnded = ref(false);
 
 const showSignaturePad = ref(false);
 const signatureData = ref(null);
+const otherElementsHeight = 210;
+const qcRecordsTableHeight = ref(window.innerHeight - otherElementsHeight);
 
 const handleSignatureSave = (data) => {
   signatureData.value = data; // Save the base64 image data here
@@ -227,6 +229,10 @@ const handleSignatureSave = (data) => {
 
 const handleSignatureClear = () => {
   signatureData.value = null; // Clear the preview when cleared from the pad
+};
+
+const updateTableHeight = () => {
+  qcRecordsTableHeight.value = window.innerHeight - otherElementsHeight;
 };
 
 // Countdown time setup
@@ -351,6 +357,16 @@ onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval);
 });
 
+// deal with qc records table height
+onMounted(() => {
+  updateTableHeight();
+  window.addEventListener('resize', updateTableHeight);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight);
+});
+
 const clearForm = () => {
   if (vFormRef.value) {
     vFormRef.value.resetForm(); // 调用 VFormRender 内部的 resetForm 方法
@@ -384,7 +400,6 @@ const openRecipeDrawer = () => {
     showRecipeDrawer.value = true;
   });
 };
-
 
 onMounted(() => {
   startCountdown();
@@ -564,6 +579,7 @@ const openQcRecordsDialog = async () => {
   qcRecordsDialogVisible.value = true;
   loadingQcRecords.value = true;
 
+  // TODO: remove the hardcoded datetime values
   const formTemplateId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
   const startDateTime = "2025-04-01 00:00:00";
   const endDateTime = "2025-05-01 23:59:59";

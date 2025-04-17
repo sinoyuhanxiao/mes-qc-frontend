@@ -50,6 +50,7 @@ export default {
         loginSuccess: 'Login successful!',
         usernameMessage: 'Please input username',
         passwordMessage: 'Please input password',
+        captchaMessage: 'Please input captcha',
         copyright: '© 2024-2025 FPS. Quality Control for MES. All rights reserved.'
     },
     userManagement: {

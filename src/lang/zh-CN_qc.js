@@ -50,6 +50,7 @@ export default {
         loginSuccess: '登录成功！',
         usernameMessage: '请输入用户名',
         passwordMessage: '请输入密码',
+        captchaMessage: "请输入验证码",
         copyright: '© 2024-2025 FPS. Quality Control for MES. All rights reserved.'
     },
     userManagement: {
