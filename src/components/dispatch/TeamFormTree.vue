@@ -30,6 +30,7 @@
           @check-change="handleCheckChange"
           @node-click="handleNodeClicked"
           :show-checkbox="!showOnlySelectedNode"
+          :default-expand-all="props.expandAllNodes"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node">
@@ -64,9 +65,11 @@ interface Tree {
 const props = withDefaults(defineProps<{
   selectedFormIds: string[];
   showOnlySelectedNode: boolean;
+  expandAllNodes: boolean;
 }>(), {
   selectedFormIds: () => [],
   showOnlySelectedNode: false,
+  expandAllNodes: false,
 });
 
 const emit = defineEmits(['update-selected-forms','on-node-clicked']);
