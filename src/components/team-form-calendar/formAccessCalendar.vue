@@ -448,7 +448,7 @@ export default {
       this.showAssignmentForm = true;
     },
     handleEventClick(info) {
-      console.log(info.event);
+      // console.log(info.event);
       const calendarApi = this.calendarApi;
 
       // Clears all event's selection style class
@@ -458,7 +458,7 @@ export default {
       info.event.setProp('classNames', ['selected-event']);
 
       const event = calendarApi.getEventById(info.event.id);
-      console.log(event);
+      // console.log(event);
       // TODO: fetch data of this event's id from backend instead of from calendar when service is ready
       // Transform event object to assignmentForm object
       this.selectedEvent = {
@@ -476,7 +476,7 @@ export default {
         endRecur: info.event._def.recurringDef?.typeData.endRecur || null,
       };
 
-      console.log(this.selectedEvent)
+      // console.log(this.selectedEvent)
 
       this.showAssignmentDetail = true;
       this.showAssignmentForm = false;
