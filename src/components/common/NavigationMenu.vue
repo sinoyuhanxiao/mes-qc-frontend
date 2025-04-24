@@ -61,7 +61,7 @@
                 <span>{{ translate('navigationMenu.formDesigner') }}</span>
               </el-menu-item>
               <el-menu-item index="/form-access-calendar">
-                <el-icon><Files /></el-icon>
+                <el-icon><Calendar /></el-icon>
                 <span>{{ translate('navigationMenu.formAccessCalendar') }}</span>
               </el-menu-item>
               <el-menu-item index="/task-assignment">
