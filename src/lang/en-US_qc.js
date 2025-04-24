@@ -176,6 +176,7 @@ export default {
         qualityManagement: "Quality Management",
         formManagement: "Form Tree",
         formDesigner: "Form Designer",
+        formAccessCalendar: "Form Access Calendar",
         dispatchManagement: "Task Dispatch",
         instrumentManagement: "Instrument",
         testSubjectManagement: "Test Subject",
@@ -384,6 +385,9 @@ export default {
             formNameRequired: 'QC form name cannot be empty!',
             folderRequired: 'Please select a folder.'
         }
+    },
+    formAccessCalendar: {
+        title: 'Form Access Calendar',
     },
     orderManagement: {
         Id: 'ID',

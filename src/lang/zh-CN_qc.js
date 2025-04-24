@@ -176,6 +176,7 @@ export default {
         qualityManagement: "质量管理",
         formManagement: "表单管理",
         formDesigner: "表单设计",
+        formAccessCalendar: "表单权限日历",
         dispatchManagement: "任务派发",
         instrumentManagement: "仪器",
         testSubjectManagement: "检测项目",
@@ -384,6 +385,9 @@ export default {
             formNameRequired: '质检单名称不能为空！',
             folderRequired: '请选择一个文件夹。'
         }
+    },
+    formAccessCalendar: {
+        title: 'Form Access Calendar',
     },
     orderManagement: {
         Id: '号码',

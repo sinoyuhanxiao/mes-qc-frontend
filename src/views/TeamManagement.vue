@@ -206,6 +206,7 @@
                 <team-form-tree
                     :selectedFormIds="teamForms"
                     :showOnlySelectedNode="true"
+                    :expand-all-nodes="false"
                     @on-node-clicked="handleFormNodeClicked"
                 >
                 </team-form-tree>
@@ -277,6 +278,7 @@
           <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
             <team-form-tree
                 :showOnlySelectedNode="false"
+                :expand-all-nodes="false"
                 @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
                 @on-node-clicked="handleFormNodeClicked"
             >
@@ -362,6 +364,7 @@
             <team-form-tree
                 :selectedFormIds="editForm.assignedForms"
                 :showOnlySelectedNode="false"
+                :expand-all-nodes="false"
                 @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
                 @on-node-clicked="handleFormNodeClicked"
             >
