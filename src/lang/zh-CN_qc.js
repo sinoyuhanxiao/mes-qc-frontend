@@ -191,6 +191,7 @@ export default {
         overdueTasks: "逾期任务",
         taskCalendar: "任务日历",
         formDataSummary: '质检汇总',
+        alarmRecords: '告警记录',
         logout: "登出",
         userRole: "用户角色",
         username: "用户名",
