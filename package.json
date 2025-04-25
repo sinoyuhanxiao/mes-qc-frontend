@@ -38,7 +38,7 @@
     "cronstrue": "^2.59.0",
     "dayjs": "^1.11.13",
     "echarts": "^5.6.0",
-    "element-plus": "^2.2.22",
+    "element-plus": "^2.9.7",
     "file-saver": "^2.0.5",
     "js-base64": "^3.7.7",
     "jspdf": "^3.0.0",

@@ -1,25 +1,32 @@
 <template>
   <div>
-    <h2 style="margin-bottom: 20px;">告警记录</h2>
+    <div style="display: flex; justify-content: space-between" no>
+      <h2 style="margin-bottom: 20px;">告警记录</h2>
+      <el-button style="margin-top: 20px;" @click="openSettingsDialog" circle>
+        <el-icon :size="30" style="display: flex; align-items: center; justify-content: center;">
+          <Setting />
+        </el-icon>
+      </el-button>
+    </div>
     <!-- Toolbar with Filters -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; gap: 10px;">
-        <el-select v-model="filterRiskLevel" placeholder="预警等级" clearable style="width: 120px;">
+        <el-select v-model="filterRiskLevel" placeholder="预警等级" clearable filterable  style="width: 120px;">
           <el-option label="高风险" value="高风险" />
           <el-option label="中风险" value="中风险" />
           <el-option label="低风险" value="低风险" />
         </el-select>
 
-        <el-select v-model="filterStatus" placeholder="状态" clearable style="width: 120px;">
+        <el-select v-model="filterStatus" placeholder="状态" clearable filterable  style="width: 120px;">
           <el-option label="处理中" value="处理中" />
           <el-option label="已关闭" value="已关闭" />
         </el-select>
 
-        <el-select v-model="filterProduct" placeholder="产品名称" clearable style="width: 140px;">
+        <el-select v-model="filterProduct" placeholder="产品名称" clearable filterable  style="width: 140px;">
           <el-option v-for="item in productOptions" :key="item" :label="item" :value="item" />
         </el-select>
 
-        <el-select v-model="filterInspectionItem" placeholder="检测项" clearable style="width: 140px;">
+        <el-select v-model="filterInspectionItem" placeholder="检测项" clearable filterable  style="width: 140px;">
           <el-option v-for="item in inspectionOptions" :key="item" :label="item" :value="item" />
         </el-select>
 
@@ -69,7 +76,15 @@
     </div>
 
     <!-- Alert Records Table -->
-    <el-table v-loading="loading" :data="paginatedAlerts" :height="tableHeight" style="width: 100%;" @sort-change="handleSortChange">
+    <el-table
+        v-loading="loading"
+        :data="paginatedAlerts"
+        :height="tableHeight"
+        style="width: 100%;"
+        @sort-change="handleSortChange"
+        :allow-drag-last-column="true"
+        :row-class-name="renderRows"
+    >
       <el-table-column label="告警编号" prop="alert_code" width="150" fixed="left">
         <template #default="scope">
           <span>{{ scope.row.alert_code }}</span>
@@ -92,9 +107,17 @@
 
       <el-table-column label="质检表单" prop="form_name" width="160" sortable />
 
-      <el-table-column label="检测项" prop="inspection_item" width="180" sortable />
+      <el-table-column label="检测项" prop="inspection_item" width="180" sortable>
+        <template #default="scope">
+          {{ scope.row.inspection_item }} ({{ scope.row.unit }})
+        </template>
+      </el-table-column>
 
-      <el-table-column label="检测值" prop="value" width="100" sortable />
+      <el-table-column label="检测值" prop="value" width="120" sortable>
+        <template #default="scope">
+          {{ scope.row.value }}
+        </template>
+      </el-table-column>
 
       <el-table-column label="标准值范围" width="150">
         <template #default="scope">
@@ -164,7 +187,7 @@
           <el-button size="small" type="primary" @click="viewDetails(scope.row)">查看</el-button>
           <el-button
               size="small"
-              type="warning"
+              :type="scope.row.isEditing ? 'success' : 'plain'"
               @click="toggleEditRpn(scope.row)"
           >
             {{ scope.row.isEditing ? '保存' : '修改' }}
@@ -200,6 +223,29 @@
     </ul>
   </el-dialog>
 
+  <el-dialog title="设置" v-model="showSettingsDialog" width="300px" @close="resetSettings">
+    <el-form label-width="120px" style="padding-top: 20px">
+      <el-form-item label="启用自动刷新">
+        <el-switch v-model="autoRefreshEnabled" />
+      </el-form-item>
+      <el-form-item label="自动刷新秒数">
+        <el-input-number
+            v-model="autoRefreshInterval"
+            :min="autoRefreshMin"
+            :max="autoRefreshMax"
+            :disabled="!autoRefreshEnabled"
+        />
+        <div style="color: rgba(255,0,0,0.5);">
+          {{autoRefreshMin}}秒 - {{autoRefreshMax}}秒之间
+        </div>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showSettingsDialog = false">关闭</el-button>
+      <el-button type="primary" @click="applyAlarmSetting">应用</el-button>  <!-- 添加这行: 应用按钮 -->
+    </template>
+  </el-dialog>
+
 </template>
 
 <script>
@@ -208,13 +254,13 @@ import { use } from "echarts/core";
 import { PieChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import VChart from "vue-echarts";
-import { QuestionFilled, Search } from "@element-plus/icons-vue";
+import {QuestionFilled, Search, Setting} from "@element-plus/icons-vue";
 
 use([PieChart, CanvasRenderer]);
 
 export default {
   name: 'AlertRecordsTable',
-  components: {QuestionFilled, Search, VChart },
+  components: {Setting, QuestionFilled, Search, VChart },
   data() {
     return {
       alertRecords: [],
@@ -231,7 +277,16 @@ export default {
       productOptions: ['产品A', '产品B', '产品C'],
       inspectionOptions: ['检测项1', '检测项2', '检测项3'],
       generalSearch: '',
-      showRpnDialog: false
+      showRpnDialog: false,
+      autoRefreshTimer: null,
+      autoRefreshEnabled: true,
+      autoRefreshEnabledTemp: false,  // 用于临时存储
+      autoRefreshIntervalTemp: 60,    // 用于临时存储
+      autoRefreshInterval: 60,
+      autoRefreshMax: 3600,
+      autoRefreshMin: 10,
+      showSettingsDialog: false,
+      indexesForEdit: {}
     };
   },
   computed: {
@@ -344,6 +399,7 @@ export default {
             'form_name': '@ctitle(4, 7)',
             'inspection_item': '@cword(3,6)',
             'value|80-200': 1,
+            'unit': '@pick(["mg/L", "ppm", "℃", "%", "mL"])',
             'standard_min|80-100': 1,
             'standard_max|150-200': 1,
             'exceed_status': '@pick(["超标", "正常"])',
@@ -364,23 +420,75 @@ export default {
           }]
         }).data;
         this.loading = false;
+
+        this.indexesForEdit = {}
       }, 1000);
+    },
+    openSettingsDialog() {
+      this.autoRefreshEnabledTemp = this.autoRefreshEnabled;
+      this.autoRefreshIntervalTemp = this.autoRefreshInterval;
+      this.showSettingsDialog = true;
+    },
+    resetSettings() {
+      this.autoRefreshEnabled = this.autoRefreshEnabledTemp;
+      this.autoRefreshInterval = this.autoRefreshIntervalTemp;
     },
     exportTable() {
       console.log('导出假数据：', this.filteredAlerts);  // 模拟导出，后续可加 CSV/PDF
     },
-    toggleEditRpn(row) {  // 添加这行
+    renderRows({ row, rowIndex }) {
+      const currentPage = this.currentPage;
+      const editIndexes = this.indexesForEdit[currentPage] || [];
+      if (editIndexes.includes(rowIndex)) {
+        return 'warning-row';
+      }
+      return '';
+    },
+    toggleEditRpn(row) {
+      const index = this.paginatedAlerts.indexOf(row);
+      const currentPage = this.currentPage;
+
+      if (this.autoRefreshEnabled && this.autoRefreshTimer) {
+        this.$confirm('当前启用了自动刷新，是否停止自动刷新以避免数据丢失？', '提示', {
+          confirmButtonText: '停止刷新',
+          cancelButtonText: '继续刷新',
+          type: 'warning',
+        }).then(() => {
+          this.autoRefreshEnabled = false;  // 停止自动刷新
+          clearInterval(this.autoRefreshTimer);
+          this.autoRefreshTimer = null;
+          this.$message.success('自动刷新已停止');
+        }).catch(() => {
+          // 用户选择继续刷新，不做任何处理
+        });
+      }
+
+      if (!this.indexesForEdit[currentPage]) {
+        this.indexesForEdit[currentPage] = [];
+      }
+
       if (!row.isEditing) {
-        row.isEditing = true;  // 开启编辑模式
+        row.isEditing = true;
+        this.indexesForEdit[currentPage].push(index);
       } else {
-        row.isEditing = false;  // 保存后退出编辑
-        // 更新预警等级
+        row.isEditing = false;
+        const idx = this.indexesForEdit[currentPage].indexOf(index);
+        if (idx !== -1) this.indexesForEdit[currentPage].splice(idx, 1);
+
+        const oldRpn = row.rpn; // 保存修改前的RPN
         const rpn = Number(row.rpn);
         if (rpn >= 200) row.risk_level = '高风险';
         else if (rpn >= 100) row.risk_level = '中风险';
         else row.risk_level = '低风险';
+        this.$message({
+          type: 'success',
+          dangerouslyUseHTMLString: true,  // 添加这行: 允许HTML
+          message: `保存成功，RPN值: <span style="color: #2c4cb3">${oldRpn}</span> → <span style="color: #f46666">${rpn}</span>`
+        });
       }
-    },  // 添加这行
+
+      console.log('indexesForEdit:', this.indexesForEdit);
+    },
     updateTableHeight() {
       const heightToSubtract = 460;
       this.tableHeight = window.innerHeight - heightToSubtract;
@@ -404,15 +512,38 @@ export default {
     },
     viewDetails(row) {
       this.$message.info(`查看告警记录 ID: ${row.id}`);
+    },
+    applyAlarmSetting() {
+      this.autoRefreshEnabledTemp = this.autoRefreshEnabled;
+      this.autoRefreshIntervalTemp = this.autoRefreshInterval;
+
+      clearInterval(this.autoRefreshTimer);
+      if (this.autoRefreshEnabled) {
+        this.autoRefreshTimer = setInterval(() => {
+          this.fetchAlertRecords();
+        }, this.autoRefreshInterval * 1000);
+      }
+      this.showSettingsDialog = false;
+      this.$message.success(
+          this.autoRefreshEnabled
+              ? `自动刷新已启用，刷新间隔: ${this.autoRefreshInterval}秒`
+              : '自动刷新已关闭'
+      );
     }
   },
   mounted() {
     this.fetchAlertRecords();
     window.addEventListener('resize', this.updateTableHeight);
     this.updateTableHeight();
+    if (this.autoRefreshEnabled) {  // 添加这行: 判断是否启用自动刷新
+      this.autoRefreshTimer = setInterval(() => {
+        this.fetchAlertRecords();
+      }, this.autoRefreshInterval * 1000);
+    }
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateTableHeight);
+    clearInterval(this.autoRefreshTimer);
   }
 };
 </script>
@@ -421,5 +552,9 @@ export default {
 .tableContainer {
   overflow-x: auto;
   max-width: 100%;
+}
+
+::v-deep(.warning-row) {
+  background-color: var(--el-color-warning-light-9) !important;
 }
 </style>
