@@ -11,27 +11,27 @@
     <!-- Toolbar with Filters -->
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; gap: 10px;">
-        <el-select v-model="filterRiskLevel" placeholder="预警等级" clearable filterable  style="width: 120px;">
+        <el-select v-model="filters.filterRiskLevel" placeholder="预警等级" clearable filterable  style="width: 120px;">
           <el-option label="高风险" value="高风险" />
           <el-option label="中风险" value="中风险" />
           <el-option label="低风险" value="低风险" />
         </el-select>
 
-        <el-select v-model="filterStatus" placeholder="状态" clearable filterable  style="width: 120px;">
+        <el-select v-model="filters.filterStatus" placeholder="状态" clearable filterable  style="width: 120px;">
           <el-option label="处理中" value="处理中" />
           <el-option label="已关闭" value="已关闭" />
         </el-select>
 
-        <el-select v-model="filterProduct" placeholder="产品名称" clearable filterable  style="width: 140px;">
-          <el-option v-for="item in productOptions" :key="item" :label="item" :value="item" />
+        <el-select v-model="filters.filterProduct" placeholder="产品名称" clearable filterable  style="width: 140px;">
+          <el-option v-for="item in filters.productOptions" :key="item" :label="item" :value="item" />
         </el-select>
 
-        <el-select v-model="filterInspectionItem" placeholder="检测项" clearable filterable  style="width: 140px;">
-          <el-option v-for="item in inspectionOptions" :key="item" :label="item" :value="item" />
+        <el-select v-model="filters.filterInspectionItem" placeholder="检测项" clearable filterable  style="width: 140px;">
+          <el-option v-for="item in filters.inspectionOptions" :key="item" :label="item" :value="item" />
         </el-select>
 
         <el-date-picker
-            v-model="filterDateRange"
+            v-model="filters.filterDateRange"
             type="daterange"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
@@ -40,7 +40,7 @@
       </div>
       <div>
         <el-input
-            v-model="generalSearch"
+            v-model="filters.generalSearch"
             placeholder="搜索..."
             clearable
             style="width: 200px; align-items: center; margin-right: 10px"
@@ -77,7 +77,7 @@
 
     <!-- Alert Records Table -->
     <el-table
-        v-loading="loading"
+        v-loading="table.loading"
         :data="paginatedAlerts"
         :height="tableHeight"
         style="width: 100%;"
@@ -137,7 +137,7 @@
         <template #header>
           <span>RPN</span>
           <el-tooltip content="点击查看 RPN 说明" placement="top">
-            <el-icon style="cursor: pointer; margin-left: 5px;" @click.stop="showRpnDialog = true">
+            <el-icon style="cursor: pointer; margin-left: 5px;" @click.stop="dialogs.showRpnDialog = true">
               <QuestionFilled />
             </el-icon>
           </el-tooltip>
@@ -200,15 +200,15 @@
         style="margin-top: 10px;"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-size="pageSize"
+        :current-page="pagination.currentPage"
+        :page-size="pagination.pageSize"
         :page-sizes="[10, 20, 30, 50]"
         layout="total, sizes, prev, pager, next"
         :total="filteredAlerts.length"
     />
   </div>
 
-  <el-dialog title="风险优先数 (RPN) 说明" v-model="showRpnDialog" width="600px">
+  <el-dialog title="风险优先数 (RPN) 说明" v-model="dialogs.showRpnDialog" width="600px">
     <p><strong>RPN = 严重度 (Severity) × 发生概率 (Occurrence) × 检测难度 (Detection)</strong></p>
     <ul>
       <li><strong>严重度</strong>：失效发生后的严重程度，评分 1-10。</li>
@@ -223,25 +223,25 @@
     </ul>
   </el-dialog>
 
-  <el-dialog title="设置" v-model="showSettingsDialog" width="300px" @close="resetSettings">
+  <el-dialog title="设置" v-model="dialogs.showSettingsDialog" width="300px" @close="resetSettings">
     <el-form label-width="120px" style="padding-top: 20px">
       <el-form-item label="启用自动刷新">
-        <el-switch v-model="autoRefreshEnabled" />
+        <el-switch v-model="autoRefresh.enabled" />
       </el-form-item>
       <el-form-item label="自动刷新秒数">
         <el-input-number
-            v-model="autoRefreshInterval"
-            :min="autoRefreshMin"
-            :max="autoRefreshMax"
-            :disabled="!autoRefreshEnabled"
+            v-model="autoRefresh.interval"
+            :min="autoRefresh.min"
+            :max="autoRefresh.max"
+            :disabled="!autoRefresh.enabled"
         />
         <div style="color: rgba(255,0,0,0.5);">
-          {{autoRefreshMin}}秒 - {{autoRefreshMax}}秒之间
+          {{autoRefresh.min}}秒 - {{autoRefresh.max}}秒之间
         </div>
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="showSettingsDialog = false">关闭</el-button>
+      <el-button @click="dialogs.showSettingsDialog = false">关闭</el-button>
       <el-button type="primary" @click="applyAlarmSetting">应用</el-button>  <!-- 添加这行: 应用按钮 -->
     </template>
   </el-dialog>
@@ -263,57 +263,76 @@ export default {
   components: {Setting, QuestionFilled, Search, VChart },
   data() {
     return {
-      alertRecords: [],
-      loading: false,
-      filterRiskLevel: '',
-      filterStatus: '',
-      filterDateRange: [],
-      currentPage: 1,
-      pageSize: 10,
-      tableHeight: 0,
-      sortSettings: { prop: '', order: '' },
-      filterProduct: '',
-      filterInspectionItem: '',
-      productOptions: ['产品A', '产品B', '产品C'],
-      inspectionOptions: ['检测项1', '检测项2', '检测项3'],
-      generalSearch: '',
-      showRpnDialog: false,
-      autoRefreshTimer: null,
-      autoRefreshEnabled: true,
-      autoRefreshEnabledTemp: false,  // 用于临时存储
-      autoRefreshIntervalTemp: 60,    // 用于临时存储
-      autoRefreshInterval: 60,
-      autoRefreshMax: 3600,
-      autoRefreshMin: 10,
-      showSettingsDialog: false,
-      indexesForEdit: {}
+      // 表格数据
+      table: {
+        alertRecords: [],
+        loading: false,
+        tableHeight: 0,
+        indexesForEdit: {}
+      },
+
+      // 分页和排序
+      pagination: {
+        currentPage: 1,
+        pageSize: 10,
+        sortSettings: { prop: '', order: '' }
+      },
+
+      // 过滤条件
+      filters: {
+        filterRiskLevel: '',
+        filterStatus: '',
+        filterProduct: '',
+        filterInspectionItem: '',
+        filterDateRange: [],
+        generalSearch: '',
+        productOptions: ['产品A', '产品B', '产品C'],
+        inspectionOptions: ['检测项1', '检测项2', '检测项3']
+      },
+
+      // 弹窗控制
+      dialogs: {
+        showRpnDialog: false,
+        showSettingsDialog: false
+      },
+
+      // 自动刷新设置
+      autoRefresh: {
+        enabled: true,
+        interval: 60,
+        timer: null,
+        min: 10,
+        max: 3600,
+        enabledTemp: false,
+        intervalTemp: 60
+      }
     };
   },
   computed: {
     filteredAlerts() {
-      let data = this.alertRecords;
-      if (this.filterProduct) {
-        data = data.filter(item => item.product_name === this.filterProduct);
+      let data = this.table.alertRecords;
+      if (this.filters.filterProduct) {
+        data = data.filter(item => item.product_name === this.filters.filterProduct);
       }
-      if (this.filterInspectionItem) {
-        data = data.filter(item => item.inspection_item === this.filterInspectionItem);
+      if (this.filters.filterInspectionItem) {
+        data = data.filter(item => item.inspection_item === this.filters.filterInspectionItem);
       }
-      if (this.filterRiskLevel) {
-        data = data.filter(item => item.risk_level === this.filterRiskLevel);
+      if (this.filters.filterRiskLevel) {
+        data = data.filter(item => item.risk_level === this.filters.filterRiskLevel);
       }
-      if (this.filterStatus) {
-        data = data.filter(item => item.status === this.filterStatus);
+      if (this.filters.filterStatus) {
+        data = data.filter(item => item.status === this.filters.filterStatus);
       }
-      if (this.generalSearch) {
-        const keyword = this.generalSearch.toLowerCase();
+      if (this.filters.generalSearch) {
+        const keyword = this.filters.generalSearch.toLowerCase();
         data = data.filter(item =>
             Object.values(item).some(val =>
                 String(val).toLowerCase().includes(keyword)
             )
         );
       }
-      if (this.filterDateRange.length === 2) {
-        const [start, end] = this.filterDateRange;
+      if (this.filters.filterDateRange.length === 2) {
+        const [start, end] = this.filters.filterDateRange;
         data = data.filter(item => new Date(item.alert_time) >= new Date(start) && new Date(item.alert_time) <= new Date(end));
       }
       return data;
@@ -347,8 +366,8 @@ export default {
       };
     },
     paginatedAlerts() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredAlerts.slice(start, start + this.pageSize);
+      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+      return this.filteredAlerts.slice(start, start + this.pagination.pageSize);
     },
     statusPieOption() {
       return {
@@ -388,10 +407,10 @@ export default {
   },
   methods: {
     fetchAlertRecords() {
-      this.loading = true;
+      this.table.loading = true;
       setTimeout(() => {
         // 用 Mock.js 生成数据
-        this.alertRecords = Mock.mock({
+        this.table.alertRecords = Mock.mock({
           'data|55': [{
             'id|+1': 1,
             'product_name': '@cword(3,5)薯条',
@@ -419,26 +438,26 @@ export default {
             }
           }]
         }).data;
-        this.loading = false;
+        this.table.loading = false;
 
-        this.indexesForEdit = {}
+        this.table.indexesForEdit = {}
       }, 1000);
     },
     openSettingsDialog() {
-      this.autoRefreshEnabledTemp = this.autoRefreshEnabled;
-      this.autoRefreshIntervalTemp = this.autoRefreshInterval;
-      this.showSettingsDialog = true;
+      this.autoRefresh.enabledTemp = this.autoRefresh.enabled;
+      this.autoRefresh.intervalTemp = this.autoRefresh.interval;
+      this.dialogs.showSettingsDialog = true;
     },
     resetSettings() {
-      this.autoRefreshEnabled = this.autoRefreshEnabledTemp;
-      this.autoRefreshInterval = this.autoRefreshIntervalTemp;
+      this.autoRefresh.enabled = this.autoRefresh.enabledTemp;
+      this.autoRefresh.interval = this.autoRefresh.intervalTemp;
     },
     exportTable() {
       console.log('导出假数据：', this.filteredAlerts);  // 模拟导出，后续可加 CSV/PDF
     },
     renderRows({ row, rowIndex }) {
-      const currentPage = this.currentPage;
-      const editIndexes = this.indexesForEdit[currentPage] || [];
+      const currentPage = this.pagination.currentPage;
+      const editIndexes = this.table.indexesForEdit[currentPage] || [];
       if (editIndexes.includes(rowIndex)) {
         return 'warning-row';
       }
@@ -446,34 +465,34 @@ export default {
     },
     toggleEditRpn(row) {
       const index = this.paginatedAlerts.indexOf(row);
-      const currentPage = this.currentPage;
+      const currentPage = this.pagination.currentPage;
 
-      if (this.autoRefreshEnabled && this.autoRefreshTimer) {
+      if (this.autoRefresh.enabled && this.autoRefresh.timer) {
         this.$confirm('当前启用了自动刷新，是否停止自动刷新以避免数据丢失？', '提示', {
           confirmButtonText: '停止刷新',
           cancelButtonText: '继续刷新',
           type: 'warning',
         }).then(() => {
-          this.autoRefreshEnabled = false;  // 停止自动刷新
-          clearInterval(this.autoRefreshTimer);
-          this.autoRefreshTimer = null;
+          this.autoRefresh.enabled = false;  // 停止自动刷新
+          clearInterval(this.autoRefresh.timer);
+          this.autoRefresh.timer = null;
           this.$message.success('自动刷新已停止');
         }).catch(() => {
           // 用户选择继续刷新，不做任何处理
         });
       }
 
-      if (!this.indexesForEdit[currentPage]) {
-        this.indexesForEdit[currentPage] = [];
+      if (!this.table.indexesForEdit[currentPage]) {
+        this.table.indexesForEdit[currentPage] = [];
       }
 
       if (!row.isEditing) {
         row.isEditing = true;
-        this.indexesForEdit[currentPage].push(index);
+        this.table.indexesForEdit[currentPage].push(index);
       } else {
         row.isEditing = false;
-        const idx = this.indexesForEdit[currentPage].indexOf(index);
-        if (idx !== -1) this.indexesForEdit[currentPage].splice(idx, 1);
+        const idx = this.table.indexesForEdit[currentPage].indexOf(index);
+        if (idx !== -1) this.table.indexesForEdit[currentPage].splice(idx, 1);
 
         const oldRpn = row.rpn; // 保存修改前的RPN
         const rpn = Number(row.rpn);
@@ -487,46 +506,46 @@ export default {
         });
       }
 
-      console.log('indexesForEdit:', this.indexesForEdit);
+      console.log('table.indexesForEdit:', this.table.indexesForEdit);
     },
     updateTableHeight() {
       const heightToSubtract = 460;
       this.tableHeight = window.innerHeight - heightToSubtract;
     },
     handleSortChange({ prop, order }) {
-      this.sortSettings = { prop, order };
+      this.pagination.sortSettings = { prop, order };
       if (prop && order) {
-        const sorted = [...this.alertRecords].sort((a, b) => {
+        const sorted = [...this.table.alertRecords].sort((a, b) => {
           const valA = a[prop];
           const valB = b[prop];
           return order === 'ascending' ? valA - valB : valB - valA;
         });
-        this.alertRecords = sorted;
+        this.table.alertRecords = sorted;
       }
     },
     handleSizeChange(size) {
-      this.pageSize = size;
+      this.pagination.pageSize = size;
     },
     handleCurrentChange(page) {
-      this.currentPage = page;
+      this.pagination.currentPage = page;
     },
     viewDetails(row) {
       this.$message.info(`查看告警记录 ID: ${row.id}`);
     },
     applyAlarmSetting() {
-      this.autoRefreshEnabledTemp = this.autoRefreshEnabled;
-      this.autoRefreshIntervalTemp = this.autoRefreshInterval;
+      this.autoRefresh.enabledTemp = this.autoRefresh.enabled;
+      this.autoRefresh.intervalTemp = this.autoRefresh.interval;
 
-      clearInterval(this.autoRefreshTimer);
-      if (this.autoRefreshEnabled) {
-        this.autoRefreshTimer = setInterval(() => {
+      clearInterval(this.autoRefresh.timer);
+      if (this.autoRefresh.enabled) {
+        this.autoRefresh.timer = setInterval(() => {
           this.fetchAlertRecords();
-        }, this.autoRefreshInterval * 1000);
+        }, this.autoRefresh.interval * 1000);
       }
-      this.showSettingsDialog = false;
+      this.dialogs.showSettingsDialog = false;
       this.$message.success(
-          this.autoRefreshEnabled
-              ? `自动刷新已启用，刷新间隔: ${this.autoRefreshInterval}秒`
+          this.autoRefresh.enabled
+              ? `自动刷新已启用，刷新间隔: ${this.autoRefresh.interval}秒`
               : '自动刷新已关闭'
       );
     }
@@ -535,15 +554,15 @@ export default {
     this.fetchAlertRecords();
     window.addEventListener('resize', this.updateTableHeight);
     this.updateTableHeight();
-    if (this.autoRefreshEnabled) {  // 添加这行: 判断是否启用自动刷新
-      this.autoRefreshTimer = setInterval(() => {
+    if (this.autoRefresh.enabled) {  // 添加这行: 判断是否启用自动刷新
+      this.autoRefresh.timer = setInterval(() => {
         this.fetchAlertRecords();
-      }, this.autoRefreshInterval * 1000);
+      }, this.autoRefresh.interval * 1000);
     }
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateTableHeight);
-    clearInterval(this.autoRefreshTimer);
+    clearInterval(this.autoRefresh.timer);
   }
 };
 </script>
