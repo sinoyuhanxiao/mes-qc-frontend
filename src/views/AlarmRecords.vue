@@ -1,32 +1,34 @@
 <template>
-  <div>
-    <div style="display: flex; justify-content: space-between">
+  <div class="alert-page-grid">
+    <!-- Header -->
+    <div class="header-area" style="display: flex; justify-content: space-between">
       <h2 style="margin-bottom: 20px;">告警记录</h2>
-      <el-button style="margin-top: 20px;" @click="openSettingsDialog" circle>
+      <el-button style="margin-top: 20px; margin-right: 5px" @click="openSettingsDialog" circle>
         <el-icon :class="{ rotate: autoRefresh.statusKey === 1 }" :size="30" style="display: flex; align-items: center; justify-content: center;">
           <Setting />
         </el-icon>
       </el-button>
     </div>
-    <!-- Toolbar with Filters -->
-    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; gap: 10px;">
-        <el-select v-model="filters.filterRiskLevel" placeholder="预警等级" clearable filterable  style="width: 120px;">
+
+    <!-- Filters -->
+    <div class="filter-area">
+      <div style="gap: 20px; display: flex; justify-content: space-around">
+        <el-select v-model="filters.filterRiskLevel" placeholder="预警等级" clearable filterable style="width: 100px;">
           <el-option label="高风险" value="高风险" />
           <el-option label="中风险" value="中风险" />
           <el-option label="低风险" value="低风险" />
         </el-select>
 
-        <el-select v-model="filters.filterStatus" placeholder="状态" clearable filterable  style="width: 120px;">
+        <el-select v-model="filters.filterStatus" placeholder="状态" clearable filterable style="width: 100px;">
           <el-option label="处理中" value="处理中" />
           <el-option label="已关闭" value="已关闭" />
         </el-select>
 
-        <el-select v-model="filters.filterProduct" placeholder="产品名称" clearable filterable  style="width: 140px;">
+        <el-select v-model="filters.filterProduct" placeholder="产品名称" clearable filterable  style="width: 100px;">
           <el-option v-for="item in filters.productOptions" :key="item" :label="item" :value="item" />
         </el-select>
 
-        <el-select v-model="filters.filterInspectionItem" placeholder="检测项" clearable filterable  style="width: 140px;">
+        <el-select v-model="filters.filterInspectionItem" placeholder="检测项" clearable filterable  style="width: 100px;">
           <el-option v-for="item in filters.inspectionOptions" :key="item" :label="item" :value="item" />
         </el-select>
 
@@ -43,36 +45,39 @@
         />
       </div>
       <div>
+
+      </div>
+      <div style="gap: 20px; display: flex; justify-content: space-around">
         <el-input
             v-model="filters.generalSearch"
             placeholder="搜索..."
             clearable
-            style="width: 200px; align-items: center; margin-right: 10px"
+            style="width: 200px; align-items: center;"
         >
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-button type="success" @click="exportTable" style="padding-bottom: 4px; margin-top: 0px;">导出</el-button> <!-- 修改这行 -->
-        <el-button type="primary" @click="fetchAlertRecords" style="margin-top: 0px;">刷新</el-button>
-
+        <el-button type="success" @click="exportTable" style="margin: 0px;">导出</el-button> <!-- 修改这行 -->
+        <el-button type="primary" @click="fetchAlertRecords" style="margin: 0px;">刷新</el-button>
       </div>
     </div>
 
-    <div style="margin-bottom: 20px; display: flex; gap: 40px; justify-content: space-between;">
-      <el-card style="width: 320px; height: 200px;">
+    <!-- Charts -->
+    <div class="charts-area">
+      <el-card>
         <div>状态统计</div>
         <v-chart :option="statusPieOption" autoresize style="height: 140px;" />
       </el-card>
-      <el-card style="width: 320px; height: 200px;">
+      <el-card>
         <div>风险等级统计</div>
         <v-chart :option="riskPieOption" autoresize style="height: 140px;" />
       </el-card>
-      <el-card style="width: 400px; height: 200px;">
+      <el-card>
         <div>Top 3 告警产品</div>
         <v-chart :option="productBarOption" autoresize style="height: 140px;" />
       </el-card>
-      <el-card style="width: 400px; height: 200px;">
+      <el-card>
         <div>Top 3 告警检测项</div>
         <v-chart :option="inspectionBarOption" autoresize style="height: 140px;" />
       </el-card>
@@ -81,10 +86,10 @@
 
     <!-- Alert Records Table -->
     <el-table
+        class="table-area"
         v-loading="table.loading"
         :data="paginatedAlerts"
-        :height="tableHeight"
-        style="width: 100%;"
+        style="width: 100%; flex: 1 1 auto;"
         @sort-change="handleSortChange"
         :allow-drag-last-column="true"
         :row-class-name="renderRows"
@@ -207,8 +212,9 @@
       </el-table-column>
     </el-table>
 
+    <!-- Pagination -->
     <el-pagination
-        style="margin-top: 10px;"
+        class="pager-area"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="pagination.currentPage"
@@ -281,7 +287,6 @@ export default {
       table: {
         alertRecords: [],
         loading: false,
-        tableHeight: 0,
         indexesForEdit: {}
       },
 
@@ -565,10 +570,6 @@ export default {
         this.$message.success('自动刷新已恢复');
       }
     },
-    updateTableHeight() {
-      const heightToSubtract = 430;
-      this.tableHeight = window.innerHeight - heightToSubtract;
-    },
     handleSortChange({ prop, order }) {
       this.pagination.sortSettings = { prop, order };
       if (prop && order) {
@@ -610,8 +611,6 @@ export default {
   },
   mounted() {
     this.fetchAlertRecords();
-    window.addEventListener('resize', this.updateTableHeight);
-    this.updateTableHeight();
     if (this.autoRefresh.enabled) {  // 添加这行: 判断是否启用自动刷新
       this.autoRefresh.timer = setInterval(() => {
         this.fetchAlertRecords();
@@ -620,7 +619,6 @@ export default {
     this.updateRefreshStatus();
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.updateTableHeight);
     clearInterval(this.autoRefresh.timer);
   }
 };
@@ -650,5 +648,45 @@ export default {
     transform: rotate(360deg);
   }
 }
+
+.alert-page-grid { /* 整个页面的 Grid 容器 */
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto; /* 5行：header, filter, charts, table, pager */
+  grid-template-areas:
+    "header"
+    "filter"
+    "charts"
+    "table"
+    "pager";
+  height: calc(100vh - 20px); /* 占满整个视口高度 */
+  gap: 10px; /* 区域间隔 */
+}
+
+/* 每个区域的 grid-area 绑定 */
+.header-area { grid-area: header; }
+.filter-area {
+  grid-area: filter;
+  display: grid; /* 改成 grid */
+  grid-template-columns: 3fr 1fr 1fr; /* 左侧筛选项占3份，右侧按钮占1份 */
+  align-items: center; /* 垂直居中 */
+  gap: 20px; /* 左右区域间距 */
+}
+.charts-area {
+  grid-area: charts;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 自动换行，每个最小300px，最大1fr */
+  gap: 20px; /* 卡片间距 */
+}
+.table-area {
+  grid-area: table;
+  overflow: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pager-area { grid-area: pager; }
+
 
 </style>
