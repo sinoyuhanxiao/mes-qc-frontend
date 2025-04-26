@@ -1,9 +1,9 @@
 <template>
   <div>
-    <div style="display: flex; justify-content: space-between" no>
+    <div style="display: flex; justify-content: space-between">
       <h2 style="margin-bottom: 20px;">告警记录</h2>
       <el-button style="margin-top: 20px;" @click="openSettingsDialog" circle>
-        <el-icon :size="30" style="display: flex; align-items: center; justify-content: center;">
+        <el-icon :class="{ rotate: autoRefresh.statusKey === 1 }" :size="30" style="display: flex; align-items: center; justify-content: center;">
           <Setting />
         </el-icon>
       </el-button>
@@ -32,10 +32,14 @@
 
         <el-date-picker
             v-model="filters.filterDateRange"
-            type="daterange"
+            type="datetimerange"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
-            style="width: 240px;"
+            style="width: 300px;"
+            @clear="filters.filterDateRange = []"
+            clearable
         />
       </div>
       <div>
@@ -115,7 +119,13 @@
 
       <el-table-column label="检测值" prop="value" width="120" sortable>
         <template #default="scope">
-          {{ scope.row.value }}
+          <span>{{ scope.row.value }}</span>
+          <el-icon v-if="scope.row.value < scope.row.standard_min" style="color: #2c4cb3; margin-left: 4px;">
+            <arrow-down-bold />
+          </el-icon>
+          <el-icon v-else-if="scope.row.value > scope.row.standard_max" style="color: #f46666; margin-left: 4px;">
+            <arrow-up-bold />
+          </el-icon>
         </template>
       </el-table-column>
 
@@ -125,15 +135,15 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="超限情况" prop="exceed_status" width="120">
-        <template #default="scope">
-          <el-tag :type="scope.row.exceed_status === '超标' ? 'danger' : 'success'">
-            {{ scope.row.exceed_status }}
-          </el-tag>
-        </template>
-      </el-table-column>
+<!--      <el-table-column label="超限情况" prop="exceed_status" width="120">-->
+<!--        <template #default="scope">-->
+<!--          <el-tag :type="scope.row.exceed_status === '超标' ? 'danger' : 'success'">-->
+<!--            {{ scope.row.exceed_status }}-->
+<!--          </el-tag>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
 
-      <el-table-column label="RPN" prop="rpn" width="120">
+      <el-table-column label="RPN" prop="rpn" width="120" sortable>
         <template #header>
           <span>RPN</span>
           <el-tooltip content="点击查看 RPN 说明" placement="top">
@@ -153,7 +163,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="预警等级" prop="risk_level" width="120">
+      <el-table-column label="预警等级" prop="risk_level" width="120" sortable>
         <template #default="scope">
           <el-tag :type="scope.row.risk_level === '高风险' ? 'danger' : scope.row.risk_level === '中风险' ? 'warning' : 'info'">
             {{ scope.row.risk_level }}
@@ -182,7 +192,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" fixed="right" width="140" align="center">
+      <el-table-column label="操作" fixed="right" width="200" align="center">
         <template #default="scope">
           <el-button size="small" type="primary" @click="viewDetails(scope.row)">查看</el-button>
           <el-button
@@ -192,6 +202,7 @@
           >
             {{ scope.row.isEditing ? '保存' : '修改' }}
           </el-button>
+          <el-button size="small" type="danger" @click="deleteRecord(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -223,8 +234,11 @@
     </ul>
   </el-dialog>
 
-  <el-dialog title="设置" v-model="dialogs.showSettingsDialog" width="300px" @close="resetSettings">
+  <el-dialog title="设置" v-model="dialogs.showSettingsDialog" width="350px" @close="resetSettings">
     <el-form label-width="120px" style="padding-top: 20px">
+      <el-form-item label="当前刷新状态">
+        <el-tag :type="autoRefresh.statusSetting[autoRefresh.statusKey][1]">{{ autoRefresh.statusSetting[autoRefresh.statusKey][0] }}</el-tag> <!-- 添加这行 -->
+      </el-form-item>
       <el-form-item label="启用自动刷新">
         <el-switch v-model="autoRefresh.enabled" />
       </el-form-item>
@@ -254,13 +268,13 @@ import { use } from "echarts/core";
 import { PieChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import VChart from "vue-echarts";
-import {QuestionFilled, Search, Setting} from "@element-plus/icons-vue";
+import {ArrowDownBold, ArrowUpBold, QuestionFilled, Search, Setting} from "@element-plus/icons-vue";
 
 use([PieChart, CanvasRenderer]);
 
 export default {
   name: 'AlertRecordsTable',
-  components: {Setting, QuestionFilled, Search, VChart },
+  components: {ArrowUpBold, ArrowDownBold, Setting, QuestionFilled, Search, VChart },
   data() {
     return {
       // 表格数据
@@ -304,11 +318,20 @@ export default {
         min: 10,
         max: 3600,
         enabledTemp: false,
-        intervalTemp: 60
+        intervalTemp: 60,
+        statusKey: 1,
+        statusSetting: {
+          1: ['正常', 'success'],
+          2: ['已停止', 'info'],
+          3: ['编辑中被停止', 'warning']
+        }
       }
     };
   },
   computed: {
+    pausedByEdit() {
+      return Object.values(this.table.indexesForEdit).some(list => list.length > 0);
+    },
     filteredAlerts() {
       let data = this.table.alertRecords;
       if (this.filters.filterProduct) {
@@ -405,6 +428,17 @@ export default {
       };
     }
   },
+  watch: {
+    'autoRefresh.enabled'(newVal) {
+      this.updateRefreshStatus();
+    },
+    'table.indexesForEdit': {
+      handler() {
+        this.updateRefreshStatus();
+      },
+      deep: true
+    }
+  },
   methods: {
     fetchAlertRecords() {
       this.table.loading = true;
@@ -443,6 +477,22 @@ export default {
         this.table.indexesForEdit = {}
       }, 1000);
     },
+    deleteRecord(row) {
+      this.$confirm('确定要删除该记录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 模拟删除（前后端分离：只操作前端数据）
+        const index = this.table.alertRecords.findIndex(item => item.id === row.id);  // 通过 id 找位置
+        if (index !== -1) {
+          this.table.alertRecords.splice(index, 1);  // 删除该项
+          this.$message.success('删除成功');
+        }
+      }).catch(() => {
+        // 取消删除
+      });
+    },
     openSettingsDialog() {
       this.autoRefresh.enabledTemp = this.autoRefresh.enabled;
       this.autoRefresh.intervalTemp = this.autoRefresh.interval;
@@ -463,28 +513,25 @@ export default {
       }
       return '';
     },
+    updateRefreshStatus() {
+      const hasEdit = Object.values(this.table.indexesForEdit).some(list => list.length > 0);
+      if (hasEdit) {
+        this.autoRefresh.statusKey = 3;
+      } else if (!this.autoRefresh.enabled) {
+        this.autoRefresh.statusKey = 2;
+      } else {
+        this.autoRefresh.statusKey = 1;
+      }
+    },
     toggleEditRpn(row) {
       const index = this.paginatedAlerts.indexOf(row);
       const currentPage = this.pagination.currentPage;
 
-      if (this.autoRefresh.enabled && this.autoRefresh.timer) {
-        this.$confirm('当前启用了自动刷新，是否停止自动刷新以避免数据丢失？', '提示', {
-          confirmButtonText: '停止刷新',
-          cancelButtonText: '继续刷新',
-          type: 'warning',
-        }).then(() => {
-          this.autoRefresh.enabled = false;  // 停止自动刷新
-          clearInterval(this.autoRefresh.timer);
-          this.autoRefresh.timer = null;
-          this.$message.success('自动刷新已停止');
-        }).catch(() => {
-          // 用户选择继续刷新，不做任何处理
-        });
-      }
-
       if (!this.table.indexesForEdit[currentPage]) {
         this.table.indexesForEdit[currentPage] = [];
       }
+
+      this.autoRefresh.pausedByEdit = Object.values(this.table.indexesForEdit).some(list => list.length > 0);
 
       if (!row.isEditing) {
         row.isEditing = true;
@@ -494,22 +541,32 @@ export default {
         const idx = this.table.indexesForEdit[currentPage].indexOf(index);
         if (idx !== -1) this.table.indexesForEdit[currentPage].splice(idx, 1);
 
-        const oldRpn = row.rpn; // 保存修改前的RPN
+        const oldRpn = row.rpn;
         const rpn = Number(row.rpn);
-        if (rpn >= 200) row.risk_level = '高风险';
-        else if (rpn >= 100) row.risk_level = '中风险';
-        else row.risk_level = '低风险';
+        row.risk_level = rpn >= 200 ? '高风险' : rpn >= 100 ? '中风险' : '低风险';
         this.$message({
           type: 'success',
-          dangerouslyUseHTMLString: true,  // 添加这行: 允许HTML
+          dangerouslyUseHTMLString: true,
           message: `保存成功，RPN值: <span style="color: #2c4cb3">${oldRpn}</span> → <span style="color: #f46666">${rpn}</span>`
         });
       }
 
-      console.log('table.indexesForEdit:', this.table.indexesForEdit);
+      // 判断所有页 indexesForEdit 是否为空
+      const isEditing = Object.values(this.table.indexesForEdit).some(arr => arr.length > 0);
+
+      if (isEditing && this.autoRefresh.enabled && this.autoRefresh.timer) {  // 编辑中暂停刷新
+        clearInterval(this.autoRefresh.timer);
+        this.autoRefresh.timer = null;
+        this.$message.warning('编辑中，自动刷新已暂停');
+      } else if (!isEditing && this.autoRefresh.enabled && !this.autoRefresh.timer) {  // 无编辑恢复刷新
+        this.autoRefresh.timer = setInterval(() => {
+          this.fetchAlertRecords();
+        }, this.autoRefresh.interval * 1000);
+        this.$message.success('自动刷新已恢复');
+      }
     },
     updateTableHeight() {
-      const heightToSubtract = 460;
+      const heightToSubtract = 430;
       this.tableHeight = window.innerHeight - heightToSubtract;
     },
     handleSortChange({ prop, order }) {
@@ -542,6 +599,7 @@ export default {
           this.fetchAlertRecords();
         }, this.autoRefresh.interval * 1000);
       }
+      this.autoRefresh.pausedByEdit = false;
       this.dialogs.showSettingsDialog = false;
       this.$message.success(
           this.autoRefresh.enabled
@@ -559,6 +617,7 @@ export default {
         this.fetchAlertRecords();
       }, this.autoRefresh.interval * 1000);
     }
+    this.updateRefreshStatus();
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateTableHeight);
@@ -568,6 +627,7 @@ export default {
 </script>
 
 <style scoped>
+
 .tableContainer {
   overflow-x: auto;
   max-width: 100%;
@@ -576,4 +636,19 @@ export default {
 ::v-deep(.warning-row) {
   background-color: var(--el-color-warning-light-9) !important;
 }
+
+.rotate {
+  animation: spin 2s linear infinite;
+  color: #409EFF;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 </style>
