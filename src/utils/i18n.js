@@ -6,6 +6,8 @@ import enLocale_render from "@/lang/en-US_render";
 import zhLocale_render from "@/lang/zh-CN_render";
 import enLocale_extension from "@/lang/en-US_extension";
 import zhLocale_extension from "@/lang/zh-CN_extension";
+import zhLocale_qc from "@/lang/zh-CN_qc";
+import enLocale_qc from "@/lang/en-US_qc";
 
 const langResources = {
   'en-US': {
@@ -14,7 +16,8 @@ const langResources = {
     },
     ...enLocale,
     ...enLocale_render,
-    ...enLocale_extension
+    ...enLocale_extension,
+    ...enLocale_qc
   },
 
   'zh-CN': {
@@ -23,7 +26,8 @@ const langResources = {
     },
     ...zhLocale,
     ...zhLocale_render,
-    ...zhLocale_extension
+    ...zhLocale_extension,
+    ...zhLocale_qc
   }
 }
 
@@ -39,6 +43,14 @@ export const changeLocale = function(langName) {
 
 export const translate = function(key) {
   return i18n.$st(key)
+}
+
+export function translateWithParams(key, params = {}) {
+  let raw = translate(key)
+  Object.keys(params).forEach(p => {
+    raw = raw.replace(new RegExp(`{${p}}`, 'g'), params[p])
+  })
+  return raw
 }
 
 export const installI18n = (app) => {

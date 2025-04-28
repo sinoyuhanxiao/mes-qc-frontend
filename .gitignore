@@ -9,3 +9,4 @@ dist-ssr
 *.iml
 /package-lock.json
 /lib/vuedraggable/dist_bak/
+.env.test

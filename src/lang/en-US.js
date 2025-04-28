@@ -154,7 +154,7 @@ export default {
       mobileLayout: 'H5',
       nodeTreeHint: 'Tree View Of Component Hierarchy',
       nodeTreeTitle: 'Tree View Of Component Hierarchy',
-      save: 'Save',
+      saveQcForm: 'Save QC Form',
       clear: 'Clear',
       preview: 'Preview',
       importJson: 'Import',

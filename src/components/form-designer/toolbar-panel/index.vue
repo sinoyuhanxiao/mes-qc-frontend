@@ -23,10 +23,10 @@
                icon-class="el-icon-arrow-right" @node-click="onNodeTreeClick"></el-tree>
     </el-drawer>
 
-    <div class="right-toolbar" :style="{width: toolbarWidth + 'px'}">
+    <div class="right-toolbar" :style="{ width: newToolBarWidth }">
       <div class="right-toolbar-con">
         <el-button v-if="showToolButton('saveFormButton')" link type="primary" @click="showSaveDialog">
-          <svg-icon icon-class="el-file-upload-field" />{{i18nt('designer.toolbar.save')}}质检单</el-button>
+          <svg-icon icon-class="el-file-upload-field" />{{i18nt('designer.toolbar.saveQcForm')}}</el-button>
         <el-button v-if="showToolButton('clearDesignerButton')" link type="primary" @click="clearFormWidget">
           <svg-icon icon-class="el-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
         <el-button v-if="showToolButton('previewFormButton')" link type="primary" @click="previewForm">
@@ -184,21 +184,21 @@
     </div>
 
     <div v-if="saveDialogVisible" class="" v-drag="['.drag-dialog.el-dialog', '.drag-dialog .el-dialog__header']">
-      <el-dialog title='Save QC Form Template to Folders' v-model="saveDialogVisible"
+      <el-dialog :title="translate('FormDesigner.saveDialog.title')" v-model="saveDialogVisible"
                  :show-close="true" class="drag-dialog small-padding-dialog" :append-to-body="true" center
                  :close-on-click-modal="false" :close-on-press-escape="false" :destroy-on-close="true" width="50%">
         <div>
-          <el-form label-width="150px">
-            <el-form-item label="Form Name">
-              <el-input v-model="formName" placeholder="Give the new form a name" />
+          <el-form label-width="130px">
+            <el-form-item :label="translate('FormDesigner.saveDialog.formNameLabel')" style="margin-right: 40px">
+              <el-input v-model="formName" :placeholder="translate('FormDesigner.saveDialog.formNamePlaceholder')" />
             </el-form-item>
             <FormTreeMultipleSelection  style="margin-left: 50px" v-model:selectedFolders="selectedFolder" />
           </el-form>
         </div>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="saveDialogVisible = false">Cancel</el-button>
-            <el-button type="primary" @click="confirmQcTemplateSave">Save</el-button>
+            <el-button @click="saveDialogVisible = false">{{ translate('FormDesigner.saveDialog.cancel') }}</el-button>
+            <el-button type="primary" @click="confirmQcTemplateSave">{{ translate('FormDesigner.saveDialog.confirm') }}</el-button>
           </div>
         </template>
       </el-dialog>
@@ -219,7 +219,7 @@
     getQueryParam,
     traverseAllWidgets, addWindowResizeHandler
   } from "@/utils/util"
-  import i18n from '@/utils/i18n'
+  import i18n, {translate} from '@/utils/i18n'
   import {generateCode} from "@/utils/code-generator"
   import {genSFC} from "@/utils/sfc-generator"
   import loadBeautifier from "@/utils/beautifierLoader"
@@ -255,6 +255,7 @@
         designerConfig: this.getDesignerConfig(),
 
         toolbarWidth: 460,
+        newToolBarWidth: 460,
         saveDialogVisible: false,
         showPreviewDialogFlag: false,
         showImportJsonDialogFlag: false,
@@ -350,6 +351,10 @@
 
     },
     mounted() {
+      this.updateToolBarWidth(); // Set initial value
+      window.addEventListener('resize', this.updateToolBarWidth); // Detect window resizes
+      this.screenMediaQuery = window.matchMedia('(max-width: 1440px)');
+      this.screenMediaQuery.addEventListener('change', this.updateToolBarWidth); // Detect monitor changes
       let maxTBWidth = this.designerConfig.toolbarMaxWidth || 460
       let minTBWidth = this.designerConfig.toolbarMinWidth || 300
       let newTBWidth = window.innerWidth - 260 - 300 - 320 - 80
@@ -361,7 +366,17 @@
         })
       })
     },
+    beforeDestroy() {
+      window.removeEventListener('resize', this.updateToolBarWidth); // Remove event listener
+      this.screenMediaQuery.removeEventListener('change', this.updateToolBarWidth); // Cleanup
+    },
     methods: {
+      translate,
+      updateToolBarWidth() {
+        const screenWidth = window.screen.width;
+        console.log('screenWidth', screenWidth)
+        this.newToolBarWidth = screenWidth <= 1600 ? '230px' : '460px';
+      },
       showToolButton(configName) {
         if (this.designerConfig[configName] === undefined) {
           return true
@@ -773,8 +788,13 @@
       },
 
       confirmQcTemplateSave() {
-        if (!this.formName || !this.selectedFolder) {
-          this.$message.warning('Please provide a form name and select a folder.');
+        if (!this.formName.trim()) {
+          this.$message.warning(translate('FormDesigner.validation.formNameRequired'));
+          return;
+        }
+
+        if (!this.selectedFolder) {
+          this.$message.warning(translate('FormDesigner.validation.folderRequired'));
           return;
         }
 
@@ -793,15 +813,15 @@
         createFormTemplateWithNodes(payload) // Use service function
             .then((response) => {
               if (response.data.status === '200') {
-                this.$message.success('Template saved successfully!');
+                this.$message.success(translate('common.messages.saveSuccess'));
                 this.saveDialogVisible = false; // Close the dialog
               } else {
-                this.$message.error(response.data.message || 'Failed to save template.');
+                this.$message.error(response.data.message || translate('common.messages.saveFailed'));
               }
             })
             .catch((error) => {
               console.error('Error saving template:', error);
-              this.$message.error('An error occurred while saving.');
+              this.$message.error(translate('common.messages.saveFailed'));
             });
       }
     }

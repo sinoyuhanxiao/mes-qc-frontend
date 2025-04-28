@@ -4,43 +4,53 @@
       <el-input
           v-model="filterText"
           style="width: 240px; margin-right: 10px;"
-          placeholder="Filter keyword"
+          :placeholder="translate('FormTree.searchPlaceholder')"
       />
-      <el-button :type="isEditMode ? 'success' : 'primary'" @click="toggleEditMode">
-        {{ isEditMode ? 'View' : 'Edit' }}
+      <el-button
+          v-if="!props.accessByTeam"
+          :type="isEditMode ? 'success' : 'primary'"
+          @click="toggleEditMode"
+          style="margin-top: 0"
+      >
+        {{ isEditMode ? translate('FormTree.cancelEdit') : translate('FormTree.edit') }}
       </el-button>
-      <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null)" style="margin-left: 10px;">
-        New
+      <el-button v-if="isEditMode" type="primary" @click="showAppendPopup(null, $event)" style="margin-left: 10px; margin-top: 0">
+        {{ translate('FormTree.addRoot') }}
       </el-button>
     </div>
 
-    <el-tree
-        ref="treeRef"
-        style="max-width: 600px"
-        :data="data"
-        node-key="_id"
-        default-expand-all
-        :props="defaultProps"
-        :filter-node-method="filterNode"
-        @node-click="handleNodeClick"
-    >
-      <template #default="{ node, data }">
-        <div class="custom-tree-node" @click="logNodeData(node, data)">
-          <div class="node-content">
-            <el-icon>
-              <Folder v-if="data.nodeType === 'folder'" />
-              <Document v-else />
-            </el-icon>
-            <span class="node-label">{{ data.label }}</span>
+    <el-scrollbar :height="scrollbarHeight">
+      <el-tree
+          ref="treeRef"
+          style="max-width: 600px"
+          :data="data"
+          node-key="_id"
+          default-expand-all
+          :props="defaultProps"
+          :filter-node-method="filterNode"
+          @node-click="handleNodeClick"
+      >
+        <template #default="{ node, data }">
+          <div class="custom-tree-node" @click="logNodeData(node, data)">
+            <div class="node-content">
+              <el-icon style="margin-right: 5px;">
+                <Folder v-if="data.nodeType === 'folder'" />
+                <Document v-else />
+              </el-icon>
+              <el-text style="max-width: 150px;" truncated>
+                {{ data.label }}
+              </el-text>
+            </div>
+            <div class="node-actions" v-if="isEditMode">
+              <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">{{ translate('FormTree.add') }}
+              </a>
+              <a @click="showDeleteConfirmation(node, data, $event)" style="color: #fb8080; cursor: pointer; margin-left: 8px;">{{ translate('FormTree.delete') }}
+              </a>
+            </div>
           </div>
-          <div class="node-actions" v-if="isEditMode">
-            <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data)" style="color: #3f9dfd; cursor: pointer;">Append</a>
-            <a @click="showDeleteConfirmation(node, data)" style="color: #3f9dfd; cursor: pointer; margin-left: 8px;">Delete</a>
-          </div>
-        </div>
-      </template>
-
-    </el-tree>
+        </template>
+      </el-tree>
+    </el-scrollbar>
 
     <el-alert
         v-if="error"
@@ -51,27 +61,28 @@
     />
 
     <!-- Delete Confirmation Dialog -->
-    <el-dialog v-model="deleteDialogVisible" title="Confirm Deletion" width="30%">
-      <span>Are you sure you want to delete <strong>{{ nodeToDelete?.nodeData.label }}</strong>?</span>
+    <el-dialog v-model="deleteDialogVisible" :title="translate('FormTree.errorTitle')" width="30%">
+      <span>{{ translate('FormTree.deleteConfirmContent') }} <strong>{{ nodeToDelete?.nodeData.label }}</strong>?</span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="deleteDialogVisible = false">Cancel</el-button>
-          <el-button type="danger" @click="confirmDelete">Delete</el-button>
+          <el-button @click="deleteDialogVisible = false">{{ translate('FormTree.cancel') }}</el-button>
+          <el-button type="danger" @click="confirmDelete">{{ translate('FormTree.delete') }}</el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- Append Node Dialog -->
-    <el-dialog v-model="appendDialogVisible" :title="`Add New Node Under ${parentDataToAppend?.label}`" width="30%">
-      <el-input v-model="newNodeLabel" placeholder="Enter node name" style="margin-bottom: 10px;" />
-      <el-select v-model="newNodeType" placeholder="Select Node Type">
-        <el-option label="Folder" value="folder"></el-option>
-        <el-option label="Document" value="document"></el-option>
+    <el-dialog v-model="appendDialogVisible" :title="translateWithParams('FormTree.appendDialogTitle', { parent: parentDataToAppend?.label || 'Root' })"
+               width="30%">
+      <el-input v-model="newNodeLabel" :placeholder="translate('FormTree.namePlaceholder')" style="margin-bottom: 10px;" />
+      <el-select v-model="newNodeType" :placeholder="translate('FormTree.typePlaceholder')">
+        <el-option :label="translate('FormTree.type.folder')" value="folder" />
+        <el-option :label="translate('FormTree.type.document')" value="document" />
       </el-select>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="appendDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="confirmAppend">Add</el-button>
+          <el-button @click="appendDialogVisible = false">{{ translate('FormTree.cancel') }}</el-button>
+          <el-button type="primary" @click="confirmAppend">{{ translate('FormTree.add') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -81,20 +92,28 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, watch, defineEmits } from 'vue'
-import { ElTree, ElAlert, ElButton, ElDialog, ElInput } from 'element-plus'
+import {ElTree, ElAlert, ElButton, ElDialog, ElInput, ElMessage} from 'element-plus'
 import { Folder, Document } from '@element-plus/icons-vue'
+import {translate, translateWithParams} from "@/utils/i18n";
 import {
   fetchFormNodes,
   addTopLevelNode,
   addChildNode,
   deleteNode,
 } from '@/services/formNodeService.js';
+import { ElMessageBox } from "element-plus";
+import { defineProps } from 'vue';
+import { getFormTreeByTeam } from '@/services/teamFormService';
 
 interface Tree {
   _id: string
   label: string
   children?: Tree[]
 }
+
+const props = defineProps<{
+  accessByTeam?: number;
+}>();
 
 const logNodeData = (node: any, data: any) => {
   console.log('Node:', node)
@@ -113,8 +132,18 @@ const nodeToDelete = ref<{ node: any; nodeData: Tree } | null>(null)
 const parentDataToAppend = ref<Tree | null>(null)
 const newNodeLabel = ref('')
 const newNodeType = ref('folder') // Default to folder
-const emit = defineEmits(['select-form']);
+const emit = defineEmits(['select-form', 'is-deletion']);
 
+const scrollbarHeight = ref(`${window.innerHeight - 70}px`); // Adjust height dynamically
+
+const updateScrollbarHeight = () => {
+  scrollbarHeight.value = `${window.innerHeight - 70}px`; // Adjust height dynamically with padding
+};
+
+onMounted(() => {
+  window.addEventListener('resize', updateScrollbarHeight);
+  updateScrollbarHeight(); // Initialize height
+});
 
 const defaultProps = {
   children: 'children',
@@ -132,12 +161,19 @@ const toggleEditMode = () => {
 // Fetch data from the backend
 const fetchFormTreeData = async () => {
   try {
-    const response = await fetchFormNodes();
-    data.value = response.data;
+    const response = props.accessByTeam !== undefined
+        ? await getFormTreeByTeam(props.accessByTeam)
+        : await fetchFormNodes();
+
+    data.value = props.accessByTeam !== undefined
+        ? response.data.data
+        : response.data;
+
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load form tree data';
+    error.value = err.response?.data?.message || translate('FormTree.loadFailed');
   }
 };
+
 
 
 onMounted(fetchFormTreeData)
@@ -154,7 +190,8 @@ const filterNode = (value: string, data: Tree) => {
 }
 
 // Show the delete confirmation dialog
-const showDeleteConfirmation = (node: any, nodeData: Tree) => {
+const showDeleteConfirmation = (node: any, nodeData: Tree, event) => {
+  event.stopPropagation()
   nodeToDelete.value = { node, nodeData }
   deleteDialogVisible.value = true
 }
@@ -165,20 +202,23 @@ const confirmDelete = async () => {
   const { node, nodeData } = nodeToDelete.value;
   try {
     await deleteNode(nodeData.id);
+    emit('is-deletion');
     const parent = node.parent;
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d) => d.id === nodeData.id);
     children.splice(index, 1);
     data.value = [...data.value];
     deleteDialogVisible.value = false;
+    ElMessage.success(translate('FormTree.deleteSuccess'))
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to delete node';
+    error.value = err.response?.data?.message || translate('FormTree.deleteFailed');
     deleteDialogVisible.value = false;
   }
 };
 
 // Show the append dialog
-const showAppendPopup = (parentData: Tree | null) => {
+const showAppendPopup = (parentData: Tree | null, event) => {
+  event.stopPropagation();
   parentDataToAppend.value = parentData
   newNodeLabel.value = ''
   appendDialogVisible.value = true
@@ -186,13 +226,52 @@ const showAppendPopup = (parentData: Tree | null) => {
 
 // Confirm appending a new child node
 const confirmAppend = async () => {
+  // no empty string allowed
+  if (!newNodeLabel.value.trim()) {
+    ElMessage.warning(translate('FormTree.nameRequired'));
+    return;
+  }
+
+  // check for duplicate names
+  const isDuplicate = (parentDataToAppend.value ? parentDataToAppend.value.children : data.value)
+      ?.some(node => node.label === newNodeLabel.value);
+
+  // 深度搜索整个树结构，检查是否有重复 label
+  const deepSearchDuplicate = (nodes, label) => {
+    for (const node of nodes) {
+      if (node.label === label) return true;
+      if (node.children && deepSearchDuplicate(node.children, label)) return true;
+    }
+    return false;
+  };
+
+  // 使用深度搜索检查整个树
+  const hasDuplicate = isDuplicate || deepSearchDuplicate(data.value, newNodeLabel.value);
+
+  if (hasDuplicate) {
+    ElMessageBox.confirm(
+        translate('FormTree.duplicateWarningMessage'),
+        translate('FormTree.duplicateWarningTitle'),
+        {
+          confirmButtonText: translate('FormTree.duplicateContinue'),
+          cancelButtonText: translate('FormTree.duplicateCancel'),
+          type: 'warning'
+        }
+    )
+    return;
+  }
+
+  await proceedWithNodeCreation();
+};
+
+const proceedWithNodeCreation = async () => {
   try {
     let newNode = {
       label: newNodeLabel.value,
       nodeType: newNodeType.value,
       children: newNodeType.value === 'folder' ? [] : undefined,
       qcFormTemplateId: newNodeType.value === 'document' ? '' : undefined,
-    }
+    };
 
     let response;
 
@@ -215,8 +294,9 @@ const confirmAppend = async () => {
 
     data.value = [...data.value];
     appendDialogVisible.value = false;
+    ElMessage.success(translate('FormTree.addSuccess'))
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to add node';
+    error.value = err.response?.data?.message || translate('FormTree.addFailed')
     appendDialogVisible.value = false;
   }
 };
