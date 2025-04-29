@@ -14,14 +14,11 @@
     <div class="filter-area">
       <div style="gap: 20px; display: flex; justify-content: space-around">
         <el-select v-model="filters.filterRiskLevel" placeholder="预警等级" clearable filterable style="width: 100px;">
-          <el-option label="高风险" value="高风险" />
-          <el-option label="中风险" value="中风险" />
-          <el-option label="低风险" value="低风险" />
+          <el-option v-for="item in filters.riskLevelOptions" :key="item.id" :label="item.name" :value="item.name" />
         </el-select>
 
         <el-select v-model="filters.filterStatus" placeholder="状态" clearable filterable style="width: 100px;">
-          <el-option label="处理中" value="处理中" />
-          <el-option label="已关闭" value="已关闭" />
+          <el-option v-for="item in filters.statusOptions" :key="item.id" :label="item.name" :value="item.name" />
         </el-select>
 
         <el-select v-model="filters.filterProduct" placeholder="产品名称" clearable filterable  style="width: 100px;">
@@ -275,6 +272,9 @@ import { PieChart } from "echarts/charts";
 import { CanvasRenderer } from "echarts/renderers";
 import VChart from "vue-echarts";
 import {ArrowDownBold, ArrowUpBold, QuestionFilled, Search, Setting} from "@element-plus/icons-vue";
+import { getAllAlarmRiskLevels } from '@/mockServices/definitions/alarmRiskLevelDefinitionService';
+import { getAllAlarmStatuses } from '@/mockServices/definitions/alarmStatusDefinitionService';
+import { getAllAlerts } from '@/mockServices/alert/alertService';
 
 use([PieChart, CanvasRenderer]);
 
@@ -306,7 +306,9 @@ export default {
         filterDateRange: [],
         generalSearch: '',
         productOptions: ['产品A', '产品B', '产品C'],
-        inspectionOptions: ['检测项1', '检测项2', '检测项3']
+        inspectionOptions: ['检测项1', '检测项2', '检测项3'],
+        riskLevelOptions: [],
+        statusOptions: [],
       },
 
       // 弹窗控制
@@ -447,40 +449,26 @@ export default {
   methods: {
     fetchAlertRecords() {
       this.table.loading = true;
-      setTimeout(() => {
-        // 用 Mock.js 生成数据
-        this.table.alertRecords = Mock.mock({
-          'data|55': [{
-            'id|+1': 1,
-            'product_name': '@cword(3,5)薯条',
-            'batch_number': 'B@date("yyyyMMdd")',
-            'form_name': '@ctitle(4, 7)',
-            'inspection_item': '@cword(3,6)',
-            'value|80-200': 1,
-            'unit': '@pick(["mg/L", "ppm", "℃", "%", "mL"])',
-            'standard_min|80-100': 1,
-            'standard_max|150-200': 1,
-            'exceed_status': '@pick(["超标", "正常"])',
-            'risk_level': '@pick(["高风险", "中风险", "低风险"])',
-            'inspector': '@cname',
-            'reviewer': '@cname',
-            'status': '@pick(["处理中", "已关闭"])',
-            'alert_time': '@datetime("yyyy-MM-dd HH:mm:ss")',
-            'alert_code': function() {
-              return `AL${Mock.Random.date('yyyyMMdd')}-${this.id}`;
-            },
-            'isEditing': false,
-            'rpn': function() {
-              const rpn = Mock.Random.integer(1, 1000);
-              this.risk_level = rpn >= 200 ? '高风险' : rpn >= 100 ? '中风险' : '低风险';  // risk_level 赋值
-              return rpn;  // 返回 RPN 数值
-            }
-          }]
-        }).data;
-        this.table.loading = false;
-
-        this.table.indexesForEdit = {}
-      }, 1000);
+      getAllAlerts()
+          .then(response => {
+            this.table.alertRecords = response.data || [];
+            this.table.indexesForEdit = {};
+          })
+          .finally(() => {
+            this.table.loading = false;
+          });
+    },
+    fetchAlarmRiskLevels() {
+      getAllAlarmRiskLevels().then(response => {
+        this.filters.riskLevelOptions = response.data || [];
+        console.log("this filters riskLevelOptions: ")
+        console.log(this.filters.riskLevelOptions)
+      });
+    },
+    fetchAlarmStatuses() {
+      getAllAlarmStatuses().then(response => {
+        this.filters.statusOptions = response.data || [];
+      });
     },
     deleteRecord(row) {
       this.$confirm('确定要删除该记录吗？', '提示', {
@@ -611,6 +599,8 @@ export default {
   },
   mounted() {
     this.fetchAlertRecords();
+    this.fetchAlarmRiskLevels();
+    this.fetchAlarmStatuses();
     if (this.autoRefresh.enabled) {  // 添加这行: 判断是否启用自动刷新
       this.autoRefresh.timer = setInterval(() => {
         this.fetchAlertRecords();
