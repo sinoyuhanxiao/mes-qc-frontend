@@ -117,8 +117,8 @@ const routes = [
         component: TaskCenterDashboard
     },
     {
-        path: '/erik-test',
-        name: 'ErikTest',
+        path: '/erik-test-view',
+        name: 'ErikTestView',
         component: ErikTestView
     },
     {

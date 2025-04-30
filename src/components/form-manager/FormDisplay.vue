@@ -46,6 +46,123 @@
       <v-form-render :form-json="formJson" :form-data="formData" :option-data="optionData" ref="vFormRef" />
 
       <div>
+
+        <h3>表单基础项</h3>
+        <!-- 通用字段：选择产品与批次 -->
+        <div style="margin-top: 20px;">
+          <el-form label-width="80px">
+            <el-form-item label="产品选择">
+              <el-select
+                    v-model="selectedProductCodes"
+                    multiple
+                    filterable
+                    clearable
+                    placeholder="选择产品"
+                    style="width: 100%;"
+                    :disabled="!(enable_form || enable_common_fields)"
+                >
+                  <el-option
+                      v-for="item in productOptions"
+                      :key="item.code"
+                      :label="item.name"
+                      :value="item.code"
+                  >
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                      <span>{{ item.name }}</span>
+                      <div style="display: flex; align-items: center;">
+                        <div>
+                          <span style="color: var(--el-text-color-secondary); font-size: 13px;">
+                            {{ item.code }}
+                          </span>
+                          <el-icon
+                              class="edit-icon"
+                              @click="handleEditProduct(item)"
+                              @click.stop
+                          >
+                            <Edit />
+                          </el-icon>
+                          <el-popconfirm
+                              title="确定删除此产品？"
+                              confirm-button-text="删除"
+                              cancel-button-text="取消"
+                              @confirm="handleDeleteProduct(item.code)"
+                              width="250"
+                          >
+                            <template #reference>
+                              <el-icon
+                                  class="delete-icon"
+                                  @click.stop
+                              >
+                                <Close />
+                              </el-icon>
+                            </template>
+                          </el-popconfirm>
+                        </div>
+                      </div>
+                    </div>
+                  </el-option>
+                  <template #footer>
+                    <el-button text bg size="small" @click="showAddProductDialog = true">添加新产品</el-button>
+                  </template>
+                </el-select>
+            </el-form-item>
+
+            <el-form-item label="批次选择">
+                  <el-select
+                      v-model="selectedBatchCodes"
+                      multiple
+                      filterable
+                      clearable
+                      placeholder="选择批次"
+                      style="width: 100%;"
+                      :disabled="!(enable_form || enable_common_fields)"
+                  >
+                    <el-option
+                        v-for="item in batchOptions"
+                        :key="item.code"
+                        :label="item.code"
+                        :value="item.code"
+                    >
+                      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <span style="color: var(--el-text-color-secondary); font-size: 13px;">
+                          {{ item.code }}
+                        </span>
+                        <div>
+                          <el-icon
+                              class="edit-icon"
+                              @click="handleEditBatch(item)"
+                              @click.stop
+                          >
+                            <Edit />
+                          </el-icon>
+                          <el-popconfirm
+                              title="确定删除此批次？"
+                              confirm-button-text="删除"
+                              cancel-button-text="取消"
+                              @confirm="handleDeleteBatch(item.code)"
+                              width="250"
+                          >
+                            <template #reference>
+                              <el-icon
+                                  class="delete-icon"
+                                  @click.stop
+                              >
+                                <Close />
+                              </el-icon>
+                            </template>
+                          </el-popconfirm>
+                        </div>
+                      </div>
+                    </el-option>
+
+                    <template #footer>
+                      <el-button text bg size="small" @click="showAddBatchDialog = true">添加新批次</el-button>
+                    </template>
+                  </el-select>
+                </el-form-item>
+          </el-form>
+        </div>
+
         <!-- 签名 Buttons and Display -->
         <div style="margin-bottom: 20px; text-align: left;">
           <el-button type="primary" @click="showSignaturePad = true" :disabled="!(enable_form || enable_common_fields)">
@@ -151,6 +268,74 @@
     </template>
   </el-dialog>
 
+  <el-dialog v-model="showAddProductDialog" title="添加新产品" width="30%">
+    <el-form label-width="80px">
+      <el-form-item label="产品名称">
+        <el-input v-model="newProduct.name" />
+      </el-form-item>
+      <el-form-item label="产品编码">
+        <el-input v-model="newProduct.code" />
+      </el-form-item>
+      <el-form-item label="描述">
+        <el-input v-model="newProduct.description" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showAddProductDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleAddProduct">添加</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog v-model="showAddBatchDialog" title="添加新批次" width="30%">
+    <el-form label-width="80px">
+      <el-form-item label="批次编码">
+        <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+          <el-input v-model="newBatch.code" style="flex: 1;" />
+          <el-switch
+              v-model="autoGenerateBatchCode"
+              inline-prompt
+              active-text="自动"
+              inactive-text="手动"
+          />
+        </div>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showAddBatchDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleAddBatch">添加</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog v-model="showEditProductDialog" title="编辑产品" width="30%">
+    <el-form label-width="80px">
+      <el-form-item label="产品名称">
+        <el-input v-model="editProduct.name" />
+      </el-form-item>
+      <el-form-item label="产品编码">
+        <el-input v-model="editProduct.code" disabled />
+      </el-form-item>
+      <el-form-item label="描述">
+        <el-input v-model="editProduct.description" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showEditProductDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleUpdateProduct">保存</el-button>
+    </template>
+  </el-dialog>
+
+  <el-dialog v-model="showEditBatchDialog" title="编辑批次" width="30%">
+    <el-form label-width="80px">
+      <el-form-item label="批次编码">
+        <el-input v-model="editBatch.code" disabled />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showEditBatchDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleUpdateBatch">保存</el-button>
+    </template>
+  </el-dialog>
+
   <el-drawer
       v-model="showRecipeDrawer"
       title="设置警戒值"
@@ -200,10 +385,27 @@ import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 import QcRecordsTable from "@/components/tables/QcRecordsTable.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 import { windowMaskVisible } from '@/globals/mask'
+const showEditProductDialog = ref(false);
+const showEditBatchDialog = ref(false);
+const editProduct = reactive({ id: null, name: '', code: '', description: '' });
+const editBatch = reactive({ id: null, code: '' });
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
 import { fetchQcRecords } from "@/services/qcReportingService"; // make sure this is imported
+// 通用submit功能导入
+import {
+  getAlActiveSuggestedProducts,
+  createSuggestedProduct,
+  deleteSuggestedProduct, updateSuggestedProduct
+} from '@/services/production/suggestedProductService';
+import {
+  getAllActiveSuggestedBatches,
+  createSuggestedBatch,
+  deleteSuggestedBatch, updateSuggestedBatch
+} from '@/services/production/suggestedBatchService';
+import {Close, Edit} from "@element-plus/icons-vue";
+
 
 const showRecipeDrawer = ref(false)
 const qcRecordsDialogVisible = ref(false);
@@ -222,6 +424,18 @@ const signatureData = ref(null);
 const otherElementsHeight = 210;
 const qcRecordsTableHeight = ref(window.innerHeight - otherElementsHeight);
 
+// 通用字段
+const productOptions = ref([]);
+const batchOptions = ref([]);
+const selectedProductCodes = ref([]);
+const selectedBatchCodes = ref([]);
+
+const showAddProductDialog = ref(false);
+const showAddBatchDialog = ref(false);
+const newProduct = reactive({ name: '', code: '', description: '' });
+const newBatch = reactive({ code: '' });
+const autoGenerateBatchCode = ref(true);
+
 const handleSignatureSave = (data) => {
   signatureData.value = data; // Save the base64 image data here
   showSignaturePad.value = false; // Close the signature pad after saving
@@ -234,6 +448,21 @@ const handleSignatureClear = () => {
 const updateTableHeight = () => {
   qcRecordsTableHeight.value = window.innerHeight - otherElementsHeight;
 };
+
+const generateBatchCode = () => {
+  const today = dayjs().format('YYMMDD');
+  let counter = 1;
+  let newCode = '';
+
+  do {
+    const padded = String(counter).padStart(3, '0');
+    newCode = `GY${today}${padded}`;
+    counter++;
+  } while (batchOptions.value.some(b => b.code === newCode));
+
+  return newCode;
+};
+
 
 // Countdown time setup
 const remainingTime = ref(rt.value);
@@ -321,11 +550,73 @@ const startCountdown = () => {
   }
 };
 
+// 通用字段
+const fetchCommonFieldOptions = async () => {
+  const productResp = await getAlActiveSuggestedProducts();
+  const batchResp = await getAllActiveSuggestedBatches();
+  productOptions.value = productResp.data || [];
+  batchOptions.value = batchResp.data || [];
+};
+
+const handleAddProduct = async () => {
+  if (!newProduct.name || !newProduct.code) return;
+
+  // 🔍 检查是否已存在相同 product code
+  const exists = productOptions.value.some(p => p.code === newProduct.code);
+  if (exists) {
+    ElMessage.error(`产品编码 ${newProduct.code} 已存在，无法重复添加`);
+    return;
+  }
+
+  try {
+    await createSuggestedProduct({ ...newProduct, created_by: userId });
+    await fetchCommonFieldOptions();
+    selectedProductCodes.value.push(newProduct.code);
+    ElMessage.success(`产品「${newProduct.name}」添加成功`);
+    showAddProductDialog.value = false;
+    Object.assign(newProduct, { name: '', code: '', description: '' });
+  } catch (err) {
+    console.error('添加产品失败:', err); // ⛔️ 后台问题或网络错误
+    ElMessage.error(`产品「${newProduct.name}」添加失败，请重试`);
+  }
+};
+
+const handleAddBatch = async () => {
+  if (!newBatch.code) return;
+
+  // 🔍 检查是否已存在相同 batch code
+  const exists = batchOptions.value.some(b => b.code === newBatch.code);
+  if (exists) {
+    ElMessage.error(`批次编码 ${newBatch.code} 已存在，无法重复添加`);
+    return;
+  }
+
+  try {
+    await createSuggestedBatch({ ...newBatch, created_by: userId });
+    await fetchCommonFieldOptions();
+    selectedBatchCodes.value.push(newBatch.code);
+    ElMessage.success(`批次 ${newBatch.code} 添加成功`);
+    showAddBatchDialog.value = false;
+    newBatch.code = '';
+  } catch (err) {
+    console.error('添加批次失败:', err); // ⛔️ 后台或网络错误
+    ElMessage.error(`批次 ${newBatch.code} 添加失败，请重试`);
+  }
+};
+
 // ✅ Watch `rt` in case it changes dynamically
 watch(() => route.query.rt, (newRt) => {
   remainingTime.value = parseInt(newRt, 10) || 0;
   startCountdown(); // Restart the countdown if `rt` changes
 }, { immediate: true });
+
+watch(autoGenerateBatchCode, (newVal) => {
+  if (newVal) {
+    newBatch.code = generateBatchCode();
+  } else {
+    newBatch.code = '';
+  }
+});
 
 watch(() => props.currentForm?.qcFormTemplateId, (newFormId, oldFormId) => {
   if (newFormId !== oldFormId) {
@@ -405,6 +696,7 @@ onMounted(() => {
   startCountdown();
   window.addEventListener('resize', updateScrollBarHeight);
   updateScrollBarHeight();
+  fetchCommonFieldOptions();
 });
 
 onUnmounted(() => {
@@ -428,6 +720,48 @@ const handleQuickDispatch = () => {
   console.log("Opening QuickDispatch dialog...");
   showQuickDispatch.value = true;
 };
+
+const handleDeleteProduct = async (code) => {
+  try {
+    const product = productOptions.value.find(p => p.code === code)
+    if (!product) {
+      ElMessage.error('找不到该产品，无法删除')
+      return
+    }
+
+    await deleteSuggestedProduct(product.id) // 后端软删除
+
+    // 更新本地状态
+    productOptions.value = productOptions.value.filter(item => item.code !== code)
+    selectedProductCodes.value = selectedProductCodes.value.filter(c => c !== code)
+
+    ElMessage.success(`产品「${product.name}」(${product.code}) 已删除`)
+  } catch (err) {
+    ElMessage.error('产品删除失败，请重试')
+    console.error('删除失败:', err)
+  }
+}
+
+const handleDeleteBatch = async (code) => {
+  try {
+    const batch = batchOptions.value.find(b => b.code === code)
+    if (!batch) {
+      ElMessage.error('找不到该批次，无法删除')
+      return
+    }
+
+    await deleteSuggestedBatch(batch.id)
+
+    // 更新本地状态
+    batchOptions.value = batchOptions.value.filter(item => item.code !== code)
+    selectedBatchCodes.value = selectedBatchCodes.value.filter(c => c !== code)
+
+    ElMessage.success(`批次「${batch.code}」已删除`)
+  } catch (err) {
+    ElMessage.error('批次删除失败，请重试')
+    console.error('删除失败:', err)
+  }
+}
 
 const confirmSubmission = async () => {
   showConfirmation.value = false; // Close the first popup before proceeding
@@ -482,6 +816,40 @@ const cancelReset = () => {
 const confirmReset = () => {
   showResetConfirmation.value = false; // Close the second popup
   vFormRef.value.resetForm(); // Reset the form
+};
+
+const handleEditProduct = (product) => {
+  Object.assign(editProduct, product);
+  showEditProductDialog.value = true;
+};
+
+const handleEditBatch = (batch) => {
+  Object.assign(editBatch, batch);
+  showEditBatchDialog.value = true;
+};
+
+const handleUpdateProduct = async () => {
+  try {
+    await updateSuggestedProduct({ ...editProduct });
+    await fetchCommonFieldOptions();
+    ElMessage.success(`产品「${editProduct.name}」更新成功`);
+    showEditProductDialog.value = false;
+  } catch (err) {
+    ElMessage.error('产品更新失败，请重试');
+    console.error(err);
+  }
+};
+
+const handleUpdateBatch = async () => {
+  try {
+    await updateSuggestedBatch({ ...editBatch });
+    await fetchCommonFieldOptions();
+    ElMessage.success(`批次「${editBatch.code}」更新成功`);
+    showEditBatchDialog.value = false;
+  } catch (err) {
+    ElMessage.error('批次更新失败，请重试');
+    console.error(err);
+  }
 };
 
 // Watch the qcFormTemplateId in the passed currentForm
@@ -691,6 +1059,32 @@ watch(showRecipeDrawer, (val) => {
     cursor: pointer;
     width: 24px;
     height: 24px;
+  }
+
+  .delete-icon {
+    font-size: 16px;
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+    color: red;
+    cursor: pointer;
+  }
+
+  .edit-icon {
+    font-size: 16px;
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+    color: #409EFF;
+    cursor: pointer;
+  }
+
+  .delete-icon:hover {
+    transform: scale(1.4); /* 鼠标悬停放大 */
+    color: #ff4d4f; /* 更鲜明的红色 */
+  }
+
+  .edit-icon:hover {
+    transform: scale(1.4); /* 鼠标悬停放大 */
+    color: rgb(51.2, 126.4, 204); /* 更鲜明的红色 */
   }
 
 </style>

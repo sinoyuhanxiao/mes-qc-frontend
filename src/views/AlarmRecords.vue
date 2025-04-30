@@ -187,6 +187,14 @@
       </el-table-column>
 
       <el-table-column label="状态" prop="status" width="120">
+        <template #header>
+          <span>状态</span>
+          <el-tooltip content="RPN值低于100时，状态将自动设为已关闭" placement="top">
+            <el-icon style="cursor: pointer; margin-left: 5px;" @click.stop="dialogs.showRpnDialog = true">
+              <QuestionFilled />
+            </el-icon>
+          </el-tooltip>
+        </template>
         <template #default="scope">
           <el-tag :type="scope.row.status === '处理中' ? 'warning' : 'success'">
             {{ scope.row.status }}
@@ -200,7 +208,7 @@
           <el-button
               size="small"
               :type="scope.row.isEditing ? 'success' : 'plain'"
-              @click="toggleEditRpn(scope.row)"
+              @click="toggleEdit(scope.row)"
           >
             {{ scope.row.isEditing ? '保存' : '修改' }}
           </el-button>
@@ -516,7 +524,7 @@ export default {
         this.autoRefresh.statusKey = 1;
       }
     },
-    toggleEditRpn(row) {
+    toggleEdit(row) {
       const index = this.paginatedAlerts.indexOf(row);
       const currentPage = this.pagination.currentPage;
 
@@ -537,10 +545,11 @@ export default {
         const oldRpn = row.rpn;
         const rpn = Number(row.rpn);
         row.risk_level = rpn >= 200 ? '高风险' : rpn >= 100 ? '中风险' : '低风险';
+        row.status = rpn < 100 ? '已处理' : '处理中';
         this.$message({
           type: 'success',
           dangerouslyUseHTMLString: true,
-          message: `保存成功，RPN值: <span style="color: #2c4cb3">${oldRpn}</span> → <span style="color: #f46666">${rpn}</span>`
+          message: `保存成功，RPN值: <span style="color: #2c4cb3">${oldRpn}</span> → <span style="color: #f46666">${rpn}</span>${rpn < 100 ? '，状态已自动设为<span style="color: green">已关闭</span>' : ''}`
         });
       }
 
