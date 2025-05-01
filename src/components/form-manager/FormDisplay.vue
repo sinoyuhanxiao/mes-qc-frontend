@@ -47,11 +47,11 @@
 
       <div>
 
-        <h3>表单基础项</h3>
+        <h4>表单基础项</h4>
         <!-- 通用字段：选择产品与批次 -->
         <div style="margin-top: 20px;">
           <el-form label-width="80px">
-            <el-form-item label="产品选择">
+            <el-form-item label="涉及产品">
               <el-select
                     v-model="selectedProductCodes"
                     multiple
@@ -107,7 +107,7 @@
                 </el-select>
             </el-form-item>
 
-            <el-form-item label="批次选择">
+            <el-form-item label="涉及批次">
                   <el-select
                       v-model="selectedBatchCodes"
                       multiple
@@ -158,6 +158,45 @@
                     <template #footer>
                       <el-button text bg size="small" @click="showAddBatchDialog = true">添加新批次</el-button>
                     </template>
+                  </el-select>
+                </el-form-item>
+
+                <!-- 新增：质检人员 -->
+                <el-form-item label="质检人员">
+                  <el-select
+                      v-model="selectedQcUserIds"
+                      multiple
+                      filterable
+                      clearable
+                      placeholder="选择质检人员"
+                      style="width: 100%;"
+                      :disabled="!(enable_form || enable_common_fields)"
+                  >
+                    <el-option
+                        v-for="user in qcUsers"
+                        :key="user.id"
+                        :label="user.name"
+                        :value="user.id"
+                    />
+                  </el-select>
+                </el-form-item>
+
+                <!-- 新增：所属班次 -->
+                <el-form-item label="所属班次">
+                  <el-select
+                      v-model="selectedShift"
+                      filterable
+                      clearable
+                      placeholder="选择班次"
+                      style="width: 100%;"
+                      :disabled="!(enable_form || enable_common_fields)"
+                  >
+                    <el-option
+                        v-for="shift in shifts"
+                        :key="shift.id"
+                        :label="shift.name"
+                        :value="shift.name"
+                    />
                   </el-select>
                 </el-form-item>
           </el-form>
@@ -389,6 +428,8 @@ const showEditProductDialog = ref(false);
 const showEditBatchDialog = ref(false);
 const editProduct = reactive({ id: null, name: '', code: '', description: '' });
 const editBatch = reactive({ id: null, code: '' });
+import { fetchUsers } from '@/services/userService'
+import { getAllShifts } from '@/services/shiftService'
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
@@ -415,6 +456,12 @@ const loadingQcRecords = ref(true);
 const currentPage = ref(1);
 const pageSize = 15;
 
+const qcUsers = ref([])
+const selectedQcUserIds = ref([]) // 存储选择的质检人员 ID
+
+const shifts = ref([])
+const selectedShift = ref('') // 存储选择的班次名称
+
 const route = useRoute()
 const rt = ref(parseInt(route.query.rt, 10) || 0);
 const showCountdownEnded = ref(false);
@@ -429,6 +476,11 @@ const productOptions = ref([]);
 const batchOptions = ref([]);
 const selectedProductCodes = ref([]);
 const selectedBatchCodes = ref([]);
+
+// 用于存储最终的ID值（从 code 映射而来）
+const selectedProductIds = ref([]);
+const selectedBatchIds = ref([]);
+const selectedShiftId = ref(null);
 
 const showAddProductDialog = ref(false);
 const showAddBatchDialog = ref(false);
@@ -558,6 +610,18 @@ const fetchCommonFieldOptions = async () => {
   batchOptions.value = batchResp.data || [];
 };
 
+const fetchQcUsersAndShifts = async () => {
+  try {
+    const userResp = await fetchUsers()
+    qcUsers.value = userResp.data.data || []
+
+    const shiftResp = await getAllShifts()
+    shifts.value = shiftResp.data.data || []
+  } catch (err) {
+    console.error('加载质检人员或班次失败:', err)
+  }
+}
+
 const handleAddProduct = async () => {
   if (!newProduct.name || !newProduct.code) return;
 
@@ -627,8 +691,29 @@ watch(() => props.currentForm?.qcFormTemplateId, (newFormId, oldFormId) => {
   }
 });
 
+// 根据 selectedProductCodes 映射出 selectedProductIds
+watch(selectedProductCodes, (codes) => {
+  selectedProductIds.value = codes
+      .map(code => productOptions.value.find(p => p.code === code)?.id)
+      .filter(Boolean);
+});
+
+// 根据 selectedBatchCodes 映射出 selectedBatchIds
+watch(selectedBatchCodes, (codes) => {
+  selectedBatchIds.value = codes
+      .map(code => batchOptions.value.find(b => b.code === code)?.id)
+      .filter(Boolean);
+});
+
+// 根据 selectedShift 名称映射出 selectedShiftId
+watch(selectedShift, (shiftName) => {
+  selectedShiftId.value = shifts.value.find(s => s.name === shiftName)?.id || null;
+});
+
+
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
+  fetchQcUsersAndShifts()
   if (props.accessByTeam) {
     enable_form.value = true; // Auto-enable
     switchDisplayed.value = false; // Hide switch
@@ -774,6 +859,28 @@ const confirmSubmission = async () => {
 
   try {
     const formData = await vFormRef.value.getFormData();
+
+    // 添加关联信息字段到表单数据
+    formData['related_product_ids'] = selectedProductIds.value;
+    formData['related_batch_ids'] = selectedBatchIds.value;
+    formData['related_inspector_ids'] = selectedQcUserIds.value;
+    formData['related_shift_id'] = selectedShiftId.value;
+
+    // 添加一条可读的字段，便于快速显示在 MongoDB 中查看和前端取数据
+    const selectedProductNames = selectedProductCodes.value
+        .map(code => productOptions.value.find(p => p.code === code)?.name)
+        .filter(Boolean);
+
+    const selectedInspectorNames = selectedQcUserIds.value
+        .map(id => qcUsers.value.find(u => u.id === id)?.name)
+        .filter(Boolean);
+
+    const selectedShiftName = shifts.value.find(s => s.id === selectedShiftId.value)?.name || '';
+
+    formData['related_products'] = selectedProductNames.join(', ');
+    formData['related_batches'] = selectedBatchCodes.value.join(', ');
+    formData['related_inspectors'] = selectedInspectorNames.join(', ');
+    formData['related_shifts'] = selectedShiftName; // already a string, no .join()
 
     formData['e-signature'] = signatureData.value || null;
 

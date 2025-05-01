@@ -132,13 +132,27 @@
 
     <el-dialog :title="`${this.selectedForm?.label} - ${translate('FormDataSummary.detailDialog.titleSuffix')}`" v-model="dialogVisible" width="50%" @close="closeDetailsDialog">
       <el-scrollbar max-height="500px">
-        <div v-for="(fields, category) in groupedDetails" :key="category">
-          <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px"> <!-- 这是 divider -->
-            <el-descriptions-item v-for="(value, key) in fields" :key="key" :label="key">
-              {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </div>
+        <template v-for="(fields, category) in groupedDetails" :key="category">
+          <div v-if="category !== 'uncategorized'">
+            <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px">
+              <el-descriptions-item
+                  v-for="(value, key) in fields"
+                  :key="key"
+                  :label="key"
+              >
+                {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+        </template>
+
+        <!-- Display Basic Information -->
+        <el-descriptions :title="translate('FormDataSummary.recordTable.groupBasicInfo')" border style="margin-top: 10px">
+          <el-descriptions-item label="涉及产品">{{ basicInfo.涉及产品 || " - " }}</el-descriptions-item>
+          <el-descriptions-item label="涉及批次">{{ basicInfo.涉及批次 || " - " }}</el-descriptions-item>
+          <el-descriptions-item label="质检人员">{{ basicInfo.质检人员 || " - " }}</el-descriptions-item>
+          <el-descriptions-item label="所属班次">{{ basicInfo.所属班次 || " - " }}</el-descriptions-item>
+        </el-descriptions>
 
         <!-- Display System Information -->
         <el-descriptions :title="translate('FormDataSummary.recordTable.groupSystemInfo')" border style="margin-top: 10px">
@@ -155,7 +169,7 @@
 
       <template #footer>
         <el-button type="info" @click="closeDetailsDialog">{{ translate('FormDataSummary.detailDialog.cancelButton') }}</el-button>
-        <el-button type="primary" @click="newExportToPdf">{{ translate('FormDataSummary.detailDialog.exportButton') }}</el-button>
+        <el-button type="primary" @click="exportSubmissionLogToPdf">{{ translate('FormDataSummary.detailDialog.exportButton') }}</el-button>
       </template>
     </el-dialog>
 
@@ -177,7 +191,8 @@ import autoTable from "jspdf-autotable";  // ✅ Import autoTable plugin explici
 import callAddFont from "@/assets/simfang.js";
 import callAddBoldFont from "@/assets/simfang-bold.js";
 import {nextTick} from "vue";
-import {translate, translateWithParams} from "@/utils/i18n"; // 添加这行
+import {translate, translateWithParams} from "@/utils/i18n";
+import {parseFormDocument} from "@/utils/formUtils"; // 添加这行
 
 export default {
   components: { FormTree, PieChart, LineChart },
@@ -193,6 +208,7 @@ export default {
       loadingCharts: false,
       groupedDetails: {},
       systemInfo: {},
+      basicInfo: {},
       eSignature: null,
       shortcuts: [
         {
@@ -317,7 +333,7 @@ export default {
         hour12: false
       }).replace(/\//g, "-");
     },
-    newExportToPdf() {
+    exportSubmissionLogToPdf() {
       const doc = new jsPDF();
       callAddBoldFont.apply(doc); // 添加字体
       doc.setFont("simfang", "bold");
@@ -334,7 +350,9 @@ export default {
       y += 10;
 
       // 导出所有组内的字段和数据
-      Object.entries(this.groupedDetails).forEach(([category, fields]) => {
+      Object.entries(this.groupedDetails)
+          .filter(([category]) => category !== 'uncategorized') // skip uncategorized
+          .forEach(([category, fields]) => {
         doc.setFontSize(14);
         doc.text(category, 10, y);
         y += 6;
@@ -355,6 +373,27 @@ export default {
 
         y = doc.lastAutoTable.finalY + 10;
       });
+
+      // 添加基础信息
+      doc.setFontSize(14);
+      doc.text('质检基础信息', 10, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [translate('Export.tableHead')],
+        body: [
+          ["涉及产品", this.basicInfo.涉及产品 || translate('Export.fallback')],
+          ["涉及批次", this.basicInfo.涉及批次 || translate('Export.fallback')],
+          ["质检人员", this.basicInfo.质检人员 || translate('Export.fallback')],
+          ["所属班次", this.basicInfo.所属班次 || translate('Export.fallback')]
+        ],
+        theme: "grid",
+        styles: { font: "simfang", fontSize: 10 },
+        headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
+      });
+
+      y = doc.lastAutoTable.finalY + 10;
 
       // 添加系统信息
       doc.setFontSize(14);
@@ -544,66 +583,53 @@ export default {
     },
     async viewDetails(row) {
       try {
+        // 1. Build MongoDB collection name
         const createdAt = new Date(this.formatClientTime(row['提交时间']));
-        const yearMonth = createdAt.getFullYear().toString() +
-            (createdAt.getMonth() + 1).toString().padStart(2, "0");
-
+        const yearMonth = createdAt.getFullYear().toString() + (createdAt.getMonth() + 1).toString().padStart(2, "0");
         const inputCollectionName = `form_template_${this.selectedForm.qcFormTemplateId}_${yearMonth}`;
 
+        // 2. Fetch form document
         const response = await getMyDocument(row._id, this.selectedForm.qcFormTemplateId, row.created_by, inputCollectionName);
-        this.selectedDetails = { ...response.data, "submissionId": row._id };
+        const rawData = response.data;
+
+        // 3. Store meta info
+        this.selectedDetails = { ...rawData, submissionId: row._id };
+
+        // 4. Resolve system fields
         this.systemInfo = {
           提交单号: this.selectedDetails.submissionId,
           提交时间: new Date(this.selectedDetails.created_at).toLocaleString("zh-CN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
             hour12: false
           }),
-          提交人: await getUserById(this.selectedDetails.created_by).then(response => response.data?.data?.name || '-')
+          提交人: await getUserById(this.selectedDetails.created_by).then(res => res.data?.data?.name || "-")
         };
 
-        // **Step 1: First, determine all `el-descriptions` sections**
-        const groupedDetails = {};
-        let eSignatureFound = false;  // Track if e-signature was found
+        // TODO: add a basicInfo field includes the 4 fields: 涉及产品，涉及批次，质检人员，所属班次
+        this.basicInfo = {
+          涉及产品: this.selectedDetails.uncategorized.related_products,
+          涉及批次: this.selectedDetails.uncategorized.related_batches,
+          质检人员: this.selectedDetails.uncategorized.related_inspectors,
+          所属班次: this.selectedDetails.uncategorized.related_shifts
+        };
 
-        Object.entries(this.selectedDetails).forEach(([key, value]) => {
-          if (["_id", "created_at", "created_by", "submissionId"].includes(key)) return; // Ignore base fields
+        // // add dummy data first
+        // this.basicInfo = {
+        //   涉及产品: '土豆条, 红薯球',        // dummy product names
+        //   涉及批次: 'BATCH20240401, BATCH20240402',   // dummy batch codes
+        //   质检人员: '张三, 李四, 王五',              // dummy inspector names
+        //   所属班次: 'A班, B班'                       // dummy shifts
+        // };
 
-          // Detect e-signature and store it separately
-          // console log each key and value
-          console.log("Key:", key, "Value:", value)
-          if (value['e-signature']) {
-            console.log("Found e-signature:", value['e-signature']);
-            this.eSignature = value['e-signature'];  // Store the base64 image string for rendering
-            eSignatureFound = true;
-            return;
-          }
-
-          // **Identify if this key belongs to a section (divider)**
-          if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-            groupedDetails[key] = value;  // If value is an object, treat it as a divider section
-          } else {
-            // If it's a standalone value, place it under "未分类"
-            if (!groupedDetails["未分类"]) {
-              groupedDetails["未分类"] = {};
-            }
-            groupedDetails["未分类"][key] = value;
-          }
-        });
-
-        // Clear e-signature if not found in this record
-        if (!eSignatureFound) {
-          this.eSignature = null;
-        }
-
+        // 5. Parse document
+        const { groupedDetails, eSignature } = parseFormDocument(this.selectedDetails);
         this.groupedDetails = groupedDetails;
-        console.log("Grouped Details: ", this.groupedDetails);
+        this.eSignature = eSignature;
 
-        this.dialogVisible = true;  // Display the dialog
+        // 6. Open dialog
+        this.dialogVisible = true;
+
       } catch (err) {
         console.error("Error fetching document details:", err);
       }

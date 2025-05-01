@@ -641,6 +641,7 @@ export default {
         generatePdf: "Generate PDF",
         viewRecords: "View QC Records",
         recordTable: {
+            groupBasicInfo: "QC Basic Info",
             groupSystemInfo: "System Submission Info",
             submitter: "Submitter",
             submittedAt: "Submission Time",
