@@ -91,7 +91,7 @@
         :allow-drag-last-column="true"
         :row-class-name="renderRows"
     >
-      <el-table-column label="告警编号" prop="alert_code" width="150" fixed="left">
+      <el-table-column label="告警编号" prop="alert_code" width="180" fixed="left">
         <template #default="scope">
           <span>{{ scope.row.alert_code }}</span>
         </template>
@@ -99,17 +99,29 @@
 
       <el-table-column label="告警时间" prop="alert_time" width="180" sortable fixed="left">
         <template #default="scope">
-          <span>{{ scope.row.alert_time }}</span>
+          <span>{{ formatDate(scope.row.alert_time) }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="产品名称" prop="product_name" width="180" sortable>
+      <el-table-column label="产品名称" width="180">
         <template #default="scope">
-          <el-tag>{{ scope.row.product_name }}</el-tag>
+          <el-tooltip
+              effect="dark"
+              :content="scope.row.product_names.join(', ')"
+              placement="top"
+          >
+            <el-tag>{{ scope.row.product_display }}</el-tag>
+          </el-tooltip>
         </template>
       </el-table-column>
 
-      <el-table-column label="批次号" prop="batch_number" width="160" sortable />
+      <el-table-column label="批次号" width="160">
+        <template #default="scope">
+          <el-tooltip effect="dark" :content="scope.row.batch_codes?.join(', ')" placement="top">
+            <el-tag type="success">{{ scope.row.batch_display }}</el-tag>
+          </el-tooltip>
+        </template>
+      </el-table-column>
 
       <el-table-column label="质检表单" prop="form_name" width="160" sortable />
 
@@ -173,16 +185,19 @@
         </template>
       </el-table-column>
 
-
-      <el-table-column label="质检人" prop="inspector" width="120">
+      <el-table-column label="质检人" width="160">
         <template #default="scope">
-          <span>{{ scope.row.inspector }}</span>
+          <el-tooltip effect="dark" :content="scope.row.inspector_names?.join(', ')" placement="top">
+            <el-tag type="warning">{{ scope.row.inspector_names?.[0] || '-' }}<span v-if="scope.row.inspector_names?.length > 1"> +{{ scope.row.inspector_names.length - 1 }}</span></el-tag>
+          </el-tooltip>
         </template>
       </el-table-column>
 
-      <el-table-column label="审核人" prop="reviewer" width="120">
+      <el-table-column label="审核人" width="160">
         <template #default="scope">
-          <span>{{ scope.row.reviewer }}</span>
+          <el-tooltip effect="dark" :content="scope.row.reviewer_names?.join(', ')" placement="top">
+            <el-tag type="danger">{{ scope.row.reviewer_names?.[0] || '-' }}<span v-if="scope.row.reviewer_names?.length > 1"> +{{ scope.row.reviewer_names.length - 1 }}</span></el-tag>
+          </el-tooltip>
         </template>
       </el-table-column>
 
@@ -226,7 +241,7 @@
         :page-size="pagination.pageSize"
         :page-sizes="[10, 20, 30, 50]"
         layout="total, sizes, prev, pager, next"
-        :total="filteredAlerts.length"
+        :total="pagination.total"
     />
   </div>
 
@@ -282,7 +297,10 @@ import VChart from "vue-echarts";
 import {ArrowDownBold, ArrowUpBold, QuestionFilled, Search, Setting} from "@element-plus/icons-vue";
 import { getAllAlarmRiskLevels } from '@/mockServices/definitions/alarmRiskLevelDefinitionService';
 import { getAllAlarmStatuses } from '@/mockServices/definitions/alarmStatusDefinitionService';
-import { getAllAlerts } from '@/mockServices/alert/alertService';
+// import { getAllAlerts } from '@/mockServices/alert/alertService';
+import { getPaginatedAlertRecords } from "@/services/alarmRecordService";
+import {formatDate} from "@/utils/task-center/dateFormatUtils"; // 替换 alert mock 调用
+
 
 use([PieChart, CanvasRenderer]);
 
@@ -302,6 +320,7 @@ export default {
       pagination: {
         currentPage: 1,
         pageSize: 10,
+        total: 0,
         sortSettings: { prop: '', order: '' }
       },
 
@@ -310,11 +329,16 @@ export default {
         filterRiskLevel: '',
         filterStatus: '',
         filterProduct: '',
+        filterBatch: '',
+        filterInspector: '',
+        filterReviewer: '',
         filterInspectionItem: '',
         filterDateRange: [],
         generalSearch: '',
-        productOptions: ['产品A', '产品B', '产品C'],
-        inspectionOptions: ['检测项1', '检测项2', '检测项3'],
+        productOptions: [],
+        batchOptions: [],
+        inspectorOptions: [],
+        reviewerOptions: [],
         riskLevelOptions: [],
         statusOptions: [],
       },
@@ -350,7 +374,7 @@ export default {
     filteredAlerts() {
       let data = this.table.alertRecords;
       if (this.filters.filterProduct) {
-        data = data.filter(item => item.product_name === this.filters.filterProduct);
+        data = data.filter(item => item.product_names.includes(this.filters.filterProduct)); // 多个产品中有一个匹配即可
       }
       if (this.filters.filterInspectionItem) {
         data = data.filter(item => item.inspection_item === this.filters.filterInspectionItem);
@@ -360,6 +384,15 @@ export default {
       }
       if (this.filters.filterStatus) {
         data = data.filter(item => item.status === this.filters.filterStatus);
+      }
+      if (this.filters.filterBatch) {
+        data = data.filter(item => item.batch_codes.includes(this.filters.filterBatch));
+      }
+      if (this.filters.filterInspector) {
+        data = data.filter(item => item.inspector_names.includes(this.filters.filterInspector));
+      }
+      if (this.filters.filterReviewer) {
+        data = data.filter(item => item.reviewer_names.includes(this.filters.filterReviewer));
       }
       if (this.filters.generalSearch) {
         const keyword = this.filters.generalSearch.toLowerCase();
@@ -378,7 +411,9 @@ export default {
     productBarOption() {
       const counts = {};
       this.filteredAlerts.forEach(item => {
-        counts[item.product_name] = (counts[item.product_name] || 0) + 1;
+        item.product_names.forEach(name => {
+          counts[name] = (counts[name] || 0) + 1;
+        });
       });
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
       return {
@@ -455,16 +490,75 @@ export default {
     }
   },
   methods: {
+    formatDate,
     fetchAlertRecords() {
+      this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
+    },
+    async fetchPaginatedAlerts(page = 0, size = 10) {
       this.table.loading = true;
-      getAllAlerts()
-          .then(response => {
-            this.table.alertRecords = response.data || [];
-            this.table.indexesForEdit = {};
-          })
-          .finally(() => {
-            this.table.loading = false;
-          });
+      try {
+        const response = await getPaginatedAlertRecords(page, size);
+        this.table.alertRecords = (response.data.content || []).map(alert => {
+          const firstProduct = alert.products?.[0]?.name || '-';
+          const additionalCount = alert.products?.length > 1 ? ` +${alert.products.length - 1}` : '';
+          return {
+            ...alert,
+            product_display: firstProduct + additionalCount, // ✅ 用于显示
+            product_names: alert.products?.map(p => p.name) || [] // ✅ 用于筛选匹配
+          };
+        });
+
+        this.table.alertRecords = (response.data.content || []).map(alert => {
+          const firstProduct = alert.products?.[0]?.name || '-';
+          const additionalProductCount = alert.products?.length > 1 ? ` +${alert.products.length - 1}` : '';
+
+          const firstBatch = alert.batches?.[0]?.code || '-';
+          const additionalBatchCount = alert.batches?.length > 1 ? ` +${alert.batches.length - 1}` : '';
+
+          const inspectorNames = (alert.inspectors || []).map(i => i.name);
+          const reviewerNames = (alert.reviewers || []).map(r => r.name);
+
+          return {
+            ...alert,
+            product_display: firstProduct + additionalProductCount,       // 产品显示用
+            product_names: alert.products?.map(p => p.name) || [],        // 产品筛选用
+
+            batch_display: firstBatch + additionalBatchCount,             // 批次显示用
+            batch_codes: alert.batches?.map(b => b.code) || [],           // 批次筛选用
+
+            inspector: inspectorNames.join(", "),                         // 展示用
+            inspector_names: inspectorNames,                              // 筛选用
+
+            reviewer: reviewerNames.join(", "),                           // 展示用
+            reviewer_names: reviewerNames                                 // 筛选用
+          };
+        });
+
+        // 收集下拉筛选项的唯一值
+        const allProductNames = new Set();
+        const allBatchCodes = new Set();
+        const allInspectorNames = new Set();
+        const allReviewerNames = new Set();
+
+        this.table.alertRecords.forEach(record => {
+          (record.product_names || []).forEach(name => allProductNames.add(name));
+          (record.batch_codes || []).forEach(code => allBatchCodes.add(code));
+          (record.inspector_names || []).forEach(name => allInspectorNames.add(name));
+          (record.reviewer_names || []).forEach(name => allReviewerNames.add(name));
+        });
+
+        this.filters.productOptions = Array.from(allProductNames);
+        this.filters.batchOptions = Array.from(allBatchCodes);
+        this.filters.inspectorOptions = Array.from(allInspectorNames);
+        this.filters.reviewerOptions = Array.from(allReviewerNames);
+
+        this.pagination.total = response.data.totalElements || 0;
+      } catch (error) {
+        console.error("❌ 获取分页告警失败:", error);
+        this.$message.error("获取告警记录失败");
+      } finally {
+        this.table.loading = false;
+      }
     },
     fetchAlarmRiskLevels() {
       getAllAlarmRiskLevels().then(response => {
@@ -580,9 +674,11 @@ export default {
     },
     handleSizeChange(size) {
       this.pagination.pageSize = size;
+      this.fetchPaginatedAlerts(this.pagination.currentPage - 1, size);
     },
     handleCurrentChange(page) {
       this.pagination.currentPage = page;
+      this.fetchPaginatedAlerts(page - 1, this.pagination.pageSize);
     },
     viewDetails(row) {
       this.$message.info(`查看告警记录 ID: ${row.id}`);
@@ -607,14 +703,16 @@ export default {
     }
   },
   mounted() {
-    this.fetchAlertRecords();
+    this.fetchPaginatedAlerts(); // ✅ 默认加载第一页
     this.fetchAlarmRiskLevels();
     this.fetchAlarmStatuses();
-    if (this.autoRefresh.enabled) {  // 添加这行: 判断是否启用自动刷新
+
+    if (this.autoRefresh.enabled) {
       this.autoRefresh.timer = setInterval(() => {
-        this.fetchAlertRecords();
+        this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize); // ✅ 自动刷新分页
       }, this.autoRefresh.interval * 1000);
     }
+
     this.updateRefreshStatus();
   },
   beforeUnmount() {
