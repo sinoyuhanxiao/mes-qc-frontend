@@ -90,8 +90,9 @@
         @sort-change="handleSortChange"
         :allow-drag-last-column="true"
         :row-class-name="renderRows"
+        border
     >
-      <el-table-column label="告警编号" prop="alert_code" width="180" fixed="left">
+      <el-table-column label="告警编号" prop="alert_code" width="190" fixed="left">
         <template #default="scope">
           <span>{{ scope.row.alert_code }}</span>
         </template>
@@ -103,7 +104,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="产品名称" width="180">
+      <el-table-column label="产品名称" width="150">
         <template #default="scope">
           <el-tooltip
               effect="dark"
@@ -123,21 +124,42 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="质检表单" prop="form_name" width="160" sortable />
-
-      <el-table-column label="检测项" prop="inspection_item" width="180" sortable>
+      <el-table-column label="质检表单" width="180">
         <template #default="scope">
-          {{ scope.row.inspection_item }} ({{ scope.row.unit }})
+          <el-link
+              type="primary"
+              :underline="false"
+              v-if="scope.row.qc_form_template?.id"
+              :href="`/form-display/${scope.row.qc_form_template.id}?usable=false&switchDisplayed=false`"
+              target="_blank"
+          >
+            {{ scope.row.form_display }}
+          </el-link>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="检测项" width="180">
+        <template #default="scope">
+          <div>{{ scope.row.inspection_item?.label || '-' }}</div>
         </template>
       </el-table-column>
 
       <el-table-column label="检测值" prop="value" width="120" sortable>
         <template #default="scope">
-          <span>{{ scope.row.value }}</span>
-          <el-icon v-if="scope.row.value < scope.row.standard_min" style="color: #2c4cb3; margin-left: 4px;">
+          <span>{{ scope.row.inspection_value }}</span>
+          <!-- 下限处理 -->
+          <el-icon
+              v-if="typeof scope.row.inspection_value === 'number' && typeof scope.row.lower_control_limit === 'number' && scope.row.inspection_value < scope.row.lower_control_limit"
+              style="color: #2c4cb3; margin-left: 4px;"
+          >
             <arrow-down-bold />
           </el-icon>
-          <el-icon v-else-if="scope.row.value > scope.row.standard_max" style="color: #f46666; margin-left: 4px;">
+          <!-- 上限处理 -->
+          <el-icon
+              v-else-if="typeof scope.row.inspection_value === 'number' && typeof scope.row.upper_control_limit === 'number' && scope.row.inspection_value > scope.row.upper_control_limit"
+              style="color: #f46666; margin-left: 4px;"
+          >
             <arrow-up-bold />
           </el-icon>
         </template>
@@ -145,7 +167,7 @@
 
       <el-table-column label="标准值范围" width="150">
         <template #default="scope">
-          {{ scope.row.standard_min }} ~ {{ scope.row.standard_max }}
+          {{ scope.row.control_range }}
         </template>
       </el-table-column>
 
@@ -179,8 +201,8 @@
 
       <el-table-column label="预警等级" prop="risk_level" width="120" sortable>
         <template #default="scope">
-          <el-tag :type="scope.row.risk_level === '高风险' ? 'danger' : scope.row.risk_level === '中风险' ? 'warning' : 'info'">
-            {{ scope.row.risk_level }}
+          <el-tag :type="scope.row.risk_level.id === 3 ? 'danger' : scope.row.risk_level.id === 2 ? 'warning' : 'info'">
+            {{ scope.row.risk_level.name }}
           </el-tag>
         </template>
       </el-table-column>
@@ -211,8 +233,8 @@
           </el-tooltip>
         </template>
         <template #default="scope">
-          <el-tag :type="scope.row.status === '处理中' ? 'warning' : 'success'">
-            {{ scope.row.status }}
+          <el-tag :type="scope.row.alert_status.id === 1 ? 'warning' : 'success'">
+            {{ scope.row.alert_status.name }}
           </el-tag>
         </template>
       </el-table-column>
@@ -232,16 +254,16 @@
       </el-table-column>
     </el-table>
 
-    <!-- Pagination -->
+    <!-- Pagination component -->
     <el-pagination
-        class="pager-area"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
         :current-page="pagination.currentPage"
         :page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 30, 50]"
-        layout="total, sizes, prev, pager, next"
         :total="pagination.total"
+        @current-change="handlePageChange"
+        @size-change="handleSizeChange"
+        layout="total, sizes, prev, pager, next, jumper"
+        :page-sizes="[10, 20, 50, 100]"
+        background
     />
   </div>
 
@@ -258,6 +280,7 @@
       <li>100 - 199 → 中风险</li>
       <li>< 100 → 低风险</li>
     </ul>
+    <p><strong>初始值为50</strong></p>
   </el-dialog>
 
   <el-dialog title="设置" v-model="dialogs.showSettingsDialog" width="350px" @close="resetSettings">
@@ -300,7 +323,7 @@ import { getAllAlarmStatuses } from '@/mockServices/definitions/alarmStatusDefin
 // import { getAllAlerts } from '@/mockServices/alert/alertService';
 import { getPaginatedAlertRecords } from "@/services/alarmRecordService";
 import {formatDate} from "@/utils/task-center/dateFormatUtils"; // 替换 alert mock 调用
-
+import { getAlertSummary } from "@/services/alarmRecordService";
 
 use([PieChart, CanvasRenderer]);
 
@@ -364,6 +387,14 @@ export default {
           2: ['已停止', 'info'],
           3: ['编辑中被停止', 'warning']
         }
+      },
+
+      // data for charts
+      summaryStats: {
+        alertStatusCounts: {},
+        riskLevelCounts: {},
+        productCounts: {},
+        inspectionItemCounts: {}
       }
     };
   },
@@ -371,51 +402,8 @@ export default {
     pausedByEdit() {
       return Object.values(this.table.indexesForEdit).some(list => list.length > 0);
     },
-    filteredAlerts() {
-      let data = this.table.alertRecords;
-      if (this.filters.filterProduct) {
-        data = data.filter(item => item.product_names.includes(this.filters.filterProduct)); // 多个产品中有一个匹配即可
-      }
-      if (this.filters.filterInspectionItem) {
-        data = data.filter(item => item.inspection_item === this.filters.filterInspectionItem);
-      }
-      if (this.filters.filterRiskLevel) {
-        data = data.filter(item => item.risk_level === this.filters.filterRiskLevel);
-      }
-      if (this.filters.filterStatus) {
-        data = data.filter(item => item.status === this.filters.filterStatus);
-      }
-      if (this.filters.filterBatch) {
-        data = data.filter(item => item.batch_codes.includes(this.filters.filterBatch));
-      }
-      if (this.filters.filterInspector) {
-        data = data.filter(item => item.inspector_names.includes(this.filters.filterInspector));
-      }
-      if (this.filters.filterReviewer) {
-        data = data.filter(item => item.reviewer_names.includes(this.filters.filterReviewer));
-      }
-      if (this.filters.generalSearch) {
-        const keyword = this.filters.generalSearch.toLowerCase();
-        data = data.filter(item =>
-            Object.values(item).some(val =>
-                String(val).toLowerCase().includes(keyword)
-            )
-        );
-      }
-      if (this.filters.filterDateRange.length === 2) {
-        const [start, end] = this.filters.filterDateRange;
-        data = data.filter(item => new Date(item.alert_time) >= new Date(start) && new Date(item.alert_time) <= new Date(end));
-      }
-      return data;
-    },
     productBarOption() {
-      const counts = {};
-      this.filteredAlerts.forEach(item => {
-        item.product_names.forEach(name => {
-          counts[name] = (counts[name] || 0) + 1;
-        });
-      });
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const sorted = Object.entries(this.summaryStats.productCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
       return {
         tooltip: {},
         grid: { top: 20, bottom: 20, left: 50, right: 20 },
@@ -425,11 +413,7 @@ export default {
       };
     },
     inspectionBarOption() {
-      const counts = {};
-      this.filteredAlerts.forEach(item => {
-        counts[item.inspection_item] = (counts[item.inspection_item] || 0) + 1;
-      });
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const sorted = Object.entries(this.summaryStats.inspectionItemCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
       return {
         tooltip: {},
         grid: { top: 20, bottom: 20, left: 50, right: 20 },
@@ -439,8 +423,7 @@ export default {
       };
     },
     paginatedAlerts() {
-      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize;
-      return this.filteredAlerts.slice(start, start + this.pagination.pageSize);
+      return this.table.alertRecords;
     },
     statusPieOption() {
       return {
@@ -449,10 +432,7 @@ export default {
         series: [{
           type: 'pie',
           radius: '70%',
-          data: [
-            { value: this.filteredAlerts.filter(item => item.status === '处理中').length, name: '处理中' },
-            { value: this.filteredAlerts.filter(item => item.status === '已关闭').length, name: '已关闭' }
-          ],
+          data: Object.entries(this.summaryStats.alertStatusCounts).map(([name, value]) => ({ name, value })),
           label: { show: false },
           labelLine: { show: false }
         }]
@@ -467,17 +447,14 @@ export default {
         series: [{
           type: 'pie',
           radius: '70%',
-          data: [
-            { value: this.filteredAlerts.filter(item => item.risk_level === '高风险').length, name: '高风险' },
-            { value: this.filteredAlerts.filter(item => item.risk_level === '中风险').length, name: '中风险' },
-            { value: this.filteredAlerts.filter(item => item.risk_level === '低风险').length, name: '低风险' }
-          ],
+          data: Object.entries(this.summaryStats.riskLevelCounts).map(([name, value]) => ({ name, value })),
           label: { show: false },
           labelLine: { show: false }
         }]
       };
     }
   },
+
   watch: {
     'autoRefresh.enabled'(newVal) {
       this.updateRefreshStatus();
@@ -493,20 +470,21 @@ export default {
     formatDate,
     fetchAlertRecords() {
       this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
+      this.fetchAlertSummary();
+    },
+    async fetchAlertSummary() {
+      try {
+        const res = await getAlertSummary();
+        this.summaryStats = res.data;
+      } catch (error) {
+        console.error("❌ 获取统计失败", error);
+        this.$message.error("获取统计图数据失败");
+      }
     },
     async fetchPaginatedAlerts(page = 0, size = 10) {
       this.table.loading = true;
       try {
         const response = await getPaginatedAlertRecords(page, size);
-        this.table.alertRecords = (response.data.content || []).map(alert => {
-          const firstProduct = alert.products?.[0]?.name || '-';
-          const additionalCount = alert.products?.length > 1 ? ` +${alert.products.length - 1}` : '';
-          return {
-            ...alert,
-            product_display: firstProduct + additionalCount, // ✅ 用于显示
-            product_names: alert.products?.map(p => p.name) || [] // ✅ 用于筛选匹配
-          };
-        });
 
         this.table.alertRecords = (response.data.content || []).map(alert => {
           const firstProduct = alert.products?.[0]?.name || '-';
@@ -530,7 +508,9 @@ export default {
             inspector_names: inspectorNames,                              // 筛选用
 
             reviewer: reviewerNames.join(", "),                           // 展示用
-            reviewer_names: reviewerNames                                 // 筛选用
+            reviewer_names: reviewerNames,                                // 筛选用
+
+            form_display: alert.qc_form_template?.name || '-'
           };
         });
 
@@ -680,6 +660,10 @@ export default {
       this.pagination.currentPage = page;
       this.fetchPaginatedAlerts(page - 1, this.pagination.pageSize);
     },
+    handlePageChange(newPage) {
+      this.pagination.currentPage = newPage;
+      this.fetchPaginatedAlerts(newPage - 1, this.pagination.pageSize);
+    },
     viewDetails(row) {
       this.$message.info(`查看告警记录 ID: ${row.id}`);
     },
@@ -703,13 +687,14 @@ export default {
     }
   },
   mounted() {
-    this.fetchPaginatedAlerts(); // ✅ 默认加载第一页
+    this.fetchPaginatedAlerts(); // 默认加载第一页
     this.fetchAlarmRiskLevels();
     this.fetchAlarmStatuses();
+    this.fetchAlertSummary();
 
     if (this.autoRefresh.enabled) {
       this.autoRefresh.timer = setInterval(() => {
-        this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize); // ✅ 自动刷新分页
+        this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
       }, this.autoRefresh.interval * 1000);
     }
 

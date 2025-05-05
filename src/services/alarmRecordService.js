@@ -16,3 +16,12 @@ export const getPaginatedAlertRecords = (page = 0, size = 10) => {
         }
     });
 };
+
+/**
+ * Fetch summary statistics for alert records (status, risk level, product, inspection item).
+ * @returns {Promise} API response containing AlertSummaryDTO
+ */
+export const getAlertSummary = () => {
+    return api.get(`${BASE_URL}/summary`);
+};
+
