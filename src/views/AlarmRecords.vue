@@ -13,41 +13,41 @@
     <!-- Filters -->
     <div class="filter-area">
       <div style="gap: 20px; display: flex; justify-content: space-around">
-        <el-select v-model="filters.filterRiskLevel" placeholder="预警等级" clearable filterable style="width: 100px;">
-          <el-option v-for="item in filters.riskLevelOptions" :key="item.id" :label="item.name" :value="item.name" />
+        <el-select v-model="filtersToSend.riskLevelId" placeholder="告警等级" clearable filterable style="width: 150px;">
+          <el-option v-for="item in filterOptions.riskLevelOptions" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
 
-        <el-select v-model="filters.filterStatus" placeholder="状态" clearable filterable style="width: 100px;">
-          <el-option v-for="item in filters.statusOptions" :key="item.id" :label="item.name" :value="item.name" />
+        <el-select v-model="filtersToSend.alertStatusId" placeholder="告警状态" clearable filterable style="width: 150px;">
+          <el-option v-for="item in filterOptions.alertStatusOptions" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
 
-        <el-select v-model="filters.filterProduct" placeholder="产品名称" clearable filterable  style="width: 100px;">
-          <el-option v-for="item in filters.productOptions" :key="item" :label="item" :value="item" />
+        <el-select v-model="filtersToSend.suggestedProductId" placeholder="产品名称" clearable filterable  style="width: 150px;">
+          <el-option v-for="item in filterOptions.suggestedProductOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
 
-        <el-select v-model="filters.filterInspectionItem" placeholder="检测项" clearable filterable  style="width: 100px;">
-          <el-option v-for="item in filters.inspectionOptions" :key="item" :label="item" :value="item" />
+        <el-select v-model="filtersToSend.suggestedBatchId" placeholder="批次号" clearable filterable  style="width: 150px;">
+          <el-option v-for="item in filterOptions.suggestedBatchOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
 
         <el-date-picker
-            v-model="filters.filterDateRange"
+            v-model="selectedDateRange"
             type="datetimerange"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
-            style="width: 300px;"
-            @clear="filters.filterDateRange = []"
-            clearable
+            style="width: 350px;"
+            @change="onDateChange"
         />
+
       </div>
       <div>
 
       </div>
       <div style="gap: 20px; display: flex; justify-content: space-around">
         <el-input
-            v-model="filters.generalSearch"
-            placeholder="搜索..."
+            v-model="filtersToSend.generalSearch"
+            placeholder="搜索告警编号..."
             clearable
             style="width: 200px; align-items: center;"
         >
@@ -55,7 +55,8 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-button type="success" @click="exportTable" style="margin: 0px;">导出</el-button> <!-- 修改这行 -->
+        <el-button type="warning" @click="resetFilters" style="margin: 0px;">重置</el-button>
+<!--        <el-button type="success" @click="exportTable" style="margin: 0px;">导出</el-button> &lt;!&ndash; 修改这行 &ndash;&gt;-->
         <el-button type="primary" @click="fetchAlertRecords" style="margin: 0px;">刷新</el-button>
       </div>
     </div>
@@ -98,7 +99,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="告警时间" prop="alert_time" width="180" sortable fixed="left">
+      <el-table-column label="告警时间" prop="alertTime" width="180" sortable fixed="left">
         <template #default="scope">
           <span>{{ formatDate(scope.row.alert_time) }}</span>
         </template>
@@ -111,7 +112,7 @@
               :content="scope.row.product_names.join(', ')"
               placement="top"
           >
-            <el-tag>{{ scope.row.product_display }}</el-tag>
+            <el-tag v-html="scope.row.product_display"/>
           </el-tooltip>
         </template>
       </el-table-column>
@@ -119,7 +120,7 @@
       <el-table-column label="批次号" width="160">
         <template #default="scope">
           <el-tooltip effect="dark" :content="scope.row.batch_codes?.join(', ')" placement="top">
-            <el-tag type="success">{{ scope.row.batch_display }}</el-tag>
+            <el-tag v-html="scope.row.batch_display" type="success" />
           </el-tooltip>
         </template>
       </el-table-column>
@@ -145,7 +146,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="检测值" prop="value" width="120" sortable>
+      <el-table-column label="检测值" prop="inspectionValue" width="120" sortable>
         <template #default="scope">
           <span>{{ scope.row.inspection_value }}</span>
           <!-- 下限处理 -->
@@ -321,9 +322,13 @@ import {ArrowDownBold, ArrowUpBold, QuestionFilled, Search, Setting} from "@elem
 import { getAllAlarmRiskLevels } from '@/mockServices/definitions/alarmRiskLevelDefinitionService';
 import { getAllAlarmStatuses } from '@/mockServices/definitions/alarmStatusDefinitionService';
 // import { getAllAlerts } from '@/mockServices/alert/alertService';
-import { getPaginatedAlertRecords } from "@/services/alarmRecordService";
-import {formatDate} from "@/utils/task-center/dateFormatUtils"; // 替换 alert mock 调用
+import {deleteAlertRecord, getPaginatedAlertRecords, updateAlertRecord} from "@/services/alarmRecordService";
+import {convertToUtcRange, formatDate} from "@/utils/task-center/dateFormatUtils"; // 替换 alert mock 调用
 import { getAlertSummary } from "@/services/alarmRecordService";
+import {getAlActiveSuggestedProducts} from "@/services/production/suggestedProductService";
+import {getAllActiveSuggestedBatches} from "@/services/production/suggestedBatchService";
+import { getRiskLevels, getAlertStatuses } from "@/services/alarmRecordService";
+import {debounce} from "lodash";
 
 use([PieChart, CanvasRenderer]);
 
@@ -347,23 +352,23 @@ export default {
         sortSettings: { prop: '', order: '' }
       },
 
+      selectedDateRange: [],
+
       // 过滤条件
-      filters: {
-        filterRiskLevel: '',
-        filterStatus: '',
-        filterProduct: '',
-        filterBatch: '',
-        filterInspector: '',
-        filterReviewer: '',
-        filterInspectionItem: '',
-        filterDateRange: [],
+      filtersToSend: {
+        alertStatusId: '',
+        riskLevelId: '',
+        suggestedProductId: null,
+        suggestedBatchId: null,
         generalSearch: '',
-        productOptions: [],
-        batchOptions: [],
-        inspectorOptions: [],
-        reviewerOptions: [],
+        dateRange: '', // "2025-12-01T00:00:00.000Z,2025-12-31T23:59:59.999Z"
+      },
+
+      filterOptions: {
+        suggestedProductOptions: [],
+        suggestedBatchOptions: [],
         riskLevelOptions: [],
-        statusOptions: [],
+        alertStatusOptions: []
       },
 
       // 弹窗控制
@@ -464,13 +469,82 @@ export default {
         this.updateRefreshStatus();
       },
       deep: true
-    }
+    },
+    filtersToSend: {
+      handler: debounce(function () {
+        this.pagination.currentPage = 1;
+        this.fetchPaginatedAlerts(0, this.pagination.pageSize);
+      }, 300),
+      deep: true
+    },
+    'pagination.sortSettings': {
+      handler() {
+        this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
+      },
+      deep: true
+    },
   },
   methods: {
     formatDate,
     fetchAlertRecords() {
       this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
       this.fetchAlertSummary();
+    },
+    onDateChange(val) {
+      this.selectedDateRange = val;
+
+      if (val && val.length === 2) {
+        const utcStart = new Date(val[0]).toISOString();
+        const utcEnd = new Date(val[1]).toISOString();
+        this.filtersToSend.dateRange = `${utcStart},${utcEnd}`;
+      } else {
+        this.filtersToSend.dateRange = '';
+      }
+    },
+    resetFilters() {
+      // 清除筛选项
+      this.filtersToSend = {
+        alertStatusId: '',
+        riskLevelId: '',
+        suggestedProductId: null,
+        suggestedBatchId: null,
+        generalSearch: '',
+        dateRange: ''
+      };
+
+      // 清除日期选择器显示
+      this.selectedDateRange = [];
+
+      // 清除排序设置
+      this.pagination.sortSettings = { prop: '', order: '' };
+
+      // 重置分页页码为第一页
+      this.pagination.currentPage = 1;
+
+      // 重新拉取数据
+      this.fetchPaginatedAlerts(0, this.pagination.pageSize);
+    },
+    async fetchSuggestedProducts() {
+      try {
+        const res = await getAlActiveSuggestedProducts();
+        this.filterOptions.suggestedProductOptions = (res.data || []).map(p => ({
+          label: p.name,
+          value: p.id
+        }));
+      } catch (e) {
+        console.error("❌ 获取产品失败", e);
+      }
+    },
+    async fetchSuggestedBatches() {
+      try {
+        const res = await getAllActiveSuggestedBatches();
+        this.filterOptions.suggestedBatchOptions = (res.data || []).map(b => ({
+          label: b.code,
+          value: b.id
+        }));
+      } catch (e) {
+        console.error("❌ 获取批次失败", e);
+      }
     },
     async fetchAlertSummary() {
       try {
@@ -483,54 +557,59 @@ export default {
     },
     async fetchPaginatedAlerts(page = 0, size = 10) {
       this.table.loading = true;
+
+
+      // Dynamically eliminate the empty values to not sending to the backend
+      const requestBody = {
+        page,
+        size
+      };
+
+      const filteredFilters = {};
+      Object.entries(this.filtersToSend).forEach(([key, value]) => {
+        if (value !== null && value !== '' && value !== undefined) {
+          if (key === 'generalSearch') {
+            filteredFilters[key] = value.trim();
+          } else {
+            filteredFilters[key] = value;
+          }
+        }
+      });
+      if (Object.keys(filteredFilters).length > 0) {
+        requestBody.filters = filteredFilters;
+      }
+
+      const sortSettings = this.pagination.sortSettings;
+      if (sortSettings.prop && sortSettings.order) {
+        requestBody.sort = {
+          prop: sortSettings.prop,
+          order: sortSettings.order
+        };
+      }
+
       try {
-        const response = await getPaginatedAlertRecords(page, size);
+        const response = await getPaginatedAlertRecords(requestBody);
 
         this.table.alertRecords = (response.data.content || []).map(alert => {
-          const firstProduct = alert.products?.[0]?.name || '-';
-          const additionalProductCount = alert.products?.length > 1 ? ` +${alert.products.length - 1}` : '';
-
-          const firstBatch = alert.batches?.[0]?.code || '-';
-          const additionalBatchCount = alert.batches?.length > 1 ? ` +${alert.batches.length - 1}` : '';
-
+          const productNames = alert.products?.map(p => p.name) || [];
+          const batchCodes = alert.batches?.map(b => b.code) || [];
           const inspectorNames = (alert.inspectors || []).map(i => i.name);
           const reviewerNames = (alert.reviewers || []).map(r => r.name);
 
           return {
             ...alert,
-            product_display: firstProduct + additionalProductCount,       // 产品显示用
-            product_names: alert.products?.map(p => p.name) || [],        // 产品筛选用
+            product_names: productNames,
+            batch_codes: batchCodes,
 
-            batch_display: firstBatch + additionalBatchCount,             // 批次显示用
-            batch_codes: alert.batches?.map(b => b.code) || [],           // 批次筛选用
+            product_display: (productNames[0] || '-') + (productNames.length > 1 ? ` +${productNames.length - 1}` : ''),
+            batch_display: (batchCodes[0] || '-') + (batchCodes.length > 1 ? ` +${batchCodes.length - 1}` : ''),
 
-            inspector: inspectorNames.join(", "),                         // 展示用
-            inspector_names: inspectorNames,                              // 筛选用
-
-            reviewer: reviewerNames.join(", "),                           // 展示用
-            reviewer_names: reviewerNames,                                // 筛选用
+            inspector_names: inspectorNames,
+            reviewer_names: reviewerNames,
 
             form_display: alert.qc_form_template?.name || '-'
           };
         });
-
-        // 收集下拉筛选项的唯一值
-        const allProductNames = new Set();
-        const allBatchCodes = new Set();
-        const allInspectorNames = new Set();
-        const allReviewerNames = new Set();
-
-        this.table.alertRecords.forEach(record => {
-          (record.product_names || []).forEach(name => allProductNames.add(name));
-          (record.batch_codes || []).forEach(code => allBatchCodes.add(code));
-          (record.inspector_names || []).forEach(name => allInspectorNames.add(name));
-          (record.reviewer_names || []).forEach(name => allReviewerNames.add(name));
-        });
-
-        this.filters.productOptions = Array.from(allProductNames);
-        this.filters.batchOptions = Array.from(allBatchCodes);
-        this.filters.inspectorOptions = Array.from(allInspectorNames);
-        this.filters.reviewerOptions = Array.from(allReviewerNames);
 
         this.pagination.total = response.data.totalElements || 0;
       } catch (error) {
@@ -540,32 +619,35 @@ export default {
         this.table.loading = false;
       }
     },
-    fetchAlarmRiskLevels() {
-      getAllAlarmRiskLevels().then(response => {
-        this.filters.riskLevelOptions = response.data || [];
-        console.log("this filters riskLevelOptions: ")
-        console.log(this.filters.riskLevelOptions)
-      });
-    },
-    fetchAlarmStatuses() {
-      getAllAlarmStatuses().then(response => {
-        this.filters.statusOptions = response.data || [];
-      });
-    },
+    // fetchAlarmRiskLevels() {
+    //   getAllAlarmRiskLevels().then(response => {
+    //     this.filters.riskLevelOptions = response.data || [];
+    //     console.log("this filters riskLevelOptions: ")
+    //     console.log(this.filters.riskLevelOptions)
+    //   });
+    // },
+    // fetchAlarmStatuses() {
+    //   getAllAlarmStatuses().then(response => {
+    //     this.filters.statusOptions = response.data || [];
+    //   });
+    // },
     deleteRecord(row) {
       this.$confirm('确定要删除该记录吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        // 模拟删除（前后端分离：只操作前端数据）
-        const index = this.table.alertRecords.findIndex(item => item.id === row.id);  // 通过 id 找位置
-        if (index !== -1) {
-          this.table.alertRecords.splice(index, 1);  // 删除该项
+      }).then(async () => {
+        try {
+          const userId = this.$store.getters.getUser.id;
+          await deleteAlertRecord(row.id, userId);
           this.$message.success('删除成功');
+          await this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
+        } catch (error) {
+          console.error("删除失败", error);
+          this.$message.error("删除失败");
         }
       }).catch(() => {
-        // 取消删除
+        // 用户取消删除
       });
     },
     openSettingsDialog() {
@@ -578,7 +660,7 @@ export default {
       this.autoRefresh.interval = this.autoRefresh.intervalTemp;
     },
     exportTable() {
-      console.log('导出假数据：', this.filteredAlerts);  // 模拟导出，后续可加 CSV/PDF
+      console.log('导出假数据：', this.filteredOptions);  // 模拟导出，后续可加 CSV/PDF
     },
     renderRows({ row, rowIndex }) {
       const currentPage = this.pagination.currentPage;
@@ -598,7 +680,7 @@ export default {
         this.autoRefresh.statusKey = 1;
       }
     },
-    toggleEdit(row) {
+    async toggleEdit(row) {
       const index = this.paginatedAlerts.indexOf(row);
       const currentPage = this.pagination.currentPage;
 
@@ -613,13 +695,21 @@ export default {
         this.table.indexesForEdit[currentPage].push(index);
       } else {
         row.isEditing = false;
+
+        try {
+          const updatedBy = this.$store.getters.getUser.id;
+          await updateAlertRecord({ id: row.id, rpn: row.rpn, updatedBy });
+          this.$message.success('保存并更新成功');
+        } catch (error) {
+          this.$message.error('更新失败，请稍后重试');
+          console.error("❌ 更新告警记录失败", error);
+        }
+
         const idx = this.table.indexesForEdit[currentPage].indexOf(index);
         if (idx !== -1) this.table.indexesForEdit[currentPage].splice(idx, 1);
 
         const oldRpn = row.rpn;
         const rpn = Number(row.rpn);
-        row.risk_level = rpn >= 200 ? '高风险' : rpn >= 100 ? '中风险' : '低风险';
-        row.status = rpn < 100 ? '已处理' : '处理中';
         this.$message({
           type: 'success',
           dangerouslyUseHTMLString: true,
@@ -642,15 +732,9 @@ export default {
       }
     },
     handleSortChange({ prop, order }) {
+      if (!prop || !order) return;
       this.pagination.sortSettings = { prop, order };
-      if (prop && order) {
-        const sorted = [...this.table.alertRecords].sort((a, b) => {
-          const valA = a[prop];
-          const valB = b[prop];
-          return order === 'ascending' ? valA - valB : valB - valA;
-        });
-        this.table.alertRecords = sorted;
-      }
+      this.fetchPaginatedAlerts(this.pagination.currentPage - 1, this.pagination.pageSize);
     },
     handleSizeChange(size) {
       this.pagination.pageSize = size;
@@ -665,7 +749,7 @@ export default {
       this.fetchPaginatedAlerts(newPage - 1, this.pagination.pageSize);
     },
     viewDetails(row) {
-      this.$message.info(`查看告警记录 ID: ${row.id}`);
+      this.$message.info(`此功能正在开发中`);
     },
     applyAlarmSetting() {
       this.autoRefresh.enabledTemp = this.autoRefresh.enabled;
@@ -687,10 +771,19 @@ export default {
     }
   },
   mounted() {
+    this.pagination.sortSettings = { prop: 'alertTime', order: 'descending' }; // 强制设定初始排序
     this.fetchPaginatedAlerts(); // 默认加载第一页
-    this.fetchAlarmRiskLevels();
-    this.fetchAlarmStatuses();
     this.fetchAlertSummary();
+    this.fetchSuggestedProducts();
+    this.fetchSuggestedBatches();
+
+    getRiskLevels().then(res => {
+      this.filterOptions.riskLevelOptions = res.data;
+    });
+
+    getAlertStatuses().then(res => {
+      this.filterOptions.alertStatusOptions = res.data;
+    });
 
     if (this.autoRefresh.enabled) {
       this.autoRefresh.timer = setInterval(() => {
