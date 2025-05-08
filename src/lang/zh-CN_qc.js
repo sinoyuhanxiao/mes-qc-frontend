@@ -640,6 +640,7 @@ export default {
         generatePdf: "生成 PDF",
         viewRecords: "查看质检记录",
         recordTable: {
+            groupUncategorized: "质检通用信息",
             groupBasicInfo: "质检基础信息",
             groupSystemInfo: "系统提交信息",
             submitter: "提交人",

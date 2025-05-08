@@ -47,8 +47,6 @@
 
 <script>
 import FormTree from '@/components/form-manager/FormTree.vue';
-import PieChart from '@/components/charts/pie001.vue';
-import LineChart from '@/components/charts/line001.vue';
 import {extractWidgetDataWithCounts, generateQcReport} from "@/services/qcReportingService";
 import {translate} from "@/utils/i18n";
 import QcCharts from "@/components/common/qc/QcCharts.vue";
@@ -57,7 +55,7 @@ import {exportChartReportToPdf} from "@/utils/exportUtils";
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue";
 
 export default {
-  components: {QcRecordsDialog, QcCharts, FormTree, PieChart, LineChart },
+  components: {QcRecordsDialog, QcCharts, FormTree },
   setup() {
     const lineChartRefs = [];
     const pieChartRefs = [];
@@ -125,43 +123,6 @@ export default {
   updateTableHeight() {
     this.tableHeight = window.innerHeight - 200;
   },
-  computed: {
-    filteredQcRecords() {
-      if (!this.searchQuery) return this.qcRecords;
-      return this.qcRecords.filter(record =>
-          Object.values(record).some(value =>
-              String(value).toLowerCase().includes(this.searchQuery.toLowerCase())
-          )
-      );
-    },
-    displayedColumnHeaders() {
-      return this.reorderedColumnHeaders.filter(header =>
-          !["提交人", "提交时间", "_id", "e-signature"].includes(header)
-      );
-    },
-    // 在 `computed: { reorderedColumnHeaders() }` 这个函数里，确保 `created_at` 和 `created_by` 排在最前
-    reorderedColumnHeaders() {
-      let headers = Object.keys(this.qcRecords[0] || {});
-      headers = headers.filter(header => header !== "created_by" && header !== "created_at");
-      headers.unteam("created_at", "created_by"); // 确保这两个字段在最前
-      headers = headers.map(header => (header === "created_at" ? "提交时间" : header));
-      return headers;
-    },
-
-    columns() {
-      // Filter out _id to avoid displaying it
-      const filteredEntries = Object.entries(this.selectedDetails)
-          .filter(([key]) => key !== "_id" && key !== "created_at" && key !== "created_by");
-
-      // Split into chunks of 10 fields per column
-      const chunkSize = 10;
-      const result = [];
-      for (let i = 0; i < filteredEntries.length; i += chunkSize) {
-        result.push(Object.fromEntries(filteredEntries.slice(i, i + chunkSize)));
-      }
-      return result;
-    }
-  },
   watch: {
     qcRecordsDialogVisible(newVal) {
       this.refreshChartData();
@@ -191,9 +152,6 @@ export default {
       const d = new Date(date);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ` +
           `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
-    },
-    handlePageChange(newPage) {
-      this.currentPage = newPage;
     },
     async refreshChartData() {
       if (!this.selectedForm || !this.dateRange || this.dateRange.length !== 2) return;

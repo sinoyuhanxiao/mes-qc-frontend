@@ -9,7 +9,7 @@
           style="width: 300px; margin-right: 500px"
       />
 
-      <el-button type="success" style="margin-right: 20px" @click="$emit('export-excel')">
+      <el-button type="success" style="margin-right: 10px; margin-bottom: 10px" @click="$emit('export-excel')">
         {{ translate('FormDataSummary.recordTable.exportExcel') }}
       </el-button>
 

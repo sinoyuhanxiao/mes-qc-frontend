@@ -22,29 +22,35 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
     y += 10;
 
     // groupedDetails
-    Object.entries(groupedDetails)
-        .filter(([category]) => category !== 'uncategorized')
-        .forEach(([category, fields]) => {
-            doc.setFontSize(14);
-            doc.text(category, 10, y);
-            y += 6;
-
-            const tableData = Object.entries(fields).map(([key, value]) => [
+    Object.entries(groupedDetails).forEach(([category, fields]) => {
+        const tableData = Object.entries(fields)
+            .filter(([_, val]) => val !== undefined && val !== null && val !== "")
+            .map(([key, value]) => [
                 key,
                 Array.isArray(value) ? value.join(", ") : value || " - ",
             ]);
 
-            autoTable(doc, {
-                startY: y,
-                head: [translate('Export.tableHead')],
-                body: tableData,
-                theme: "grid",
-                styles: { font: "simfang", fontSize: 10 },
-                headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
-            });
+        if (tableData.length === 0) return;
 
-            y = doc.lastAutoTable.finalY + 10;
+        const sectionTitle = category === 'uncategorized'
+            ? translate('FormDataSummary.recordTable.groupUncategorized')
+            : category;
+
+        doc.setFontSize(14);
+        doc.text(sectionTitle, 10, y);
+        y += 6;
+
+        autoTable(doc, {
+            startY: y,
+            head: [translate('Export.tableHead')],
+            body: tableData,
+            theme: "grid",
+            styles: { font: "simfang", fontSize: 10 },
+            headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
         });
+
+        y = doc.lastAutoTable.finalY + 10;
+    });
 
     // basicInfo
     doc.setFontSize(14);
@@ -111,10 +117,36 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
 
 export function exportQcRecordsToExcel({ records, label, translate }) {
     const tableData = records.map(record => {
-        const { _id, created_by, ...filtered } = record;
+        const {
+            created_at,
+            created_by,
+            提交人,
+            _id,
+            'e-signature': signature,
+            ...rest
+        } = record;
+
+        const entries = Object.entries(rest);
+
+        // Regular fields (excluding _id, created_by, e-signature, and any related_*_id/s)
+        const normalFields = entries.filter(([key]) =>
+            !key.startsWith('related_') &&
+            !key.endsWith('_id') &&
+            !key.endsWith('_ids')
+        );
+
+        // Only keep related_* fields that do NOT end with _id or _ids
+        const relatedFields = entries.filter(([key]) =>
+            key.startsWith('related_') &&
+            !key.endsWith('_id') &&
+            !key.endsWith('_ids')
+        );
+
         return {
-            [translate('Export.systemInfo.submittedAt')]: record.created_at || "-",
-            ...filtered
+            [translate('Export.systemInfo.submittedAt')]: created_at || "-",
+            [translate('Export.systemInfo.submitter')]: 提交人 || "-",
+            ...Object.fromEntries(normalFields),
+            ...Object.fromEntries(relatedFields)
         };
     });
 

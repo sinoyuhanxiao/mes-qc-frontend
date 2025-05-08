@@ -156,8 +156,8 @@ async function deleteRecord(row) {
         translateWithParams("FormDataSummary.recordTable.deleteConfirmMessage", { id: row._id }),
         translate("FormDataSummary.recordTable.deleteConfirmTitle"),
         {
-          confirmButtonText: translate("FormDataSummary.confirm"),
-          cancelButtonText: translate("FormDataSummary.cancel"),
+          confirmButtonText: translate("common.confirm"),
+          cancelButtonText: translate("common.cancel"),
           type: "warning"
         }
     );
@@ -167,8 +167,6 @@ async function deleteRecord(row) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
       ElMessage.error(translate("FormDataSummary.recordTable.deleteFailed"));
-    } else {
-      ElMessage.info(translate("FormDataSummary.recordTable.deleteCanceled"));
     }
   }
 }
@@ -216,6 +214,16 @@ async function viewDetails(row) {
 
     // 5. Parse document
     const { groupedDetails: grouped, eSignature: signature } = parseFormDocument(selectedDetails);
+
+    // 5.1 Remove all "related_" fields from 'uncategorized'
+    if (grouped.uncategorized) {
+      for (const key of Object.keys(grouped.uncategorized)) {
+        if (key.startsWith("related_")) {
+          delete grouped.uncategorized[key];
+        }
+      }
+    }
+
     groupedDetails.value = grouped;
     eSignature.value = signature;
 

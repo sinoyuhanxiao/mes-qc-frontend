@@ -407,6 +407,8 @@
 </template>
 
 <script setup>
+import { onBeforeRouteLeave } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 import {ref, reactive, watch, onMounted, onUnmounted, nextTick, computed} from 'vue'
 import {translate, translateWithParams} from "@/utils/i18n";
 import { useStore } from 'vuex'
@@ -549,6 +551,7 @@ const props = defineProps({
   }
 });
 
+
 /* 注意：formJson是指表单设计器导出的json，此处演示的formJson只是一个空白表单json！！ */
 // const formJson = reactive(testFormJsonData) // Use the imported JSON data - original code
 const formData = reactive({})
@@ -557,6 +560,8 @@ const formTitle = ref(''); // Store form title
 const enable_form = ref(false)
 const enable_common_fields = ref(false)
 let vFormRef = ref(null)
+const emit = defineEmits(['updateIsDirty']);
+let initialFormSnapshot = ''; // ⏱存储初始快照
 const showQuickDispatch = ref(false);
 const showConfirmation = ref(false);
 const showResetConfirmation = ref(false);
@@ -564,6 +569,9 @@ const showClearConfirmation = ref(false);
 const switchDisplayed = ref(
     !route.params.qcFormTemplateId
 );
+
+import { useDirtyCheck } from '@/composables/useDirtyCheck.js'
+const { isDirty, startDirtyCheck, resetDirty, stopDirtyCheck } = useDirtyCheck(vFormRef, emit)
 
 const cancelClear = () => {
   showClearConfirmation.value = false; // Cancel reset
@@ -710,7 +718,6 @@ watch(selectedShift, (shiftName) => {
   selectedShiftId.value = shifts.value.find(s => s.name === shiftName)?.id || null;
 });
 
-
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
   fetchQcUsersAndShifts()
@@ -726,6 +733,14 @@ onMounted(() => {
       drawer.parentElement.style.width = '35%';
     }
   }, 0);
+
+  // wait until the vFormRef is ready
+  const waitUntilFormReady = setInterval(() => {
+    if (vFormRef.value && typeof vFormRef.value.getFormData === 'function') {
+      clearInterval(waitUntilFormReady)
+      startDirtyCheck()
+    }
+  }, 100)
 });
 
 // ✅ Clean up the interval when unmounted
@@ -786,6 +801,26 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateScrollBarHeight);
+});
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    ElMessageBox.confirm(
+        '请查看可能未保存的更改，是否确定要离开？',
+        '警告',
+        {
+          confirmButtonText: '离开',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+    ).then(() => {
+      next(); // 继续跳转
+    }).catch(() => {
+      next(false); // 取消跳转
+    });
+  } else {
+    next();
+  }
 });
 
 const handleDispatch = (data) => {
@@ -908,6 +943,7 @@ const confirmSubmission = async () => {
       console.log(response.data);
       ElMessage.success(translate('FormDisplay.formSubmitSuccess'))
       showResetConfirmation.value = true; // Show second popup after success
+      await resetDirty();
     } else {
       ElMessage.error(translate('FormDisplay.formSubmitError'))
     }
@@ -971,6 +1007,7 @@ watch(
           const templateJson = JSON.parse(response.data.data.form_template_json);
           formTitle.value = response.data.data.name
           vFormRef.value.setFormJson(templateJson); // Update the form JSON dynamically
+          initialFormSnapshot = JSON.stringify(await vFormRef.value.getFormData());
           await nextTick();
           enable_common_fields.value = true;
           // when usable is false it will disable the forms as well as the common fields

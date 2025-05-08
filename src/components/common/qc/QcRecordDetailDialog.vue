@@ -7,8 +7,22 @@
       @close="onClose"
   >
     <el-scrollbar max-height="500px">
+      <!-- Render uncategorized -->
+      <template v-if="groupedDetails.uncategorized && Object.keys(groupedDetails.uncategorized).length > 0">
+      <el-descriptions :title="translate('FormDataSummary.recordTable.groupUncategorized')" border style="margin-top: 10px; margin-bottom: 10px">
+          <el-descriptions-item
+              v-for="(value, key) in groupedDetails.uncategorized"
+              :key="key"
+              :label="key"
+          >
+            {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+
+      <!-- Render other grouped sections -->
       <template v-for="(fields, category) in groupedDetails" :key="category">
-        <div v-if="category === 'uncategorized'">
+        <div v-if="category !== 'uncategorized'">
           <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px">
             <el-descriptions-item
                 v-for="(value, key) in fields"
