@@ -49,6 +49,14 @@
         />
       </el-table-column>
 
+      <!-- 表单基础信息字段组 -->
+      <el-table-column :label="translate('FormDataSummary.recordTable.groupBasicInfo')" label-class-name="group-header">
+        <el-table-column prop="related_products" label="涉及产品" width="150" sortable />
+        <el-table-column prop="related_batches" label="涉及批次" width="150" sortable />
+        <el-table-column prop="related_inspectors" label="质检人员" width="150" sortable />
+        <el-table-column prop="related_shifts" label="所属班次" width="150" sortable />
+      </el-table-column>
+
       <el-table-column :label="translate('FormDataSummary.recordTable.actions')" fixed="right" width="120">
         <template #default="scope">
           <el-link type="primary" @click="$emit('view-details', scope.row)">
@@ -151,7 +159,9 @@
 
   watch(() => props.search, (val) => localSearch.value = val)
   watch(() => props.dateRange, (val) => localDateRange.value = val)
-
+  watch(localDateRange, (newVal, oldVal) => {
+    console.log("📆 Date range changed from", oldVal, "to", newVal)
+  })
   const handlePageChange = (page) => {
     currentPage.value = page
   }

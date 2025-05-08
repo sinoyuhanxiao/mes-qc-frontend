@@ -20,7 +20,7 @@
         <el-button type="success" style="margin-top: 0;" @click="exportChartReportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
         <el-button
             type="primary"
-            @click="openQcRecordsDialog(selectedForm, dateRange)"
+            @click="qcRecordsDialogVisible = true"
             style="margin-top: 0"
         >
           {{ translate('FormDataSummary.viewRecords') }}
@@ -38,17 +38,8 @@
     <!-- 质检记录弹窗组件 -->
     <QcRecordsDialog
         v-model:visible="qcRecordsDialogVisible"
-        :records="qcRecords"
-        :headers="displayedColumnHeaders"
-        :search="searchQuery"
-        :dateRange="dateRange"
-        :loading="loadingQcRecords"
-        :tableHeight="tableHeight"
         :selectedForm="selectedForm"
-        @delete="deleteRecord"
-        @export-excel="exportQcRecordsToExcel"
-        @update:dateRange="handleDateRangeChange"
-        @close="closeQcRecordsDialog"
+        :dateRange="dateRange"
     />
 
   </el-container>
@@ -58,12 +49,11 @@
 import FormTree from '@/components/form-manager/FormTree.vue';
 import PieChart from '@/components/charts/pie001.vue';
 import LineChart from '@/components/charts/line001.vue';
-import {extractWidgetDataWithCounts, fetchQcRecords, generateQcReport} from "@/services/qcReportingService";
+import {extractWidgetDataWithCounts, generateQcReport} from "@/services/qcReportingService";
 import {translate} from "@/utils/i18n";
 import QcCharts from "@/components/common/qc/QcCharts.vue";
-import { provide } from "vue";
+import {provide, ref, watch} from "vue";
 import {exportChartReportToPdf} from "@/utils/exportUtils";
-import {useQcRecordsDialog} from "@/composables/useQcRecordsDialog";
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue";
 
 export default {
@@ -75,32 +65,6 @@ export default {
     provide("lineChartRefs", lineChartRefs);
     provide("pieChartRefs", pieChartRefs);
 
-    const {
-      qcRecordsDialogVisible,
-      loadingQcRecords,
-      qcRecords,
-      reorderedColumnHeaders,
-      openDialog,
-      fetchRecordsData
-    } = useQcRecordsDialog();
-
-    const openQcRecordsDialog = async (selectedForm, dateRange) => {
-      if (selectedForm && dateRange && dateRange.length === 2) {
-        qcRecordsDialogVisible.value = true;
-        await openDialog(selectedForm.qcFormTemplateId, dateRange);
-        await fetchRecordsData(selectedForm.qcFormTemplateId, dateRange);
-      }
-    };
-
-    return {
-      lineChartRefs,
-      pieChartRefs,
-      qcRecordsDialogVisible,
-      loadingQcRecords,
-      qcRecords,
-      reorderedColumnHeaders,
-      openQcRecordsDialog
-    };
   },
   data() {
     return {
@@ -111,6 +75,7 @@ export default {
       pieChartRefs: [],
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
       loadingCharts: false,
+      qcRecordsDialogVisible: false,
       shortcuts: [
         {
           text: translate('FormDataSummary.shortcuts.thisWeek'),
@@ -145,13 +110,10 @@ export default {
           },
         },
       ],
-      searchQuery: "",
       selectedForm: null,
       pieChartWidgets: [],
       lineChartWidgets: [],
-      columnHeaders: [], // ✅ Also initialized as an empty array
-      currentPage: 1,
-      pageSize: 15,
+      columnHeaders: []
     };
   },
   mounted() {
@@ -186,12 +148,6 @@ export default {
       return headers;
     },
 
-    paginatedQcRecords() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      return this.filteredQcRecords.slice(start, end);
-    },
-
     columns() {
       // Filter out _id to avoid displaying it
       const filteredEntries = Object.entries(this.selectedDetails)
@@ -209,9 +165,6 @@ export default {
   watch: {
     qcRecordsDialogVisible(newVal) {
       this.refreshChartData();
-      // if (!newVal) {
-      //   this.dateRange = [this.getStartOfMonth(), this.getEndOfMonth()];
-      // }
     }
   },
   methods: {
@@ -318,56 +271,7 @@ export default {
         this.loadingCharts = false; // Stop loading indicator
       }
     },
-    async fetchQcRecordsData(formTemplateId, startDateTime, endDateTime) {
-      if (!formTemplateId) {
-        console.error("No formTemplateId selected");
-        return;
-      }
-
-      try {
-        const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
-        this.qcRecords = response.data;
-
-        // Ensure column headers remain in sync
-        if (Array.isArray(this.qcRecords) && this.qcRecords.length > 0) {
-          let headers = Object.keys(this.qcRecords[0]);
-
-          // Move `_id` to the last column and remove `created_by`
-          headers = headers.filter(header => header !== "_id" && header !== "created_by");
-
-          // Rename `created_at` to `提交时间`
-          headers = headers.map(header => (header === "created_at" ? "提交时间" : header));
-
-          headers.push("_id"); // Ensure `_id` is last
-          this.reorderedColumnHeaders = headers;
-
-          // Format `created_at` correctly
-          this.qcRecords = this.qcRecords.map(record => {
-            if (record.created_at) {
-              const localDate = new Date(record.created_at);
-              const formattedDate = localDate.toLocaleString("zh-CN", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: false,
-              }).replace(/\//g, "-");
-
-              record["提交时间"] = formattedDate;
-              delete record.created_at;
-            }
-            return record;
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching QC records:", error);
-      } finally {
-        this.loadingQcRecords = false;
-      }
-    }
-  },
+  }
 };
 </script>
 

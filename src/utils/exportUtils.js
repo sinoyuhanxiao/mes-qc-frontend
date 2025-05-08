@@ -1,13 +1,14 @@
 // exportUtils.js
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import callAddFont from "@/assets/simfang.js";
+import callAddFont from "@/assets/simfang.js"; // ✅ Regular Simfang font
 import callAddBoldFont from "@/assets/simfang-bold.js";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basicInfo, systemInfo, eSignature, translate }) {
     const doc = new jsPDF();
+    callAddFont.apply(doc);
     callAddBoldFont.apply(doc);
     doc.setFont("simfang", "bold");
 

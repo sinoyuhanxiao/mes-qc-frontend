@@ -8,7 +8,7 @@
   >
     <el-scrollbar max-height="500px">
       <template v-for="(fields, category) in groupedDetails" :key="category">
-        <div v-if="category !== 'uncategorized'">
+        <div v-if="category === 'uncategorized'">
           <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px">
             <el-descriptions-item
                 v-for="(value, key) in fields"
@@ -48,7 +48,7 @@
 
 <script setup>
   import { translate } from '@/utils/i18n'
-  defineProps({
+  const props = defineProps({
     visible: {
       type: Boolean, required: true
     },
@@ -64,6 +64,14 @@
     emit('close')
   }
   function exportSubmissionLogToPdf() {
-    emit('export')
+    emit('export', {
+      formLabel: props.selectedForm?.label || "-",
+      groupedDetails: props.groupedDetails,
+      basicInfo: props.basicInfo,
+      systemInfo: props.systemInfo,
+      eSignature: props.eSignature,
+      translate
+    });
   }
+
 </script>
