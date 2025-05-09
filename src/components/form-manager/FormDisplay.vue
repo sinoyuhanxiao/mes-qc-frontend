@@ -25,9 +25,14 @@
         </el-button>
       </template>
 
-      <el-button type="success" v-if="props.accessByTeam" @click="openQcRecordsDialog" style="margin-left: 10px">
-        {{ translate('FormDataSummary.viewRecords') }}
-      </el-button>
+<!--      <el-button type="success" v-if="props.accessByTeam" @click="openQcRecordsDialog" style="margin-left: 10px">-->
+<!--        {{ translate('FormDataSummary.viewRecords') }}-->
+<!--      </el-button>-->
+
+        <el-button type="primary" v-if="props.accessByTeam" @click="qcRecordsDialogVisible = true" style="margin-left: 10px">
+          {{ translate('FormDataSummary.viewRecords') }}
+        </el-button>
+
 
       </div>
 
@@ -389,19 +394,25 @@
 
   </el-drawer>
 
-  <QcRecordsTable
-      v-if="props.accessByTeam"
-      :visible="qcRecordsDialogVisible"
-      :loading="loadingQcRecords"
-      :form-label="props.currentForm?.label"
-      :paginated-qc-records="qcRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize)"
-      :displayed-column-headers="reorderedColumnHeaders"
-      :total="qcRecords.length"
+<!--  <QcRecordsTable-->
+<!--      v-if="props.accessByTeam"-->
+<!--      :visible="qcRecordsDialogVisible"-->
+<!--      :loading="loadingQcRecords"-->
+<!--      :form-label="props.currentForm?.label"-->
+<!--      :paginated-qc-records="qcRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize)"-->
+<!--      :displayed-column-headers="reorderedColumnHeaders"-->
+<!--      :total="qcRecords.length"-->
+<!--      v-model:visible="qcRecordsDialogVisible"-->
+<!--      :shortcuts="[]"-->
+<!--      :table-height="qcRecordsTableHeight"-->
+<!--      @close="qcRecordsDialogVisible = false"-->
+<!--      @page-change="currentPage = $event"-->
+<!--  />-->
+
+  <QcRecordsDialog
       v-model:visible="qcRecordsDialogVisible"
-      :shortcuts="[]"
-      :table-height="qcRecordsTableHeight"
-      @close="qcRecordsDialogVisible = false"
-      @page-change="currentPage = $event"
+      :selectedForm="props.currentForm"
+      :dateRange="[getStartOfMonth(), getEndOfMonth()]"
   />
 
 </template>
@@ -432,6 +443,7 @@ const editProduct = reactive({ id: null, name: '', code: '', description: '' });
 const editBatch = reactive({ id: null, code: '' });
 import { fetchUsers } from '@/services/userService'
 import { getAllShifts } from '@/services/shiftService'
+import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
@@ -502,6 +514,17 @@ const handleSignatureClear = () => {
 const updateTableHeight = () => {
   qcRecordsTableHeight.value = window.innerHeight - otherElementsHeight;
 };
+
+const getStartOfMonth = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+};
+
+const getEndOfMonth = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+};
+
 
 const generateBatchCode = () => {
   const today = dayjs().format('YYMMDD');
