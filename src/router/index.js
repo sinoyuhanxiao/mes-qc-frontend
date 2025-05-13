@@ -23,6 +23,7 @@ import PendingTasks from "@/views/TaskCenter/PendingTasks.vue";
 import ShiftManagement from "@/views/shiftManagement.vue";
 import FormAccessCalendar from "@/components/team-form-calendar/formAccessCalendar.vue";
 import AlarmRecords from "@/views/AlarmRecords.vue";
+import ApprovalDesigner from "@/views/ApprovalDesigner.vue";
 
 const routes = [
     {
@@ -151,6 +152,11 @@ const routes = [
         path: '/alarm-records',
         name: 'AlarmRecords',
         component: AlarmRecords,
+    },
+    {
+        path: '/approval-designer',
+        name: 'ApprovalDesigner',
+        component: ApprovalDesigner,
     },
 
 ];
