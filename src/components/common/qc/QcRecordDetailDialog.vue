@@ -1,48 +1,98 @@
 <template>
   <el-dialog
-      :title="`${selectedForm?.label} - ${translate('FormDataSummary.detailDialog.titleSuffix')}`"
       :model-value="visible"
       @update:modelValue="onClose"
       width="50%"
       @close="onClose"
   >
+    <template #header>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 20px">{{ selectedForm?.label }} - {{ translate('FormDataSummary.detailDialog.titleSuffix') }}</span>
+        <el-switch
+            v-model="showAlerts"
+            active-text="显示告警"
+            inactive-text="隐藏告警"
+            inline-prompt
+            size="large"
+            style="--el-switch-off-color: #989898; --el-switch-on-color: #409EFF;"
+        />
+      </div>
+    </template>
     <el-scrollbar max-height="500px">
       <!-- Render uncategorized -->
-      <template v-if="groupedDetails.uncategorized && Object.keys(groupedDetails.uncategorized).length > 0">
-      <el-descriptions :title="translate('FormDataSummary.recordTable.groupUncategorized')" border style="margin-top: 10px; margin-bottom: 10px">
-          <el-descriptions-item
-              v-for="(value, key) in groupedDetails.uncategorized"
-              :key="key"
-              :label="key"
-          >
-            {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
-          </el-descriptions-item>
-        </el-descriptions>
+      <template v-if="groupedDetails.uncategorized && Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info').length > 0">
+      <el-descriptions
+          :title="translate('FormDataSummary.recordTable.groupUncategorized')"
+          border
+          style="margin-top: 10px; margin-bottom: 10px"
+          :column="1"
+          :label-width="descriptionLabelWidth"
+      >
+        <el-descriptions-item
+            v-for="(value, key) in Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info')"
+            :key="key"
+            :label="key"
+        >
+          {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+        </el-descriptions-item>
+      </el-descriptions>
       </template>
 
       <!-- Render other grouped sections -->
       <template v-for="(fields, category) in groupedDetails" :key="category">
-        <div v-if="category !== 'uncategorized'">
-          <el-descriptions :title="category" border style="margin-top: 10px; margin-bottom: 10px">
-            <el-descriptions-item
-                v-for="(value, key) in fields"
-                :key="key"
-                :label="key"
-            >
-              {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
-            </el-descriptions-item>
+        <div v-if="category !== 'uncategorized' && category !== 'exceeded_info'">
+          <el-descriptions
+              :title="category"
+              border
+              style="margin-top: 10px; margin-bottom: 10px"
+              :column="showAlerts ? 2 : 1"
+              :label-width="descriptionLabelWidth"
+          >
+            <template v-for="(value, key) in fields" :key="key">
+              <el-descriptions-item :label="key">
+                <span>
+                  {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+                  <el-icon
+                      v-if="showAlerts && getAlertIcon(groupedDetails, key)"
+                      style="margin-left: 4px;"
+                      :style="getAlertStyle(groupedDetails, key)"
+                  >
+                    <component :is="getAlertIcon(groupedDetails, key)" />
+                  </el-icon>
+                </span>
+              </el-descriptions-item>
+              <el-descriptions-item
+                  v-if="showAlerts"
+                  label="合格范围"
+                  :key="key + '-range'"
+              >
+                {{ getAlertTooltip(groupedDetails, key, { removePrefix: true }) }}
+              </el-descriptions-item>
+            </template>
           </el-descriptions>
         </div>
       </template>
 
-      <el-descriptions :title="translate('FormDataSummary.recordTable.groupBasicInfo')" border style="margin-top: 10px">
+      <el-descriptions
+          :title="translate('FormDataSummary.recordTable.groupBasicInfo')"
+          :column="1"
+          border
+          style="margin-top: 10px"
+          :label-width="descriptionLabelWidth"
+      >
         <el-descriptions-item label="涉及产品">{{ basicInfo.涉及产品 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="涉及批次">{{ basicInfo.涉及批次 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="质检人员">{{ basicInfo.质检人员 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="所属班次">{{ basicInfo.所属班次 || " - " }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-descriptions :title="translate('FormDataSummary.recordTable.groupSystemInfo')" border style="margin-top: 10px">
+      <el-descriptions
+          :title="translate('FormDataSummary.recordTable.groupSystemInfo')"
+          :column="1"
+          border
+          style="margin-top: 10px"
+          :label-width="descriptionLabelWidth"
+      >
         <el-descriptions-item :label="translate('FormDataSummary.detailDialog.submitter')">{{ systemInfo.提交人 || " - " }}</el-descriptions-item>
         <el-descriptions-item :label="translate('FormDataSummary.detailDialog.submittedAt')">{{ systemInfo.提交时间 || " - " }}</el-descriptions-item>
       </el-descriptions>
@@ -62,6 +112,14 @@
 
 <script setup>
   import { translate } from '@/utils/i18n'
+  import { ref } from 'vue'
+  import { useAlertHighlight } from '@/composables/useAlertHighlight'
+
+  const showAlerts = ref(true)
+  const descriptionLabelWidth = '200px'
+  const rangeLabelWidth = '60px'
+  const { getAlertIcon, getAlertStyle, getAlertTooltip } = useAlertHighlight(showAlerts)
+
   const props = defineProps({
     visible: {
       type: Boolean, required: true
@@ -89,3 +147,6 @@
   }
 
 </script>
+
+<style scoped>
+</style>

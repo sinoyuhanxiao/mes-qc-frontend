@@ -688,6 +688,7 @@ export default {
         groupTitle: '质检提交信息',
         signatureTitle: '质检人签名：',
         tableHead: ['质检项目', '质检结果'],
+        tableHeadValidRange: ['质检项目', '质检结果', '合格范围'],
         fallback: ' - ',
         systemInfo: {
             submitter: '提交人',

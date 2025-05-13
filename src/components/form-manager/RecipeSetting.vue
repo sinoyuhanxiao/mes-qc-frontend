@@ -13,7 +13,7 @@
       <span class="border-anim right"></span>
       <span class="border-anim bottom"></span>
       <span class="border-anim left"></span>
-      <div class="row" style="justify-content: space-evenly">
+      <div v-if="!item.optionItems || item.optionItems.length === 0" class="row" style="justify-content: space-evenly">
         <div class="key-name">{{ item.label }}</div>
 
         <div class="input-group">
@@ -58,6 +58,19 @@
           </div>
         </div>
       </div>
+
+      <div v-else class="row" style="flex-direction: column">
+        <div class="key-name-valid-options">{{ item.label }}<span class="input-label-valid-options" style="margin-bottom: 8px;"> (检测合格选项)</span></div>
+        <el-checkbox-group v-model="item.valid_keys">
+          <el-checkbox
+              v-for="opt in item.optionItems"
+              :key="opt.value"
+              :label="opt.value"
+          >
+            {{ opt.label }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
     </el-card>
 
     <div style="margin-top: 20px; text-align: center;">
@@ -71,11 +84,11 @@
       v-model="showSaveConfirm"
       title="确认保存"
       width="30%"
-      :before-close="() => (showSaveConfirm.value = false)"
+      :before-close="handleDialogClose"
   >
     <span>是否确定保存当前配方警戒值？</span>
     <template #footer>
-      <el-button @click="showSaveConfirm.value = false">取消</el-button>
+      <el-button @click="handleDialogClose">取消</el-button>
       <el-button type="primary" @click="pendingSave && pendingSave()">确认</el-button>
     </template>
   </el-dialog>
@@ -137,13 +150,16 @@ const fetchData = async (templateId) => {
         controlLimits[key] = {
           upper_control_limit: data[key].upper_control_limit,
           lower_control_limit: data[key].lower_control_limit,
-          label: data[key].label || 'No Label'
+          label: data[key].label || 'No Label',
+          valid_keys: data[key].valid_keys || [], // initialize valid_keys
+          optionItems: data[key].optionItems || [] // initialize option items
         }
 
         // Copy for original comparison
         originalControlLimits[key] = {
           upper_control_limit: data[key].upper_control_limit,
-          lower_control_limit: data[key].lower_control_limit
+          lower_control_limit: data[key].lower_control_limit,
+          valid_keys: [...(data[key].valid_keys || [])]
         }
       })
     }
@@ -167,11 +183,19 @@ const saveSettings = () => {
       }
 
       for (const key in controlLimits) {
-        payload.control_limits[key] = {
-          upper_control_limit: controlLimits[key].upper_control_limit,
-          lower_control_limit: controlLimits[key].lower_control_limit,
-          label: controlLimits[key].label
+        const item = controlLimits[key]
+        const entry = { label: item.label }
+
+        // 有选项的字段保存 valid_keys
+        if (item.optionItems?.length) {
+          entry.valid_keys = item.valid_keys || []
+          entry.optionItems = item.optionItems || []
+        } else {
+          entry.upper_control_limit = item.upper_control_limit
+          entry.lower_control_limit = item.lower_control_limit
         }
+
+        payload.control_limits[key] = entry
       }
 
       await updateControlLimits(payload)
@@ -246,10 +270,17 @@ const resetToOriginal = () => {
     if (controlLimits[key]) {
       controlLimits[key].upper_control_limit = originalControlLimits[key].upper_control_limit
       controlLimits[key].lower_control_limit = originalControlLimits[key].lower_control_limit
+      controlLimits[key].valid_keys = [...(originalControlLimits[key].valid_keys || [])]
     }
   }
   ElMessage.success('已重置为原始值')
 }
+
+const handleDialogClose = (done) => {
+  showSaveConfirm.value = false;
+  done();
+}
+
 
 </script>
 
@@ -407,6 +438,13 @@ const resetToOriginal = () => {
   padding-top: 20px;
 }
 
+.key-name-valid-options {
+  width: 400px;
+  font-weight: 500;
+  font-size: 14px;
+  padding-top: 20px;
+}
+
 .input-group {
   display: flex;
   flex-direction: column;
@@ -418,6 +456,12 @@ const resetToOriginal = () => {
   color: #888;
   margin-bottom: 5px;
   margin-left:45px;
+}
+
+.input-label-valid-options {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 5px;
 }
 
 .input {
