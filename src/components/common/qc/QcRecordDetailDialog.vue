@@ -8,16 +8,16 @@
   >
     <el-scrollbar max-height="500px">
       <!-- Render uncategorized -->
-      <template v-if="groupedDetails.uncategorized && Object.keys(groupedDetails.uncategorized).length > 0">
+      <template v-if="groupedDetails.uncategorized && Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info').length > 0">
       <el-descriptions :title="translate('FormDataSummary.recordTable.groupUncategorized')" border style="margin-top: 10px; margin-bottom: 10px">
-          <el-descriptions-item
-              v-for="(value, key) in groupedDetails.uncategorized"
-              :key="key"
-              :label="key"
-          >
-            {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
-          </el-descriptions-item>
-        </el-descriptions>
+        <el-descriptions-item
+            v-for="(value, key) in Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info')"
+            :key="key"
+            :label="key"
+        >
+          {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+        </el-descriptions-item>
+      </el-descriptions>
       </template>
 
       <!-- Render other grouped sections -->

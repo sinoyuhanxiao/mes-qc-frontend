@@ -125,6 +125,49 @@
         </template>
       </el-table-column>
 
+      <el-table-column label="检测项" width="180">
+        <template #default="scope">
+          <div>{{ scope.row.inspection_item?.label || '-' }}</div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="检测值" prop="inspectionValue" width="180" sortable>
+        <template #default="scope">
+          <!-- 如果是数字类型 -->
+          <template v-if="scope.row.alert_type === 'number'">
+            <span>{{ scope.row.inspection_value }}</span>
+            <el-icon
+                v-if="typeof scope.row.inspection_value === 'number' && typeof scope.row.lower_control_limit === 'number' && scope.row.inspection_value < scope.row.lower_control_limit"
+                style="color: #2c4cb3; margin-left: 4px;"
+            >
+              <arrow-down-bold />
+            </el-icon>
+            <el-icon
+                v-else-if="typeof scope.row.inspection_value === 'number' && typeof scope.row.upper_control_limit === 'number' && scope.row.inspection_value > scope.row.upper_control_limit"
+                style="color: #f46666; margin-left: 4px;"
+            >
+              <arrow-up-bold />
+            </el-icon>
+          </template>
+
+          <!-- 如果是选项类型 -->
+          <template v-else-if="scope.row.alert_type === 'options'">
+            <span>{{ (scope.row.invalid_option_items_labels || []).join(', ') }}</span>
+          </template>
+
+          <!-- 其他 fallback -->
+          <template v-else>
+            <span>-</span>
+          </template>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="标准值范围" width="300">
+        <template #default="scope">
+          {{ scope.row.control_range }}
+        </template>
+      </el-table-column>
+
       <el-table-column label="质检表单" width="180">
         <template #default="scope">
           <el-link
@@ -137,38 +180,6 @@
             {{ scope.row.form_display }}
           </el-link>
           <span v-else>-</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="检测项" width="180">
-        <template #default="scope">
-          <div>{{ scope.row.inspection_item?.label || '-' }}</div>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="检测值" prop="inspectionValue" width="120" sortable>
-        <template #default="scope">
-          <span>{{ scope.row.inspection_value }}</span>
-          <!-- 下限处理 -->
-          <el-icon
-              v-if="typeof scope.row.inspection_value === 'number' && typeof scope.row.lower_control_limit === 'number' && scope.row.inspection_value < scope.row.lower_control_limit"
-              style="color: #2c4cb3; margin-left: 4px;"
-          >
-            <arrow-down-bold />
-          </el-icon>
-          <!-- 上限处理 -->
-          <el-icon
-              v-else-if="typeof scope.row.inspection_value === 'number' && typeof scope.row.upper_control_limit === 'number' && scope.row.inspection_value > scope.row.upper_control_limit"
-              style="color: #f46666; margin-left: 4px;"
-          >
-            <arrow-up-bold />
-          </el-icon>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="标准值范围" width="150">
-        <template #default="scope">
-          {{ scope.row.control_range }}
         </template>
       </el-table-column>
 
