@@ -5,6 +5,8 @@ import callAddFont from "@/assets/simfang.js"; // ✅ Regular Simfang font
 import callAddBoldFont from "@/assets/simfang-bold.js";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import {useAlertHighlight} from '@/composables/useAlertHighlight'
+const { getAlertTooltip, getAlertTextColor, getStyledValueWithIcon } = useAlertHighlight(true)
 
 export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basicInfo, systemInfo, eSignature, translate }) {
     const doc = new jsPDF();
@@ -23,12 +25,18 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
 
     // groupedDetails
     Object.entries(groupedDetails).forEach(([category, fields]) => {
+        if (category === 'exceeded_info') return;
         const tableData = Object.entries(fields)
-            .filter(([_, val]) => val !== undefined && val !== null && val !== "")
-            .map(([key, value]) => [
-                key,
-                Array.isArray(value) ? value.join(", ") : value || " - ",
-            ]);
+            .filter(([key, val]) =>
+                key !== 'exceeded_info' && val !== undefined && val !== null && val !== ""
+            )
+            .map(([key, value]) => {
+                const styledVal = getStyledValueWithIcon(value, groupedDetails.exceeded_info?.[key]);
+                const passedRange = groupedDetails.exceeded_info?.[key]
+                    ? getAlertTooltip(groupedDetails, key, { removePrefix: true })
+                    : "-";
+                return [key, styledVal, passedRange];
+            });
 
         if (tableData.length === 0) return;
 
@@ -42,11 +50,21 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
 
         autoTable(doc, {
             startY: y,
-            head: [translate('Export.tableHead')],
+            head: [translate('Export.tableHeadValidRange')],
             body: tableData,
             theme: "grid",
             styles: { font: "simfang", fontSize: 10 },
             headStyles: { font: "simfang", fontStyle: 'bold', fontSize: 12, fillColor: [0, 133, 164] },
+            didParseCell: function (data) {
+                if (data.section === 'body' && data.column.index === 1) {
+                    const key = data.row.raw[0];
+                    const color = getAlertTextColor(groupedDetails, key);
+                    if (color) {
+                        data.cell.styles.textColor = color;
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            }
         });
 
         y = doc.lastAutoTable.finalY + 10;

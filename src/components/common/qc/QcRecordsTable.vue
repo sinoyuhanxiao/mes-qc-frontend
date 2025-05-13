@@ -18,6 +18,7 @@
           active-text="显示告警"
           inactive-text="隐藏告警"
           class="ml-2 mr-2"
+          size="large"
           inline-prompt
           style="--el-switch-off-color: #989898; --el-switch-on-color: #409EFF; margin-right: 10px"
       />
@@ -57,11 +58,17 @@
             :width="150"
         >
           <template #default="scope">
-            <span :style="getAlertStyle(scope.row, header)">
+            <span :style="showAlerts && getAlertIcon(scope.row, header) ? { fontWeight: 'bold' } : {}">
               {{ Array.isArray(scope.row[header]) ? scope.row[header].join(', ') : scope.row[header] }}
-              <el-icon v-if="showAlerts && getAlertIcon(scope.row, header)" size="18px">
-                <component :is="getAlertIcon(scope.row, header)" />
-              </el-icon>
+              <el-tooltip
+                  v-if="showAlerts && getAlertIcon(scope.row, header)"
+                  :content="getAlertTooltip(scope.row, header)"
+                  placement="top"
+              >
+                <el-icon :style="getAlertStyle(scope.row, header)" size="18px">
+                  <component :is="getAlertIcon(scope.row, header)" />
+                </el-icon>
+              </el-tooltip>
             </span>
           </template>
         </el-table-column>
@@ -120,7 +127,7 @@
   const currentPage = ref(1)
   const pageSize = 15
   const showAlerts = ref(true)
-  const { getAlertStyle, getAlertIcon } = useAlertHighlight(showAlerts)
+  const { getAlertStyle, getAlertIcon, getAlertTooltip } = useAlertHighlight(showAlerts)
 
   const shortcuts = [
     {

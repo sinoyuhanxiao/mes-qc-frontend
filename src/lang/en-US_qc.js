@@ -689,6 +689,7 @@ export default {
         groupTitle: 'QC Submission Info',
         signatureTitle: 'Inspector Signature:',
         tableHead: ['QC Field', 'QC Result'],
+        tableHeadValidRange: ['QC Field', 'QC Result', 'Valid Range'],
         fallback: ' - ',
         systemInfo: {
             submitter: 'Submitter',
