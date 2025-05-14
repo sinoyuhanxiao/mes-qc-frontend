@@ -20,16 +20,26 @@
           设置警戒值
         </el-button>
 
-        <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
-          {{ translate('FormDisplay.quickDispatch') }}
+        <el-button type="primary" @click="openApprovalDialog">
+          编辑审批流
         </el-button>
+
+
+        <!--        <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">-->
+<!--          {{ translate('FormDisplay.quickDispatch') }}-->
+<!--        </el-button>-->
       </template>
 
 <!--      <el-button type="success" v-if="props.accessByTeam" @click="openQcRecordsDialog" style="margin-left: 10px">-->
 <!--        {{ translate('FormDataSummary.viewRecords') }}-->
 <!--      </el-button>-->
 
-        <el-button type="primary" v-if="props.accessByTeam" @click="qcRecordsDialogVisible = true" style="margin-left: 10px">
+        <el-button
+            type="primary"
+            v-if="props.accessByTeam"
+            @click="handleViewRecords"
+            style="margin-left: 10px"
+        >
           {{ translate('FormDataSummary.viewRecords') }}
         </el-button>
 
@@ -415,6 +425,21 @@
       :dateRange="[getStartOfMonth(), getEndOfMonth()]"
   />
 
+  <PasswordPrompt
+      v-model="showPasswordDialog"
+      :correct-password="'Sv@18388'"
+      @verified="openQcRecords"
+  />
+
+  <EditApprovalFlowDialog
+      v-if="selectedApprovalType"
+      :visible="showApprovalDialog"
+      :template-id="props.currentForm?.qcFormTemplateId"
+      :initial-approval-type="selectedApprovalType"
+      @update-success="handleApprovalUpdated"
+      @update:visible="val => showApprovalDialog = val"
+  />
+
 </template>
 
 <script setup>
@@ -432,11 +457,13 @@ import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
 import { insertFormData } from '@/services/qcFormDataService.js';
 import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
+import PasswordPrompt from '@/components/common/PasswordPrompt.vue';
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
 import QcRecordsTable from "@/components/tables/QcRecordsTable.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 import { windowMaskVisible } from '@/globals/mask'
+import { updateApprovalType } from '@/services/qcFormTemplateService.js';
 const showEditProductDialog = ref(false);
 const showEditBatchDialog = ref(false);
 const editProduct = reactive({ id: null, name: '', code: '', description: '' });
@@ -444,6 +471,7 @@ const editBatch = reactive({ id: null, code: '' });
 import { fetchUsers } from '@/services/userService'
 import { getAllShifts } from '@/services/shiftService'
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
+const showApprovalDialog = ref(false)
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
@@ -469,6 +497,7 @@ const reorderedColumnHeaders = ref([]);
 const loadingQcRecords = ref(true);
 const currentPage = ref(1);
 const pageSize = 15;
+const showPasswordDialog = ref(false);
 
 const qcUsers = ref([])
 const selectedQcUserIds = ref([]) // 存储选择的质检人员 ID
@@ -501,6 +530,7 @@ const showAddBatchDialog = ref(false);
 const newProduct = reactive({ name: '', code: '', description: '' });
 const newBatch = reactive({ code: '' });
 const autoGenerateBatchCode = ref(true);
+const selectedApprovalType = ref() // default fallback
 
 const handleSignatureSave = (data) => {
   signatureData.value = data; // Save the base64 image data here
@@ -510,6 +540,27 @@ const handleSignatureSave = (data) => {
 const handleSignatureClear = () => {
   signatureData.value = null; // Clear the preview when cleared from the pad
 };
+
+const handleViewRecords = () => {
+  if (userRole.id === 3) {
+    showPasswordDialog.value = true;
+  } else {
+    openQcRecords()
+  }
+};
+
+const handleApprovalUpdated = (newVal) => {
+  selectedApprovalType.value = newVal
+  ElMessage.success('审批流程已更新')
+}
+
+const openQcRecords = () => {
+  qcRecordsDialogVisible.value = true;
+};
+
+const openApprovalDialog = () => {
+  showApprovalDialog.value = true;
+}
 
 const updateTableHeight = () => {
   qcRecordsTableHeight.value = window.innerHeight - otherElementsHeight;
@@ -593,7 +644,11 @@ const switchDisplayed = ref(
     !route.params.qcFormTemplateId
 );
 
+const store = useStore();
+let userId = store.getters.getUser.id;
+const userRole = store.getters.getUser.role;
 import { useDirtyCheck } from '@/composables/useDirtyCheck.js'
+import EditApprovalFlowDialog from "@/components/approval-designer/EditApprovalFlowDialog.vue";
 const { isDirty, startDirtyCheck, resetDirty, stopDirtyCheck } = useDirtyCheck(vFormRef, emit)
 
 const cancelClear = () => {
@@ -791,9 +846,6 @@ const clearForm = () => {
 
 const previewState = ref(true)
 let formId = null
-
-const store = useStore();
-let userId = store.getters.getUser.id;
 
 // dynamic size:
 const scrollBarHeight = ref(`${window.innerHeight-140}px`);
@@ -1030,6 +1082,7 @@ watch(
           const templateJson = JSON.parse(response.data.data.form_template_json);
           formTitle.value = response.data.data.name
           vFormRef.value.setFormJson(templateJson); // Update the form JSON dynamically
+          selectedApprovalType.value = response.data.data.approval_type;
           initialFormSnapshot = JSON.stringify(await vFormRef.value.getFormData());
           await nextTick();
           enable_common_fields.value = true;

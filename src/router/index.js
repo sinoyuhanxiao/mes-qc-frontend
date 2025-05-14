@@ -24,6 +24,7 @@ import ShiftManagement from "@/views/shiftManagement.vue";
 import FormAccessCalendar from "@/components/team-form-calendar/formAccessCalendar.vue";
 import AlarmRecords from "@/views/AlarmRecords.vue";
 import ApprovalDesigner from "@/views/ApprovalDesigner.vue";
+import TestSetForm from "@/views/TestSetForm.vue";
 
 const routes = [
     {
@@ -157,6 +158,11 @@ const routes = [
         path: '/approval-designer',
         name: 'ApprovalDesigner',
         component: ApprovalDesigner,
+    },
+    {
+        path: '/test-set-form',
+        name: 'TestSetForm',
+        component: TestSetForm,
     },
 
 ];

@@ -20,3 +20,13 @@ export const fetchFormTemplate = (formTemplateId) => {
 export const createFormTemplateWithNodes = (payload) => {
     return api.post(`${BASE_URL}/create-with-nodes`, payload);
 };
+
+/**
+ * Update approval_type for a given form template
+ * @param {number} id - Template ID
+ * @param {string} approvalType - One of: flow_1, flow_2, flow_3, flow_4
+ * @returns {Promise} API response
+ */
+export const updateApprovalType = (id, approvalType) => {
+    return api.put(`${BASE_URL}/${id}`, { approval_type: approvalType });
+};
