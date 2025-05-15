@@ -12,9 +12,11 @@
         :dateRange="props.dateRange"
         :loading="localLoading"
         :tableHeight="tableHeight"
+        :qcFormTemplateId="props.selectedForm.qcFormTemplateId"
         @view-details="viewDetails"
         @delete="deleteRecord"
         @export-excel="exportRecordsToExcel"
+        @edit-record="editQcSubmissionRecord"
         @update:dateRange="handleDateRangeChange"
         @update:search="search = $event"
         @current-change="currentPage = $event"
@@ -46,6 +48,7 @@
       </el-button>
     </template>
   </el-dialog>
+
 </template>
 
 <script setup>
@@ -59,6 +62,10 @@ import {computed, nextTick, ref, watch} from "vue";
 import {exportQcRecordsToExcel, exportSubmissionLogToPdf} from "@/utils/exportUtils";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useQcRecordsDialog} from "@/composables/useQcRecordsDialog";
+import { getRawMongoDocument } from '@/services/qcTaskSubmissionLogsService'
+import FormEdit from '@/components/form-manager/FormEdit.vue'
+import {fetchFormTemplate} from "@/services/qcFormTemplateService";
+
 const {
   fetchRecordsData,
 } = useQcRecordsDialog();
@@ -232,6 +239,37 @@ async function viewDetails(row) {
 
   } catch (err) {
     console.error("Error fetching document details:", err);
+  }
+}
+
+async function editQcSubmissionRecord(row) {
+  try {
+    const createdAt = new Date(row['提交时间']);
+    const formattedCreatedAt = createdAt.toISOString();
+
+    // 获取原始 Mongo 数据
+    const response = await getRawMongoDocument(
+        row._id,
+        props.selectedForm.qcFormTemplateId,
+        formattedCreatedAt
+    );
+    const rawData = response.data;
+
+    // 获取表单结构
+    const templateRes = await fetchFormTemplate(props.selectedForm.qcFormTemplateId);
+    if (templateRes.status !== 200 || !templateRes.data?.data?.form_template_json) {
+      ElMessage.error("无法加载表单结构");
+      return;
+    }
+
+    const formTemplateJson = templateRes.data.data.form_template_json;
+
+    // 构造 URL 并打开新 Tab
+    const url = `/form-edit?templateId=${props.selectedForm.qcFormTemplateId}&submissionId=${row._id}&createdAt=${formattedCreatedAt}`;
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error('❌ Failed to fetch raw document for editing:', err);
+    ElMessage.error("加载原始数据失败");
   }
 }
 

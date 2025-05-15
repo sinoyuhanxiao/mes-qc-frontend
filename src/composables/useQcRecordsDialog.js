@@ -1,6 +1,7 @@
 // useQcRecordsDialog.js
 import { ref, nextTick } from "vue";
 import { fetchQcRecords } from "@/services/qcReportingService";
+import { fetchQcVersionsByGroupId } from "@/services/qcReportingService";
 
 export function useQcRecordsDialog() {
     const qcRecordsDialogVisible = ref(false);
@@ -50,6 +51,37 @@ export function useQcRecordsDialog() {
         }
     }
 
+    async function loadVersionGroupRecords(formTemplateId, versionGroupId) {
+        loadingQcRecords.value = true;
+
+        try {
+            const response = await fetchQcVersionsByGroupId(formTemplateId, versionGroupId);
+            const versionedRecords = response.data || [];
+
+            // Format date and labels like main records
+            return versionedRecords.map((r) => {
+                if (r.created_at) {
+                    r["提交时间"] = new Date(r.created_at).toLocaleString("zh-CN", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                    }).replace(/\//g, "-");
+                    delete r.created_at;
+                }
+                return r;
+            });
+        } catch (err) {
+            console.error("Fetch version group records error:", err);
+            return [];
+        } finally {
+            loadingQcRecords.value = false;
+        }
+    }
+
     const openDialog = async (formTemplateId, dateRange) => {
         qcRecordsDialogVisible.value = true;
         await nextTick();
@@ -83,5 +115,6 @@ export function useQcRecordsDialog() {
         reorderedColumnHeaders,
         openDialog,
         fetchRecordsData,
+        loadVersionGroupRecords
     };
 }

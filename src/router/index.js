@@ -25,6 +25,7 @@ import FormAccessCalendar from "@/components/team-form-calendar/formAccessCalend
 import AlarmRecords from "@/views/AlarmRecords.vue";
 import ApprovalDesigner from "@/views/ApprovalDesigner.vue";
 import TestSetForm from "@/views/TestSetForm.vue";
+import TestSocket from "@/views/TestSocket.vue";
 
 const routes = [
     {
@@ -164,6 +165,16 @@ const routes = [
         name: 'TestSetForm',
         component: TestSetForm,
     },
+    {
+        path: '/form-edit',
+        name: 'FormEdit',
+        component: () => import('@/components/form-manager/FormEdit.vue')
+    },
+    {
+        path: '/test-socket',
+        name: 'TestSocket',
+        component: TestSocket,
+    }
 
 ];
 

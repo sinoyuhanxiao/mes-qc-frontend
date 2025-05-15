@@ -460,7 +460,6 @@ import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
 import PasswordPrompt from '@/components/common/PasswordPrompt.vue';
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
-import QcRecordsTable from "@/components/tables/QcRecordsTable.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 import { windowMaskVisible } from '@/globals/mask'
 import { updateApprovalType } from '@/services/qcFormTemplateService.js';

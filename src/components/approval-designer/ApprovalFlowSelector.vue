@@ -3,10 +3,10 @@
     <el-form label-position="left" inline>
       <el-form-item label="审批流程" style="margin-bottom: 12px; margin-right: 20px">
         <el-select v-model="selectedFlow" placeholder="请选择审批流程" @change="onFlowChange" style="width: 300px">
-          <el-option label="1. 填报员填写并签字 -> 归档" value="flow_1" />
+          <el-option label="1. 填报员 -> 归档" value="flow_1" />
           <el-option label="2. 填报员 -> 班长签字 -> 归档" value="flow_2" />
           <el-option label="3. 填报员 -> 主管签字 -> 归档" value="flow_3" />
-          <el-option label="4. 填报员 -> 班长 -> 主管签字 -> 归档" value="flow_4" />
+          <el-option label="4. 填报员 -> 班长签字 -> 主管签字 -> 归档" value="flow_4" />
         </el-select>
       </el-form-item>
     </el-form>
