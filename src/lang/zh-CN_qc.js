@@ -172,6 +172,7 @@ export default {
         systemManagement: "系统管理",
         userManagement: "用户管理",
         teamManagement: "班组管理",
+        approvalCenter: "审批中心",
         shiftManagement: "班次管理",
         qualityManagement: "质量管理",
         formManagement: "表单管理",

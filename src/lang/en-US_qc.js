@@ -175,6 +175,7 @@ export default {
         shiftManagement: "Shift",
         qualityManagement: "Quality Management",
         formManagement: "Form Tree",
+        approvalCenter: "Approval Center",
         formDesigner: "Form Designer",
         formAccessCalendar: "Form Access Calendar",
         dispatchManagement: "Task Dispatch",

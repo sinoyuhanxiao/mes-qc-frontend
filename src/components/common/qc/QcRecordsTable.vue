@@ -119,7 +119,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, watch } from 'vue'
+import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
   import { translate } from '@/utils/i18n'
   import { useAlertHighlight } from '@/composables/useAlertHighlight'
   import { useQcRecordsDialog } from '@/composables/useQcRecordsDialog'
@@ -202,18 +202,23 @@
     return filteredRecords.value.slice(start, end)
   })
 
-  const displayedRecords = computed(() => {
-    const allChildIds = new Set(
-        props.records.flatMap(record => record.children?.map(child => child._id) || [])
-    )
+// 找到这段 computed 逻辑：
+const displayedRecords = computed(() => {
+  const allChildIds = new Set(
+      props.records.flatMap(record => record.children?.map(child => child._id) || [])
+  )
 
-    return paginatedRecords.value.map(record => {
-      if (record.version_group_id && !allChildIds.has(record._id)) {
-        return { ...record, hasChildren: true }
-      }
-      return record
-    })
+  return paginatedRecords.value.map(record => {
+    if (
+        record.version_group_id &&
+        !allChildIds.has(record._id)
+    ) {
+      return { ...record, hasChildren: true }
+    }
+    return record
   })
+})
+
 
   watch(() => props.search, (val) => localSearch.value = val)
   watch(() => props.dateRange, (val) => localDateRange.value = val)
@@ -257,6 +262,18 @@
     return expandedRows.value.has(row._id) ? 'expanded-highlight' : ''
   }
 
+  onMounted(() => {
+    window.refreshQcRecordsTableAfterEditRecord = () => {
+      console.log("🔄 refreshing from child edit window");
+      emit('update:dateRange', [...localDateRange.value]) // ⬅️ 触发刷新
+    }
+  })
+
+  onBeforeUnmount(() => {
+    delete window.refreshQcRecordsTableAfterEditRecord
+  })
+
+
 </script>
 
 <style scoped>
@@ -277,6 +294,8 @@
   ::v-deep(.el-table__fixed-left .el-table__row.expanded-highlight td),
   ::v-deep(.el-table__fixed-right .el-table__row.expanded-highlight td) {
     background-color: #e0f3ff !important;
-    border: 1px solid grey !important;
+    box-shadow:
+      inset 0 -0.5px 0 rgba(128, 128, 128, 0.91),  /* bottom */
+      inset -0.5px 0 0 rgba(128, 128, 128, 0.91);  /* left */
   }
 </style>

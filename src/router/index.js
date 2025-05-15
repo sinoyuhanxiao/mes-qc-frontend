@@ -26,6 +26,8 @@ import AlarmRecords from "@/views/AlarmRecords.vue";
 import ApprovalDesigner from "@/views/ApprovalDesigner.vue";
 import TestSetForm from "@/views/TestSetForm.vue";
 import TestSocket from "@/views/TestSocket.vue";
+import Chat from "@/views/Chat.vue";
+import ApprovalInfo from "@/views/ApprovalInfo.vue";
 
 const routes = [
     {
@@ -174,6 +176,16 @@ const routes = [
         path: '/test-socket',
         name: 'TestSocket',
         component: TestSocket,
+    },
+    {
+        path: '/chat',
+        name: 'Chat',
+        component: Chat,
+    },
+    {
+        path: '/approval-info',
+        name: 'ApprovalInfo',
+        component: ApprovalInfo,
     }
 
 ];
@@ -185,29 +197,33 @@ const router = createRouter({
 
 // Global navigation guard to restrict routes based on user role
 router.beforeEach((to, from, next) => {
-    const userRole = store.state.user.role.id;
-    console.log('[Router] userRole:', userRole);
+    const user = store.state.user;
+    const userRole = user?.role?.id || 0;
+    const isLoggedIn = !!user.username && userRole !== 0;
 
     if (to.path === '/LoginPage') {
-        next();
-    } else if (userRole === 0) {
+        next(); // 登录页允许访问
+    } else if (!isLoggedIn) {
+        // 如果未登录，跳转到登录页
         next('/LoginPage');
-    } else if (userRole === 3 && [
-        '/form-designer',
-        '/user-management',
-        '/team-management',
-        '/quality-form-management',
-        '/form-data-summary',
-        '/task-assignment',
-        '/instrument-management',
-        '/sampling-location-management',
-        '/test-subject-management'
-    ].includes(to.path)) {
+    } else if (
+        userRole === 3 &&
+        [
+            '/form-designer',
+            '/user-management',
+            '/team-management',
+            '/quality-form-management',
+            '/form-data-summary',
+            '/task-assignment',
+            '/instrument-management',
+            '/sampling-location-management',
+            '/test-subject-management'
+        ].includes(to.path)
+    ) {
         next('/task-center-dashboard');
     } else {
-        next();
+        next(); // 其他情况允许访问
     }
 });
-
 
 export default router;

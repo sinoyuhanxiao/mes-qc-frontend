@@ -112,6 +112,10 @@
               <el-icon><Document /></el-icon>
               <span>{{ translate('navigationMenu.pendingTasks') }}</span>
             </el-menu-item>
+            <el-menu-item index="/approval-info">
+              <el-icon><Edit /></el-icon>
+              <span>{{ translate('navigationMenu.approvalCenter')}}</span>
+            </el-menu-item>
             <el-menu-item index="/current-tasks">
               <el-icon><Document /></el-icon>
               <span>{{ translate('navigationMenu.todayTasks') }}</span>

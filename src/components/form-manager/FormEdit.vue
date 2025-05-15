@@ -98,7 +98,7 @@ const handleSubmit = async () => {
         .map(item => item.key);
 
     if (changedKeys.length === 0) {
-      await ElMessageBox.alert('表单未发生任何修改, 确认提交？', '提示', {type: 'info'});
+      await ElMessageBox.alert('表单未发生任何修改。', '提示', {type: 'info'});
       return;
     }
 
@@ -185,6 +185,9 @@ const handleSignatureSave = async (data) => {
 
     await ElMessageBox.alert('修改已成功提交', '成功', {type: 'success'});
     window.close();
+    if (window.opener?.refreshQcRecordsTableAfterEditRecord) {
+      window.opener.refreshQcRecordsTableAfterEditRecord()
+    }
   } catch (error) {
     console.error('❌ 提交编辑版本失败:', error);
     await ElMessageBox.alert('提交失败，请稍后重试', '错误', {type: 'error'});

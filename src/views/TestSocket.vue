@@ -52,7 +52,7 @@ const connectSocket = () => {
       connected.value = true
       console.log("✅ WebSocket connected")
 
-      stompClient.subscribe("/topic/workorders", (message) => {
+      stompClient.subscribe("/topic/locations", (message) => {
         const payload = JSON.parse(message.body)
         broadcastMessages.value.push(JSON.stringify(payload))
       })
