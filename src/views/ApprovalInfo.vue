@@ -109,7 +109,15 @@
       <el-table-column label="操作" fixed="right" width="150">
         <template #default="scope">
           <el-button size="small" type="primary" @click="viewDetails(scope.row)" style="margin-top: 0">查看</el-button>
-          <el-button size="small" type="success" @click="viewDetails(scope.row)" style="margin-top: 0">批准</el-button>
+          <el-button
+              size="small"
+              type="success"
+              :disabled="shouldDisableApprove(scope.row)"
+              @click="viewDetails(scope.row)"
+              style="margin-top: 0"
+          >
+            批准
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -127,6 +135,12 @@
         :page-sizes="[10, 20, 50]"
         background
     />
+
+    <ApprovalDetailDialog
+        v-if="showApprovalDetailDialog"
+        v-model:visible="showApprovalDetailDialog"
+        :submission-id="selectedSubmissionId"
+    />
   </div>
 </template>
 
@@ -137,6 +151,7 @@ import {FLOW_TYPE_LABELS} from "@/utils/constants/flowTypes";
 import { getStepsFromState } from '@/utils/helpers/approvalStepHelper';
 import { RefreshRight } from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
+import ApprovalDetailDialog from '@/components/approval-designer/ApprovalDetailDialog.vue'
 
 import {
   APPROVAL_STATE_LABELS,
@@ -162,6 +177,7 @@ export default {
     }
   },
   components: {
+    ApprovalDetailDialog,
     RefreshRight
   },
   data() {
@@ -182,7 +198,9 @@ export default {
         template_name: '',
         dateRange: []
       },
-      tableHeight: window.innerHeight - 180
+      tableHeight: window.innerHeight - 180,
+      showApprovalDetailDialog: false,
+      selectedSubmissionId: null,
     };
   },
   methods: {
@@ -247,18 +265,34 @@ export default {
       this.fetchAssignments(this.pagination.currentPage - 1, newSize);
     },
     viewDetails(row) {
-      this.$message.info(`查看表单：${row.qc_form_template_name}`);
+      this.selectedSubmissionId = row.submission_id || row.id; // 后期确认字段
+      this.showApprovalDetailDialog = true;
     },
     updateTableHeight() {
       this.tableHeight = window.innerHeight - 200;
+    },
+    shouldDisableApprove(row) {
+      return (
+          (this.userRoleId === 1 && row.state === 'pending_leader') ||
+          (this.userRoleId === 3 && row.state === 'pending_supervisor')
+      );
     }
   },
   mounted() {
     this.userRoleId = this.roleId
     console.log('✅ 当前登录用户的角色ID:', this.userRoleId)
-    this.fetchAssignments();
-    window.addEventListener('resize', this.updateTableHeight);
-    this.updateTableHeight();
+
+    // 根据角色自动设置默认审核状态
+    if (this.userRoleId === 1) {
+      this.filters.state = 'pending_supervisor'
+    } else if (this.userRoleId === 3) {
+      this.filters.state = 'pending_leader'
+    }
+
+    // 自动应用筛选
+    this.fetchAssignments()
+    window.addEventListener('resize', this.updateTableHeight)
+    this.updateTableHeight()
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.updateTableHeight);
