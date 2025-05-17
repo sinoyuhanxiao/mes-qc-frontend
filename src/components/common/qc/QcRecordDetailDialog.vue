@@ -20,7 +20,7 @@
     </template>
     <el-scrollbar max-height="500px">
       <!-- Render uncategorized -->
-      <template v-if="groupedDetails.uncategorized && Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info').length > 0">
+      <template v-if="groupedDetails.uncategorized && Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info' && k !== 'approval_info').length > 0">
       <el-descriptions
           :title="translate('FormDataSummary.recordTable.groupUncategorized')"
           border

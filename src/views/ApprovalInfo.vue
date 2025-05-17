@@ -140,6 +140,10 @@
         v-if="showApprovalDetailDialog"
         v-model:visible="showApprovalDetailDialog"
         :submission-id="selectedSubmissionId"
+        :qc-form-template-name="selectedQcFormTemplateName"
+        :qc-form-template-id="selectedQcFormTemplateId"
+        :collection-name="selectedCollectionName"
+        :records="table.assignments"
     />
   </div>
 </template>
@@ -201,6 +205,9 @@ export default {
       tableHeight: window.innerHeight - 180,
       showApprovalDetailDialog: false,
       selectedSubmissionId: null,
+      selectedCollectionName: null,
+      selectedQcFormTemplateName: '',
+      selectedQcFormTemplateId: ''
     };
   },
   methods: {
@@ -244,6 +251,12 @@ export default {
     getSteps(row) {
       return getStepsFromState(row.approval_type, row.state);
     },
+    getCollectionNameFromRow(row) {
+      const createdAt = new Date(row.created_at);
+      const year = createdAt.getFullYear();
+      const month = (createdAt.getMonth() + 1).toString().padStart(2, '0');
+      return `form_template_${row.qc_form_template_id}_${year}${month}`;
+    },
     applyFilters() {
       this.fetchAssignments(0, this.pagination.pageSize); // 重新分页从第一页加载
     },
@@ -265,7 +278,10 @@ export default {
       this.fetchAssignments(this.pagination.currentPage - 1, newSize);
     },
     viewDetails(row) {
-      this.selectedSubmissionId = row.submission_id || row.id; // 后期确认字段
+      this.selectedSubmissionId = row.submission_id || row.id;
+      this.selectedCollectionName = this.getCollectionNameFromRow(row); //
+      this.selectedQcFormTemplateName = row.qc_form_template_name;
+      this.selectedQcFormTemplateId = row.qc_form_template_id;
       this.showApprovalDetailDialog = true;
     },
     updateTableHeight() {

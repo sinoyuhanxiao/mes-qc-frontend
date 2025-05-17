@@ -9,7 +9,7 @@
           style="width: 300px; margin-right: 500px"
       />
 
-      <el-button type="success" style="margin-right: 10px; margin-bottom: 10px" @click="$emit('export-excel')">
+      <el-button v-if="!props.fromApprovalPage" type="success" style="margin-right: 10px; margin-bottom: 10px" @click="$emit('export-excel')">
         {{ translate('FormDataSummary.recordTable.exportExcel') }}
       </el-button>
 
@@ -24,6 +24,7 @@
       />
 
       <el-date-picker
+          v-if="!props.fromApprovalPage"
           v-model="localDateRange"
           type="datetimerange"
           :shortcuts="shortcuts"
@@ -49,9 +50,23 @@
         v-loading="loading"
     >
       <el-table-column :label="translate('FormDataSummary.recordTable.groupSystemInfo')" label-class-name="group-header" fixed class-name="section-border-right">
+        <el-table-column
+            v-if="props.fromApprovalPage"
+            prop="版本类型"
+            label="版本"
+            width="110"
+        >
+          <template #default="scope">
+            <span :style="{
+              fontWeight: 'bold',
+              color: scope.row._id === latestRecordId ? '#1677ff' : '#606266'
+            }">
+              {{ scope.row._id === latestRecordId ? '当前版本' : '历史版本' }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="提交人" :label="translate('FormDataSummary.recordTable.submitter')" fixed="left" width="150" sortable />
         <el-table-column prop="提交时间" :label="translate('FormDataSummary.recordTable.submittedAt')" fixed="left" width="180" sortable />
-        <el-table-column prop="_id" :label="translate('FormDataSummary.recordTable.submissionId')" fixed="left" width="220" sortable />
       </el-table-column>
 
       <el-table-column :label="translate('FormDataSummary.recordTable.groupQcDetails')" label-class-name="group-header" class-name="section-border-right">
@@ -86,15 +101,16 @@
         <el-table-column prop="related_batches" label="涉及批次" width="150" sortable />
         <el-table-column prop="related_inspectors" label="质检人员" width="150" sortable />
         <el-table-column prop="related_shifts" label="所属班次" width="150" sortable />
+        <el-table-column prop="_id" :label="translate('FormDataSummary.recordTable.submissionId')" fixed="left" width="220" sortable />
       </el-table-column>
 
-      <el-table-column :label="translate('FormDataSummary.recordTable.actions')" fixed="right" width="180">
+      <el-table-column :label="translate('FormDataSummary.recordTable.actions')" fixed="right" :width="props.fromApprovalPage ? 100 : 180">
         <template #default="scope">
           <el-link type="success" @click="$emit('view-details', scope.row)">
             {{ translate('FormDataSummary.recordTable.view') }}
           </el-link>
           <!-- 仅当为顶层版本才显示 编辑 和 删除 -->
-          <template v-if="!scope.row.version_group_id || scope.row.hasChildren">
+          <template v-if="!props.fromApprovalPage && (!scope.row.version_group_id || scope.row.hasChildren)">
             <el-link type="primary" style="margin-left: 10px" @click="$emit('edit-record', scope.row)">
               {{ translate('common.table.editButton') }}
             </el-link>
@@ -119,12 +135,18 @@
 </template>
 
 <script setup>
-import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
+  import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
   import { translate } from '@/utils/i18n'
   import { useAlertHighlight } from '@/composables/useAlertHighlight'
   import { useQcRecordsDialog } from '@/composables/useQcRecordsDialog'
 
   const { loadVersionGroupRecords } = useQcRecordsDialog()
+
+  const latestRecordId = computed(() => {
+    if (!props.fromApprovalPage || !props.records?.length) return null
+    return [...props.records]
+        .sort((a, b) => new Date(b['提交时间']) - new Date(a['提交时间']))[0]?._id
+  })
 
   const props = defineProps({
     records: Array,
@@ -133,7 +155,8 @@ import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
     dateRange: Array,
     loading: Boolean,
     tableHeight: Number,
-    qcFormTemplateId: Number
+    qcFormTemplateId: Number,
+    fromApprovalPage: Boolean
   })
 
   const emit = defineEmits(['view-details', 'delete', 'edit-record', 'export-excel', 'update:dateRange'])
@@ -258,9 +281,22 @@ const displayedRecords = computed(() => {
     }
   }
 
-  const getRowClass = ({ row }) => {
-    return expandedRows.value.has(row._id) ? 'expanded-highlight' : ''
+const getRowClass = ({ row, rowIndex }) => {
+  let classes = []
+
+  // 当前展开行高亮
+  if (expandedRows.value.has(row._id)) {
+    classes.push('expanded-highlight')
   }
+
+  // 如果来自审批页面，首行添加主色背景
+  if (props.fromApprovalPage && row._id === latestRecordId.value) {
+    classes.push('primary-version-row')
+  }
+
+  return classes.join(' ')
+}
+
 
   onMounted(() => {
     window.refreshQcRecordsTableAfterEditRecord = () => {
@@ -297,5 +333,9 @@ const displayedRecords = computed(() => {
     box-shadow:
       inset 0 -0.5px 0 rgba(128, 128, 128, 0.91),  /* bottom */
       inset -0.5px 0 0 rgba(128, 128, 128, 0.91);  /* left */
+  }
+
+  ::v-deep(.el-table__row.primary-version-row td) {
+    background-color: #def0fb !important;
   }
 </style>
