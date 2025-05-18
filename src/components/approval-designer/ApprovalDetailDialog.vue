@@ -39,13 +39,57 @@
       <!-- ▶ 审批记录 -->
       <section class="section-block">
         <h3>审批记录</h3>
-        <el-table :data="hardcodedApprovalRecords" border style="width: 100%">
+        <el-table :data="filteredApprovalRecords" border style="width: 100%">
           <el-table-column prop="user_name" label="审批人" width="150" />
-          <el-table-column prop="role" label="用户角色" width="120" />
-          <el-table-column prop="status" label="审批状态" width="120" />
-          <el-table-column prop="timestamp" label="审批时间" width="200" />
+
+          <el-table-column label="角色" width="120">
+            <template #default="scope">
+              <el-tag
+                  :type="{
+                    'submitter': 'success',
+                    'leader': 'primary',
+                    'supervisor': 'warning'
+                  }[scope.row.role]"
+              >
+                {{
+                  {
+                    'submitter': '填报员',
+                    'leader': '班长',
+                    'supervisor': '主管'
+                  }[scope.row.role] || scope.row.role
+                }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="审批状态" width="120">
+            <template #default="scope">
+              {{
+                {
+                  'completed': '已完成',
+                  'pending': '待操作',
+                  'not_started': '未开始'
+                }[scope.row.status] || scope.row.status
+              }}
+            </template>
+          </el-table-column>
+
+          <el-table-column label="审批时间" width="200">
+            <template #default="scope">
+              {{ formatDate(scope.row.timestamp) }}
+            </template>
+          </el-table-column>
+
           <el-table-column prop="comments" label="审批意见" />
-          <el-table-column prop="suggest_retest" label="复检建议" width="100" />
+
+          <el-table-column label="需要复检" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.suggest_retest ? 'danger' : 'info'">
+                {{ scope.row.suggest_retest ? '是' : '否' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
           <el-table-column label="审批人签字" width="180">
             <template #default="scope">
               <img
@@ -57,13 +101,12 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-
         </el-table>
       </section>
 
-      <!-- ▶ 复检建议 -->
+      <!-- ▶ 需要复检 -->
       <section class="section-block">
-        <h3>复检建议</h3>
+        <h3>需要复检？</h3>
         <el-switch
             v-model="suggestRetest"
             active-text="是"
@@ -118,13 +161,15 @@
   <SignaturePadComponent
       v-if="showSignaturePad"
       :visible="showSignaturePad"
-      @save="handleSignatureSave"
+      @save="handleSignatureSaveAndApprove"
       @close="handleSignatureClose"
   />
 
 </template>
 
 <script setup>
+import { submitApprovalAction } from '@/services/approval/approvalService';
+import { useStore } from 'vuex';
 import {ref, defineProps, watch, computed} from 'vue'
 import QcRecordsTable from '@/components/common/qc/QcRecordsTable.vue'
 import { getVersionHistory } from '@/services/approval/approvalService'
@@ -134,7 +179,7 @@ import { getUserById } from '@/services/userService'
 import { parseFormDocument } from '@/utils/formUtils'
 import {getMyDocument} from "@/services/qcTaskSubmissionLogsService";
 import SignaturePadComponent from '@/components/form-manager/SignaturePad.vue';
-
+import { getApprovalInfo } from '@/services/approval/approvalService'
 
 const props = defineProps({
   visible: Boolean,
@@ -180,25 +225,27 @@ const suggestRetest = ref(false);
 // Signature
 const showSignaturePad = ref(false);
 
+// Approval History
+const approvalRecords = ref([])
+const filteredApprovalRecords = computed(() =>
+    approvalRecords.value.filter((r) =>
+        r.role !== 'submitter' &&
+        r.role !== 'archive' &&
+        r.status === 'completed'
+    )
+);
 
-const hardcodedApprovalRecords = ref([
-  {
-    role: 'submitter',
-    user_name: '张三',
-    status: 'completed',
-    timestamp: '2025-05-15 08:29:32',
-    comments: '数据正常',
-    suggest_retest: '否'
-  },
-  {
-    role: 'leader',
-    user_name: '李四',
-    status: 'pending',
-    timestamp: '',
-    comments: '',
-    suggest_retest: ''
-  }
-])
+// approval action
+const store = useStore();
+const user = store.getters.getUser;
+const approverId = user?.id;
+
+// 🔽 Determine approver role string based on user's role ID
+const approverRole = computed(() => {
+  if (user?.role?.id === 1) return 'supervisor';
+  if (user?.role?.id === 3) return 'leader';
+  return null;
+});
 
 const handleClose = () => {
   emit('update:visible', false)
@@ -213,15 +260,6 @@ const exportToPdf = () => {
 }
 
 // signature handler
-
-function handleSignatureSave(signatureData) {
-  console.log('签名数据 Base64:', signatureData);
-
-  // TODO: 可以在这里调用后端 API，保存签名记录：
-  // await saveApprovalSignature(props.submissionId, signatureData)
-
-  showSignaturePad.value = false;
-}
 
 function handleSignatureClose() {
   showSignaturePad.value = false;
@@ -300,6 +338,37 @@ async function viewDetails(row) {
     console.error("Error fetching document details:", err);
   }
 }
+
+async function handleSignatureSaveAndApprove(signatureData) {
+  try {
+    await submitApprovalAction({
+      submissionId: props.submissionId,
+      collectionName: props.collectionName,
+      approverId,
+      role: approverRole.value,
+      comment: comment.value,
+      suggestRetest: suggestRetest.value,
+      eSignature: signatureData
+    });
+
+    showSignaturePad.value = false;
+    emit('update:visible', false); // Close the dialog
+    emit('approved');              // Notify parent to refresh table
+  } catch (err) {
+    console.error('❌ 审批失败:', err);
+  }
+}
+
+watch(() => props.submissionId, async (newId) => {
+  if (!newId || !props.collectionName) return
+  try {
+    const res = await getApprovalInfo(newId, props.collectionName)
+    approvalRecords.value = res.data.data || []
+  } catch (err) {
+    console.error("获取审批记录失败", err)
+    approvalRecords.value = []
+  }
+}, { immediate: true })
 
 watch(() => props.submissionId, async (newId) => {
   if (!newId) return
