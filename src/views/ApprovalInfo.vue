@@ -38,7 +38,6 @@
           placeholder="质检表单名称"
           clearable
           style="width: 200px; margin-bottom: 10px"
-          @keyup.enter.native="applyFilters"
       />
 
       <el-date-picker
@@ -51,7 +50,7 @@
           style="width: 280px;"
       />
 
-      <el-button type="primary" @click="applyFilters" style="margin-top: 0;">搜索</el-button>
+<!--      <el-button type="primary" @click="applyFilters" style="margin-top: 0;">搜索</el-button>-->
       <el-button @click="resetFilters" style="margin-top: 0; margin-left: 0" type="warning">重置</el-button>
     </div>
 
@@ -108,16 +107,24 @@
 
       <el-table-column label="操作" fixed="right" width="150">
         <template #default="scope">
-          <el-button size="small" type="primary" @click="viewDetails(scope.row)" style="margin-top: 0">查看</el-button>
-          <el-button
-              size="small"
-              type="success"
-              :disabled="shouldDisableApprove(scope.row)"
-              @click="viewDetails(scope.row)"
-              style="margin-top: 0"
-          >
-            批准
-          </el-button>
+          <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+            <el-button
+                size="small"
+                type="primary"
+                @click="viewDetails(scope.row)"
+            >
+              查看
+            </el-button>
+            <!--          <el-button-->
+            <!--              size="small"-->
+            <!--              type="success"-->
+            <!--              :disabled="shouldDisableApprove(scope.row)"-->
+            <!--              @click="viewDetails(scope.row)"-->
+            <!--              style="margin-top: 0"-->
+            <!--          >-->
+            <!--            批准-->
+            <!--          </el-button>-->
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -144,7 +151,12 @@
         :qc-form-template-id="selectedQcFormTemplateId"
         :collection-name="selectedCollectionName"
         :records="table.assignments"
+        :approval-type="selectedApprovalType"
+        :approval-state="selectedApprovalState"
+        :can-approve="!shouldDisableApprove({ state: selectedApprovalState })"
+        @approved="refreshAssignments"
     />
+
   </div>
 </template>
 
@@ -156,6 +168,7 @@ import { getStepsFromState } from '@/utils/helpers/approvalStepHelper';
 import { RefreshRight } from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
 import ApprovalDetailDialog from '@/components/approval-designer/ApprovalDetailDialog.vue'
+import { debounce } from 'lodash';
 
 import {
   APPROVAL_STATE_LABELS,
@@ -207,7 +220,9 @@ export default {
       selectedSubmissionId: null,
       selectedCollectionName: null,
       selectedQcFormTemplateName: '',
-      selectedQcFormTemplateId: ''
+      selectedQcFormTemplateId: '',
+      selectedApprovalType: '',
+      selectedApprovalState: ''
     };
   },
   methods: {
@@ -279,9 +294,11 @@ export default {
     },
     viewDetails(row) {
       this.selectedSubmissionId = row.submission_id || row.id;
-      this.selectedCollectionName = this.getCollectionNameFromRow(row); //
+      this.selectedCollectionName = this.getCollectionNameFromRow(row);
       this.selectedQcFormTemplateName = row.qc_form_template_name;
       this.selectedQcFormTemplateId = row.qc_form_template_id;
+      this.selectedApprovalType = row.approval_type;
+      this.selectedApprovalState = row.state;
       this.showApprovalDetailDialog = true;
     },
     updateTableHeight() {
@@ -292,6 +309,28 @@ export default {
           (this.userRoleId === 1 && row.state === 'pending_leader') ||
           (this.userRoleId === 3 && row.state === 'pending_supervisor')
       );
+    },
+    debouncedApplyFilters: debounce(function () {
+      this.table.loading = true;
+      this.applyFilters();
+      setTimeout(() => {
+        this.table.loading = false;
+      }, 500);
+    }, 300),
+  },
+  watch: {
+    'filters.state': {
+      handler: 'debouncedApplyFilters'
+    },
+    'filters.approval_type': {
+      handler: 'debouncedApplyFilters'
+    },
+    'filters.template_name': {
+      handler: 'debouncedApplyFilters'
+    },
+    'filters.dateRange': {
+      handler: 'debouncedApplyFilters',
+      deep: true
     }
   },
   mounted() {

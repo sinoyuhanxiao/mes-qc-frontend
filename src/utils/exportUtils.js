@@ -10,6 +10,7 @@ const { getAlertTooltip, getAlertTextColor, getStyledValueWithIcon } = useAlertH
 
 export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basicInfo, systemInfo, eSignature, translate }) {
     const doc = new jsPDF();
+    const excludedKeys = ['e-signature', 'exceeded_info', 'approval_info', 'version_group_id', 'version'];
     callAddFont.apply(doc);
     callAddBoldFont.apply(doc);
     doc.setFont("simfang", "bold");
@@ -26,9 +27,10 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
     // groupedDetails
     Object.entries(groupedDetails).forEach(([category, fields]) => {
         if (category === 'exceeded_info') return;
+
         const tableData = Object.entries(fields)
             .filter(([key, val]) =>
-                key !== 'exceeded_info' && val !== undefined && val !== null && val !== ""
+                !excludedKeys.includes(key) && val !== undefined && val !== null && val !== ""
             )
             .map(([key, value]) => {
                 const styledVal = getStyledValueWithIcon(value, groupedDetails.exceeded_info?.[key]);
@@ -38,7 +40,7 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
                 return [key, styledVal, passedRange];
             });
 
-        if (tableData.length === 0) return;
+        if (tableData.length === 0) return; // Don't render empty sections
 
         const sectionTitle = category === 'uncategorized'
             ? translate('FormDataSummary.recordTable.groupUncategorized')

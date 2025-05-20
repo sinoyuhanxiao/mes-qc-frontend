@@ -14,7 +14,7 @@ export function getStepsFromState(flow, state) {
         pending: 0,
         pending_leader: 1,
         approved_leader: 2,
-        pending_supervisor: 2,
+        pending_supervisor: flow === 'flow_3' ? 1 : 2,
         fully_approved: titles.length - 1,
         approved: titles.length - 1
     };

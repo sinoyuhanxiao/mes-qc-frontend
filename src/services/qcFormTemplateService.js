@@ -30,3 +30,15 @@ export const createFormTemplateWithNodes = (payload) => {
 export const updateApprovalType = (id, approvalType) => {
     return api.put(`${BASE_URL}/${id}`, { approval_type: approvalType });
 };
+
+/**
+ * Get all field name-label-optionItems from a form template.
+ * @param {number} formTemplateId - The ID of the form template.
+ * @returns {Promise} API response with field definitions.
+ */
+export const getFormTemplateFieldList = (formTemplateId) => {
+    return api.get(`/qc-task-submission-logs/form-template-fields`, {
+        params: { qcFormTemplateId: formTemplateId }
+    });
+};
+

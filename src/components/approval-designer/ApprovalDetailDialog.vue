@@ -12,10 +12,12 @@
       <section class="section-block">
         <h3>审批流程</h3>
         <el-steps :space="200" direction="horizontal">
-          <el-step title="填报员" status="finish" />
-          <el-step title="班长签名" status="finish" />
-          <el-step title="主管签名" status="process" />
-          <el-step title="归档" status="wait" />
+          <el-step
+              v-for="(step, idx) in getSteps()"
+              :key="idx"
+              :title="step.title"
+              :status="step.status"
+          />
         </el-steps>
       </section>
 
@@ -27,6 +29,7 @@
             :headers="versionHeaders"
             :loading="versionTableLoading"
             :tableHeight="computedTableHeight"
+            @latest-submission-id="latestSubmissionId"
             @view-details="viewDetails"
             :qcFormTemplateId="parseInt(collectionName.split('_')[2])"
             search=""
@@ -64,13 +67,15 @@
 
           <el-table-column label="审批状态" width="120">
             <template #default="scope">
-              {{
-                {
-                  'completed': '已完成',
-                  'pending': '待操作',
-                  'not_started': '未开始'
-                }[scope.row.status] || scope.row.status
-              }}
+              <el-tag :type="scope.row.status === 'completed' ? 'success' : 'info'">
+                {{
+                  {
+                    'completed': '已完成',
+                    'pending': '待操作',
+                    'not_started': '未开始'
+                  }[scope.row.status] || scope.row.status
+                }}
+              </el-tag>
             </template>
           </el-table-column>
 
@@ -92,11 +97,13 @@
 
           <el-table-column label="审批人签字" width="180">
             <template #default="scope">
-              <img
-                  v-if="scope.row.signature"
-                  :src="scope.row.signature"
-                  alt="签名"
-                  style="max-height: 50px;"
+              <el-image
+                  v-if="scope.row['e-signature']"
+                  :src="scope.row['e-signature']"
+                  :preview-src-list="[scope.row['e-signature']]"
+                  :preview-teleported="true"
+                  fit="contain"
+                  style="max-height: 40px; max-width: 100%;"
               />
               <span v-else>-</span>
             </template>
@@ -137,7 +144,13 @@
 
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
-      <el-button type="primary" @click="handleApprove">批准</el-button>
+      <el-button
+          type="primary"
+          :disabled="!props.canApprove"
+          @click="handleApprove"
+      >
+          提交
+      </el-button>
     </template>
   </el-dialog>
 
@@ -153,7 +166,7 @@
       :systemInfo="systemInfo"
       :eSignature="eSignature"
       :alertInfo="alertInfo"
-      :showAlerts="true"
+      :showAlerts="false"
       @export="exportToPdf"
       @close="dialogVisible = false"
   />
@@ -179,7 +192,8 @@ import { getUserById } from '@/services/userService'
 import { parseFormDocument } from '@/utils/formUtils'
 import {getMyDocument} from "@/services/qcTaskSubmissionLogsService";
 import SignaturePadComponent from '@/components/form-manager/SignaturePad.vue';
-import { getApprovalInfo } from '@/services/approval/approvalService'
+import { getApprovalInfo } from '@/services/approval/approvalService';
+import { getStepsFromState } from '@/utils/helpers/approvalStepHelper';
 
 const props = defineProps({
   visible: Boolean,
@@ -190,6 +204,12 @@ const props = defineProps({
   records: {
     type: Array,
     default: () => []
+  },
+  approvalType: String,
+  approvalState: String,
+  canApprove: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -357,6 +377,10 @@ async function handleSignatureSaveAndApprove(signatureData) {
   } catch (err) {
     console.error('❌ 审批失败:', err);
   }
+}
+
+function getSteps() {
+  return getStepsFromState(props.approvalType, props.approvalState)
 }
 
 watch(() => props.submissionId, async (newId) => {

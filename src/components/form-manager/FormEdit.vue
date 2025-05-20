@@ -21,7 +21,7 @@
   <el-dialog
       v-model="showDialog"
       title="确认修改以下字段？"
-      width="30%"
+      width="40%"
       top="15vh"
   >
     <div v-html="tableHtml"></div>
@@ -51,6 +51,7 @@ import { ElMessageBox } from 'element-plus';
 import { getChangedFields, getLabelMapFromTemplate } from '@/utils/compareFormChanges'
 import SignaturePadComponent from '@/components/form-manager/SignaturePad.vue'
 import { editFormData } from '@/services/qcFormDataService';
+import { getFormTemplateFieldList } from '@/services/qcFormTemplateService';
 
 const route = useRoute();
 
@@ -72,11 +73,23 @@ const formData = ref({});
 
 const initialSnapshot = ref({});
 
+const optionItemsMap = ref({})
+
 onMounted(async () => {
   try {
     const res1 = await fetchFormTemplate(templateId);
     templateJson.value = JSON.parse(res1.data?.data?.form_template_json || '{}');
     formTitle.value = res1.data?.data?.name || '表单';
+
+    const optionRes = await getFormTemplateFieldList(templateId);
+    optionRes.data.forEach(field => {
+      if (field.optionItems) {
+        optionItemsMap.value[field.name] = {};
+        field.optionItems.forEach(opt => {
+          optionItemsMap.value[field.name][opt.value] = opt.label;
+        });
+      }
+    });
 
     const res2 = await getRawMongoDocument(submissionId, templateId, createdAt);
     initialSnapshot.value = JSON.parse(JSON.stringify(res2.data)); // hard copy for comparison
@@ -118,8 +131,8 @@ const handleSubmit = async () => {
           const prev = initialSnapshot.value[key];
           const curr = updatedData[key];
 
-          const prevStr = formatValue(prev);
-          const currStr = formatValue(curr);
+          const prevStr = formatValue(prev, key);
+          const currStr = formatValue(curr, key);
 
           return `
               <tr>
@@ -195,11 +208,24 @@ const handleSignatureSave = async (data) => {
 };
 
 
-function formatValue(val) {
+function formatValue(val, key = '') {
   if (val === null || val === undefined || val === '') return '-';
+
+  // If optionItems exists for this key
+  if (optionItemsMap.value[key]) {
+    const map = optionItemsMap.value[key];
+    if (Array.isArray(val)) {
+      return val.map(v => map[v] || v).join(', ');
+    } else {
+      return map[val] || val;
+    }
+  }
+
+  // Fallback default
   if (Array.isArray(val)) return val.join(', ');
   return val.toString();
 }
+
 
 function getCollectionNameFromCreatedAt(createdAtString) {
   const date = new Date(createdAtString);
