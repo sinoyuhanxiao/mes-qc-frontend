@@ -152,15 +152,28 @@ export function exportQcRecordsToExcel({ records, label, translate }) {
         const normalFields = entries.filter(([key]) =>
             !key.startsWith('related_') &&
             !key.endsWith('_id') &&
-            !key.endsWith('_ids')
+            !key.endsWith('_ids') &&
+            !key.endsWith('approval_info') &&
+            !key.endsWith('version_group_id') &&
+            !key.endsWith('version') &&
+            !key.endsWith('exceeded_info')
         );
 
-        // Only keep related_* fields that do NOT end with _id or _ids
-        const relatedFields = entries.filter(([key]) =>
-            key.startsWith('related_') &&
-            !key.endsWith('_id') &&
-            !key.endsWith('_ids')
-        );
+        // Only keep related_* fields that do NOT end with _id or _ids, and translate keys
+        const relatedFields = entries
+            .filter(([key]) =>
+                key.startsWith('related_') &&
+                !key.endsWith('_id') &&
+                !key.endsWith('_ids')
+            )
+            .map(([key, value]) => {
+                let translatedKey = key;
+                if (key === 'related_products') translatedKey = '涉及产品';
+                else if (key === 'related_batches') translatedKey = '涉及批次';
+                else if (key === 'related_inspectors') translatedKey = '质检人员';
+                else if (key === 'related_shifts') translatedKey = '所属班次';
+                return [translatedKey, value];
+            });
 
         return {
             [translate('Export.systemInfo.submittedAt')]: created_at || "-",
