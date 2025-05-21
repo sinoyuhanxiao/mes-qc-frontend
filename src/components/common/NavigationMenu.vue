@@ -95,6 +95,10 @@
                 <el-icon><WarningFilled /></el-icon>
                 <span>{{ translate('navigationMenu.alarmRecords') }}</span>
               </el-menu-item>
+              <el-menu-item index="/qc-summary">
+                <el-icon><Document /></el-icon>
+                <span>{{ translate('navigationMenu.QcSummary') }}</span>
+              </el-menu-item>
             </el-sub-menu>
           </template>
 
@@ -321,6 +325,13 @@ export default {
       }
     },
 
+    autoCollapseIfNeeded(path) {
+      if (this.autoCollapseRoutes.includes(path)) {
+        this.isCollapsed = true;
+        this.showExpandButton = true; // 可选：显示展开按钮
+      }
+    },
+
     async handleEditConfirm() {
       this.$refs.editUserForm.validate(async (valid) => {
         if (valid) {
@@ -450,6 +461,7 @@ export default {
       changePassword: false,
       newPassword: '',
       confirmPassword: '',
+      autoCollapseRoutes: ['/qc-summary'],
       rules: {
         name: [{ required: true, message: 'Name is required', trigger: 'blur' }],
         role: [{ required: true, message: 'Role is required', trigger: 'change' }],
@@ -458,6 +470,13 @@ export default {
       },
     };
   },
+  mounted() {
+    this.autoCollapseIfNeeded(this.$route.path);
+    this.$watch('$route', (to) => {
+      this.autoCollapseIfNeeded(to.path);
+    });
+  },
+
 };
 </script>
 

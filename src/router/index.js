@@ -28,6 +28,7 @@ import TestSetForm from "@/views/TestSetForm.vue";
 import TestSocket from "@/views/TestSocket.vue";
 import Chat from "@/views/Chat.vue";
 import ApprovalInfo from "@/views/ApprovalInfo.vue";
+import QcSummary from "@/views/QcSummary.vue";
 
 const routes = [
     {
@@ -186,6 +187,11 @@ const routes = [
         path: '/approval-info',
         name: 'ApprovalInfo',
         component: ApprovalInfo,
+    },
+    {
+        path: '/qc-summary',
+        name: 'QcSummary',
+        component: QcSummary,
     }
 
 ];
