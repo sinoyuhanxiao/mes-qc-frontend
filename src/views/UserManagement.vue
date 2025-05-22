@@ -224,31 +224,27 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.addDialog.assignedTeams')" prop="assignedTeams">
-            <el-select
+            <el-tree-select
                 v-model="newUser.assignedTeams"
+                :data="teamsOptions"
+                show-checkbox
+                check-on-click-node
+                check-strictly
                 multiple
-                filterable
                 :placeholder="translate('userManagement.addDialog.assignedTeamPlaceHolder')"
-                style="width: 100%;"
             >
-              <el-option
-                  v-for="team in teamsOptions"
-                  :key="team.id"
-                  :label="team.label"
-                  :value="team.id"
-              >
-                <span style="float: left">{{ team.label }}</span>
+              <template #default="{ data }">
+                <span style="float:left">{{ data.label }}</span>
                 <span
                     style="
-                        float: right;
-                        color: var(--el-text-color-secondary);
-                        font-size: 13px;
-                     "
+                    float:right;
+                    color: var(--el-text-color-secondary);
+                    font-size: 13px;"
                 >
-                    {{ translate('userManagement.table.leader') + ": " + team.value }}
+                  {{ translate('userManagement.table.leader') }}: {{ data.leader?.name ?? '-' }}
                 </span>
-              </el-option>
-            </el-select>
+              </template>
+            </el-tree-select>
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.addDialog.status')" prop="status">
@@ -314,31 +310,27 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.assignedTeams')" prop="assignedTeams">
-            <el-select
+            <el-tree-select
                 v-model="editUser.assignedTeams"
+                :data="teamsOptions"
+                show-checkbox
+                check-on-click-node
+                check-strictly
                 multiple
-                filterable
                 :placeholder="translate('userManagement.editDialog.assignedTeams')"
-                style="width: 100%;"
             >
-              <el-option
-                  v-for="team in teamsOptions"
-                  :key="team.value"
-                  :label="team.label"
-                  :value="team.id"
-              >
-                <span style="float: left">{{ team.label }}</span>
+              <template #default="{ data }">
+                <span style="float:left">{{ data.label }}</span>
                 <span
                     style="
-                  float: right;
-                  color: var(--el-text-color-secondary);
-                  font-size: 13px;
-                "
+                    float:right;
+                    color: var(--el-text-color-secondary);
+                    font-size: 13px;"
                 >
-              {{ translate('userManagement.table.leader') + ": " + team.value }}
-            </span>
-              </el-option>
-            </el-select>
+                  {{ translate('userManagement.table.leader') }}: {{ data.leader?.name ?? '-' }}
+                </span>
+              </template>
+            </el-tree-select>
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.status')" prop="status">
@@ -361,7 +353,6 @@
           <el-form-item v-if="changePassword" :label="translate('userManagement.editDialog.confirmPassword')" prop="confirmPassword">
             <el-input v-model="confirmPassword" type="password" show-password />
           </el-form-item>
-
         </el-form>
       </div>
 
@@ -610,20 +601,37 @@ export default {
         this.loading = false;
       }
     },
-    async fetchTeamOptions() {
+    async fetchTeamOptions () {
       try {
-        const response = await getAllTeams();
-        if (response.data.status === "200") {
-          this.teamsOptions = response.data.data.map(team => ({
-            value: team.leader?.name || "-", // Team Name
-            label: team.name, // Team Leader Name
-            id: team.id
-          }));
-        } else {
+        const { data } = await getAllTeams();
+
+        if (data.status !== '200') {
           this.teamsOptions = [];
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching teams:", error);
+
+        /** Recursively copy node → add value/label → skip nodes with status = 0 */
+        const toOptionNode = (team) => {
+          if (team.status === 0) return null;
+
+          const children =
+              Array.isArray(team.children)
+                  ? team.children.map(toOptionNode).filter(Boolean) // remove nulls
+                  : [];
+
+          return {
+            ...team,
+            value: team.id,
+            label: team.name,
+            children,
+          };
+        };
+
+        this.teamsOptions = data.data
+            .map(toOptionNode)
+            .filter(Boolean);    // strip any nulls that bubbled up
+      } catch (err) {
+        console.error('Error fetching teams:', err);
         this.teamsOptions = [];
       }
     },
