@@ -135,7 +135,8 @@ async function openDetailsDialog(row) {
       涉及产品: rawData.uncategorized.related_products,
       涉及批次: rawData.uncategorized.related_batches,
       质检人员: rawData.uncategorized.related_inspectors,
-      所属班次: rawData.uncategorized.related_shifts
+      所属班次: rawData.uncategorized.related_shifts,
+      所属班组: rawData.uncategorized.related_teams
     };
 
     systemInfo.value = {
@@ -203,12 +204,13 @@ async function viewDetails(row) {
       提交人: await getUserById(selectedDetails.created_by).then(res => res.data?.data?.name || "-")
     };
 
-    // TODO: add a basicInfo field includes the 4 fields: 涉及产品，涉及批次，质检人员，所属班次
+    // Add a basicInfo field includes the 4 fields: 涉及产品，涉及批次，质检人员，所属班次, 所属班组
     basicInfo.value = {
       涉及产品: selectedDetails.uncategorized.related_products,
       涉及批次: selectedDetails.uncategorized.related_batches,
       质检人员: selectedDetails.uncategorized.related_inspectors,
-      所属班次: selectedDetails.uncategorized.related_shifts
+      所属班次: selectedDetails.uncategorized.related_shifts,
+      所属班组: selectedDetails.uncategorized.related_teams,
     };
 
     // // add dummy data first
@@ -316,7 +318,8 @@ watch(() => props.visible, async (val) => {
         related_products: item.related_products || item.uncategorized?.related_products || "-",
         related_batches: item.related_batches || item.uncategorized?.related_batches || "-",
         related_inspectors: item.related_inspectors || item.uncategorized?.related_inspectors || "-",
-        related_shifts: item.related_shifts || item.uncategorized?.related_shifts || "-"
+        related_shifts: item.related_shifts || item.uncategorized?.related_shifts || "-",
+        related_teams: item.related_teams || item.uncategorized?.related_teams || "-"
       }));
 
       localRecords.value = result;

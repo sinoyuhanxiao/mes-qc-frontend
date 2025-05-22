@@ -83,7 +83,8 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
             ["涉及产品", basicInfo.涉及产品 || translate('Export.fallback')],
             ["涉及批次", basicInfo.涉及批次 || translate('Export.fallback')],
             ["质检人员", basicInfo.质检人员 || translate('Export.fallback')],
-            ["所属班次", basicInfo.所属班次 || translate('Export.fallback')]
+            ["所属班次", basicInfo.所属班次 || translate('Export.fallback')],
+            ["所属班组", basicInfo.所属班组 || translate('Export.fallback')]
         ],
         theme: "grid",
         styles: { font: "simfang", fontSize: 10 },
@@ -172,6 +173,7 @@ export function exportQcRecordsToExcel({ records, label, translate }) {
                 else if (key === 'related_batches') translatedKey = '涉及批次';
                 else if (key === 'related_inspectors') translatedKey = '质检人员';
                 else if (key === 'related_shifts') translatedKey = '所属班次';
+                else if (key === 'related_teams') translatedKey = '所属班组';
                 return [translatedKey, value];
             });
 

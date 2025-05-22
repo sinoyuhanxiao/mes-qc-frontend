@@ -84,6 +84,7 @@
         <el-descriptions-item label="涉及批次">{{ basicInfo.涉及批次 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="质检人员">{{ basicInfo.质检人员 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="所属班次">{{ basicInfo.所属班次 || " - " }}</el-descriptions-item>
+        <el-descriptions-item label="所属班组">{{ basicInfo.所属班组 || " - " }}</el-descriptions-item>
       </el-descriptions>
 
       <el-descriptions

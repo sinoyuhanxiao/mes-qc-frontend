@@ -101,6 +101,7 @@
         <el-table-column prop="related_batches" label="涉及批次" width="150" sortable />
         <el-table-column prop="related_inspectors" label="质检人员" width="150" sortable />
         <el-table-column prop="related_shifts" label="所属班次" width="150" sortable />
+        <el-table-column prop="related_teams" label="所属班组" width="150" sortable />
         <el-table-column prop="_id" :label="translate('FormDataSummary.recordTable.submissionId')" fixed="left" width="220" sortable />
       </el-table-column>
 

@@ -214,6 +214,26 @@
                     />
                   </el-select>
                 </el-form-item>
+
+                <!-- 新增：所属班组 -->
+                <el-form-item label="所属班组">
+                  <el-select
+                      v-model="selectedTeam"
+                      filterable
+                      clearable
+                      placeholder="选择班组"
+                      style="width: 100%;"
+                      :disabled="!(enable_form || enable_common_fields)"
+                  >
+                    <el-option
+                        v-for="team in teamOptions"
+                        :key="team.id"
+                        :label="team.name"
+                        :value="team.name"
+                    />
+                  </el-select>
+                </el-form-item>
+
           </el-form>
         </div>
 
@@ -470,6 +490,7 @@ const editBatch = reactive({ id: null, code: '' });
 import { fetchUsers } from '@/services/userService'
 import { getAllShifts } from '@/services/shiftService'
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
+import { getAllTeams, getTeamByTeamLeadId } from '@/services/teamService';
 const showApprovalDialog = ref(false)
 
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
@@ -530,6 +551,11 @@ const newProduct = reactive({ name: '', code: '', description: '' });
 const newBatch = reactive({ code: '' });
 const autoGenerateBatchCode = ref(true);
 const selectedApprovalType = ref() // default fallback
+
+// team
+const selectedTeam = ref('');
+const selectedTeamId = ref(null);
+const teamOptions = ref([]);
 
 const handleSignatureSave = (data) => {
   signatureData.value = data; // Save the base64 image data here
@@ -693,6 +719,21 @@ const fetchCommonFieldOptions = async () => {
   const batchResp = await getAllActiveSuggestedBatches();
   productOptions.value = productResp.data || [];
   batchOptions.value = batchResp.data || [];
+
+  // 👇 新增：加载班组选项并默认设置为当前用户所属班组
+  try {
+    const allTeamResp = await getAllTeams();
+    teamOptions.value = allTeamResp.data.data || [];
+
+    const leadTeamResp = await getTeamByTeamLeadId(userId);
+    const defaultTeam = leadTeamResp.data.data;
+    if (defaultTeam) {
+      selectedTeam.value = defaultTeam.name;
+      selectedTeamId.value = defaultTeam.id;
+    }
+  } catch (e) {
+    console.error("加载班组数据失败", e);
+  }
 };
 
 const fetchQcUsersAndShifts = async () => {
@@ -793,6 +834,10 @@ watch(selectedBatchCodes, (codes) => {
 // 根据 selectedShift 名称映射出 selectedShiftId
 watch(selectedShift, (shiftName) => {
   selectedShiftId.value = shifts.value.find(s => s.name === shiftName)?.id || null;
+});
+
+watch(selectedTeam, (teamName) => {
+  selectedTeamId.value = teamOptions.value.find(t => t.name === teamName)?.id || null;
 });
 
 // ✅ Ensure the countdown starts when mounted
@@ -974,6 +1019,7 @@ const confirmSubmission = async () => {
     formData['related_batch_ids'] = selectedBatchIds.value;
     formData['related_inspector_ids'] = selectedQcUserIds.value;
     formData['related_shift_id'] = selectedShiftId.value;
+    formData['related_team_id'] = selectedTeamId.value;
 
     // 添加一条可读的字段，便于快速显示在 MongoDB 中查看和前端取数据
     const selectedProductNames = selectedProductCodes.value
@@ -990,6 +1036,7 @@ const confirmSubmission = async () => {
     formData['related_batches'] = selectedBatchCodes.value.join(', ');
     formData['related_inspectors'] = selectedInspectorNames.join(', ');
     formData['related_shifts'] = selectedShiftName; // already a string, no .join()
+    formData['related_teams'] = selectedTeam.value || '';
 
     formData['e-signature'] = signatureData.value || null;
 

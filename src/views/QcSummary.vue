@@ -21,17 +21,12 @@
 <!--        <el-option label="成品检测" value="form2" />-->
 <!--      </el-select>-->
 
-      <el-select v-model="filters.team" placeholder="大组" style="width: 120px">
+      <el-select v-model="filters.team" placeholder="班组" style="width: 120px" clearable>
         <el-option label="成品检测组" value="A" />
         <el-option label="微生物组" value="B" />
       </el-select>
 
-      <el-select v-model="filters.team" placeholder="小组" style="width: 120px">
-        <el-option label="A组" value="A" />
-        <el-option label="B组" value="B" />
-      </el-select>
-
-      <el-select v-model="filters.shift" placeholder="班次" style="width: 120px">
+      <el-select v-model="filters.shift" placeholder="班次" style="width: 120px" clearable>
         <el-option label="早班" value="morning" />
         <el-option label="晚班" value="night" />
       </el-select>
@@ -56,13 +51,18 @@
       </el-radio-group>
 
       <el-button type="primary" style="margin-top: 0" @click="loadSummary">查询</el-button>
+      <el-button type="warning" style="margin-top: 0; margin-left: 0" @click="loadSummary">重置</el-button>
     </div>
 
     <!-- Summary Cards -->
     <div class="card-area">
       <el-card class="summary-card">总检测批次：{{ summary.totalBatches }}</el-card>
       <el-card class="summary-card">异常批次：{{ summary.abnormalBatches }}</el-card>
-      <el-card class="summary-card">合格率：{{ summary.passRate }}%</el-card>
+      <el-card class="summary-card">批次合格率：{{ summary.passRate }}%</el-card>
+      <el-card class="summary-card">更新时间：{{ summary.updateTime }}</el-card>
+      <el-card class="summary-card">总检测项目：{{ summary.totalBatches }}</el-card>
+      <el-card class="summary-card">异常项目：{{ summary.abnormalBatches }}</el-card>
+      <el-card class="summary-card">项目合格率：{{ summary.passRate }}%</el-card>
       <el-card class="summary-card">更新时间：{{ summary.updateTime }}</el-card>
     </div>
 

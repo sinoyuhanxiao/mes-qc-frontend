@@ -325,7 +325,8 @@ async function viewDetails(row) {
       涉及产品: selectedDetails.uncategorized.related_products,
       涉及批次: selectedDetails.uncategorized.related_batches,
       质检人员: selectedDetails.uncategorized.related_inspectors,
-      所属班次: selectedDetails.uncategorized.related_shifts
+      所属班次: selectedDetails.uncategorized.related_shifts,
+      所属班组: selectedDetails.uncategorized.related_teams
     };
 
     // // add dummy data first
