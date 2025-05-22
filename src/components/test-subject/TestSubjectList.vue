@@ -1,10 +1,11 @@
 <template>
   <el-table
+      v-loading="loading"
       :data="sortedAndPaginatedList"
       style="width: 100%"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
-      :height = "tableHeight"
+      :height="tableHeight"
   >
     <el-table-column prop="id" :label="translate('orderManagement.Id')" width="80" sortable/>
     <el-table-column prop="name" :label="translate('orderManagement.name')" width="200" sortable show-overflow-tooltip/>
@@ -19,7 +20,13 @@
         <UserTagHoverForDetail :user="userMap[scope.row.created_by]"/>
       </template>
     </el-table-column>
-    <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="250">
+    <el-table-column
+        :label="translate('orderManagement.dispatchedTaskTable.actions')"
+        align="right"
+        header-align="right"
+        width="180"
+        fixed="right"
+    >
       <template #default="scope">
         <el-button size="small" @click="$emit('edit-test-subject', scope.row)">
           {{ translate('orderManagement.edit') }}
@@ -67,6 +74,10 @@ export default {
       type: Object,
       required: true,
     },
+    loading: {
+      type: Boolean,
+      required: false,
+    }
   },
   watch : {
     testSubjects: {

@@ -392,11 +392,6 @@ export default {
     async handleRefreshButton() {
       this.searchQuery = "";
       await this.loadAllData()
-      this.$notify({
-        title: translate('orderManagement.messages.messageTitle'),
-        message: translate('orderManagement.messages.listRefreshed'),
-        type: "success",
-      });
     },
   },
   mounted() {

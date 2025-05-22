@@ -60,11 +60,11 @@
     </el-form-item>
 
     <!-- Buttons -->
-    <el-form-item>
-      <el-button type="primary" @click="validateAndSubmit">{{ translate('orderManagement.confirm') }}</el-button>
+    <div style="display: flex; justify-content: end;">
       <el-button @click="$emit('cancel')">{{ translate('orderManagement.cancel') }}</el-button>
-    </el-form-item>
-  </el-form>
+      <el-button type="primary" @click="validateAndSubmit">{{ translate('orderManagement.confirm') }}</el-button>
+    </div>
+      </el-form>
 </template>
 
 <script>

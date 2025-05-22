@@ -7,7 +7,6 @@
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
       :height = "tableHeight"
-      border
       v-loading="loading"
   >
     <!-- Row Selection -->

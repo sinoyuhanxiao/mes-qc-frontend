@@ -1,5 +1,6 @@
 <template>
   <el-table
+      v-loading="loading"
       :data="sortedAndPaginatedList"
       style="width: 100%"
       @sort-change="handleSortChange"
@@ -30,7 +31,13 @@
         <UserTagHoverForDetail :user="userMap[scope.row.created_by]"/>
       </template>
     </el-table-column>
-    <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="250" :fixed="'right'">
+    <el-table-column
+        :label="translate('userManagement.table.actions')"
+        align="right"
+        header-align="right"
+        width="180"
+        fixed="right"
+    >
       <template #default="scope">
         <el-button size="small" @click="$emit('edit-shift', scope.row)">
           {{ translate('orderManagement.edit') }}
@@ -78,6 +85,10 @@ export default {
       type: Object,
       required: true,
     },
+    loading: {
+      type: Boolean,
+      required: false,
+    }
   },
   watch: {
     shifts: {
