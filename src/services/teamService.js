@@ -87,7 +87,7 @@ export const getTeamByTeamLeadId = (id) => {
  *
  * @returns {Promise} API response containing an array of user IDs who are team leaders.
  */
-export const getCurrentLeaderIds = () => {
+export const getCurrentLeaders = () => {
     return api.get(`${BASE_URL}/leaders`);
 };
 
