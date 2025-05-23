@@ -7,7 +7,7 @@
         <h2>{{ translate('shiftManagement.title') }}</h2>
         <el-input
             v-model="searchQuery"
-            :placeholder="translate('shiftManagement.searchPlaceholder')"
+            :placeholder="translate('common.searchPlaceholder')"
             clearable
             style="width: 300px; margin-left: 20px;"
         >

@@ -10,6 +10,7 @@ export default {
         info: "Information",
         operationCancelled: 'Operation Cancelled',
         view: "View",
+        noDataAvailable: 'No Data Available',
         table: {
             id: 'ID',
             name: 'Name',
@@ -213,6 +214,11 @@ export default {
         membersTab: 'Members',
         formsTab: 'Associated Forms',
         parentTeam: 'Parent Team',
+        leaderSelectionHint:
+            'Visible users for leader depend on team depth:<br>' +
+            ' Depth 1 → Manager & Supervisor users<br>' +
+            ' Depth 2 → Supervisor only users<br>' +
+            ' Depth 3 → all roles users',
         table: {
             id: 'ID',
             name: 'Name',
@@ -244,8 +250,9 @@ export default {
             cancelButton: 'Cancel',
             confirmButton: 'Confirm',
             selectLeaderPlaceholder: 'Select Team Lead',
+            selectMembersPlaceholder: 'Select Members',
             selectStatusPlaceholder: 'Select Status',
-            selectMembers: 'Select Members',
+            selectParentTeamPlaceholder: 'Select Parent Team',
         },
         editDialog: {
             title: 'Edit Team',
@@ -263,6 +270,7 @@ export default {
             selectLeaderPlaceholder: 'Select Team Lead',
             selectMembersPlaceholder: 'Select Members',
             selectStatusPlaceholder: 'Select Status',
+            selectParentTeamPlaceholder: 'Select Parent Team',
         },
         status: {
             active: 'Active',
@@ -715,7 +723,7 @@ export default {
         navigateTo: 'Navigate to',
         taskCardTooltip: 'Task card details',
         statisticFooterText: 'Compared to yesterday',
-        noData: 'No data available'
+        noData: 'No data available',
     },
     TaskCenter: {
         quarterlyTaskCountLabel: 'Quarterly Task Assignment Count',

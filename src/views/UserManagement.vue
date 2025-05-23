@@ -37,7 +37,14 @@
 
     <!-- Table -->
     <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
-      <el-table v-loading="loading" :data="paginatedUsers" :height="tableHeight" style="width: 100%" @sort-change="handleSortChange">
+      <el-table
+          v-loading="loading"
+          :data="paginatedUsers"
+          :height="tableHeight"
+          style="width: 100%"
+          @sort-change="handleSortChange"
+          :empty-text="translate('common.noDataAvailable')"
+      >
         <el-table-column :label="translate('userManagement.table.id')" width="100" prop="id" sortable>
           <template #default="scope">
             <span>{{ scope.row.id }}</span>

@@ -8,6 +8,7 @@
       :default-sort="{ prop: 'id', order: 'descending' }"
       :height = "tableHeight"
       v-loading="loading"
+      :empty-text="translate('common.noDataAvailable')"
   >
     <!-- Row Selection -->
     <el-table-column

@@ -54,6 +54,7 @@
           :height="tableHeight"
           :default-sort="{ prop: 'due_date', order: 'ascending' }"
           @sort-change="handleSortChange"
+          :empty-text="translate('common.noDataAvailable')"
       >
         <el-table-column
             v-for="(key, index) in columnList"

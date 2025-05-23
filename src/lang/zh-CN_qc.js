@@ -6,10 +6,11 @@ export default {
         cancel: '取消',
         confirm: '确认',
         delete: '删除',
-        operationCancelled: '操作已取消',
         warn: '警告',
         info: '信息',
+        operationCancelled: '操作已取消',
         view: '查看',
+        noDataAvailable: '暂无数据',
         table: {
             id: '编号',
             name: '名称',
@@ -213,6 +214,11 @@ export default {
         membersTab: '成员',
         formsTab: '已关联表单',
         parentTeam: '上级班组',
+        leaderSelectionHint:
+            '负责人可选用户取决于班组层级:<br>' +
+            ' 层级 1 → 主管和班长用户<br>' +
+            ' 层级 2 → 仅班长用户<br>' +
+            ' 层级 3 → 所有用户',
         table: {
             id: 'ID',
             name: '名称',
@@ -221,7 +227,7 @@ export default {
             startTime: '开始时间',
             endTime: '结束时间',
             status: '状态',
-            description: '描述',
+            description: '备注',
             actions: '操作',
             statusTooltip: '班组的激活/停用状态',
             editButton: '编辑',
@@ -239,13 +245,14 @@ export default {
             endTime: '结束时间',
             members: '成员',
             forms: '关联表单',
-            description: '描述',
+            description: '备注',
             status: '状态',
             cancelButton: '取消',
             confirmButton: '确认',
             selectLeaderPlaceholder: '选择负责人',
             selectStatusPlaceholder: '选择状态',
-            selectMembers: '选择成员',
+            selectMembersPlaceholder: '选择成员',
+            selectParentTeamPlaceholder: '选择上级班组',
         },
         editDialog: {
             title: '编辑班组',
@@ -256,13 +263,14 @@ export default {
             endTime: '结束时间',
             members: '成员',
             forms: '关联表单',
-            description: '描述',
+            description: '备注',
             status: '状态',
             cancelButton: '取消',
             confirmButton: '确认',
             selectLeaderPlaceholder: '选择负责人',
             selectMembersPlaceholder: '选择成员',
             selectStatusPlaceholder: '选择状态',
+            selectParentTeamPlaceholder: '选择上级班组',
         },
         status: {
             active: '已激活',
