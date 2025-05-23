@@ -326,10 +326,10 @@ export default {
     },
 
     autoCollapseIfNeeded(path) {
-      if (this.autoCollapseRoutes.includes(path)) {
-        this.isCollapsed = true;
-        this.showExpandButton = true; // 可选：显示展开按钮
-      }
+      // if (this.autoCollapseRoutes.includes(path)) {
+      //   this.isCollapsed = true;
+      //   this.showExpandButton = true; // 可选：显示展开按钮
+      // }
     },
 
     async handleEditConfirm() {
