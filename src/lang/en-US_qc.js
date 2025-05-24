@@ -3,6 +3,7 @@ export default {
         searchPlaceholder: 'Search keyword',
         refreshTooltip: 'Refresh table',
         addButton: '+ New',
+        new: 'New',
         cancel: 'Cancel',
         confirm: 'Confirm',
         delete: 'Delete',

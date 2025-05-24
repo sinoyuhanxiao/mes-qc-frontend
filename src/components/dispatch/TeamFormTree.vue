@@ -31,6 +31,7 @@
           @node-click="handleNodeClicked"
           :show-checkbox="!showOnlySelectedNode"
           :default-expand-all="props.expandAllNodes"
+          :empty-text="translate('common.noDataAvailable')"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node">

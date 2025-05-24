@@ -3,6 +3,7 @@ export default {
         searchPlaceholder: '搜索关键字',
         refreshTooltip: '刷新表格',
         addButton: '+ 新增',
+        new: '新增',
         cancel: '取消',
         confirm: '确认',
         delete: '删除',
