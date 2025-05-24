@@ -35,6 +35,15 @@ export const getAbnormalRatioByField = (params) => {
 };
 
 /**
+ * 获取字段级别的异常比例（合并小于20%的为“其他”）
+ * @param {Object} params - Filtering options
+ * @returns {Promise} Axios response with grouped pie chart data
+ */
+export const getAbnormalRatioByFieldGrouped = (params) => {
+    return axios.get(`${BASE_URL}/abnormal-ratio-by-field-grouped`, { params });
+};
+
+/**
  * 获取产品 × 时间维度的异常热力图数据
  * @param {Object} params - Filtering options
  * @returns {Promise} Axios response with heatmap data (date × product)
@@ -48,8 +57,8 @@ export const getAbnormalHeatmap = (params) => {
  * @param {Object} params - Filtering options
  * @returns {Promise} Axios response with product-level abnormal stats
  */
-export const getAbnormalByProduct = (params) => {
-    return axios.get(`${BASE_URL}/abnormal-by-product`, { params });
+export const getAbnormalBatchesByProduct = (params) => {
+    return axios.get(`${BASE_URL}/abnormal-batches-by-product`, { params });
 };
 
 /**
