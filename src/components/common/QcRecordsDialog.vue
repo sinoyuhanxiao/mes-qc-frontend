@@ -9,7 +9,7 @@
         :records="paginatedRecords"
         :headers="displayedHeaders"
         :search="search"
-        :dateRange="props.dateRange"
+        v-model:dateRange="dateRange"
         :loading="localLoading"
         :tableHeight="tableHeight"
         :qcFormTemplateId="props.selectedForm.qcFormTemplateId"
@@ -88,6 +88,9 @@ const props = defineProps({
   selectedForm: Object,
   dateRange: Array
 });
+
+const dateRange = ref(props.dateRange);
+watch(dateRange, handleDateRangeChange)
 
 defineEmits(["update:visible"])
 
@@ -171,6 +174,21 @@ async function deleteRecord(row) {
     );
     await deleteTaskSubmissionLog(row._id, props.selectedForm.qcFormTemplateId, row["提交时间"]);
     ElMessage.success(translate("FormDataSummary.recordTable.deleteSuccess"));
+
+    // 删除成功后，刷新记录
+    if (props.selectedForm?.qcFormTemplateId && props.dateRange?.length === 2) {
+      localLoading.value = true;
+      const result = await fetchRecordsData(props.selectedForm.qcFormTemplateId, props.dateRange);
+      localRecords.value = result.map(item => ({
+        ...item,
+        related_products: item.related_products || item.uncategorized?.related_products || "-",
+        related_batches: item.related_batches || item.uncategorized?.related_batches || "-",
+        related_inspectors: item.related_inspectors || item.uncategorized?.related_inspectors || "-",
+        related_shifts: item.related_shifts || item.uncategorized?.related_shifts || "-",
+        related_teams: item.related_teams || item.uncategorized?.related_teams || "-"
+      }));
+      localLoading.value = false;
+    }
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
