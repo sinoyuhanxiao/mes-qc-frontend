@@ -135,10 +135,15 @@
       </section>
 
       <!-- ▶ 导出功能 -->
-<!--      <section class="section-block">-->
-<!--        <h3>导出</h3>-->
-<!--        <el-button type="primary" @click="exportToPdf">PDF</el-button>-->
-<!--      </section>-->
+      <section class="section-block">
+        <h3>导出</h3>
+        <el-button type="success" @click="exportApprovalAndRecordsToExcel(versionRecords, filteredApprovalRecords, qcFormTemplateName)">
+          导出 Excel
+        </el-button>
+        <el-button type="primary" @click="handleExportPdf">
+          导出 PDF
+        </el-button>
+      </section>
 
     </div>
 
@@ -194,6 +199,8 @@ import {getMyDocument} from "@/services/qcTaskSubmissionLogsService";
 import SignaturePadComponent from '@/components/form-manager/SignaturePad.vue';
 import { getApprovalInfo } from '@/services/approval/approvalService';
 import { getStepsFromState } from '@/utils/helpers/approvalStepHelper';
+import { useApprovalDetailExport } from '@/composables/useApprovalDetailExport'
+const { exportApprovalAndRecordsToExcel, exportApprovalAndRecordsToPdf } = useApprovalDetailExport()
 
 const props = defineProps({
   visible: Boolean,
@@ -379,6 +386,69 @@ async function handleSignatureSaveAndApprove(signatureData) {
     console.error('❌ 审批失败:', err);
   }
 }
+
+
+async function generatePdfVersionData() {
+  const allVersionData = [];
+
+  for (const row of versionRecords.value) {
+    const submissionId = row._id;
+    const createdBy = row.created_by;
+    const createdAt = row['提交时间'];
+    const formTemplateId = props.qcFormTemplateId;
+    const collectionName = props.collectionName;
+
+    // Step 1: 获取原始文档
+    const res = await getMyDocument(submissionId, formTemplateId, createdBy, collectionName);
+    const rawData = res.data;
+
+    // Step 2: 解析字段
+    const { groupedDetails, eSignature } = parseFormDocument(rawData);
+    if (eSignature) {
+      groupedDetails['e-signature'] = eSignature;
+    }
+
+    // Step 3: 清除 groupedDetails 中的 related_* 字段（只保留在 basicInfo）
+    if (groupedDetails.uncategorized) {
+      for (const key of Object.keys(groupedDetails.uncategorized)) {
+        if (key.startsWith("related_")) {
+          delete groupedDetails.uncategorized[key];
+        }
+      }
+    }
+
+    const singleBasicInfo = {
+      涉及产品: rawData.uncategorized?.related_products,
+      涉及批次: rawData.uncategorized?.related_batches,
+      质检人员: rawData.uncategorized?.related_inspectors,
+      所属班次: rawData.uncategorized?.related_shifts,
+      所属班组: rawData.uncategorized?.related_teams,
+    };
+
+    const singleSystemInfo = {
+      提交单号: submissionId,
+      提交时间: createdAt,
+      提交人: await getUserById(rawData.created_by).then(res => res.data?.data?.name || "-")
+    };
+
+    const approvalInfo = rawData.uncategorized?.approval_info || [];
+
+    allVersionData.push({
+      groupedDetails,
+      basicInfo: singleBasicInfo,
+      systemInfo: singleSystemInfo,
+      approvalInfo
+    });
+  }
+
+  return allVersionData;
+}
+
+async function handleExportPdf() {
+  const versionData = await generatePdfVersionData();
+  await exportApprovalAndRecordsToPdf(versionData, filteredApprovalRecords.value, props.qcFormTemplateName);
+}
+
 
 function getSteps() {
   return getStepsFromState(props.approvalType, props.approvalState)

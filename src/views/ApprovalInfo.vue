@@ -51,6 +51,8 @@
       />
 
 <!--      <el-button type="primary" @click="applyFilters" style="margin-top: 0;">搜索</el-button>-->
+<!--      <el-button type="primary" @click="exportToExcel(table.assignments)">导出 Excel</el-button>-->
+<!--      <el-button type="success" @click="exportToPDF(table.assignments)">导出 PDF</el-button>-->
       <el-button @click="resetFilters" style="margin-top: 0; margin-left: 0" type="warning">重置</el-button>
     </div>
 
@@ -169,6 +171,7 @@ import { RefreshRight } from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
 import ApprovalDetailDialog from '@/components/approval-designer/ApprovalDetailDialog.vue'
 import { debounce } from 'lodash';
+import { useApprovalExport } from '@/composables/useApprovalExport'
 
 import {
   APPROVAL_STATE_LABELS,
@@ -180,7 +183,13 @@ export default {
   setup() {
     const store = useStore();
     const roleId = store.getters.getUser.role?.id || null;
-    return { roleId };
+    const { exportToExcel, exportToPDF } = useApprovalExport();
+
+    return {
+      roleId,
+      exportToExcel,
+      exportToPDF
+    };
   },
   computed: {
     APPROVAL_STATE_TAG_TYPES() {
