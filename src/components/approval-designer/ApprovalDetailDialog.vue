@@ -151,10 +151,10 @@
       <el-button @click="handleClose">关闭</el-button>
       <el-button
           type="primary"
-          :disabled="!props.canApprove"
+          :disabled="!props.canApprove || props.approvalState === 'fully_approved'"
           @click="handleApprove"
       >
-          提交
+        提交
       </el-button>
     </template>
   </el-dialog>
@@ -174,6 +174,7 @@
       :showAlerts="false"
       @export="exportToPdf"
       @close="dialogVisible = false"
+      :from-approval-page="true"
   />
 
   <SignaturePadComponent

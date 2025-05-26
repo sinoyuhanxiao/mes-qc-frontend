@@ -105,8 +105,19 @@
     </el-scrollbar>
 
     <template #footer>
-      <el-button type="info" @click="onClose">{{ translate('FormDataSummary.detailDialog.cancelButton') }}</el-button>
-      <el-button type="primary" @click="exportSubmissionLogToPdf">{{ translate('FormDataSummary.detailDialog.exportButton') }}</el-button>
+      <el-button v-if="!props.fromApprovalPage"
+                 type="info"
+                 @click="onClose"
+      >
+        {{ translate('FormDataSummary.detailDialog.cancelButton') }}
+      </el-button>
+      <el-button
+          v-if="!props.fromApprovalPage"
+          type="primary"
+          @click="exportSubmissionLogToPdf"
+      >
+        {{ translate('FormDataSummary.detailDialog.exportButton') }}
+      </el-button>
     </template>
   </el-dialog>
 </template>
@@ -129,7 +140,11 @@
     groupedDetails: Object,
     basicInfo: Object,
     systemInfo: Object,
-    eSignature: String
+    eSignature: String,
+    fromApprovalPage: {
+      type: Boolean,
+      default: false
+    }
   })
   const emit = defineEmits(['close', 'export'])
 
