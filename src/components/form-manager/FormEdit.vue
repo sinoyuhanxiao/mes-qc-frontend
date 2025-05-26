@@ -52,6 +52,7 @@ import { getChangedFields, getLabelMapFromTemplate } from '@/utils/compareFormCh
 import SignaturePadComponent from '@/components/form-manager/SignaturePad.vue'
 import { editFormData } from '@/services/qcFormDataService';
 import { getFormTemplateFieldList } from '@/services/qcFormTemplateService';
+import {useStore} from "vuex";
 
 const route = useRoute();
 
@@ -74,6 +75,7 @@ const formData = ref({});
 const initialSnapshot = ref({});
 
 const optionItemsMap = ref({})
+const store = useStore();
 
 onMounted(async () => {
   try {
@@ -192,7 +194,7 @@ const handleSignatureSave = async (data) => {
     // Add the signature data into the updated form (you can customize the key name)
     updatedData['e-signature'] = signatureData.value;
 
-    const userId = 19 // TODO: 🔧 Replace with dynamic user ID if available
+    const userId = store.getters.getUser.id
     const collectionName = getCollectionNameFromCreatedAt(createdAt); // store to its original collection
     await editFormData(userId, collectionName, submissionId, templateId, updatedData);
 
