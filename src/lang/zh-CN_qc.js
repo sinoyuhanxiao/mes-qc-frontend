@@ -12,6 +12,7 @@ export default {
         operationCancelled: '操作已取消',
         view: '查看',
         noDataAvailable: '暂无数据',
+        none: '无',
         table: {
             id: '编号',
             name: '名称',
@@ -79,7 +80,7 @@ export default {
             statusTooltip: '如果未激活，用户将无法使用此账号',
             editButton: '编辑',
             deleteButton: '删除',
-            leader: '班长'
+            leader: '组长'
         },
         addDialog: {
             title: '添加用户',
@@ -131,7 +132,7 @@ export default {
             emailRequired: '邮箱是必填项',
             emailInvalid: '邮箱格式不正确',
             phoneNumberRequired: '电话号码是必填项',
-            phoneNumberInvalid: '电话号码格式不正确'
+            phoneNumberFormat: '电话号码格式不正确'
         },
         messages: {
             userAddedSuccess: '用户添加成功',
@@ -141,6 +142,7 @@ export default {
             userDeletedSuccess: '用户删除成功',
             teamsUpdatedSuccess: '班组更新成功',
             teamsUpdateFailed: '班组更新失败',
+            selfDeactivationSuccess: '你的账号已经成功注销，登出后将无法登入。',
             selfDeactivationWarning: '您正在停用自己的账号。确定要继续吗？',
             selfDeletionWarning: '您正在删除自己的账号及其关联的班组。确定要继续吗？',
             deletionConfirmation: '确定要删除用户“{name}”及其关联的班组吗？',
@@ -151,7 +153,6 @@ export default {
             validationErrors: '请在继续之前修复验证错误',
             selfDeactivationTitle: '注销自己账号',
             deletionTitle: '删除',
-            selfDeactivationSuccess: '你的账号已经成功注销，登出后将无法登入。',
             deactivationFailed: '注销账号失败',
             pleaseCorrectErrors: '请修正错误！',
             passwordNotMatchOrFewerCharacters: '密码不匹配或少于 4 个字符！',
@@ -215,16 +216,16 @@ export default {
         membersTab: '成员',
         formsTab: '已关联表单',
         parentTeam: '上级班组',
-        leaderSelectionHint:
-            '负责人可选用户取决于班组层级:<br>' +
-            ' 层级 1 → 主管和班长用户<br>' +
-            ' 层级 2 → 仅班长用户<br>' +
-            ' 层级 3 → 所有用户',
+        isSetAsSubTeam: '是否设为子班组',
+        depth1RoleAllowed: '仅允许主管/班长角色用户',
+        depth2RoleAllowed: '仅允许班长角色用户',
+        limitedMemberOptionsHint: '仅允许选择上级班组成员',
+        limitedFormOptionsHint: '仅允许选择上级班组关联表单',
         table: {
             id: 'ID',
             name: '名称',
             type: '类型',
-            leader: '负责人',
+            leader: '组长',
             startTime: '开始时间',
             endTime: '结束时间',
             status: '状态',
@@ -241,7 +242,7 @@ export default {
             title: '添加班组',
             name: '名称',
             type: '类型',
-            leader: '负责人',
+            leader: '组长',
             startTime: '开始时间',
             endTime: '结束时间',
             members: '成员',
@@ -250,7 +251,7 @@ export default {
             status: '状态',
             cancelButton: '取消',
             confirmButton: '确认',
-            selectLeaderPlaceholder: '选择负责人',
+            selectLeaderPlaceholder: '选择组长',
             selectStatusPlaceholder: '选择状态',
             selectMembersPlaceholder: '选择成员',
             selectParentTeamPlaceholder: '选择上级班组',
@@ -259,7 +260,7 @@ export default {
             title: '编辑班组',
             name: '名称',
             type: '类型',
-            leader: '负责人',
+            leader: '组长',
             startTime: '开始时间',
             endTime: '结束时间',
             members: '成员',
@@ -268,7 +269,7 @@ export default {
             status: '状态',
             cancelButton: '取消',
             confirmButton: '确认',
-            selectLeaderPlaceholder: '选择负责人',
+            selectLeaderPlaceholder: '选择组长',
             selectMembersPlaceholder: '选择成员',
             selectStatusPlaceholder: '选择状态',
             selectParentTeamPlaceholder: '选择上级班组',
@@ -280,7 +281,7 @@ export default {
         validation: {
             nameRequired: '名称是必填项',
             typeRequired: '类型是必填项',
-            leaderRequired: '负责人是必填项',
+            leaderRequired: '组长是必选项',
             startTimeRequired: '开始时间是必填项',
             endTimeRequired: '结束时间是必填项',
         },
@@ -293,7 +294,7 @@ export default {
             teamEditedFailed: '班组编辑失败',
             membersUpdatedSuccess: '班组成员更新成功',
             deletionConfirmation: '确定要删除班组“{name}”并断开所有成员关系吗？',
-            teamDeletionCanceled: '班组删除已取消',
+            teamDeletionCancelled: '班组删除已取消',
             validationErrors: '请在继续之前修复验证错误',
             statusUpdatedSuccess: '状态更改成功',
             statusUpdatedFailed: '状态更改失败'
