@@ -470,7 +470,7 @@ export default {
           },
           {
             pattern: /^\+?[1-9]\d{1,14}$/,
-            message: translate('userManagement.validation.phoneNumberInvalid'),
+            message: translate('userManagement.validation.phoneNumberFormat'),
             trigger: 'blur'
           }
         ]
@@ -661,7 +661,7 @@ export default {
                 // Proceed with deactivation
                 const payload = { status: newStatus };
                 await updateUser(userId, payload);
-                this.$message.success(translate('userManagement.validation.selfDeactivationSuccess'));
+                this.$message.success(translate('userManagement.messages.selfDeactivationSuccess'));
                 // Handle logout or session cleanup here
               })
               .catch(() => {
