@@ -248,6 +248,9 @@ async function viewDetails(row) {
         if (key.startsWith("related_")) {
           delete grouped.uncategorized[key];
         }
+        if (key === "approver_updated_at") {
+          delete grouped.uncategorized[key];
+        }
       }
     }
 

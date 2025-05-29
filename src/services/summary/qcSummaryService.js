@@ -69,3 +69,40 @@ export const getAbnormalBatchesByProduct = (params) => {
 export const getInspectionCountByPersonnel = (params) => {
     return axios.get(`${BASE_URL}/inspection-count-by-personnel`, { params });
 };
+
+/**
+ * 获取卡片汇总统计数据（批次、人员、字段、异常率等）
+ * @param {Object} params - Filtering options
+ * @returns {Promise} Axios response with summary card values
+ */
+export const getCardStats = (params) => {
+    return axios.get(`${BASE_URL}/card-stats`, { params });
+};
+
+/**
+ * 获取质检人员 KPI（字段检测数、异常率、提交表单数）
+ * @param {Object} params - Filtering options
+ * @returns {Promise} Axios response with personnel KPI
+ */
+export const getPersonnelKPI = (params) => {
+    return axios.get(`${BASE_URL}/personnel-kpi`, { params });
+};
+
+/**
+ * 获取复检记录列表
+ * @param {Object} params - Filtering options
+ * @returns {Promise} Axios response with retest record data
+ */
+export const getRetestRecords = (params) => {
+    return axios.get(`${BASE_URL}/retest-records`, { params });
+};
+
+/**
+ * 获取 MongoDB 中的质检文档列表（用于导出）
+ * @param {Object} params - { start_date, end_date, team_id, shift_id, product_id, batch_id }
+ * @returns {Promise} Axios response with raw document list
+ */
+export const getDocumentList = (params) => {
+    return axios.get(`${BASE_URL}/document-list`, { params });
+};
+
