@@ -216,7 +216,7 @@ export default {
         membersTab: 'Members',
         formsTab: 'Associated Forms',
         parentTeam: 'Parent Team',
-        isSetAsSubTeam: 'Set As Sub Team',
+        isSubTeam: 'Assign Under A Team',
         depth1RoleAllowed: 'Manager/Supervisor User Only',
         depth2RoleAllowed: 'Supervisor User Only',
         limitedMemberOptionsHint: 'Allow Members From Parent Team Only',

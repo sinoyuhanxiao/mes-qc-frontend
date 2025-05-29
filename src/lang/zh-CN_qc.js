@@ -216,11 +216,11 @@ export default {
         membersTab: '成员',
         formsTab: '已关联表单',
         parentTeam: '上级班组',
-        isSetAsSubTeam: '是否设为子班组',
+        isSubTeam: '分配至其他班组',
         depth1RoleAllowed: '仅允许主管/班长角色用户',
         depth2RoleAllowed: '仅允许班长角色用户',
         limitedMemberOptionsHint: '仅允许选择上级班组成员',
-        limitedFormOptionsHint: '仅允许选择上级班组关联表单',
+        limitedFormOptionsHint: '仅允许选择上级班组已关联表单',
         table: {
             id: 'ID',
             name: '名称',

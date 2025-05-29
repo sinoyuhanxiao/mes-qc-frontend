@@ -166,7 +166,6 @@
 
   <!-- Team Info Dialog -->
   <el-dialog
-      v-loading="loadingTeamDetails"
       v-model="teamDetailDialogVisible"
       :title="`${selectedTeamName}`"
       width="800"
@@ -189,12 +188,32 @@
 
         <!-- Table with Sorting -->
         <el-table
+            v-loading="loadingTeamDetails"
             :data="paginatedTeamUsers"
             @sort-change="handleUserSortChange"
             :empty-text="translate('common.noDataAvailable')"
         >
           <el-table-column prop="id" :label="translate('userManagement.table.id')" width="100" sortable />
-          <el-table-column prop="name" :label="translate('userManagement.table.name')" width="180" sortable />
+
+          <el-table-column
+              prop="name"
+              :label="translate('userManagement.table.name')"
+              width="180"
+              sortable
+          >
+            <template #default="{ row }">
+              {{ row.name }}
+
+              <el-tooltip
+                  :content="translate('teamManagement.table.leader')"
+              >
+                <el-icon v-if="row.isLeader" style="margin-left: 4px;">
+                  <StarFilled />
+                </el-icon>
+              </el-tooltip>
+              </template>
+          </el-table-column>
+
           <el-table-column prop="role" :label="translate('userManagement.table.role')" width="150" sortable>
             <template #default="scope">
               <el-tag :type="scope.row.role?.el_tag_type || 'info'">
@@ -277,9 +296,16 @@
         </el-row>
 
         <el-row>
-          <el-col :span="12">
-            <el-form-item :label="translate('teamManagement.isSetAsSubTeam')">
-              <el-switch v-model="isSubTeam" @change="handleIsSubTeam"/>
+          <el-col :span="12" align="center">
+            <el-form-item>
+              <el-text style="padding-right: 10px;">
+                {{ translate('teamManagement.isSubTeam') }}
+              </el-text>
+
+              <el-switch
+                  v-model="isSubTeam"
+                  @change="handleIsSubTeam"
+              />
             </el-form-item>
           </el-col>
 
@@ -364,10 +390,11 @@
                       float: right;
                       color: var(--el-text-color-secondary);
                       font-size: 13px;
-                   "
+                      padding-right: 10px;
+                      "
                   >
-                  {{ getRole(user.role_id).name }}
-              </span>
+                    {{ getRole(user.role_id).name }}
+                  </span>
                 </el-option>
               </el-select>
 
@@ -467,8 +494,12 @@
         </el-row>
 
         <el-row>
-          <el-col :span="12">
-            <el-form-item :label="translate('teamManagement.isSetAsSubTeam')">
+          <el-col :span="12" align="center">
+            <el-form-item>
+              <el-text style="padding-right: 10px;">
+              {{ translate('teamManagement.isSubTeam') }}
+              </el-text>
+
               <el-switch
                   v-model="isSubTeam"
                   @change="handleIsSubTeam"
@@ -518,11 +549,11 @@
                       font-size: 13px;
                    "
                   >
-                  {{ getRole(user.role_id).name }}
+                    {{ getRole(user.role_id).name }}
 
                     <!-- team name, if this user is currently a leader -->
-                <span v-if="user.team_name"> - {{ user.team_name }}</span>
-              </span>
+                    <span v-if="user.team_name"> - {{ user.team_name }}</span>
+                  </span>
                 </el-option>
               </el-select>
 
@@ -559,10 +590,11 @@
                       float: right;
                       color: var(--el-text-color-secondary);
                       font-size: 13px;
-                   "
+                      padding-right: 10px;
+                      "
                   >
-                  {{ getRole(user.role_id).name }}
-              </span>
+                    {{ getRole(user.role_id).name }}
+                  </span>
                 </el-option>
               </el-select>
 
@@ -638,7 +670,7 @@
 </template>
 
 <script>
-import {Search, Plus, QuestionFilled, RefreshRight, InfoFilled} from "@element-plus/icons-vue";
+import {Search, Plus, QuestionFilled, RefreshRight, InfoFilled, StarFilled} from "@element-plus/icons-vue";
 import { removeTeamFromAllUsers } from '@/services/teamUserService';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -663,13 +695,13 @@ import { getCurrentLeaders } from "@/services/teamService";
 import { fetchRoles } from "@/services/roleService";
 import { h } from 'vue';
 
-
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export default {
   name: "TeamManagement",
   components: {
+    StarFilled,
     InfoFilled,
     TeamFormTree,
     Search,
@@ -691,7 +723,7 @@ export default {
       isSubTeam: false,
       depth: 1, // Depth of the team to populate related options for create/edite dialog
       filteredTeamUsers: [], // Filtered users for pagination
-      sortSettings: { prop: "id", order: "ascending" },
+      sortSettings: { prop: "", order: "" },
       userSortSettings: { prop: "", order: "" }, // Sort settings for team detail user table
       tableData: [], // Original data
       teamOptions: [], // Dropdown options for all teams (used for selecting parent team)
@@ -867,7 +899,10 @@ export default {
       try {
         let response = await getUsersForTeam(team.id);
         if (response.data.status === "200") {
-          this.teamUsers = response.data.data;
+          const teamLeadId = team.leader?.id;
+
+          // Mark the leader user with isLeader
+          this.teamUsers = response.data.data.map(u => ({...u, isLeader: u.id === teamLeadId}));
           this.filteredTeamUsers = [...this.teamUsers];
         } else {
           this.teamUsers = [];
@@ -1119,7 +1154,10 @@ export default {
       this.syncMembersWithLeader(this.editUser.assignedUsers, this.editTeam.leader_id, null);
       this.previousLeaderId = this.editTeam.leader_id;
       this.editDialogVisible = true;
-      this.$refs.editTeamForm.clearValidate();
+
+      if (this.$refs.editTeamForm){
+        this.$refs.editTeamForm.clearValidate();
+      }
     },
     showAddDialog(row = null) {
       this.addDialogVisible = true; // Open the dialog
@@ -1138,7 +1176,9 @@ export default {
       // });
     },
     resetNewTeamForm() {
-      this.$refs.addTeamForm.clearValidate();
+      if (this.$refs.addTeamForm){
+        this.$refs.addTeamForm.clearValidate();
+      }
 
       this.newTeam = {
         name: "",
@@ -1344,7 +1384,6 @@ export default {
       }
 
       if (!newVal) {
-        console.log('newVal is null');
         this.syncMembersWithLeader(members, newVal, oldVal);
         this.previousLeaderId = null;
         return;
