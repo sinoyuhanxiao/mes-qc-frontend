@@ -131,9 +131,11 @@
         v-if="filteredRecords.length > 0"
         v-model:currentPage="currentPage"
         :page-size="pageSize"
-        layout="total, prev, pager, next"
+        :page-sizes="[15]"
+        layout="total, sizes, prev, pager, next, jumper"
         :total="filteredRecords.length"
         @current-change="handlePageChange"
+        @size-change="handleSizeChange"
     />
   </div>
 </template>
@@ -168,7 +170,11 @@
   const localSearch = ref(props.search || '')
   const localDateRange = ref(props.dateRange || [])
   const currentPage = ref(1)
-  const pageSize = 15
+  let pageSize = ref(15)
+  const handleSizeChange = (newSize) => {
+    pageSize = newSize
+    currentPage.value = 1
+  }
   const showAlerts = ref(true)
   const expandedRows = ref(new Set())
   const { getAlertStyle, getAlertIcon, getAlertTooltip } = useAlertHighlight(showAlerts)
@@ -224,8 +230,8 @@
   })
 
   const paginatedRecords = computed(() => {
-    const start = (currentPage.value - 1) * pageSize
-    const end = start + pageSize
+    const start = (currentPage.value - 1) * pageSize.value
+    const end = start + pageSize.value
     return filteredRecords.value.slice(start, end)
   })
 
@@ -245,7 +251,6 @@ const displayedRecords = computed(() => {
     return record
   })
 })
-
 
   watch(() => props.search, (val) => localSearch.value = val)
   watch(() => props.dateRange, (val) => localDateRange.value = val)
