@@ -1,6 +1,6 @@
 // utils/BulkExportUtil.js
-import { parseFormDocument } from '@/utils/parseFormDocument';
-import { getUserById } from '@/services/personnelService';
+import { parseFormDocument } from '@/utils/formUtils';
+// import { getUserById } from '@/services/userService';
 import JSZip from 'jszip';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -11,14 +11,7 @@ import {useAlertHighlight} from '@/composables/useAlertHighlight'
 const { getAlertTooltip, getAlertTextColor, getStyledValueWithIcon } = useAlertHighlight(true);
 
 export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, systemInfo, eSignature, translate }) {
-    const doc = new jsPDF({
-        compress: true,
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        userUnit: 1,
-        useCORS: true, // 启用 CORS 以防图片/字体跨域资源未加载
-    });
+    const doc = new jsPDF();
     const excludedKeys = ['e-signature', 'exceeded_info', 'approval_info', 'version_group_id', 'version'];
     callAddFont.call(doc);
     callAddBoldFont.call(doc);
@@ -58,7 +51,6 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
         doc.text(sectionTitle, 10, y);
         y += 6;
 
-        doc.setFont("simfang");
         autoTable(doc, {
             startY: y,
             head: [translate('Export.tableHeadValidRange')],
@@ -84,7 +76,7 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
     doc.setFontSize(14);
     doc.text('质检基础信息', 10, y);
     y += 6;
-    doc.setFont("simfang");
+
     autoTable(doc, {
         startY: y,
         head: [translate('Export.tableHead')],
@@ -105,7 +97,7 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
     doc.setFontSize(14);
     doc.text(translate('Export.groupTitle'), 10, y);
     y += 6;
-    doc.setFont("simfang");
+
     autoTable(doc, {
         startY: y,
         head: [translate('Export.tableHead')],
@@ -157,7 +149,7 @@ export async function exportDocumentsToZip(documents, translate) {
                 hour: "2-digit", minute: "2-digit", second: "2-digit",
                 hour12: false
             });
-            const submitterName = await getUserById(doc.created_by).then(res => res.data?.data?.name || "-");
+            const submitterName = "-" // await getUserById(doc.created_by).then(res => res.data?.data?.name || "-");
 
             const systemInfo = {
                 提交单号: submissionId,
@@ -196,7 +188,9 @@ export async function exportDocumentsToZip(documents, translate) {
             let inspectorStr = Array.isArray(doc.related_inspectors)
                 ? doc.related_inspectors.join('_')
                 : String(doc.related_inspectors || 'unknown');
-            const docName = `${doc.qc_form_template_name || 'unknown'}_${inspectorStr}_${formatDate(doc.created_at)}.pdf`;
+            const safeTemplateName = (doc.qc_form_template_name || 'unknown').trim().replace(/[\\/:*?"<>|]/g, '_');
+            const safeInspectorStr = inspectorStr.trim().replace(/[\\/:*?"<>|]/g, '_');
+            const docName = `${safeTemplateName}_${safeInspectorStr}_${formatDate(doc.created_at)}.pdf`;
 
             const pdf = generateSingleRecordPdf({
                 formLabel: doc.qc_form_template_name || 'unknown',

@@ -98,7 +98,7 @@
       <el-statistic
             title="批次合格率（%）"
             :value="(sourceSummary.batch_pass_rate * 100).toFixed(1)"
-        />
+      />
       </el-card>
       <el-card class="summary-card clickable-card" @click="scrollToSection('kpi-section')">
         <el-statistic title="总质检人员" :value="animatedInt.total_personnel" />
@@ -481,12 +481,13 @@
 
 <script setup>
 import { getPersonnelKPI, getDocumentList } from '@/services/summary/qcSummaryService'
-import { exportDocumentsToZip } from '@/utils/BulkExportUtil'
+import { exportDocumentsToZip } from '@/utils/bulkExportUtil'
 import {computed, nextTick, onMounted, reactive, ref, toRef} from 'vue';
 import { watch } from 'vue';
 import VChart from 'vue-echarts';
 import {Download, RefreshRight} from "@element-plus/icons-vue";
 import { useTransition } from '@vueuse/core'
+import { convertDateRangeToUtc } from '@/utils/time_utils';
 
 // Common fields API section
 import { getAlActiveSuggestedProducts } from '@/services/production/suggestedProductService';
@@ -522,6 +523,7 @@ const { viewDetailsFromRetest } = useViewDetails(basicInfo, systemInfo, groupedD
 import * as XLSX from 'xlsx';
 import QcRecordDetailDialog from "@/components/common/qc/QcRecordDetailDialog.vue";
 import {ElMessage} from "element-plus";
+import {translate} from "@/utils/i18n";
 
 const filters = ref({
   productId: null,
@@ -963,16 +965,17 @@ async function fetchSummaryCards() {
 }
 
 function buildFilterParams() {
+  const [startDateUtc, endDateUtc] = convertDateRangeToUtc(filters.value.dateRange);
+
   return {
-    start_date: filters.value.dateRange?.[0]?.toISOString().split('T')[0],
-    end_date: filters.value.dateRange?.[1]?.toISOString().split('T')[0],
+    start_date: startDateUtc,
+    end_date: endDateUtc,
     team_id: filters.value.teamId,
     shift_id: filters.value.shiftId,
     product_id: filters.value.productId,
     batch_id: filters.value.batchId
   };
 }
-
 async function loadBatchPassRateTrend(params) {
   const res = await getPassRateByDay(params);
   chartBatchPassRateTrend.value.xAxis.data = res.data.map(item => item.snapshot_date);
@@ -1089,16 +1092,17 @@ async function viewDetails(row) {
 }
 
 async function handleDocumentExport() {
+  const [startDateUtc, endDateUtc] = convertDateRangeToUtc(filters.value.dateRange);
   try {
     const res = await getDocumentList({
-      start_date: filters.value.dateRange[0],
-      end_date: filters.value.dateRange[1],
+      start_date: startDateUtc,
+      end_date: endDateUtc,
       team_id: filters.value.teamId,
       shift_id: filters.value.shiftId,
       product_id: filters.value.productId,
       batch_id: filters.value.batchId
     });
-    await exportDocumentsToZip(res.data.data);
+    await exportDocumentsToZip(res.data.data, translate);
   } catch (err) {
     console.error("❌ 导出失败", err);
   }

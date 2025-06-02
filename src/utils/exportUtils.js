@@ -15,6 +15,7 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
     callAddBoldFont.apply(doc);
     doc.setFont("simfang", "bold");
 
+
     let y = 10;
     const title = `${formLabel}${translate('Export.titleSuffix')}`;
     const pageWidth = doc.internal.pageSize.getWidth();
