@@ -17,9 +17,6 @@
         @delete="deleteRecord"
         @export-excel="exportRecordsToExcel"
         @edit-record="editQcSubmissionRecord"
-        @update:dateRange="handleDateRangeChange"
-        @update:search="search = $event"
-        @current-change="currentPage = $event"
     />
 
     <QcRecordDetailDialog
@@ -55,15 +52,13 @@
 import QcRecordsTable from "./qc/QcRecordsTable.vue";
 import {translate, translateWithParams} from "@/utils/i18n";
 import QcRecordDetailDialog from "@/components/common/qc/QcRecordDetailDialog.vue";
-import {deleteTaskSubmissionLog, getMyDocument} from "@/services/qcTaskSubmissionLogsService";
+import {deleteTaskSubmissionLog, getMyDocument, getRawMongoDocument} from "@/services/qcTaskSubmissionLogsService";
 import {getUserById} from "@/services/userService";
 import {parseFormDocument} from "@/utils/formUtils";
-import {computed, nextTick, ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {exportQcRecordsToExcel, exportSubmissionLogToPdf} from "@/utils/exportUtils";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useQcRecordsDialog} from "@/composables/useQcRecordsDialog";
-import { getRawMongoDocument } from '@/services/qcTaskSubmissionLogsService'
-import FormEdit from '@/components/form-manager/FormEdit.vue'
 import {fetchFormTemplate} from "@/services/qcFormTemplateService";
 
 const {
@@ -89,7 +84,9 @@ const props = defineProps({
   dateRange: Array
 });
 
-const dateRange = ref(props.dateRange);
+const defaultStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0); // e.g. 2025-06-01 00:00:00
+const defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59); // e.g. 2025-06-30 23:59:59
+const dateRange = ref(props.dateRange ?? [defaultStart, defaultEnd]);
 watch(dateRange, handleDateRangeChange)
 
 defineEmits(["update:visible"])
@@ -314,7 +311,6 @@ function exportRecordsToExcel() {
 async function handleDateRangeChange(dateRange) {
   if (!dateRange || dateRange.length !== 2) return;
   const formTemplateId = props.selectedForm?.qcFormTemplateId;
-
   localLoading.value = true;
   try {
     localRecords.value = await fetchRecordsData(formTemplateId, dateRange);
@@ -345,14 +341,14 @@ watch(() => props.visible, async (val) => {
 
       localRecords.value = result;
 
-      // ✅ Step 1: 先过滤掉不需要展示的字段
+      // Step 1: 先过滤掉不需要展示的字段
       let fields = Object.keys(result[0]);
-      fields = fields.filter(key => !['_id', 'created_by', 'e-signature', '提交时间', '提交人', 'exceeded_info', 'approval_info'].includes(key)); // filter some system fields
+      fields = fields.filter(key => !['_id', 'created_by', 'e-signature', '提交时间', '提交人', 'exceeded_info', 'approval_info', 'version', 'version_group_id', 'approver_updated_at'].includes(key)); // filter some system fields
       fields = fields.filter(key => !key.startsWith('related_')); // remove all related_* fields
-      // ✅ Step 2: 替换字段名（如 created_at ➝ 提交时间）
+      // Step 2: 替换字段名（如 created_at ➝ 提交时间）
       // fields = fields.map(key => key === 'created_at' ? '提交时间' : key);
 
-      // ✅ Step 3: push this to the last column
+      // Step 3: push this to the last column
       fields.push('_id');
 
       headers.value = fields;

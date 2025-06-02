@@ -2,7 +2,7 @@
   <div class="qc-summary-grid" v-loading="qcSummaryLoading">
     <!-- Header -->
     <div class="header-area" style="display: flex; justify-content: space-between; align-items: center;">
-      <h2>质量汇总报告</h2>
+      <h2>质量汇总</h2>
       <div>
         <el-tooltip content="刷新" placement="top">
           <el-button
@@ -477,11 +477,17 @@
       :from-approval-page="true"
       @close="dialogVisible = false"
   />
+
+  <DownloadProgress
+      :visible="downloadingProgress.visible"
+      :current="downloadingProgress.current"
+      :total="downloadingProgress.total"
+  />
 </template>
 
 <script setup>
-import { getPersonnelKPI, getDocumentList } from '@/services/summary/qcSummaryService'
-import { exportDocumentsToZip } from '@/utils/bulkExportUtil'
+import {getPersonnelKPI, getDocumentList, downloadPdfReport} from '@/services/summary/qcSummaryService'
+import {exportDocumentsToExcelZip, exportDocumentsToZip} from '@/utils/bulkExportUtil'
 import {computed, nextTick, onMounted, reactive, ref, toRef} from 'vue';
 import { watch } from 'vue';
 import VChart from 'vue-echarts';
@@ -524,6 +530,7 @@ import * as XLSX from 'xlsx';
 import QcRecordDetailDialog from "@/components/common/qc/QcRecordDetailDialog.vue";
 import {ElMessage} from "element-plus";
 import {translate} from "@/utils/i18n";
+import DownloadProgress from "@/components/export/DownloadProgress.vue";
 
 const filters = ref({
   productId: null,
@@ -542,6 +549,7 @@ const personnelKpi = ref([])
 const qcSummaryLoading = ref(false);
 const chartDataReady = ref(false);
 const loadingSummary = ref(false);
+const downloadingProgress = reactive({ visible: false, total: 0, current: 0 });
 const groupedKpiRows = computed(() => {
   const rows = []
   for (let i = 0; i < personnelKpi.value.length; i += 2) {
@@ -676,6 +684,13 @@ const columnsRetestRecords = [
 
 function exportRetestRecordsToExcel() {
   exportTableToExcel(tableRetestRecords.value, columnsRetestRecords, '需复检列表', '需复检列表.xlsx');
+}
+
+// download progress
+function onProgress(current, total) {
+  downloadingProgress.current = current;
+  downloadingProgress.total = total;
+  downloadingProgress.visible = true;
 }
 
 // charts section
@@ -1092,7 +1107,11 @@ async function viewDetails(row) {
 }
 
 async function handleDocumentExport() {
+  downloadingProgress.visible = true;
+  downloadingProgress.total = 0;
+  downloadingProgress.current = 0;
   const [startDateUtc, endDateUtc] = convertDateRangeToUtc(filters.value.dateRange);
+
   try {
     const res = await getDocumentList({
       start_date: startDateUtc,
@@ -1102,9 +1121,32 @@ async function handleDocumentExport() {
       product_id: filters.value.productId,
       batch_id: filters.value.batchId
     });
-    await exportDocumentsToZip(res.data.data, translate);
+
+    // Set total to document count + 1 (for the summary PDF)
+    const docs = res.data.data;
+    downloadingProgress.total = docs.length + 1;
+    downloadingProgress.current = 0;
+    downloadingProgress.visible = true;
+
+    await exportDocumentsToZip(docs, translate, onProgress);         // PDF
+    await exportDocumentsToExcelZip(docs, translate, onProgress);    // Excel
+
+    // Export AI summary report
+    await downloadPdfReport({
+      start_date: startDateUtc,
+      end_date: endDateUtc,
+      team_id: filters.value.teamId,
+      shift_id: filters.value.shiftId,
+      product_id: filters.value.productId,
+      batch_id: filters.value.batchId
+    });
+
+    // update the current
+    downloadingProgress.current = downloadingProgress.total;
+    downloadingProgress.visible = false;
   } catch (err) {
     console.error("❌ 导出失败", err);
+    downloadingProgress.visible = false;
   }
 }
 

@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable";
 import callAddFont from "@/assets/simfang.js"; // ✅ Regular Simfang font
 import callAddBoldFont from "@/assets/simfang-bold.js";
 import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 import {useAlertHighlight} from '@/composables/useAlertHighlight'
 const { getAlertTooltip, getAlertTextColor, getStyledValueWithIcon } = useAlertHighlight(true);
 
@@ -113,11 +114,9 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
 
     y = doc.lastAutoTable.finalY + 10;
 
-    const signatureImg = document.querySelector('img[alt="e-signature"]');
-    if (signatureImg) {
+    if (eSignature) {
         const imgWidth = 150;
-        const aspectRatio = signatureImg.naturalWidth / signatureImg.naturalHeight;
-        const imgHeight = imgWidth / aspectRatio;
+        const imgHeight = 30; // height could be adjusted
         const pageHeight = doc.internal.pageSize.getHeight();
 
         if (y + imgHeight + 20 > pageHeight) {
@@ -129,7 +128,7 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
         doc.text(translate('Export.signatureTitle'), 10, y);
         y += 10;
 
-        doc.addImage(signatureImg, 'PNG', 10, y, imgWidth, imgHeight);
+        doc.addImage(eSignature, 'PNG', 10, y, imgWidth, imgHeight);
         y += imgHeight + 10;
     }
 
@@ -137,10 +136,13 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
     return doc;
 }
 
-export async function exportDocumentsToZip(documents, translate) {
+export async function exportDocumentsToZip(documents, translate, onProgress) {
     const zip = new JSZip();
 
-    for (const doc of documents) {
+    for (let i = 0; i < documents.length; i++) {
+        const doc = documents[i];
+        onProgress(i + 1, documents.length);
+        await new Promise(resolve => setTimeout(resolve, 0));
         try {
             const submissionId = doc._id;
             const createdAt = new Date(doc.created_at);
@@ -168,7 +170,7 @@ export async function exportDocumentsToZip(documents, translate) {
 
             const cleanedUncategorized = { ...uncategorized };
             for (const key of Object.keys(cleanedUncategorized)) {
-                if (key.startsWith("related_") || key === "approver_updated_at") {
+                if (key.startsWith("related_") || key.startsWith("qc_form_template") || key === "approver_updated_at") {
                     delete cleanedUncategorized[key];
                 }
             }
@@ -180,20 +182,19 @@ export async function exportDocumentsToZip(documents, translate) {
 
             if (groupedDetails.uncategorized) {
                 groupedDetails.uncategorized = {
-                    ...groupedDetails.uncategorized,
                     ...cleanedUncategorized
                 };
             }
 
-            let inspectorStr = Array.isArray(doc.related_inspectors)
-                ? doc.related_inspectors.join('_')
-                : String(doc.related_inspectors || 'unknown');
-            const safeTemplateName = (doc.qc_form_template_name || 'unknown').trim().replace(/[\\/:*?"<>|]/g, '_');
+            let inspectorStr = Array.isArray(doc.uncategorized.related_inspectors)
+                ? doc.uncategorized.related_inspectors.join('_')
+                : String(doc.uncategorized.related_inspectors || '');
+            const safeTemplateName = (doc.uncategorized.qc_form_template_name || 'unknown').trim().replace(/[\\/:*?"<>|]/g, '_');
             const safeInspectorStr = inspectorStr.trim().replace(/[\\/:*?"<>|]/g, '_');
             const docName = `${safeTemplateName}_${safeInspectorStr}_${formatDate(doc.created_at)}.pdf`;
 
             const pdf = generateSingleRecordPdf({
-                formLabel: doc.qc_form_template_name || 'unknown',
+                formLabel: doc.uncategorized.qc_form_template_name || 'unknown',
                 groupedDetails,
                 basicInfo,
                 systemInfo,
@@ -209,8 +210,145 @@ export async function exportDocumentsToZip(documents, translate) {
     }
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
-    saveAs(zipBlob, '质检汇总.zip');
+    saveAs(zipBlob, '质检汇总_pdf.zip');
 }
+
+// utils/BulkExportUtil.js 下方添加
+export async function exportDocumentsToExcelZip(documents, translate, onProgress) {
+    const zip = new JSZip();
+
+    for (let i = 0; i < documents.length; i++) {
+
+        const doc = documents[i];
+        onProgress(i + 1, documents.length);
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        const { groupedDetails } = parseFormDocument({
+            ...doc,
+            submissionId: doc._id
+        });
+
+        const createdAt = new Date(doc.created_at);
+        const formattedTime = createdAt.toLocaleString("zh-CN", {
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hour12: false
+        });
+
+        const systemInfo = {
+            提交单号: doc._id,
+            提交时间: formattedTime,
+            // 提交用户: "-"
+        };
+
+        const uncategorized = doc.uncategorized || {};
+        const basicInfo = {
+            涉及产品: uncategorized.related_products || '-',
+            涉及批次: uncategorized.related_batches || '-',
+            质检人员: uncategorized.related_inspectors || '-',
+            所属班次: uncategorized.related_shifts || '-',
+            所属班组: uncategorized.related_teams || '-'
+        };
+
+        try {
+            const {
+                created_at,
+                created_by,
+                _id,
+                'e-signature': signature,
+                ...rest
+            } = doc;
+
+            const entries = Object.entries(rest);
+
+            const normalFields = entries.filter(([key]) =>
+                !key.startsWith('related_') &&
+                !key.endsWith('_id') &&
+                !key.endsWith('_ids') &&
+                !key.endsWith('approval_info') &&
+                !key.endsWith('version_group_id') &&
+                !key.endsWith('version') &&
+                !key.endsWith('exceeded_info')
+            );
+
+            const relatedFields = entries
+                .filter(([key]) =>
+                    key.startsWith('related_') &&
+                    !key.endsWith('_id') &&
+                    !key.endsWith('_ids')
+                )
+                .map(([key, value]) => {
+                    let translatedKey = key;
+                    if (key === 'related_products') translatedKey = '涉及产品';
+                    else if (key === 'related_batches') translatedKey = '涉及批次';
+                    else if (key === 'related_inspectors') translatedKey = '质检人员';
+                    else if (key === 'related_shifts') translatedKey = '所属班次';
+                    else if (key === 'related_teams') translatedKey = '所属班组';
+                    return [translatedKey, value];
+                });
+
+            // 将所有字段展开为平铺结构
+            const flatRow = {};
+
+            flatRow[translate('Export.systemInfo.submittedAt')] = doc.created_at || "-";
+            flatRow[translate('Export.systemInfo.submitter')] = "-";
+
+            // 展开 groupedDetails 的所有子字段
+            Object.entries(groupedDetails).forEach(([category, fields]) => {
+                if (typeof fields !== 'object' || fields === null) return;
+
+                Object.entries(fields).forEach(([key, value]) => {
+                    if (
+                        key === 'e-signature' ||
+                        key === 'approval_info' ||
+                        key.startsWith('related_') ||
+                        key.startsWith('qc_form_template') ||
+                        key === 'version_group_id' ||
+                        key === 'version' ||
+                        key === 'exceeded_info'
+                    ) return;
+
+                    flatRow[key] = value;
+                });
+            });
+
+            // Basic Info
+            Object.entries(basicInfo).forEach(([key, value]) => {
+                flatRow[key] = value;
+            });
+
+            // System Info
+            Object.entries(systemInfo).forEach(([key, value]) => {
+                flatRow[key] = value;
+            });
+
+            const tableData = [flatRow];
+            const headers = Object.keys(flatRow);
+
+            const worksheet = XLSX.utils.json_to_sheet(tableData, { header: headers, skipHeader: false });
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "QC记录");
+
+
+            const safeTemplateName = (doc.uncategorized?.qc_form_template_name || 'unknown').trim().replace(/[\\/:*?"<>|]/g, '_');
+            const inspectorStr = Array.isArray(doc.uncategorized?.related_inspectors)
+                ? doc.uncategorized.related_inspectors.join('_')
+                : String(doc.uncategorized?.related_inspectors || '');
+            const safeInspectorStr = inspectorStr.trim().replace(/[\\/:*?"<>|]/g, '_');
+
+            const fileName = `${safeTemplateName}_${safeInspectorStr}_${formatDate(created_at)}.xlsx`;
+            const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+
+            zip.file(fileName, excelBuffer);
+        } catch (err) {
+            console.error(`❌ Failed to export Excel for doc with _id=${doc._id}`, err);
+        }
+    }
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    saveAs(zipBlob, '质检汇总_excel.zip');
+}
+
 
 function formatDate(isoStr) {
     try {

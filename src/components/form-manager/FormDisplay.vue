@@ -43,6 +43,16 @@
           {{ translate('FormDataSummary.viewRecords') }}
         </el-button>
 
+        <el-button
+            type="success"
+            v-if="props.accessByTeam"
+            @update:modelValue="emit('update:visible', $event)"
+            @click="exportDialogVisible = true"
+            style="margin-left: 10px"
+        >
+          导出本班汇总
+        </el-button>
+
 
       </div>
 
@@ -460,6 +470,12 @@
       @update:visible="val => showApprovalDialog = val"
   />
 
+  <ExportDocumentDialog
+      v-if="selectedTeamId !== null"
+      v-model:visible="exportDialogVisible"
+      :default-team-id=selectedTeamId
+      :default-date-range="[new Date(), new Date()]"
+  />
 </template>
 
 <script setup>
@@ -493,9 +509,9 @@ import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
 import { getAllTeams, getTeamByTeamLeadId } from '@/services/teamService';
 const showApprovalDialog = ref(false)
 
+import ExportDocumentDialog from '@/components/export/ExportDocumentDialog.vue'
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
-import { fetchQcRecords } from "@/services/qcReportingService"; // make sure this is imported
 // 通用submit功能导入
 import {
   getAlActiveSuggestedProducts,
@@ -518,6 +534,7 @@ const loadingQcRecords = ref(true);
 const currentPage = ref(1);
 const pageSize = 15;
 const showPasswordDialog = ref(false);
+const exportDialogVisible = ref(false);
 
 const qcUsers = ref([])
 const selectedQcUserIds = ref([]) // 存储选择的质检人员 ID
@@ -1208,45 +1225,6 @@ const audio = new Audio(soundEffect);
 //     await new Promise((resolve) => setTimeout(resolve, interval));
 //   }
 // }
-
-const openQcRecordsDialog = async () => {
-  qcRecordsDialogVisible.value = true;
-  loadingQcRecords.value = true;
-
-  // TODO: remove the hardcoded datetime values
-  const formTemplateId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
-  const startDateTime = "2025-04-01 00:00:00";
-  const endDateTime = "2025-05-01 23:59:59";
-
-  try {
-    const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
-    qcRecords.value = response.data;
-
-    if (qcRecords.value.length > 0) {
-      let headers = Object.keys(qcRecords.value[0]);
-      headers = headers.filter(h => h !== "_id" && h !== "created_by").map(h => h === "created_at" ? "提交时间" : h);
-      headers.push("_id");
-      reorderedColumnHeaders.value = headers;
-
-      qcRecords.value = qcRecords.value.map(r => {
-        if (r.created_at) {
-          const localDate = new Date(r.created_at);
-          r["提交时间"] = localDate.toLocaleString("zh-CN", {
-            year: "numeric", month: "2-digit", day: "2-digit",
-            hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
-          }).replace(/\//g, "-");
-          delete r.created_at;
-        }
-        return r;
-      });
-    }
-  } catch (err) {
-    console.error("Error fetching records:", err);
-  } finally {
-    loadingQcRecords.value = false;
-  }
-};
-
 
 watch(remainingTime, (newTime) => {
   nextTick(() => {

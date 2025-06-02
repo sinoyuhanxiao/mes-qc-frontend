@@ -9,7 +9,7 @@ import callAddBoldFont from '@/assets/simfang-bold.js'
 import { useAlertHighlight } from '@/composables/useAlertHighlight'
 const { getAlertTextColor, getStyledValueWithIcon, getAlertTooltip } = useAlertHighlight(true)
 
-const excludedKeys = ['exceeded_info', 'approval_info', 'version_group_id', 'version'];
+const excludedKeys = ['exceeded_info', 'approval_info', 'version_group_id', 'version', 'approver_updated_at']; // set the excluded key in uncategorized in here
 
 const relatedFieldTitleMap = {
     related_products: '涉及产品',
@@ -48,7 +48,7 @@ export function useApprovalDetailExport() {
             for (const key of Object.keys(clean)) {
                 if (key.startsWith('related_') || [
                     '_id', 'created_by', 'created_at', 'e-signature',
-                    'version', 'approval_info', 'exceeded_info', 'version_group_id'
+                    'version', 'approval_info', 'exceeded_info', 'version_group_id', 'approver_updated_at'
                 ].includes(key)) {
                     delete clean[key]
                 }
