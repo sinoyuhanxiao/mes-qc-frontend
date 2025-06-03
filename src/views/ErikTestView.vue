@@ -15,16 +15,28 @@
       <el-button type="primary" @click="ask">Send</el-button>
     </div>
   </div>
+  <el-button type="success" @click="openDialog">查看质检记录</el-button>
+  <QcRecordDetailDialogRefactored
+      :visible="dialogVisible"
+      :submission-id="'683e7616542d986296b7d1c5'"
+      :qc-form-template-id="378"
+      :created-at="'2025-06-02 21:12:07'"
+      danger-label="气味来源判定"
+      @close="dialogVisible = false"
+  />
 </template>
 
 <script>
 import axios from 'axios'
+import QcRecordDetailDialogRefactored from '@/components/common/qc/QcRecordDetailDialogRefactored.vue'
 
 export default {
+  components: {QcRecordDetailDialogRefactored},
   data() {
     return {
       question: '',
-      chatHistory: []
+      chatHistory: [],
+      dialogVisible: false
     }
   },
   methods: {
@@ -38,6 +50,9 @@ export default {
         const el = this.$el.querySelector('.chat-window')
         el.scrollTop = el.scrollHeight
       })
+    },
+    openDialog() {
+      this.dialogVisible = true
     }
   }
 }
