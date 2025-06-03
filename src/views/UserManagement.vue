@@ -619,7 +619,8 @@ export default {
 
         /** Recursively copy node → add value/label → skip nodes with status = 0 */
         const toOptionNode = (team) => {
-          if (team.status === 0) return null;
+          // Allow status 0 teams for now
+          // if (team.status === 0) return null;
 
           const children =
               Array.isArray(team.children)

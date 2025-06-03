@@ -217,8 +217,10 @@ export default {
         formsTab: 'Associated Forms',
         parentTeam: 'Parent Team',
         isSubTeam: 'Assign Under A Team',
+        formSelectionPreview: 'Preview',
+        totalCount: 'Total Selected Count',
         depth1RoleAllowed: 'Manager/Supervisor User Only',
-        depth2RoleAllowed: 'Supervisor User Only',
+        depth2RoleAllowed: 'Team Lead User Only',
         limitedMemberOptionsHint: 'Allow Members From Parent Team Only',
         limitedFormOptionsHint: 'Allow Forms From Parent Team Only',
         table: {

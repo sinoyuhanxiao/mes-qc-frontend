@@ -170,6 +170,7 @@
       :title="`${selectedTeamName}`"
       width="800"
       top="10vh"
+      @close="clearTeamDialogSearch"
   >
     <el-tabs>
       <el-tab-pane :label="translate('teamManagement.membersTab')">
@@ -205,13 +206,14 @@
               {{ row.name }}
 
               <el-tooltip
+                  v-if="row.isLeader"
                   :content="translate('teamManagement.table.leader')"
               >
-                <el-icon v-if="row.isLeader" style="margin-left: 4px;">
+                <el-icon  style="margin-left: 4px;">
                   <StarFilled />
                 </el-icon>
               </el-tooltip>
-              </template>
+            </template>
           </el-table-column>
 
           <el-table-column prop="role" :label="translate('userManagement.table.role')" width="150" sortable>
@@ -317,6 +319,7 @@
                   :placeholder="translate('teamManagement.addDialog.selectParentTeamPlaceholder')"
                   check-strictly
                   clearable
+                  @change="clearLeaderMemberFormSeleciton('create')"
               >
               </el-tree-select>
             </el-form-item>
@@ -337,12 +340,15 @@
                   :placeholder="translate('teamManagement.addDialog.selectLeaderPlaceholder')"
                   @visible-change="open => { if (open) previousLeaderId = newTeam.leader_id }"
                   @change="(newVal)=>handleNewLeaderSelection(newTeam, newUser.selectedUsers, newVal)"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
               >
                 <el-option
                     v-for="user in teamLeaderOptions"
                     :key="user.id"
                     :label="user.name"
                     :value="user.id"
+                    :disabled="user.disabled"
                 >
                   <span style="float:left">{{ user.name }}</span>
                   <span
@@ -352,7 +358,9 @@
                       font-size: 13px;"
                   >
                   {{ getRole(user.role_id).name }}
-                 <span v-if="user.team_name"> - {{ user.team_name }}</span>
+                 <span v-if="user.team_name">
+                   - {{ user.team_name }} ({{user.team_id}})
+                 </span>
               </span>
                 </el-option>
               </el-select>
@@ -376,6 +384,8 @@
                   multiple
                   filterable
                   :placeholder="translate('teamManagement.addDialog.selectMembersPlaceholder')"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
               >
                 <el-option
                     v-for="user in teamMemberOptions"
@@ -425,27 +435,48 @@
 <!--            />-->
 <!--          </el-form-item>-->
 
+        <el-row justify="space-between" gutter="20">
+          <el-col :span="14">
+            <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
+              <team-form-tree
+                  :showOnlySelectedNode="false"
+                  :expand-all-nodes="false"
+                  :allowed-form-ids="parentFormIds"
+                  @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
 
-        <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
-          <team-form-tree
-              :showOnlySelectedNode="false"
-              :expand-all-nodes="false"
-              :allowed-form-ids="parentFormIds"
-              @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
-              @on-node-clicked="handleFormNodeClicked"
-          >
-          </team-form-tree>
+              <span v-if="newTeam.parent_id != null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
 
-          <span v-if="newTeam.parent_id != null">
-            <el-text type="info">
-                <el-icon>
-                  <InfoFilled />
-                </el-icon>
+                  {{ translate('teamManagement.limitedFormOptionsHint') }}
+                </el-text>
+              </span>
+            </el-form-item>
+          </el-col>
 
-                {{ translate('teamManagement.limitedFormOptionsHint') }}
-            </el-text>
-          </span>
-        </el-form-item>
+          <el-col :span="10" style="background: #f9f9f9; border-color: #f9f9f9; border-width: 1px; border-radius: 5px;">
+            <div style="margin-bottom: 10px; margin-top: 5px;">
+              <el-text>
+                {{ translate('teamManagement.formSelectionPreview') }} - {{ translate('teamManagement.totalCount') }} : {{ newForm.selectedForms.length }}
+              </el-text>
+            </div>
+
+            <div style="margin-bottom: 10px">
+              <team-form-tree
+                  :selectedFormIds="newForm.selectedForms"
+                  :showOnlySelectedNode="true"
+                  :expand-all-nodes="true"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
+            </div>
+          </el-col>
+        </el-row>
 
         <el-form-item :label="translate('teamManagement.addDialog.description')" prop="description">
           <el-input type="textarea" v-model="newTeam.description" />
@@ -515,6 +546,7 @@
                   check-strictly
                   clearable
                   :placeholder="translate('teamManagement.editDialog.selectParentTeamPlaceholder')"
+                  @change="clearLeaderMemberFormSeleciton('edit')"
               />
             </el-form-item>
           </el-col>
@@ -534,12 +566,15 @@
                   :placeholder="translate('teamManagement.editDialog.selectLeaderPlaceholder')"
                   @visible-change="open => { if (open) previousLeaderId = editTeam.leader_id }"
                   @change="(newVal)=>handleNewLeaderSelection(editTeam, editUser.assignedUsers ,newVal)"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
               >
                 <el-option
                     v-for="user in teamLeaderOptions"
                     :key="user.id"
                     :label="user.name"
                     :value="user.id"
+                    :disabled="user.disabled"
                 >
                   <span style="float:left">{{ user.name }}</span>
                   <span
@@ -552,12 +587,14 @@
                     {{ getRole(user.role_id).name }}
 
                     <!-- team name, if this user is currently a leader -->
-                    <span v-if="user.team_name"> - {{ user.team_name }}</span>
+                    <span v-if="user.team_name">
+                      - {{ user.team_name }} ({{user.team_id}})
+                    </span>
                   </span>
                 </el-option>
               </el-select>
 
-              <el-text type="info">
+              <el-text type="info" v-if="this.depth">
                 <el-icon>
                   <InfoFilled />
                 </el-icon>
@@ -576,6 +613,8 @@
                   multiple
                   filterable
                   :placeholder="translate('teamManagement.editDialog.selectMembersPlaceholder')"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
               >
                 <el-option
                     v-for="user in teamMemberOptions"
@@ -625,27 +664,52 @@
         <!--            />-->
         <!--          </el-form-item>-->
 
-        <el-form-item :label="translate('teamManagement.editDialog.forms')">
-          <team-form-tree
-              :selectedFormIds="editForm.assignedForms"
-              :showOnlySelectedNode="false"
-              :expand-all-nodes="false"
-              :allowed-form-ids="parentFormIds"
-              @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
-              @on-node-clicked="handleFormNodeClicked"
-          >
-          </team-form-tree>
 
-          <span v-if="editTeam.parent_id != null">
-            <el-text type="info">
-                <el-icon>
-                  <InfoFilled />
-                </el-icon>
+        <el-row justify="space-between" gutter="20">
+          <el-col :span="14">
+            <el-form-item :label="translate('teamManagement.editDialog.forms')">
+              <team-form-tree
+                  :selectedFormIds="editForm.assignedForms"
+                  :showOnlySelectedNode="false"
+                  :expand-all-nodes="false"
+                  :allowed-form-ids="parentFormIds"
+                  @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
 
-                {{ translate('teamManagement.limitedFormOptionsHint') }}
-            </el-text>
-          </span>
-        </el-form-item>
+              <span v-if="editTeam.parent_id != null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+
+                  {{ translate('teamManagement.limitedFormOptionsHint') }}
+                </el-text>
+              </span>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="10"  style="background: #f9f9f9; border-color: #f9f9f9; border-width: 1px; border-radius: 5px;">
+            <div style="margin-bottom: 10px; margin-top: 5px;">
+              <el-text>
+                {{ translate('teamManagement.formSelectionPreview') }} - {{ translate('teamManagement.totalCount') }} : {{ editForm.assignedForms.length }}
+              </el-text>
+            </div>
+
+            <div style="margin-bottom: 10px">
+              <team-form-tree
+                  :selectedFormIds="editForm.assignedForms"
+                  :showOnlySelectedNode="true"
+                  :expand-all-nodes="true"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
+            </div>
+          </el-col>
+        </el-row>
+
+
 
         <el-form-item :label="translate('teamManagement.editDialog.description')" prop="description">
           <el-input type="textarea" v-model="editTeam.description" />
@@ -682,7 +746,7 @@ import {
   activateTeam,
   deactivateTeam,
   deleteTeam,
-  getTeamDepth
+  getTeamDepth, getTeamById
 } from "@/services/teamService.js";
 import { formatDate} from "@/utils/task-center/dateFormatUtils";
 import { fetchUsers} from "@/services/userService";
@@ -817,14 +881,14 @@ export default {
       const end = start + this.pageSize;
       return sortedData.slice(start, end);
     },
-    leaderHint() {
-      return translate('teamManagement.leaderSelectionHint');
-    },
     leaderLabelSuffix() {
       const depth = this.depth;
-      if (depth === 1) return translate('teamManagement.depth1RoleAllowed');
-      if (depth === 2) return translate('teamManagement.depth2RoleAllowed');
-      return ''
+
+      if (depth === 1) {
+        return translate('teamManagement.depth1RoleAllowed');
+      } else {
+        return translate('teamManagement.depth2RoleAllowed');
+      }
     },
   },
   mounted() {
@@ -903,7 +967,7 @@ export default {
 
           // Mark the leader user with isLeader
           this.teamUsers = response.data.data.map(u => ({...u, isLeader: u.id === teamLeadId}));
-          this.filteredTeamUsers = [...this.teamUsers];
+          this.filteredTeamUsers = this.teamUsers;
         } else {
           this.teamUsers = [];
           this.filteredTeamUsers = [];
@@ -952,7 +1016,7 @@ export default {
     },
     async fetchUserOptions() {
       try {
-        const response = await fetchUsers(); // Fetch users from the backend
+        const response = await fetchUsers();
         if (response.data && response.data.status === "200") {
           // Store all users for general use
           this.userOptions = response.data.data
@@ -962,7 +1026,7 @@ export default {
                 role_id: user.role?.id,
               }));
 
-          await this.onParentChanged();
+          // await this.onParentChanged();
         } else {
           this.userOptions = [];
           this.teamLeaderOptions = []; // Ensure empty state
@@ -980,7 +1044,7 @@ export default {
 
         if (response.data.status === "200") {
           response.data.data.forEach(leaderObj => {
-            map.set(leaderObj.user_id, leaderObj.team_name);
+            map.set(leaderObj.user_id, leaderObj);
           });
           this.currentLeaders = map;
         } else {
@@ -1155,25 +1219,37 @@ export default {
       this.previousLeaderId = this.editTeam.leader_id;
       this.editDialogVisible = true;
 
-      if (this.$refs.editTeamForm){
+      if (this.$refs.editTeamForm) {
         this.$refs.editTeamForm.clearValidate();
       }
     },
     showAddDialog(row = null) {
-      this.addDialogVisible = true; // Open the dialog
-      this.resetNewTeamForm();
+      const oldParentId = this.newTeam.parent_id;
+      this.addDialogVisible = true;
+
+      // clicking new team button will not reset for now
+      // this.resetNewTeamForm();
 
       if (row.id) {
-        this.newTeam.parent_id = row.id;
+        if (this.newTeam.parent_id !== row.id) {
+          this.clearLeaderMemberFormSeleciton('create');
+          this.newTeam.parent_id = row.id;
+        }
+
         this.isSubTeam = true;
       } else {
         this.newTeam.parent_id = null;
         this.isSubTeam = false;
       }
 
-      // this.$nextTick(() => {
-      //   this.resetNewTeamForm(); // Reset the form after rendering : has bug but I do not know why
-      // });
+
+
+      // Manually rebuild leader/member/form options when parent id changed to same value within same tick.
+      // This case does not get capture by the watcher, however leader options, member options, form options are shared
+      // between create/edit function
+      if (oldParentId === this.newTeam.parent_id) {
+        this.onParentChanged(this.newTeam.parent_id, null);
+      }
     },
     resetNewTeamForm() {
       if (this.$refs.addTeamForm){
@@ -1231,10 +1307,12 @@ export default {
       return this.markSelfAndDescDisabled(this.teamOptions, id);
     },
     // Reload leader/member/form options whenever parent_id changes. Works for both add & edit dialog.
-    async onParentChanged(parentId) {
+    async onParentChanged(newParentId, oldParentId) {
       this.parentFormIds = [];
 
-      if (!parentId) {
+      // If parent id is null, allow manager/supervisor role to be choose as leader, and all user to be choose as member
+      if (!newParentId) {
+        console.log("new parent Id is null");
         this.depth = 1;
         this.buildLeaderOptions(this.depth);
 
@@ -1243,12 +1321,22 @@ export default {
         return;
       }
 
-      // Get parent team depth to adjust leader options based on roles
-      this.depth = 2;            // Default to 2, root depth starts from 1
-      const parentLeaderId = this.findLeaderIdOfParent(parentId);
+      // Otherwise if team has a parent, build  leader/form/member options based on it
+      this.depth = 2; // Root depth starts from 1
+      let parentLeaderId = null;
 
       try {
-        const { data } = await getTeamDepth(parentId);
+        const { data } = await getTeamById(newParentId);
+        if (data.status === '200') {
+          parentLeaderId = data.data.leader?.id ?? null;
+        }
+      } catch (err) {
+        parentLeaderId = null;
+      }
+      console.log('parent leader id: ', parentLeaderId);
+
+      try {
+        const { data } = await getTeamDepth(newParentId);
         if (data.status === '200'){
           this.depth = data.data + 1;
         }
@@ -1258,9 +1346,9 @@ export default {
 
       this.buildLeaderOptions(this.depth, parentLeaderId);
 
-      // Setup member options which is subset of members of parent team
+      // Prevent choosing parent team's leader user as a member
       try {
-        const { data } = await getUsersForTeam(parentId);
+        const { data } = await getUsersForTeam(newParentId);
         if (data.status === '200') {
           this.teamMemberOptions = data.data
               .filter(u => u.id !== parentLeaderId)
@@ -1273,9 +1361,9 @@ export default {
         console.error('Failed to retrieve member ids for team.', err);
       }
 
-      // Setup parent's form ids for available form options
+      // Fetch parent team's form for disabling form
       try {
-        const { data } = await getFormIdsForTeam(parentId);
+        const { data } = await getFormIdsForTeam(newParentId);
         if (data.status === '200') {
           this.parentFormIds = data.data;
         }
@@ -1285,22 +1373,23 @@ export default {
     },
     // Helper that fills team leader options according to depth
     buildLeaderOptions(depth, reservedLeaderId = null) {
-      // Only show manager/supervisor role user for depth 1 team, supervisor role user for depth 2,
-      // all role for depth 3 temporary
-
+      // depth 1 team allow leader of manager/supervisor user, otherwise allow supervisor role user.
       const allowedRoleIdByDepth = { 1: [1, 4], 2: [3]};
-      const allowed = allowedRoleIdByDepth[depth] ?? [1, 2, 3, 4];
-      this.teamLeaderOptions = this.userOptions.filter(u => allowed.includes(u.role_id) &&
-          u.id !== reservedLeaderId)
-             .map(u => ({
-              id: u.id,
-              name: u.name,
-              role_id: u.role_id,
-              team_name: this.currentLeaders.get(u.id) || null
-              }));
+      const allowed = allowedRoleIdByDepth[depth] ?? [3];
+
+      this.teamLeaderOptions = this.userOptions.filter(u => allowed.includes(u.role_id))
+          .map(u => ({
+            id: u.id,
+            name: u.name,
+            role_id: u.role_id,
+            disabled: u.id === reservedLeaderId,
+            team_name: this.currentLeaders.get(u.id) ? this.currentLeaders.get(u.id).team_name : null,
+            team_id: this.currentLeaders.get(u.id) ? this.currentLeaders.get(u.id).team_id : null,
+          }));
     },
-    findLeaderIdOfParent(parentId) {
-      const n = this.tableData.find(t => t.id === parentId);
+    getLeaderIdByTeamId(teamId) {
+      // This find is not a deep find, does not check children of teams
+      const n = this.tableData.find(t => t.id === teamId);
       return n?.leader?.id ?? null;
     },
     async fetchRoles() {
@@ -1398,13 +1487,13 @@ export default {
 
       // new leader can be null, currentLeaders.get can also be null,
       if (newLeader && this.currentLeaders.get(newLeader.id)) {
-        otherTeamName = this.currentLeaders.get(newLeader.id);
+        otherTeamName = this.currentLeaders.get(newLeader.id).team_name;
       }
 
       const lines = [];
       lines.push(`${currentTeamName} ${translate('teamManagement.table.leader')}: ${oldLeader?.name ?? translate('common.none')} → ${newLeader.name}`);
 
-      if (otherTeamName !== 'none'){
+      if (otherTeamName !== 'none') {
         lines.push(`${otherTeamName} ${translate('teamManagement.table.leader')}: ${newLeader.name} → ${oldLeader?.name ?? translate('common.none')}`);
       }
 
@@ -1422,35 +1511,53 @@ export default {
             teamObj.leader_id = oldVal;
           });
       },
+    clearTeamDialogSearch() {
+      this.searchUserQuery = "";
+    },
+    clearLeaderMemberFormSeleciton(type) {
+      // Clear leader, member, form selection since these may no longer be valid under new parent team
+      if (type === 'edit') {
+        this.editTeam.leader_id = null;
+        this.editUser.assignedUsers = [];
+        this.editForm.assignedForms = [];
+      } else {
+        this.newTeam.leader_id = null;
+        this.newUser.selectedUsers = [];
+        this.newForm.selectedForms = [];
+      }
+
+    }
   },
   watch: {
-    addDialogVisible(newVal) {
-      if (!newVal) {
-        // this.$nextTick(() => {
-        //   this.resetNewTeamForm(); // Reset form after dialog closes
-        // });
-      }
-    },
-    teamDetailDialogVisible(newVal) {
-      if (!newVal) {
-        this.searchUserQuery = ""; // Clear the search query when closing the dialog
-      }
-    },
     'newTeam.parent_id': {
       immediate: true,
-      async handler(id) {
-        await this.onParentChanged(id);
+      async handler(newId, oldId) {
+        if (newId !== oldId) {
+          console.log("new team's parent id changed to a different value");
+          console.log("old parent id: ", oldId);
+          console.log("new parent id: ", newId);
+          await this.onParentChanged(newId, oldId);
+        } else {
+          console.log("new team's parent id changed to same value");
+        }
       }
     },
     'editTeam.parent_id': {
       immediate: true,
-      async handler(id) {
-        await this.onParentChanged(id);
+      async handler(newId, oldId) {
+        if (newId !== oldId) {
+          console.log("edit team's parent id changed to a different value");
+          console.log("old parent id: ", oldId);
+          console.log("new parent id: ", newId);
+          await this.onParentChanged(newId, oldId);
+        } else {
+          console.log("edit team's parent id changed to same value");
+        }
       }
     },
-    userOptions: async function (newVal, oldVal) {
-      await this.onParentChanged(this.editTeam.parent_id ?? this.newTeam.parent_id);
-    },
+    // userOptions: async function (newVal, oldVal) {
+    //   await this.onParentChanged(this.editTeam.parent_id ?? this.newTeam.parent_id);
+    // },
   }
 };
 </script>
