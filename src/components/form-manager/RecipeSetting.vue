@@ -60,7 +60,7 @@
       </div>
 
       <div v-else class="row" style="flex-direction: column">
-        <div class="key-name-valid-options">{{ item.label }}<span class="input-label-valid-options" style="margin-bottom: 8px;"> (检测合格选项)</span></div>
+        <div class="key-name-valid-options">{{ item.label }}<span class="input-label-valid-options" style="margin-bottom: 8px;">{{ VALID_OPTION_SUFFIX }}</span></div>
         <el-checkbox-group v-model="item.valid_keys">
           <el-checkbox
               v-for="opt in item.optionItems"
@@ -104,8 +104,8 @@ import { fetchControlLimitsByTemplateId, updateControlLimits  } from '@/services
 
 const showSaveConfirm = ref(false);
 const loading = ref(false)
+const VALID_OPTION_SUFFIX = '（检测合格选项）'
 let pendingSave = null;
-
 
 const props = defineProps({
   qcFormTemplateId: {
@@ -252,13 +252,18 @@ const logCardRight = (key) => {
   nextTick(() => {
     const allCards = document.querySelectorAll('.limit-card')
     allCards.forEach(card => {
-      const title = card.querySelector('.key-name')?.innerText?.trim()
-      if (title === key) {
+      const rawTitle = card.querySelector('[class^="key-name"]')?.innerText?.trim()
+
+      // Normalize title by removing VALID_OPTION_SUFFIX if present
+      const normalizedTitle = rawTitle?.endsWith(VALID_OPTION_SUFFIX)
+          ? rawTitle.slice(0, -VALID_OPTION_SUFFIX.length)
+          : rawTitle
+
+      if (normalizedTitle === key) {
         const rect = card.getBoundingClientRect()
-        console.log(`[坐标] 卡片 ${key} → right: ${rect.right}, topCenter: ${rect.top + rect.height / 2}`)
         const x = rect.right
         const y = rect.top + rect.height / 2
-
+        console.log(`[坐标] 卡片 ${key} → right: ${x}, topCenter: ${y}`)
         leftHoverDotPoint.value = { x, y }
       }
     })
