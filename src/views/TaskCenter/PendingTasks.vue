@@ -1,13 +1,17 @@
 <template>
   <el-container>
-    <el-aside width="25%">
-      <FormTree
-          v-if="teamId !== null"
-          :accessByTeam="teamId"
-          @select-form="selectForm"
-          @add-form="addForm"
-          @is-deletion="handleDeletion"
-      />
+    <el-aside width="25%" style="padding: 20px">
+      <template v-if="teamId !== null">
+        <FormTree
+            :accessByTeam="teamId"
+            @select-form="selectForm"
+            @add-form="addForm"
+            @is-deletion="handleDeletion"
+        />
+      </template>
+      <template v-else>
+        <el-empty description="无待办任务" image-size="120" />
+      </template>
     </el-aside>
     <el-main>
       <FormDisplay

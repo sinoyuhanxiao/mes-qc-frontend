@@ -201,6 +201,7 @@ import SignaturePadComponent from '@/components/form-manager/SignaturePad.vue';
 import { getApprovalInfo } from '@/services/approval/approvalService';
 import { getStepsFromState } from '@/utils/helpers/approvalStepHelper';
 import { useApprovalDetailExport } from '@/composables/useApprovalDetailExport'
+import {ElMessage} from "element-plus";
 const { exportApprovalAndRecordsToExcel, exportApprovalAndRecordsToPdf } = useApprovalDetailExport()
 
 const props = defineProps({
@@ -384,10 +385,12 @@ async function handleSignatureSaveAndApprove(signatureData) {
     });
 
     showSignaturePad.value = false;
+    ElMessage.success('审批成功！');
     emit('update:visible', false); // Close the dialog
     emit('approved');              // Notify parent to refresh table
   } catch (err) {
     console.error('❌ 审批失败:', err);
+    ElMessage.error('审批失败，请稍后重试');
   }
 }
 
