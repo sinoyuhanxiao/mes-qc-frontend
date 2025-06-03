@@ -87,7 +87,23 @@ const props = defineProps({
 const defaultStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0); // e.g. 2025-06-01 00:00:00
 const defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59); // e.g. 2025-06-30 23:59:59
 const dateRange = ref(props.dateRange ?? [defaultStart, defaultEnd]);
-watch(dateRange, handleDateRangeChange)
+
+// fetch new records whenever the date range is changed
+watch(dateRange, handleDateRangeChange);
+
+// Sync prop change to internal ref for the date range change
+watch(() => props.dateRange, (newVal) => {
+  if (newVal && newVal.length === 2) {
+    dateRange.value = newVal;
+  }
+});
+
+// Reset the dateRange when the window closes
+watch(() => props.visible, (visibleNow) => {
+  if (!visibleNow && props.dateRange?.length === 2) {
+    dateRange.value = [...props.dateRange]; // Reset dateRange to initial prop value
+  }
+});
 
 defineEmits(["update:visible"])
 
@@ -358,6 +374,4 @@ watch(() => props.visible, async (val) => {
     }
   }
 });
-
-
 </script>

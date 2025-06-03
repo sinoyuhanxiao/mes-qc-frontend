@@ -253,7 +253,13 @@ const displayedRecords = computed(() => {
 })
 
   watch(() => props.search, (val) => localSearch.value = val)
-  watch(() => props.dateRange, (val) => localDateRange.value = val)
+  watch(
+      () => props.dateRange,
+      (val) => {
+        localDateRange.value = Array.isArray(val) ? [...val] : []
+      },
+      { immediate: true, deep: true }
+  )
   watch(localDateRange, (newVal, oldVal) => {
     console.log("📆 Date range changed from", oldVal, "to", newVal)
   })
