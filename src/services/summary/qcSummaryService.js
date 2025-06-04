@@ -107,26 +107,25 @@ export const getDocumentList = (params) => {
 };
 
 /**
- * 导出汇总 PDF 报告
- * @param {Object} params - 过滤参数（start_date, end_date, team_id, shift_id, product_id, batch_id）
- * @returns {Promise} Triggers client-side download of the PDF
+ * 导出汇总 PDF 报告（支持图表截图）
+ * @param {Object} params - 参数对象，包含 start_date, end_date, team_id 等，以及 base64 图表图像对象 charts
+ * @returns {Promise} 下载 PDF 文件
  */
 export const downloadPdfReport = async (params) => {
-    // 获取浏览器时区（如 "Asia/Shanghai"）
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const response = await axios.get(`${BASE_URL}/export-pdf-report`, {
-        params: {
-            ...params,
-            timezone  // 将 timezone 添加到查询参数中
-        },
+    // 拆分参数与图表图片
+    const { charts, ...filters } = params;
+
+    const response = await axios.post(`${BASE_URL}/export-pdf-report`, {
+        ...filters,
+        timezone,
+        charts: charts || {}
+    }, {
         responseType: 'blob'
     });
 
-    // 生成文件名
     const fileName = `QC_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-
-    // 创建下载链接并触发
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -135,6 +134,7 @@ export const downloadPdfReport = async (params) => {
     link.click();
     link.remove();
 };
+
 
 
 

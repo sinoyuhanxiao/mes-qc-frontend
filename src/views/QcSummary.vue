@@ -448,9 +448,11 @@
       </div>
     </div>
 
-    <div class="floating-download custom-download hoverable-icon">
+    <div v-if="downloadButtonEnabled" class="floating-download custom-download hoverable-icon">
       <el-tooltip content="导出报告" placement="left">
-        <el-icon style="font-size: 30px;" @click="handleDocumentExport"><Download /></el-icon>
+        <el-icon style="font-size: 30px;" @click="handleDocumentExport">
+          <Download />
+        </el-icon>
       </el-tooltip>
     </div>
 
@@ -491,6 +493,7 @@ import {exportDocumentsToExcelZip, exportDocumentsToZip} from '@/utils/bulkExpor
 import {computed, nextTick, onMounted, reactive, ref, toRef} from 'vue';
 import { watch } from 'vue';
 import VChart from 'vue-echarts';
+import * as echarts from 'echarts/core';
 import {Download, RefreshRight} from "@element-plus/icons-vue";
 import { useTransition } from '@vueuse/core'
 import { convertDateRangeToUtc } from '@/utils/time_utils';
@@ -541,6 +544,15 @@ const filters = ref({
   summaryType: 'weekly'
 });
 
+// Chart Images
+const chartImages = reactive({
+  pass_rate: '',
+  abnormal_by_team: '',
+  abnormal_ratio: '',
+  abnormal_batches_by_product: '',
+  kpi_by_inspector: ''
+});
+
 const productOptions = ref([]);
 const batchOptions = ref([]);
 const teamOptions = ref([]);
@@ -549,6 +561,7 @@ const personnelKpi = ref([])
 const qcSummaryLoading = ref(false);
 const chartDataReady = ref(false);
 const loadingSummary = ref(false);
+const downloadButtonEnabled = ref(false);
 const downloadingProgress = reactive({ visible: false, total: 0, current: 0 });
 const groupedKpiRows = computed(() => {
   const rows = []
@@ -942,6 +955,7 @@ const fetchQcUsersAndShifts = async () => {
 async function loadSummary() {
   qcSummaryLoading.value = true;
   chartDataReady.value = false;
+  downloadButtonEnabled.value = false;
   try {
     const params = buildFilterParams();
     await Promise.all([
@@ -955,6 +969,7 @@ async function loadSummary() {
       loadPersonnelKpi(params),
       loadRetestRecords(params)
     ]);
+    await extractAllChartImages()
     chartDataReady.value = true;
   } catch (e) {
     console.error('加载图表失败：', e);
@@ -1138,7 +1153,8 @@ async function handleDocumentExport() {
       team_id: filters.value.teamId,
       shift_id: filters.value.shiftId,
       product_id: filters.value.productId,
-      batch_id: filters.value.batchId
+      batch_id: filters.value.batchId,
+      charts: chartImages
     });
 
     // update the current
@@ -1148,6 +1164,41 @@ async function handleDocumentExport() {
     console.error("❌ 导出失败", err);
     downloadingProgress.visible = false;
   }
+}
+
+async function extractAllChartImages() {
+  await nextTick();
+  setTimeout(() => {
+    const charts = document.querySelectorAll('.echarts');
+
+    charts.forEach((el, index) => {
+      const instance = echarts.getInstanceByDom(el);
+      if (instance) {
+        const base64 = instance.getDataURL({
+          type: 'png',
+          pixelRatio: 2,
+          backgroundColor: '#fff'
+        });
+
+        // Map known keys in order
+        const chartKeys = [
+          'pass_rate',
+          'abnormal_by_team',
+          'abnormal_ratio',
+          'abnormal_batches_by_product',
+          'product_date_heatmap',
+          'kpi_by_inspector'
+        ];
+
+        if (index < chartKeys.length) { // TODO: hardcoded now for skipping the heatmap but should find them by the id or title
+          chartImages[chartKeys[index]] = base64;
+        }
+      }
+    });
+
+    console.log("✅ chartImages ready to send to backend:", chartImages);
+    downloadButtonEnabled.value = true
+  }, 2000); // short delay to ensure canvas is painted
 }
 
 watch(() => filters.value.summaryType, (newType) => {
