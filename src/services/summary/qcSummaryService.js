@@ -135,6 +135,15 @@ export const downloadPdfReport = async (params) => {
     link.remove();
 };
 
+/**
+ * 手动触发快照插入（Mongo 数据 + 复检记录）
+ * @returns {Promise} Axios response with success message
+ */
+export const triggerManualSnapshot = () => {
+    const BASE_ROOT_URL = import.meta.env.VITE_QC_SUMMARY_API;
+    return axios.post(`${BASE_ROOT_URL}/snapshot/manual-trigger`);
+};
+
 
 
 

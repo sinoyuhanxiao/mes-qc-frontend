@@ -488,7 +488,12 @@
 </template>
 
 <script setup>
-import {getPersonnelKPI, getDocumentList, downloadPdfReport} from '@/services/summary/qcSummaryService'
+import {
+  getPersonnelKPI,
+  getDocumentList,
+  downloadPdfReport,
+  triggerManualSnapshot
+} from '@/services/summary/qcSummaryService'
 import {exportDocumentsToExcelZip, exportDocumentsToZip} from '@/utils/bulkExportUtil'
 import {computed, nextTick, onMounted, reactive, ref, toRef} from 'vue';
 import { watch } from 'vue';
@@ -956,8 +961,20 @@ async function loadSummary() {
   qcSummaryLoading.value = true;
   chartDataReady.value = false;
   downloadButtonEnabled.value = false;
+
+  const params = buildFilterParams();
+
   try {
-    const params = buildFilterParams();
+    // Step 1: trigger manual snapshot insertion (Mongo + retest)
+    await triggerManualSnapshot()
+        .then(() => {
+          console.log("Manual snapshot triggered successfully");
+        })
+        .catch((err) => {
+          console.warn("⚠Manual snapshot trigger failed", err);
+        });
+
+    // Step 2: continue loading charts regardless of snapshot trigger result
     await Promise.all([
       fetchSummaryCards(params),
       loadBatchPassRateTrend(params),
@@ -969,15 +986,16 @@ async function loadSummary() {
       loadPersonnelKpi(params),
       loadRetestRecords(params)
     ]);
-    await extractAllChartImages()
+
+    await extractAllChartImages();
     chartDataReady.value = true;
+
   } catch (e) {
     console.error('加载图表失败：', e);
   } finally {
     qcSummaryLoading.value = false;
   }
 }
-
 
 async function loadPersonnelKpi(params) {
   const res = await getPersonnelKPI(params)
