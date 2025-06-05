@@ -73,6 +73,7 @@ import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.v
 
 export default {
   components: { TimeSlot, UserTagHoverForDetail },
+  emits: ['edit-shift', 'delete-shift'],
   props: {
     shifts: {
       type: Array,

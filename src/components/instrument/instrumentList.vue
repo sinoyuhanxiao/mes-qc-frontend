@@ -5,7 +5,7 @@
       style="width: 100%"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
-      :height = "tableHeight"
+      :height="tableHeight"
       :empty-text="translate('common.noDataAvailable')"
   >
     <el-table-column prop="id" :label="translate('orderManagement.Id')" width="80" sortable/>
@@ -61,6 +61,7 @@ import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.v
 
 export default {
   components: {UserTagHoverForDetail, TimeSlot},
+  emits: ['edit-instrument', 'delete-instrument'],
   props: {
     instruments: {
       type: Array,

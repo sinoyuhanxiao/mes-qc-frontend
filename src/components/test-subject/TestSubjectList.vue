@@ -62,6 +62,7 @@ import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.v
 
 export default {
   components: {UserTagHoverForDetail, TimeSlot},
+  emits: ['edit-test-subject', 'delete-test-subject'],
   props: {
     testSubjects: {
       type: Array,

@@ -60,6 +60,7 @@ import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.v
 
 export default {
   components: {UserTagHoverForDetail, TimeSlot},
+  emits: ['edit-location', 'delete-location'],
   props: {
     locations: {
       type: Array,

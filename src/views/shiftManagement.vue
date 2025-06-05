@@ -172,9 +172,6 @@ export default {
         updatedShift.start_time = offsetTimeStartTime;
         updatedShift.end_time = offsetTimeEndTime;
 
-        // TODO: delete logging after testing
-        console.log(updatedShift);
-
         if (this.isEditMode) {
           await updateShift(updatedShift.id, updatedShift);
         } else {
