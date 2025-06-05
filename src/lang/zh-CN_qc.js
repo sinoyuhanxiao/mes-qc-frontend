@@ -13,6 +13,7 @@ export default {
         view: '查看',
         noDataAvailable: '暂无数据',
         none: '无',
+        processing: '处理中',
         table: {
             id: '编号',
             name: '名称',

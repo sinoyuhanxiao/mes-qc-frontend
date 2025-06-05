@@ -77,21 +77,19 @@
         </template>
       </el-table-column>
 
-
-
-      <el-table-column :label="translate('teamManagement.memberCount')" width="130">
+      <el-table-column :label="translate('teamManagement.memberCount')" width="150" prop="memberCount" sortable>
         <template #default="scope">
           {{ scope.row.memberCount }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="translate('teamManagement.associatedFormCount')" width="130">
+      <el-table-column :label="translate('teamManagement.associatedFormCount')" width="150" prop="associatedFormCount" sortable>
         <template #default="scope">
           {{ scope.row.associatedFormCount }}
         </template>
       </el-table-column>
 
-      <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="360" sortable>
+      <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="300" sortable>
         <template #default="scope">
           <span>{{ scope.row.description }}</span>
         </template>
@@ -400,7 +398,7 @@
                   :no-match-text="translate('common.noDataAvailable')"
                   collapse-tags
                   collapse-tags-tooltip
-                  :max-collapse-tags="4"
+                  :max-collapse-tags="3"
               >
                 <el-option
                     v-for="user in teamMemberOptions"
@@ -632,7 +630,7 @@
                   :no-match-text="translate('common.noDataAvailable')"
                   collapse-tags
                   collapse-tags-tooltip
-                  :max-collapse-tags="4"
+                  :max-collapse-tags="3"
               >
                 <el-option
                     v-for="user in teamMemberOptions"
@@ -767,6 +765,7 @@ import TeamFormTree from "@/components/dispatch/TeamFormTree.vue";
 import { openFormPreviewWindow } from "@/utils/dispatch-utils";
 import { getCurrentLeaders } from "@/services/teamService";
 import { fetchRoles } from "@/services/roleService";
+import { ElLoading } from 'element-plus';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -814,6 +813,7 @@ export default {
       teamForms: [], // Stores forms assigned to the team
       selectedTeamName: "", // store the selected team for showing users
       expandedKeys: [],
+      processing: false,
       newTeam: {
         name: "",
         type: "",
@@ -1107,59 +1107,89 @@ export default {
       this.currentPage = page;
     },
     async validateAndAddTeam() {
+      if (this.processing) return;
+      this.processing = true;
+
+      const loader = ElLoading.service({
+        lock: true,
+        text: this.translate('common.processing'),
+        background: 'rgba(255, 255 ,255, 0.35)',
+      });
+
       this.$refs.addTeamForm.validate(async (valid) => {
-        if (valid) {
-          try {
-            // Avoid modifying reactive properties repeatedly
-            const startTime = this.toOffsetTime(this.newTeam.start_time);
-            const endTime = this.toOffsetTime(this.newTeam.end_time);
+        if (!valid) {
+          loader.close();
+          this.processing = false;
+          return;
+        }
 
-            const payload = { ...this.newTeam,
-              start_time: startTime,
-              end_time: endTime,
-              created_by: this.$store.getters.getUser.id,
-              member_ids: this.newUser.selectedUsers,
-              form_ids: this.newForm.selectedForms,
-            };
+        try {
+          // Avoid modifying reactive properties repeatedly
+          const startTime = this.toOffsetTime(this.newTeam.start_time);
+          const endTime = this.toOffsetTime(this.newTeam.end_time);
 
-            const response = await createTeam(payload);
+          const payload = { ...this.newTeam,
+            start_time: startTime,
+            end_time: endTime,
+            created_by: this.$store.getters.getUser.id,
+            member_ids: this.newUser.selectedUsers,
+            form_ids: this.newForm.selectedForms,
+          };
 
-            // await this.$nextTick(() => this.resetNewTeamForm());
-            this.resetNewTeamForm();
-            // Force reset after successful addition
-            this.addDialogVisible = false;
-            await this.fetchTeamData();
-            await this.fetchCurrentLeaders();
-            this.$message.success(translate('teamManagement.messages.teamAddedSuccess'));
-          } catch (error) {
-            console.error("Error adding team:", error);
-            this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
-          }
+          const response = await createTeam(payload);
+
+          this.resetNewTeamForm();
+          // Force reset after successful addition
+          this.addDialogVisible = false;
+          await this.fetchTeamData();
+          await this.fetchCurrentLeaders();
+          this.$message.success(translate('teamManagement.messages.teamAddedSuccess'));
+        } catch (error) {
+          console.error("Error adding team:", error);
+          this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
+        } finally {
+          loader.close();
+          this.processing = false;
         }
       });
     },
     async handleEditConfirm() {
+      if (this.processing) return;
+      this.processing = true;
+
+      const loader = ElLoading.service({
+        lock: true,
+        text: this.translate('common.processing'),
+        background: 'rgba(255, 255 ,255, 0.35)',
+      });
+
       this.$refs.editTeamForm.validate(async (valid) => {
-        if (valid) {
-          // await this.$nextTick();
-          try {
-            const payload = {...this.editTeam};
-            payload.start_time = this.toOffsetTime(payload.start_time);
-            payload.end_time = this.toOffsetTime(payload.end_time);
-            payload.updated_by = this.$store.getters.getUser.id;
-            payload.member_ids = this.editUser.assignedUsers;
-            payload.form_ids = this.editForm.assignedForms;
-            await updateTeam(payload.id, payload);
+        if (!valid) {
+          loader.close();
+          this.processing = false;
+          return;
+        }
 
-            this.editDialogVisible = false;
+        try {
+          const payload = {...this.editTeam};
+          payload.start_time = this.toOffsetTime(payload.start_time);
+          payload.end_time = this.toOffsetTime(payload.end_time);
+          payload.updated_by = this.$store.getters.getUser.id;
+          payload.member_ids = this.editUser.assignedUsers;
+          payload.form_ids = this.editForm.assignedForms;
 
-            await this.fetchTeamData();
-            await this.fetchCurrentLeaders();
-            this.$message.success(translate('teamManagement.messages.teamEditedSuccess'));
-          } catch (error) {
-            console.error("Error updating team:", error);
-            this.$message.error(translate('teamManagement.messages.teamEditedFailed'));
-          }
+          await updateTeam(payload.id, payload);
+
+          this.editDialogVisible = false;
+          await this.fetchTeamData();
+          await this.fetchCurrentLeaders();
+          this.$message.success(translate('teamManagement.messages.teamEditedSuccess'));
+        } catch (error) {
+          console.error("Error updating team:", error);
+          this.$message.error(translate('teamManagement.messages.teamEditedFailed'));
+        } finally {
+          loader.close();
+          this.processing = false;
         }
       });
     },
@@ -1228,17 +1258,16 @@ export default {
       this.originalLeaderId = this.editTeam.leader_id;
       this.editDialogVisible = true;
 
+      await this.$nextTick();
+
       if (this.$refs.editTeamForm) {
         this.$refs.editTeamForm.clearValidate();
       }
     },
-    showAddDialog(row = null) {
+    async showAddDialog(row = null) {
       const oldParentId = this.newTeam.parent_id;
       this.addDialogVisible = true;
       this.originalLeaderId = null;
-
-      // clicking new team button will not reset for now
-      // this.resetNewTeamForm();
 
       if (row.id) {
         if (this.newTeam.parent_id !== row.id) {
@@ -1252,11 +1281,18 @@ export default {
         this.isSubTeam = false;
       }
 
-      // Manually rebuild leader/member/form options when parent id changed to same value within same tick.
-      // This case does not get capture by the watcher, however leader options, member options, form options are shared
-      // between create/edit function
+      // Rebuild leader/member/form options when parent id changed to same value within same tick.
+      // This case does not get capture by the watcher, however leader options, member options, form options could be
+      // dirty due to access by both create/edit team form
       if (oldParentId === this.newTeam.parent_id) {
-        this.onParentChanged(this.newTeam.parent_id, null, 'create');
+        await this.onParentChanged(this.newTeam.parent_id, null, 'create');
+      }
+
+      // Ensure form is ready before clearing validate
+      await this.$nextTick();
+
+      if (this.$refs.addTeamForm){
+        this.$refs.addTeamForm.clearValidate();
       }
     },
     resetNewTeamForm() {

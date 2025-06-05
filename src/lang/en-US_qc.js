@@ -13,6 +13,7 @@ export default {
         view: "View",
         noDataAvailable: 'No Data Available',
         none: 'None',
+        processing: 'Processing',
         table: {
             id: 'ID',
             name: 'Name',
