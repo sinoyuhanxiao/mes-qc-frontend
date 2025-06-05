@@ -66,6 +66,9 @@ export default {
         confirm: '确认',
         delete: '删除',
         operationCancelled: '操作取消',
+        managerAssignTeamHint: '经理不能被分配为团队成员',
+        supervisorAssignTeamHint: '主管不能被分配为团队成员',
+        teamLeadAssignTeamHint: '仅允许班长被分配至最上级班组',
         table: {
             id: 'ID',
             name: '姓名',
@@ -163,7 +166,7 @@ export default {
             admin: '管理员',
             qcWorker: '质检人员',
             unknown: '未知角色',
-            selectRowPlaceHolder: '选择用户角色'
+            selectRolePlaceHolder: '选择用户角色'
         },
     },
     pagination: {
@@ -218,10 +221,14 @@ export default {
         parentTeam: '上级班组',
         isSubTeam: '分配至其他班组',
         formSelectionPreview: '预览',
-        totalCount: '已选总数',
+        totalCount: '总数',
+        memberCount: '成员总数',
+        associatedFormCount: '关联表单总数',
+        leaderSwapWarning: '班组組長互換',
         depth1RoleAllowed: '仅允许经理/主管角色用户',
         depth2RoleAllowed: '仅允许班长角色用户',
-        limitedMemberOptionsHint: '仅允许选择上级班组成员',
+        rootTeamLimitedMemberOptionsHint: '仅允许班长/质检员角色用户',
+        nonRootTeamLimitedMemberOptionsHint: '仅允许选择上级班组的质检员角色成员',
         limitedFormOptionsHint: '仅允许选择上级班组已关联表单',
         table: {
             id: 'ID',
@@ -238,7 +245,8 @@ export default {
             deleteButton: '删除',
             viewMembers: '查看成员',
             viewTeam: '查看',
-            createdAt: '创建时间'
+            createdAt: '创建时间',
+            updatedAt: '更新时间',
         },
         addDialog: {
             title: '添加班组',
@@ -286,6 +294,7 @@ export default {
             leaderRequired: '组长是必选项',
             startTimeRequired: '开始时间是必填项',
             endTimeRequired: '结束时间是必填项',
+            parentTeamRequired: '请选择上级班组',
         },
         messages: {
             teamAddedSuccess: '班组创建成功',
@@ -299,7 +308,8 @@ export default {
             teamDeletionCancelled: '班组删除已取消',
             validationErrors: '请在继续之前修复验证错误',
             statusUpdatedSuccess: '状态更改成功',
-            statusUpdatedFailed: '状态更改失败'
+            statusUpdatedFailed: '状态更改失败',
+            leaderSwapMessage: "该班组组长将改为 {otherTeamLeader}, {otherTeamName} 组长将改为 {targetLeader}",
         },
     },
     shiftManagement: {

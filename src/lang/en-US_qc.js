@@ -66,6 +66,9 @@ export default {
         confirm: 'Confirm',
         delete: 'Delete',
         operationCancelled: 'Operation Cancelled',
+        managerAssignTeamHint: 'Manager can not be assign as member under any team',
+        supervisorAssignTeamHint: 'Supervisor can not be assign as member under any team',
+        teamLeadAssignTeamHint: 'Team lead can only be assign as member under root team',
         table: {
             id: 'ID',
             name: 'Name',
@@ -163,7 +166,7 @@ export default {
             admin: 'Administrator',
             qcWorker: 'QC Worker',
             unknown: 'Unknown Role',
-            selectRowPlaceHolder: 'Select User Role'
+            selectRolePlaceHolder: 'Select User Role'
         },
     },
     pagination: {
@@ -218,10 +221,14 @@ export default {
         parentTeam: 'Parent Team',
         isSubTeam: 'Assign Under A Team',
         formSelectionPreview: 'Preview',
-        totalCount: 'Total Selected Count',
+        totalCount: 'Total Count',
+        memberCount: 'Member Count',
+        associatedFormCount: 'Associated Form Count',
+        leaderSwapWarning: "Swap Team Leaders",
         depth1RoleAllowed: 'Manager/Supervisor User Only',
         depth2RoleAllowed: 'Team Lead User Only',
-        limitedMemberOptionsHint: 'Allow Members From Parent Team Only',
+        rootTeamLimitedMemberOptionsHint: 'Team lead & worker role user only',
+        nonRootTeamLimitedMemberOptionsHint: 'Allow worker role members from parent team only',
         limitedFormOptionsHint: 'Allow Forms From Parent Team Only',
         table: {
             id: 'ID',
@@ -238,7 +245,8 @@ export default {
             deleteButton: 'Delete',
             viewMembers: 'Members',
             viewTeam: 'View',
-            createdAt: 'Created At'
+            createdAt: 'Created At',
+            updatedAt: 'Updated At'
         },
         addDialog: {
             title: 'Add Team',
@@ -286,20 +294,22 @@ export default {
             leaderRequired: 'Leader is required',
             startTimeRequired: 'Start Time is required',
             endTimeRequired: 'End Time is required',
+            parentTeamRequired: 'Please select a parent team',
         },
         messages: {
             teamAddedSuccess: 'Team added successfully',
             teamUpdatedSuccess: 'Team updated successfully',
             teamDeletedSuccess: 'Team deleted successfully',
             teamDeletionFailed: 'Failed to delete team',
-            teamEditedSuccess:  'Team edited successfully',
+            teamEditedSuccess: 'Team edited successfully',
             teamEditedFailed: 'Failed to edit team',
             membersUpdatedSuccess: 'Team members updated successfully',
             deletionConfirmation: 'Are you sure you want to delete the team "{name}" and disconnect all its relationships with members?',
             teamDeletionCancelled: 'Team deletion canceled',
             validationErrors: 'Please fix validation errors before proceeding',
             statusUpdatedSuccess: 'Status updated successfully',
-            statusUpdatedFailed:  'Failed to update status'
+            statusUpdatedFailed: 'Failed to update status',
+            leaderSwapMessage: "This team's leader will changed to {otherTeamLeader}, {otherTeamName}'s leader will changed to {targetLeader}",
         },
     },
     shiftManagement: {

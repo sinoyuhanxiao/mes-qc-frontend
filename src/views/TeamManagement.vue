@@ -55,7 +55,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column :label="translate('teamManagement.table.name')" prop="name" width="200" sortable show-overflow-tooltip>
+      <el-table-column :label="translate('teamManagement.table.name')" prop="name" width="180" sortable show-overflow-tooltip>
         <template #default="{ row }">
           <span :style="{ paddingLeft: `${(row.level - 1) * 16}px` }">
             {{ row.name }}
@@ -63,7 +63,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column :label="translate('teamManagement.table.type')" prop="type" width="180" sortable>
+      <el-table-column :label="translate('teamManagement.table.type')" prop="type" width="100" sortable>
         <template #default="scope">
           <el-tag type="info" round size="small">
             {{ scope.row.type || " - " }}
@@ -71,26 +71,34 @@
         </template>
       </el-table-column>
 
-      <el-table-column :label="translate('teamManagement.table.leader')" prop="leader_id" width="180" sortable>
+      <el-table-column :label="translate('teamManagement.table.leader')" prop="leader_id" width="150" sortable>
         <template #default="scope">
           <span>{{ scope.row.leader?.name || " - " }}</span>
         </template>
       </el-table-column>
 
-<!--        <el-table-column :label="translate('teamManagement.table.startTime')" prop="start_time" width="180" sortable>-->
-<!--          <template #default="scope">-->
-<!--            <span>{{ formatTime(scope.row.start_time) }}</span>-->
-<!--          </template>-->
-<!--        </el-table-column>-->
 
-<!--        <el-table-column :label="translate('teamManagement.table.endTime')" prop="end_time" width="180" sortable>-->
-<!--          <template #default="scope">-->
-<!--            <span>{{ formatTime(scope.row.end_time) }}</span>-->
-<!--          </template>-->
-<!--        </el-table-column>-->
+
+      <el-table-column :label="translate('teamManagement.memberCount')" width="130">
+        <template #default="scope">
+          {{ scope.row.memberCount }}
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.associatedFormCount')" width="130">
+        <template #default="scope">
+          {{ scope.row.associatedFormCount }}
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="360" sortable>
+        <template #default="scope">
+          <span>{{ scope.row.description }}</span>
+        </template>
+      </el-table-column>
 
       <el-table-column
-          :label="translate('teamManagement.table.status')" prop="status" width="180" sortable
+          :label="translate('teamManagement.table.status')" prop="status" width="100" sortable
       >
         <template #header>
           <span>
@@ -107,12 +115,6 @@
               :inactive-value="0"
               @change="handleStatusChange(scope.row.id, scope.row.status)"
           />
-        </template>
-      </el-table-column>
-
-      <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="360" sortable>
-        <template #default="scope">
-          <span>{{ scope.row.description }}</span>
         </template>
       </el-table-column>
 
@@ -134,11 +136,11 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-<!--        <el-table-column label="Updated At" prop="updated_at" width="180" sortable>-->
-<!--          <template #default="scope">-->
-<!--            <span>{{ formatDate(scope.row.updated_at) }}</span>-->
-<!--          </template>-->
-<!--        </el-table-column>-->
+        <el-table-column :label="translate('teamManagement.table.updatedAt')" prop="updated_at" width="180" sortable>
+          <template #default="scope">
+            <span>{{ formatDate(scope.row.updated_at) }}</span>
+          </template>
+        </el-table-column>
 
       <el-table-column :label="translate('teamManagement.table.actions')" align="right" header-align="right" width="280" fixed="right">
         <template #default="scope">
@@ -205,14 +207,15 @@
             <template #default="{ row }">
               {{ row.name }}
 
-              <el-tooltip
+              <el-tag
                   v-if="row.isLeader"
-                  :content="translate('teamManagement.table.leader')"
+                  style="margin-left: 4px;"
+                  hit
+                  effect="dark"
+                  round
               >
-                <el-icon  style="margin-left: 4px;">
-                  <StarFilled />
-                </el-icon>
-              </el-tooltip>
+                {{ translate('teamManagement.table.leader') }}
+              </el-tag>
             </template>
           </el-table-column>
 
@@ -259,15 +262,19 @@
 
       <el-tab-pane :label="translate('teamManagement.formsTab')">
         <div class="popup-container">
-          <el-form>
-            <team-form-tree
-                :selectedFormIds="teamForms"
-                :showOnlySelectedNode="true"
-                :expand-all-nodes="false"
-                @on-node-clicked="handleFormNodeClicked"
-            >
-            </team-form-tree>
-          </el-form>
+          <div style="margin-bottom: 10px;">
+            <el-text>
+              {{ translate('teamManagement.totalCount') }} : {{ teamForms.length }}
+            </el-text>
+          </div>
+
+          <team-form-tree
+              :selectedFormIds="teamForms"
+              :showOnlySelectedNode="true"
+              :expand-all-nodes="false"
+              @on-node-clicked="handleFormNodeClicked"
+          >
+          </team-form-tree>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -312,7 +319,12 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="translate('teamManagement.parentTeam')" v-if="this.isSubTeam">
+            <el-form-item
+                :label="translate('teamManagement.parentTeam')"
+                v-if="this.isSubTeam"
+                required
+                prop="parent_id"
+            >
               <el-tree-select
                   v-model="newTeam.parent_id"
                   :data="parentTeamOptions(newTeam.id)"
@@ -338,7 +350,7 @@
                   filterable
                   clearable
                   :placeholder="translate('teamManagement.addDialog.selectLeaderPlaceholder')"
-                  @visible-change="open => { if (open) previousLeaderId = newTeam.leader_id }"
+                  @visible-change="open => { if (open) previousLeaderSelectionId = newTeam.leader_id }"
                   @change="(newVal)=>handleNewLeaderSelection(newTeam, newUser.selectedUsers, newVal)"
                   :no-data-text="translate('common.noDataAvailable')"
                   :no-match-text="translate('common.noDataAvailable')"
@@ -386,6 +398,9 @@
                   :placeholder="translate('teamManagement.addDialog.selectMembersPlaceholder')"
                   :no-data-text="translate('common.noDataAvailable')"
                   :no-match-text="translate('common.noDataAvailable')"
+                  collapse-tags
+                  collapse-tags-tooltip
+                  :max-collapse-tags="4"
               >
                 <el-option
                     v-for="user in teamMemberOptions"
@@ -408,12 +423,21 @@
                 </el-option>
               </el-select>
 
+              <span v-if="newTeam.parent_id == null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+                  {{ translate('teamManagement.rootTeamLimitedMemberOptionsHint') }}
+                </el-text>
+              </span>
+
               <span v-if="newTeam.parent_id != null">
                 <el-text type="info">
                   <el-icon>
                     <InfoFilled />
                   </el-icon>
-                  {{ translate('teamManagement.limitedMemberOptionsHint') }}
+                  {{ translate('teamManagement.nonRootTeamLimitedMemberOptionsHint') }}
                 </el-text>
               </span>
             </el-form-item>
@@ -421,21 +445,7 @@
           </el-col>
         </el-row>
 
-<!--          <el-form-item :label="translate('teamManagement.addDialog.startTime')" prop="start_time">-->
-<!--            <el-time-picker-->
-<!--                v-model="newTeam.start_time"-->
-<!--                :placeholder="translate('teamManagement.addDialog.startTime')"-->
-<!--            />-->
-<!--          </el-form-item>-->
-
-<!--          <el-form-item :label="translate('teamManagement.addDialog.endTime')" prop="end_time">-->
-<!--            <el-time-picker-->
-<!--                v-model="newTeam.end_time"-->
-<!--                :placeholder="translate('teamManagement.addDialog.endTime')"-->
-<!--            />-->
-<!--          </el-form-item>-->
-
-        <el-row justify="space-between" gutter="20">
+        <el-row justify="space-between" :gutter=20>
           <el-col :span="14">
             <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
               <team-form-tree
@@ -539,7 +549,12 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="translate('teamManagement.parentTeam')" v-if="this.isSubTeam">
+            <el-form-item
+                :label="translate('teamManagement.parentTeam')"
+                v-if="this.isSubTeam"
+                required
+                prop="parent_id"
+            >
               <el-tree-select
                   v-model="editTeam.parent_id"
                   :data="parentTeamOptions(editTeam.id)"
@@ -564,7 +579,7 @@
                   filterable
                   clearable
                   :placeholder="translate('teamManagement.editDialog.selectLeaderPlaceholder')"
-                  @visible-change="open => { if (open) previousLeaderId = editTeam.leader_id }"
+                  @visible-change="open => { if (open) previousLeaderSelectionId = editTeam.leader_id }"
                   @change="(newVal)=>handleNewLeaderSelection(editTeam, editUser.assignedUsers ,newVal)"
                   :no-data-text="translate('common.noDataAvailable')"
                   :no-match-text="translate('common.noDataAvailable')"
@@ -615,6 +630,9 @@
                   :placeholder="translate('teamManagement.editDialog.selectMembersPlaceholder')"
                   :no-data-text="translate('common.noDataAvailable')"
                   :no-match-text="translate('common.noDataAvailable')"
+                  collapse-tags
+                  collapse-tags-tooltip
+                  :max-collapse-tags="4"
               >
                 <el-option
                     v-for="user in teamMemberOptions"
@@ -637,35 +655,29 @@
                 </el-option>
               </el-select>
 
+              <span v-if="editTeam.parent_id == null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+                  {{ translate('teamManagement.rootTeamLimitedMemberOptionsHint') }}
+                </el-text>
+              </span>
+
               <span v-if="editTeam.parent_id != null">
                 <el-text type="info">
-                <el-icon>
-                  <InfoFilled />
-                </el-icon>
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
 
-                {{ translate('teamManagement.limitedMemberOptionsHint') }}
-              </el-text>
+                  {{ translate('teamManagement.nonRootTeamLimitedMemberOptionsHint') }}
+                </el-text>
               </span>
             </el-form-item>
           </el-col>
         </el-row>
 
-        <!--          <el-form-item :label="translate('teamManagement.editDialog.startTime')" prop="start_time">-->
-        <!--            <el-time-picker-->
-        <!--                v-model="editTeam.start_time"-->
-        <!--                :placeholder="translate('teamManagement.editDialog.startTime')"-->
-        <!--            />-->
-        <!--          </el-form-item>-->
-
-        <!--          <el-form-item :label="translate('teamManagement.editDialog.endTime')" prop="end_time">-->
-        <!--            <el-time-picker-->
-        <!--                v-model="editTeam.end_time"-->
-        <!--                :placeholder="translate('teamManagement.editDialog.endTime')"-->
-        <!--            />-->
-        <!--          </el-form-item>-->
-
-
-        <el-row justify="space-between" gutter="20">
+        <el-row justify="space-between" :gutter=20>
           <el-col :span="14">
             <el-form-item :label="translate('teamManagement.editDialog.forms')">
               <team-form-tree
@@ -708,8 +720,6 @@
             </div>
           </el-col>
         </el-row>
-
-
 
         <el-form-item :label="translate('teamManagement.editDialog.description')" prop="description">
           <el-input type="textarea" v-model="editTeam.description" />
@@ -757,7 +767,6 @@ import TeamFormTree from "@/components/dispatch/TeamFormTree.vue";
 import { openFormPreviewWindow } from "@/utils/dispatch-utils";
 import { getCurrentLeaders } from "@/services/teamService";
 import { fetchRoles } from "@/services/roleService";
-import { h } from 'vue';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -838,13 +847,13 @@ export default {
       editForm: {
         assignedForms: [],
       },
-      previousLeaderId: null, // Remember old leader to auto remove in member's list
+      previousLeaderSelectionId: null, // Remember old leader selection to clear up that user in member's list
+      originalLeaderId: null, // Reflect actual original id of the team before editing
       rules: {
         name: [{ required: true, message: translate("teamManagement.validation.nameRequired"), trigger: "blur" }],
         type: [{ required: false, message: translate("teamManagement.validation.typeRequired"), trigger: "blur" }],
         leader_id: [{ required: false, message: translate("teamManagement.validation.leaderRequired"), trigger: "blur" }],
-        start_time: [{ required: false, message: translate("teamManagement.validation.startTimeRequired"), trigger: "blur" }],
-        end_time: [{ required: false, message: translate("teamManagement.validation.endTimeRequired"), trigger: "blur" }],
+        parent_id: [{ required: true, message: translate("teamManagement.validation.parentTeamRequired"), trigger: "blur" }],
       },
     };
   },
@@ -1026,7 +1035,6 @@ export default {
                 role_id: user.role?.id,
               }));
 
-          // await this.onParentChanged();
         } else {
           this.userOptions = [];
           this.teamLeaderOptions = []; // Ensure empty state
@@ -1216,7 +1224,8 @@ export default {
       this.editUser.assignedUsers = userRes.data.data.map(u => u.id);
       this.editForm.assignedForms = [...formRes.data.data];
       this.syncMembersWithLeader(this.editUser.assignedUsers, this.editTeam.leader_id, null);
-      this.previousLeaderId = this.editTeam.leader_id;
+      this.previousLeaderSelectionId = this.editTeam.leader_id;
+      this.originalLeaderId = this.editTeam.leader_id;
       this.editDialogVisible = true;
 
       if (this.$refs.editTeamForm) {
@@ -1226,6 +1235,7 @@ export default {
     showAddDialog(row = null) {
       const oldParentId = this.newTeam.parent_id;
       this.addDialogVisible = true;
+      this.originalLeaderId = null;
 
       // clicking new team button will not reset for now
       // this.resetNewTeamForm();
@@ -1242,13 +1252,11 @@ export default {
         this.isSubTeam = false;
       }
 
-
-
       // Manually rebuild leader/member/form options when parent id changed to same value within same tick.
       // This case does not get capture by the watcher, however leader options, member options, form options are shared
       // between create/edit function
       if (oldParentId === this.newTeam.parent_id) {
-        this.onParentChanged(this.newTeam.parent_id, null);
+        this.onParentChanged(this.newTeam.parent_id, null, 'create');
       }
     },
     resetNewTeamForm() {
@@ -1307,17 +1315,27 @@ export default {
       return this.markSelfAndDescDisabled(this.teamOptions, id);
     },
     // Reload leader/member/form options whenever parent_id changes. Works for both add & edit dialog.
-    async onParentChanged(newParentId, oldParentId) {
+    async onParentChanged(newParentId, oldParentId, type) {
+      let leaderId = null;
+
+      if (type === 'create') {
+        leaderId = this.newTeam.leader_id;
+      } else {
+        leaderId = this.editTeam.leader_id
+      }
+
+      const allowedRoleIdByDepthForMember = { 1: [2, 3], 2: [2]};
       this.parentFormIds = [];
 
-      // If parent id is null, allow manager/supervisor role to be choose as leader, and all user to be choose as member
+      // If parent id is null, allow manager/supervisor role to be chosen as leader, and all user to be chosen as member
       if (!newParentId) {
-        console.log("new parent Id is null");
         this.depth = 1;
         this.buildLeaderOptions(this.depth);
+        const allowed = allowedRoleIdByDepthForMember[this.depth] ?? [2,3];
 
-        // Root team can select member from all users
-        this.teamMemberOptions = this.userOptions;
+        // Limit root team member options to only users with role lower than leader, keep leader user option that is not editable
+        this.teamMemberOptions = this.userOptions.filter(u => (allowed.includes(u.role_id)
+            || (leaderId != null && u.id === leaderId)));
         return;
       }
 
@@ -1333,7 +1351,6 @@ export default {
       } catch (err) {
         parentLeaderId = null;
       }
-      console.log('parent leader id: ', parentLeaderId);
 
       try {
         const { data } = await getTeamDepth(newParentId);
@@ -1349,12 +1366,16 @@ export default {
       // Prevent choosing parent team's leader user as a member
       try {
         const { data } = await getUsersForTeam(newParentId);
+        const allowed = allowedRoleIdByDepthForMember[this.depth] ?? [2];
+
+        // Limit non-root teams member options to: not leader in parent teams and has allowed role or equal to leader
         if (data.status === '200') {
           this.teamMemberOptions = data.data
-              .filter(u => u.id !== parentLeaderId)
-              .map(user => ({
-                role_id: user.role?.id,
-                ...user
+              .filter(u => (u.id !== parentLeaderId && allowed.includes(u.role?.id))
+                  || (leaderId != null && u.id === leaderId))
+              .map(u => ({
+                role_id: u.role?.id,
+                ...u
               }));
         }
       } catch (err) {
@@ -1374,8 +1395,8 @@ export default {
     // Helper that fills team leader options according to depth
     buildLeaderOptions(depth, reservedLeaderId = null) {
       // depth 1 team allow leader of manager/supervisor user, otherwise allow supervisor role user.
-      const allowedRoleIdByDepth = { 1: [1, 4], 2: [3]};
-      const allowed = allowedRoleIdByDepth[depth] ?? [3];
+      const allowedRoleIdByDepthForLeader = { 1: [1, 4], 2: [3]};
+      const allowed = allowedRoleIdByDepthForLeader[depth] ?? [3];
 
       this.teamLeaderOptions = this.userOptions.filter(u => allowed.includes(u.role_id))
           .map(u => ({
@@ -1386,11 +1407,6 @@ export default {
             team_name: this.currentLeaders.get(u.id) ? this.currentLeaders.get(u.id).team_name : null,
             team_id: this.currentLeaders.get(u.id) ? this.currentLeaders.get(u.id).team_id : null,
           }));
-    },
-    getLeaderIdByTeamId(teamId) {
-      // This find is not a deep find, does not check children of teams
-      const n = this.tableData.find(t => t.id === teamId);
-      return n?.leader?.id ?? null;
     },
     async fetchRoles() {
       try {
@@ -1429,32 +1445,32 @@ export default {
         }
       }
     },
-    syncMembersWithLeader(membersArr, newLeaderId, oldLeaderId){
+    syncMembersWithLeader(membersArr, newLeaderSelectionId, oldLeaderSelectionId){
       const set = new Set(membersArr);
       const memberOptions = this.teamMemberOptions;
 
-      if (oldLeaderId) {
-        set.delete(oldLeaderId);
+      if (oldLeaderSelectionId) {
+        set.delete(oldLeaderSelectionId);
 
         // Remove previous leader from the member options
-        const optionIndex = memberOptions.findIndex(u => u.id === oldLeaderId);
+        const optionIndex = memberOptions.findIndex(u => u.id === oldLeaderSelectionId);
 
         if (optionIndex !== -1) {
           memberOptions.splice(optionIndex, 1);
         }
       }
 
-      if (!newLeaderId) {
+      if (!newLeaderSelectionId) {
         membersArr.splice(0, membersArr.length, ...set);
         return;
       }
 
-      set.add(newLeaderId);
+      set.add(newLeaderSelectionId);
       membersArr.splice(0, membersArr.length, ...set);
 
       // Add leader to the member options
-      if (!memberOptions.some(u => u.id === newLeaderId)) {
-        const user = this.userOptions.find(u => u.id === newLeaderId);
+      if (!memberOptions.some(u => u.id === newLeaderSelectionId)) {
+        const user = this.userOptions.find(u => u.id === newLeaderSelectionId);
 
         if (user) {
           memberOptions.push({
@@ -1466,56 +1482,69 @@ export default {
       }
     },
     async handleNewLeaderSelection(teamObj, members, newVal) {
-      const oldVal = this.previousLeaderId ?? null;
+      // previousLeader id is use for sync member list, this changes as dropdown selection changes
+      // original leader id is used for displaying when a swapping happens
 
-      if (newVal === oldVal) {
+      const oldVal = this.previousLeaderSelectionId ?? null;
+
+      if (newVal === oldVal) { // unchanged
         return;
       }
 
-      if (!newVal) {
+      if (!newVal) {  // leader cleared
         this.syncMembersWithLeader(members, newVal, oldVal);
-        this.previousLeaderId = null;
+        this.previousLeaderSelectionId = null;
         return;
       }
 
+      const hasOriginalLeader   = this.originalLeaderId != null;
       const allUsers = this.userOptions;
-      const userById = id => allUsers.find(u => u.id === id); // Helper method
-      const oldLeader  = userById(oldVal);
-      const newLeader  = userById(newVal) ?? null;
-      const currentTeamName  = teamObj.name;
+      const userById = id => allUsers.find(u => u.id === id);
+      const newLeader = userById(newVal) ?? null;
+
+      // !! convert all including false, empty string, 0, undefined, and null to false
+      const isNewValCurrentLead = !!(newLeader && this.currentLeaders.get(newLeader.id));
+      const isNewValSameAsOriginal = (this.originalLeaderId === newVal);
+
+      // Skip confirmation if new selection is not a current leader or same as original leader
+      if (!isNewValCurrentLead || isNewValSameAsOriginal) {
+        this.syncMembersWithLeader(members, newVal, oldVal);
+        this.previousLeaderSelectionId = newVal;
+        return;
+      }
+
+      const oldLeader = userById(this.originalLeaderId);
       let otherTeamName = 'none';
 
-      // new leader can be null, currentLeaders.get can also be null,
+      // New leader can be null, and it may not be a existing leader
       if (newLeader && this.currentLeaders.get(newLeader.id)) {
         otherTeamName = this.currentLeaders.get(newLeader.id).team_name;
       }
 
-      const lines = [];
-      lines.push(`${currentTeamName} ${translate('teamManagement.table.leader')}: ${oldLeader?.name ?? translate('common.none')} → ${newLeader.name}`);
-
-      if (otherTeamName !== 'none') {
-        lines.push(`${otherTeamName} ${translate('teamManagement.table.leader')}: ${newLeader.name} → ${oldLeader?.name ?? translate('common.none')}`);
-      }
-
       await this.$confirm(
-          h('div', lines.map(l => h('p', l))),
-          this.translate('common.warn'),
+          translateWithParams('teamManagement.messages.leaderSwapMessage',
+              {
+                targetLeader: oldLeader?.name ?? translate('common.none'),
+                otherTeamName: otherTeamName,
+                otherTeamLeader: newLeader.name,
+              }),
+          this.translate('teamManagement.leaderSwapWarning'),
           {
             confirmButtonText: this.translate('common.confirm'),
             cancelButtonText:  this.translate('common.cancel'),
             type: 'warning',
-          }).then(()=> {
+          }).then(()=> { // user confirmed
             this.syncMembersWithLeader(members, newVal, oldVal);
-            this.previousLeaderId = newVal;
-          }).catch(()=> {
-            teamObj.leader_id = oldVal;
+            this.previousLeaderSelectionId = newVal;
+          }).catch(()=> { // user cancelled – revert selection
+            this.syncMembersWithLeader(members, null, oldVal);
+            teamObj.leader_id = this.originalLeaderId;
           });
-      },
+    },
     clearTeamDialogSearch() {
       this.searchUserQuery = "";
     },
     clearLeaderMemberFormSeleciton(type) {
-      // Clear leader, member, form selection since these may no longer be valid under new parent team
       if (type === 'edit') {
         this.editTeam.leader_id = null;
         this.editUser.assignedUsers = [];
@@ -1525,7 +1554,6 @@ export default {
         this.newUser.selectedUsers = [];
         this.newForm.selectedForms = [];
       }
-
     }
   },
   watch: {
@@ -1533,12 +1561,7 @@ export default {
       immediate: true,
       async handler(newId, oldId) {
         if (newId !== oldId) {
-          console.log("new team's parent id changed to a different value");
-          console.log("old parent id: ", oldId);
-          console.log("new parent id: ", newId);
-          await this.onParentChanged(newId, oldId);
-        } else {
-          console.log("new team's parent id changed to same value");
+          await this.onParentChanged(newId, oldId, 'create');
         }
       }
     },
@@ -1546,18 +1569,10 @@ export default {
       immediate: true,
       async handler(newId, oldId) {
         if (newId !== oldId) {
-          console.log("edit team's parent id changed to a different value");
-          console.log("old parent id: ", oldId);
-          console.log("new parent id: ", newId);
-          await this.onParentChanged(newId, oldId);
-        } else {
-          console.log("edit team's parent id changed to same value");
+          await this.onParentChanged(newId, oldId, 'edit');
         }
       }
     },
-    // userOptions: async function (newVal, oldVal) {
-    //   await this.onParentChanged(this.editTeam.parent_id ?? this.newTeam.parent_id);
-    // },
   }
 };
 </script>

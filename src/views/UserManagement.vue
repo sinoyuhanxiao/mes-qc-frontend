@@ -59,7 +59,7 @@
                 <p>{{ translate('userManagement.table.wecomId') }}: {{ scope.row.wecom_id }}</p>
               </template>
               <template #reference>
-                <el-tag size="medium">{{ scope.row.name }}</el-tag>
+                <el-tag size="default">{{ scope.row.name }}</el-tag>
               </template>
             </el-popover>
           </template>
@@ -106,7 +106,7 @@
           <template #default="scope">
             <el-tag
                 :type="scope.row.role.el_tag_type || 'info'"
-                size="medium"
+                size="default"
                 style="font-weight:bold"
             >
               {{ scope.row.role.name }}
@@ -206,7 +206,7 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.table.role')" prop="role">
-            <el-select v-model="newUser.role" placeholder="Select a Role">
+            <el-select v-model="newUser.role" :placeholder="translate('userManagement.role.selectRolePlaceHolder')">
               <el-option
                   v-for="role in rolesOptions"
                   :key="role.id"
@@ -251,6 +251,12 @@
                   {{ translate('userManagement.table.leader') }}: {{ data.leader?.name ?? '-' }}
                 </span>
               </template>
+
+              <template v-slot:footer>
+                <el-text>
+                  {{ assignTeamHintText(newUser.role) }}
+                </el-text>
+              </template>
             </el-tree-select>
           </el-form-item>
 
@@ -288,7 +294,7 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.role')" prop="role">
-            <el-select v-model="editUser.role" placeholder="Select a Role">
+            <el-select v-model="editUser.role" :placeholder="translate('userManagement.role.selectRolePlaceHolder')">
               <el-option
                   v-for="role in rolesOptions"
                   :key="role.id"
@@ -336,6 +342,12 @@
                 >
                   {{ translate('userManagement.table.leader') }}: {{ data.leader?.name ?? '-' }}
                 </span>
+              </template>
+
+              <template v-slot:footer>
+                <el-text>
+                  {{ assignTeamHintText(editUser.role) }}
+                </el-text>
               </template>
             </el-tree-select>
           </el-form-item>
@@ -515,15 +527,112 @@ export default {
       },
       deep: true, // Ensures nested changes are tracked
     },
-    // Watch for changes in editUser.role and log the changes
-    "editUser.role": {
-      handler(newValue, oldValue) {
-        console.log("Role changed:", {
-          newValue,
-          oldValue,
-        });
+    "newUser.role": {
+      handler(newRoleId, oldRoleId) {
+        /**
+         Recursively walk the team tree and set the disabled flag according to the selected role.
+         **/
+        const setDisabledRecursive = (nodes) => {
+          nodes.forEach((node) => {
+            let disabled;
+
+            switch (newRoleId) {
+              case 1:
+                disabled = true; // everything disabled
+                break;
+              case 2:
+                disabled = false; // everything enabled
+                break;
+              case 3:
+                disabled = node.level !== 1; // only root-level teams enabled
+                break;
+              case 4:
+                disabled = true;  // everything disabled
+                break;
+            }
+
+            node.disabled = disabled;
+
+            if (Array.isArray(node.children) && node.children.length) {
+              setDisabledRecursive(node.children);
+            }
+          })
+        };
+
+        /**
+         Check if a selected team is valid by finding matching team object and get its disabled value
+         */
+        const isAllowed = (teamId, nodes) => {
+          nodes.forEach((node) => {
+            if (node.id === teamId) {
+              return !node.disabled;
+            }
+
+            return !!(node.children?.length && isAllowed(teamId, node.children));
+          })
+        };
+
+        /**
+         * Team has restriction on what user can be assigned as member depending on its depth, depth is calculated by
+         hierarchy distance to root level. Traverse through teams tree structure data, adjust each team's disabled
+         field to true/false depending on the new role id.
+
+         Role id of:
+         1, 2, all teams have disabled as true
+         3, root level teams have disabled as false, all other teams have disabled as true
+         4, all teams have disabled as false
+         **/
+
+        // Update teams option disabled field based on new role id
+        setDisabledRecursive(this.teamsOptions);
+
+        // Clean up invalid team selection
+        this.newUser.assignedTeams = this.newUser.assignedTeams.filter(id => {isAllowed(id, this.teamsOptions)})
       },
-      immediate: true // Trigger the watch immediately upon initialization
+      immediate: true
+    },
+    "editUser.role": {
+      handler(newRoleId, oldRoleId) {
+        const setDisabledRecursive = (nodes) => {
+          nodes.forEach((node) => {
+            let disabled;
+
+            switch (newRoleId) {
+              case 1:
+                disabled = true; // everything disabled
+                break;
+              case 2:
+                disabled = false; // everything enabled
+                break;
+              case 3:
+                disabled = node.level !== 1; // only root-level teams enabled
+                break;
+              case 4:
+                disabled = true;  // everything disabled
+                break;
+            }
+
+            node.disabled = disabled;
+
+            if (Array.isArray(node.children) && node.children.length) {
+              setDisabledRecursive(node.children);
+            }
+          })
+        };
+        const isAllowed = (teamId, nodes) => {
+          nodes.forEach((node) => {
+            if (node.id === teamId) {
+              return !node.disabled;
+            }
+
+            return !!(node.children?.length && isAllowed(teamId, node.children));
+          })
+        };
+
+        setDisabledRecursive(this.teamsOptions);
+        this.editUser.assignedTeams = this.editUser.assignedTeams.filter(id => {isAllowed(id, this.teamsOptions)})
+      },
+      immediate: true
     }
   },
   created() {
@@ -631,6 +740,7 @@ export default {
             ...team,
             value: team.id,
             label: team.name,
+            disabled: false,
             children,
           };
         };
@@ -880,6 +990,10 @@ export default {
         wecomId: '',
         username: '',
         password: '',
+        email: '',
+        phone_number: '',
+        status: 1,
+        assignedTeams: []
       };
     },
     filterTable() {
@@ -905,6 +1019,19 @@ export default {
     },
     handleCurrentChange(page) {
       this.currentPage = page;
+    },
+    assignTeamHintText(roleId) {
+      switch (roleId) {
+        case 4:
+          return translate('userManagement.managerAssignTeamHint');
+        case 1:
+          return translate('userManagement.supervisorAssignTeamHint');
+        case 3:
+          return translate('userManagement.teamLeadAssignTeamHint');
+
+        default:
+          return '';
+      }
     },
   },
 };

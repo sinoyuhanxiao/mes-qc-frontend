@@ -60,14 +60,14 @@
                 <el-icon><Edit /></el-icon>
                 <span>{{ translate('navigationMenu.formDesigner') }}</span>
               </el-menu-item>
-              <el-menu-item index="/form-access-calendar">
-                <el-icon><Calendar /></el-icon>
-                <span>{{ translate('navigationMenu.formAccessCalendar') }}</span>
-              </el-menu-item>
-              <el-menu-item index="/task-assignment">
-                <el-icon><Files /></el-icon>
-                <span>{{ translate('navigationMenu.dispatchManagement') }}</span>
-              </el-menu-item>
+<!--              <el-menu-item index="/form-access-calendar">-->
+<!--                <el-icon><Calendar /></el-icon>-->
+<!--                <span>{{ translate('navigationMenu.formAccessCalendar') }}</span>-->
+<!--              </el-menu-item>-->
+<!--              <el-menu-item index="/task-assignment">-->
+<!--                <el-icon><Files /></el-icon>-->
+<!--                <span>{{ translate('navigationMenu.dispatchManagement') }}</span>-->
+<!--              </el-menu-item>-->
               <el-menu-item index="/instrument-management">
                 <el-icon><TakeawayBox /></el-icon>
                 <span>{{ translate('navigationMenu.instrumentManagement') }}</span>
