@@ -1,19 +1,17 @@
-// utils/formDraftStorage.js
-export function saveUserDraft(userId, formId, data) {
+// src/utils/formDraftStorage.js
+
+export function saveFormDraftForUser(userId, formId, data) {
     const key = `draft_${userId}_${formId}`;
-    const expiry = Date.now() + 24 * 60 * 60 * 1000;
-    localStorage.setItem(key, JSON.stringify({ data, expiry }));
+    localStorage.setItem(key, JSON.stringify(data));
 }
 
-export function loadUserDraft(userId, formId) {
+export function loadFormDraftForUser(userId, formId) {
     const key = `draft_${userId}_${formId}`;
-    const itemStr = localStorage.getItem(key);
-    if (!itemStr) return null;
+    const str = localStorage.getItem(key);
+    return str ? JSON.parse(str) : null;
+}
 
-    const { data, expiry } = JSON.parse(itemStr);
-    if (Date.now() > expiry) {
-        localStorage.removeItem(key);
-        return null;
-    }
-    return data;
+export function clearDraftForUser(userId, formId) {
+    const key = `draft_${userId}_${formId}`;
+    localStorage.removeItem(key);
 }

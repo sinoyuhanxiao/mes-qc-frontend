@@ -35,6 +35,22 @@
 <!--      </el-button>-->
 
         <el-button
+            type="info"
+            @click="saveDraft"
+            v-show="props.accessByTeam"
+        >
+          保存草稿
+        </el-button>
+
+<!--        <el-button-->
+<!--            v-if="props.accessByTeam !== null"-->
+<!--            type="success"-->
+<!--            @click="loadDraft"-->
+<!--        >-->
+<!--          加载草稿-->
+<!--        </el-button>-->
+
+        <el-button
             type="primary"
             v-if="props.accessByTeam"
             @click="handleViewRecords"
@@ -512,6 +528,8 @@ const showApprovalDialog = ref(false)
 import ExportDocumentDialog from '@/components/export/ExportDocumentDialog.vue'
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
+import { saveFormDraftForUser, loadFormDraftForUser, clearDraftForUser } from '@/utils/formDraftStorage';
+
 // 通用submit功能导入
 import {
   getAlActiveSuggestedProducts,
@@ -705,6 +723,9 @@ const confirmClear = () => {
     signatureData.value = null;
     ElMessage.success(translate('FormDisplay.formClearedSuccess'))
   }
+  clearDraftForUser(userId, formId);        // 清除草稿
+  emit('refreshFormTree');            // 刷新树节点（草稿标签消失）
+  resetDirty();                             // 标记已清除更改状态
 };
 
 const closeCountdownEnded = () => {
@@ -877,7 +898,8 @@ onMounted(() => {
   const waitUntilFormReady = setInterval(() => {
     if (vFormRef.value && typeof vFormRef.value.getFormData === 'function') {
       clearInterval(waitUntilFormReady)
-      startDirtyCheck()
+      startDirtyCheck();
+      tryLoadDraft();
     }
   }, 100)
 });
@@ -1080,6 +1102,8 @@ const confirmSubmission = async () => {
     if (response.status === 200) {
       console.log(response.data);
       ElMessage.success(translate('FormDisplay.formSubmitSuccess'))
+      clearDraftForUser(userId, formId);
+      emit('refreshFormTree');
       showResetConfirmation.value = true; // Show second popup after success
       await resetDirty();
     } else {
@@ -1133,6 +1157,58 @@ const handleUpdateBatch = async () => {
   }
 };
 
+const saveDraft = async () => {
+  const formId = props.currentForm?.qcFormTemplateId;
+  if (!formId || props.accessByTeam === null) return;
+
+  const data = await vFormRef.value?.getFormData?.();
+  if (data && userId) {
+    saveFormDraftForUser(userId, formId, data);
+    ElMessage.success('草稿已保存');
+    console.log('📦 已保存草稿:', {
+      userId,
+      formId,
+      draft: data
+    });
+  }
+  emit('refreshFormTree');
+};
+
+// const loadDraft = async () => {
+//   const formId = props.currentForm?.qcFormTemplateId;
+//   if (!formId || props.accessByTeam === null) return;
+//
+//   const draft = loadFormDraftForUser(userId, formId);
+//   if (draft) {
+//     try {
+//       // Ensure form JSON is already rendered
+//       await nextTick(); // wait for render
+//       vFormRef.value?.setFormData?.(draft);
+//       ElMessage.success('草稿已加载');
+//       console.log('📥 加载的草稿内容:', { userId, formId, draft });
+//     } catch (err) {
+//       console.error('❌ 加载草稿失败:', err);
+//       ElMessage.error('加载草稿时发生错误');
+//     }
+//   } else {
+//     ElMessage.warning('未找到可用草稿');
+//     console.log('⚠️ 无草稿可加载:', { userId, formId });
+//   }
+// };
+
+const tryLoadDraft = async () => {
+  const formId = props.currentForm?.qcFormTemplateId;
+  if (!formId || props.accessByTeam === null) return;
+
+  const draft = loadFormDraftForUser(userId, formId);
+  if (draft) {
+    await nextTick();
+    vFormRef.value?.setFormData?.(draft);
+    ElMessage.info('已加载草稿');
+    console.log('📥 自动加载草稿:', { userId, formId, draft });
+  }
+};
+
 // Watch the qcFormTemplateId in the passed currentForm
 watch(
     () => props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId, // Safely access qcFormTemplateId
@@ -1155,6 +1231,7 @@ watch(
             enable_common_fields.value = false;
           }
           ElMessage.success(translate('FormDisplay.formLoadSuccess'))
+          // await tryLoadDraft();
         } else {
           ElMessage.error(translate('FormDisplay.formLoadFailed'))
         }
