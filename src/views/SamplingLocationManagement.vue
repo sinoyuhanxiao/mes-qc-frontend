@@ -49,6 +49,7 @@
         @delete-location="confirmDelete"
         :search-input="searchQuery"
         :user-map="userMap"
+        :loading="loading"
     />
 
 
@@ -78,7 +79,6 @@ import {
 import {RefreshRight, Search} from "@element-plus/icons-vue";
 import SamplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 import SamplingLocationForm from "@/components/sampling-location/SamplingLocationForm.vue";
-import samplingLocationList from "@/components/sampling-location/SamplingLocationList.vue";
 import {translate, translateWithParams} from "@/utils/i18n";
 import {fetchUsers} from "@/services/userService";
 
@@ -87,6 +87,7 @@ export default {
   data() {
     return {
       locations: [],
+      loading: false,
       searchQuery: "",
       dialogVisible: false,
       isEditMode: false,
@@ -102,6 +103,7 @@ export default {
     translate,
     async loadLocations() {
       try {
+        this.loading = true;
         const response = await getAllSamplingLocations();
         if (response.data && response.data.data) {
           this.locations = response.data.data;
@@ -111,6 +113,8 @@ export default {
       } catch (error) {
         console.error("Failed to load sampling locations:", error);
         this.locations = [];
+      } finally {
+        this.loading = false;
       }
     },
     async loadUserMap() {
@@ -166,12 +170,7 @@ export default {
     },
     async handleRefreshButton() {
       this.searchQuery = "";
-      await this.loadLocations()
-      this.$notify({
-        title: translate('orderManagement.messages.messageTitle'),
-        message: translate('orderManagement.messages.listRefreshed'),
-        type: "success",
-      });
+      await this.loadLocations();
     },
   },
   mounted() {

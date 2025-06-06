@@ -38,6 +38,7 @@
 
     <!-- Test Subject List -->
     <TestSubjectList
+        :loading="loading"
         :testSubjects="testSubjects"
         @edit-test-subject="openDialog"
         @delete-test-subject="confirmDelete"
@@ -81,6 +82,7 @@ export default {
   data() {
     return {
       testSubjects: [],
+      loading: false,
       searchQuery: "",
       dialogVisible: false,
       isEditMode: false,
@@ -96,6 +98,7 @@ export default {
     translate,
     async loadTestSubjects() {
       try {
+        this.loading = true;
         const response = await getAllTestSubjects();
         if (response.data && response.data.data) {
           this.testSubjects = response.data.data;
@@ -105,6 +108,8 @@ export default {
       } catch (error) {
         console.error("Failed to load test subjects:", error);
         this.testSubjects = [];
+      } finally {
+        this.loading = false;
       }
     },
     async loadUserMap() {
@@ -160,11 +165,6 @@ export default {
     async handleRefreshButton() {
       this.searchQuery = "";
       await this.loadTestSubjects()
-      this.$notify({
-        title: translate('orderManagement.messages.messageTitle'),
-        message: translate('orderManagement.messages.listRefreshed'),
-        type: "success",
-      });
     },
   },
   mounted() {

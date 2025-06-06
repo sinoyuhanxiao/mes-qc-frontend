@@ -1,10 +1,12 @@
 <template>
   <el-table
+      v-loading="loading"
       :data="sortedAndPaginatedList"
       style="width: 100%"
       @sort-change="handleSortChange"
       :default-sort="{ prop: 'id', order: 'descending' }"
-      :height = "tableHeight"
+      :height="tableHeight"
+      :empty-text="translate('common.noDataAvailable')"
   >
     <el-table-column prop="id" :label="translate('orderManagement.Id')" width="80" sortable/>
     <el-table-column prop="name" :label="translate('orderManagement.name')" width="180" sortable show-overflow-tooltip/>
@@ -22,7 +24,13 @@
         <UserTagHoverForDetail :user="userMap[scope.row.created_by]"/>
       </template>
     </el-table-column>
-    <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="250">
+    <el-table-column
+        :label="translate('orderManagement.dispatchedTaskTable.actions')"
+        align="right"
+        header-align="right"
+        width="180"
+        fixed="right"
+    >
       <template #default="scope">
         <el-button size="small" @click="$emit('edit-instrument', scope.row)">{{ translate('orderManagement.edit') }}</el-button>
         <el-button type="danger" size="small" @click="$emit('delete-instrument', scope.row.id)">{{ translate('orderManagement.delete') }}</el-button>
@@ -53,6 +61,7 @@ import UserTagHoverForDetail from "@/components/dispatch/UserTagHoverForDetail.v
 
 export default {
   components: {UserTagHoverForDetail, TimeSlot},
+  emits: ['edit-instrument', 'delete-instrument'],
   props: {
     instruments: {
       type: Array,
@@ -66,6 +75,10 @@ export default {
       type: Object,
       required: true,
     },
+    loading: {
+      type: Boolean,
+      required: false,
+    }
   },
   watch : {
     instruments: {

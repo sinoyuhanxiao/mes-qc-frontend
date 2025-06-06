@@ -31,10 +31,11 @@
           @node-click="handleNodeClicked"
           :show-checkbox="!showOnlySelectedNode"
           :default-expand-all="props.expandAllNodes"
+          :empty-text="translate('common.noDataAvailable')"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node">
-            <div class="node-content">
+            <div :class="['node-content', {'disabled-dark': node.disabled}]">
               <el-icon>
                 <Folder v-if="data.nodeType === 'folder'" />
                 <Document v-else />
@@ -60,14 +61,17 @@ interface Tree {
   children?: Tree[];
   nodeType: string;
   qcFormTemplateId: string | null;
+  disabled: boolean;
 }
 
 const props = withDefaults(defineProps<{
-  selectedFormIds: string[];
+  selectedFormIds?: string[];
+  allowedFormIds?: string[];
   showOnlySelectedNode: boolean;
   expandAllNodes: boolean;
 }>(), {
   selectedFormIds: () => [],
+  allowedFormIds: () => [],
   showOnlySelectedNode: false,
   expandAllNodes: false,
 });
@@ -92,7 +96,7 @@ const fetchFormTreeData = async () => {
   try {
     const response = await fetchFormNodes();
     rawTreeData.value = response.data;
-    data.value = response.data;
+    applyAllowed();
   } catch (err) {
     console.log('Failed to load form tree data', err);
   }
@@ -157,6 +161,39 @@ function filterTreeBySelectedIds(tree: Tree[], selectedIds: string[]): Tree[] {
   return result;
 }
 
+function markDisabled(tree: Tree[]): Tree[] {
+  const { allowedFormIds } = props          // keep it readable
+
+  /** returns a deep-copied subtree where `.disabled`
+   is set on every node (documents & folders) */
+  const walk = (nodes: Tree[]): Tree[] =>
+      nodes.map(n => {
+        const copy: Tree = { ...n }
+        const isDoc   = copy.nodeType === 'document'
+        const hasKids = Array.isArray(copy.children) && copy.children.length
+
+        /* ─────────────────────────────  leaves  ── */
+        if (!hasKids) {
+          copy.disabled = isDoc ?
+              (allowedFormIds.length &&
+              !allowedFormIds.includes(copy.id)) : true;
+          return copy
+        }
+
+        /* ─────────────────────────────  folders  ── */
+        copy.children = walk(copy.children)
+        /* folder is disabled ⇢ all direct children are disabled */
+        copy.disabled = copy.children.every(c => c.disabled)
+        return copy
+      })
+
+  return walk(tree)
+}
+
+function applyAllowed () {
+  data.value = markDisabled(rawTreeData.value);
+}
+
 onMounted(async () => {
   await fetchFormTreeData();
   if (props.showOnlySelectedNode != true && treeRef.value) {
@@ -189,6 +226,10 @@ watch(
 watch(filterText, (val) => {
   treeRef.value?.filter(val)
 });
+
+watch(
+    () => props.allowedFormIds, applyAllowed, {immediate: true, deep: true}
+)
 
 </script>
 
@@ -244,5 +285,9 @@ watch(filterText, (val) => {
   overflow-y: auto;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
+}
+
+.disabled-dark {
+  opacity: .45;
 }
 </style>

@@ -1,105 +1,120 @@
 <template>
-  <div v-loading="loadingUsers" >
-    <!-- Toolbar with Search Bar and Add Button -->
-    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>{{ translate("teamManagement.title") }}</h2>
-        <el-input
-            v-model="searchQuery"
-            :placeholder="translate('teamManagement.searchPlaceholder')"
-            clearable
-            @input="filterTable"
-            style="width: 300px; margin-left: 20px"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
-
-      <div style="display: flex; gap: 10px;">
-        <!-- Refresh Button -->
-        <el-tooltip :content="translate('teamManagement.refreshTooltip')" placement="top">
-          <el-button
-              class="refresh-button"
-              type="primary"
-              circle
-              @click="fetchTeamData"
-          >
-            <el-icon style="color: #004085;"><RefreshRight /></el-icon>
-          </el-button>
-        </el-tooltip>
-
-        <!-- Add Button -->
-        <el-button type="primary" @click="showAddDialog">{{ translate("teamManagement.addButton") }}</el-button>
-      </div>
+  <!-- Toolbar with Search Bar and Add Button -->
+  <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>{{ translate("teamManagement.title") }}</h2>
+      <el-input
+          v-model="searchQuery"
+          :placeholder="translate('common.searchPlaceholder')"
+          clearable
+          @input="filterTable"
+          style="width: 300px; margin-left: 20px"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
     </div>
 
-    <!-- Table -->
-    <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
-      <el-table :data="paginatedTeams" style="width: 100%" @sort-change="handleSortChange" :height="tableHeight">
-        <el-table-column label="ID" width="100" prop="id" sortable>
-          <template #default="scope">
-            <span>{{ scope.row.id }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="translate('teamManagement.table.name')" prop="name" width="180" sortable>
-          <template #default="scope">
-            <span>{{ scope.row.name }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="translate('teamManagement.table.type')" prop="type" width="180" sortable>
-          <template #default="scope">
-            <span>{{ scope.row.type }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="translate('teamManagement.table.leader')" prop="leader_id" width="180" sortable>
-          <template #default="scope">
-            <span>{{ scope.row.leader?.name || " - " }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="translate('teamManagement.table.startTime')" prop="start_time" width="180" sortable>
-          <template #default="scope">
-            <span>{{ formatTime(scope.row.start_time) }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="translate('teamManagement.table.endTime')" prop="end_time" width="180" sortable>
-          <template #default="scope">
-            <span>{{ formatTime(scope.row.end_time) }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column
-            :label="translate('teamManagement.table.status')" prop="status" width="180" sortable
+    <div style="display: flex; gap: 10px;">
+      <!-- Refresh Button -->
+      <el-tooltip :content="translate('teamManagement.refreshTooltip')" placement="top">
+        <el-button
+            class="refresh-button"
+            type="primary"
+            circle
+            @click="fetchAllData"
         >
-          <template #header>
-            <span>
-              {{ translate('teamManagement.table.status') }}
-              <el-tooltip :content="translate('teamManagement.table.statusTooltip')" placement="top">
-                <el-icon><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <template #default="scope">
-            <el-switch
-                v-model="scope.row.status"
-                :active-value="1"
-                :inactive-value="0"
-                @change="handleStatusChange(scope.row.id, scope.row.status)"
-            />
-          </template>
-        </el-table-column>
+          <el-icon style="color: #004085;"><RefreshRight /></el-icon>
+        </el-button>
+      </el-tooltip>
 
-        <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="360" sortable>
-          <template #default="scope">
-            <span>{{ scope.row.description }}</span>
-          </template>
-        </el-table-column>
+      <!-- Add Button -->
+      <el-button type="primary" @click="showAddDialog">{{ translate("teamManagement.addButton") }}</el-button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
+    <el-table
+        style="width: 100%"
+        @sort-change="handleSortChange"
+        row-key="id"
+        v-loading="loadingTeam"
+        :height="tableHeight"
+        :data="paginatedTeams"
+        :tree-props="{children : 'children'}"
+        :expand-row-keys="expandedKeys"
+        :empty-text="translate('common.noDataAvailable')"
+        :indent="0"
+        :cell-style="indentCellStyle"
+    >
+      <el-table-column label="ID" width="100" prop="id" sortable>
+        <template #default="scope">
+          <span>{{ scope.row.id }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.table.name')" prop="name" width="180" sortable show-overflow-tooltip>
+        <template #default="{ row }">
+          <span :style="{ paddingLeft: `${(row.level - 1) * 16}px` }">
+            {{ row.name }}
+          </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.table.type')" prop="type" width="100" sortable>
+        <template #default="scope">
+          <el-tag type="info" round size="small">
+            {{ scope.row.type || " - " }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.table.leader')" prop="leader_id" width="150" sortable>
+        <template #default="scope">
+          <span>{{ scope.row.leader?.name || " - " }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.memberCount')" width="150" prop="memberCount" sortable>
+        <template #default="scope">
+          {{ scope.row.memberCount }}
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.associatedFormCount')" width="150" prop="associatedFormCount" sortable>
+        <template #default="scope">
+          {{ scope.row.associatedFormCount }}
+        </template>
+      </el-table-column>
+
+      <el-table-column :label="translate('teamManagement.table.description')" prop="description" width="300" sortable>
+        <template #default="scope">
+          <span>{{ scope.row.description }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+          :label="translate('teamManagement.table.status')" prop="status" width="100" sortable
+      >
+        <template #header>
+          <span>
+            {{ translate('teamManagement.table.status') }}
+            <el-tooltip :content="translate('teamManagement.table.statusTooltip')" placement="top">
+              <el-icon><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </span>
+        </template>
+        <template #default="scope">
+          <el-switch
+              v-model="scope.row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleStatusChange(scope.row.id, scope.row.status)"
+          />
+        </template>
+      </el-table-column>
 
 <!--        <el-table-column label="Created By" prop="created_by" width="180" sortable>-->
 <!--          <template #default="scope">-->
@@ -107,11 +122,11 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-        <el-table-column :label="translate('teamManagement.table.createdAt')" prop="created_at" width="180" sortable>
-          <template #default="scope">
-            <span>{{ formatDate(scope.row.created_at) }}</span>
-          </template>
-        </el-table-column>
+      <el-table-column :label="translate('teamManagement.table.createdAt')" prop="created_at" width="180" sortable>
+        <template #default="scope">
+          <span>{{ formatDate(scope.row.created_at) }}</span>
+        </template>
+      </el-table-column>
 
 <!--        <el-table-column label="Updated By" prop="updated_by" width="180" sortable>-->
 <!--          <template #default="scope">-->
@@ -119,284 +134,616 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-<!--        <el-table-column label="Updated At" prop="updated_at" width="180" sortable>-->
-<!--          <template #default="scope">-->
-<!--            <span>{{ formatDate(scope.row.updated_at) }}</span>-->
-<!--          </template>-->
-<!--        </el-table-column>-->
-
-        <el-table-column :title="translate('teamManagement.table.actions')" align="right" header-align="right" width="230" fixed="right">
+        <el-table-column :label="translate('teamManagement.table.updatedAt')" prop="updated_at" width="180" sortable>
           <template #default="scope">
-            <el-button size="small" type="primary" @click="openTeamInfoDialog(scope.row)">{{ translate('teamManagement.table.viewTeam') }}</el-button>
-            <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate('teamManagement.edit') }}</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate('teamManagement.delete') }}</el-button>
+            <span>{{ formatDate(scope.row.updated_at) }}</span>
           </template>
         </el-table-column>
-      </el-table>
+
+      <el-table-column :label="translate('teamManagement.table.actions')" align="right" header-align="right" width="280" fixed="right">
+        <template #default="scope">
+          <el-button size="small" type="success" @click="openTeamInfoDialog(scope.row)">{{ translate('teamManagement.table.viewTeam') }}</el-button>
+          <el-button size="small" type="primary" @click="showAddDialog(scope.row)">{{ translate('common.new') }}</el-button>
+          <el-button size="small" @click="handleEdit(scope.$index, scope.row)">{{ translate('teamManagement.edit') }}</el-button>
+          <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">{{ translate('teamManagement.delete') }}</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
+
+  <el-pagination
+      v-if="filteredData.length > 15"
+      style="margin-top: 10px"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      :page-sizes="[15, 30, 45, 60]"
+      layout="total, sizes, prev, pager, next"
+      :total="filteredData.length"
+      :hide-on-single-page="true"
+  />
+
+  <!-- Team Info Dialog -->
+  <el-dialog
+      v-model="teamDetailDialogVisible"
+      :title="`${selectedTeamName}`"
+      width="800"
+      top="10vh"
+      @close="clearTeamDialogSearch"
+  >
+    <el-tabs>
+      <el-tab-pane :label="translate('teamManagement.membersTab')">
+        <!-- Filter Bar -->
+        <el-input
+            v-model="searchUserQuery"
+            :placeholder="translate('orderManagement.orderFormDialog.searchUserPlaceholder')"
+            clearable
+            @input="filterTeamUsers"
+            style="margin-bottom: 10px; width: 300px;"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+
+        <!-- Table with Sorting -->
+        <el-table
+            v-loading="loadingTeamDetails"
+            :data="paginatedTeamUsers"
+            @sort-change="handleUserSortChange"
+            :empty-text="translate('common.noDataAvailable')"
+        >
+          <el-table-column prop="id" :label="translate('userManagement.table.id')" width="100" sortable />
+
+          <el-table-column
+              prop="name"
+              :label="translate('userManagement.table.name')"
+              width="180"
+              sortable
+          >
+            <template #default="{ row }">
+              {{ row.name }}
+
+              <el-tag
+                  v-if="row.isLeader"
+                  style="margin-left: 4px;"
+                  hit
+                  effect="dark"
+                  round
+              >
+                {{ translate('teamManagement.table.leader') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="role" :label="translate('userManagement.table.role')" width="150" sortable>
+            <template #default="scope">
+              <el-tag :type="scope.row.role?.el_tag_type || 'info'">
+                {{ scope.row.role?.name || translate('userManagement.role.unknown') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="wecom_id" :label="translate('userManagement.table.wecomId')" width="180" sortable />
+          <el-table-column prop="status" :label="translate('userManagement.table.status')">
+            <template #default="scope">
+              <el-switch
+                v-model="scope.row.status"
+                :active-value="1"
+                :inactive-value="0"
+                disabled
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="username" :label="translate('userManagement.table.username')" width="180" sortable />
+          <el-table-column prop="email" :label="translate('userManagement.table.email')" width="220" sortable />
+          <el-table-column prop="phone_number" :label="translate('userManagement.table.phoneNumber')" width="180" sortable>
+            <template #default="scope">
+              <span>{{ scope.row.phone_number || '-' }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <!-- Pagination -->
+        <el-pagination
+            style="margin-top: 10px"
+            @size-change="handleUserSizeChange"
+            @current-change="handleUserPageChange"
+            :current-page="userCurrentPage"
+            :page-size="userPageSize"
+            :page-sizes="[10, 20, 30, 50]"
+            layout="total, sizes, prev, pager, next"
+            :total="filteredTeamUsers.length"
+            :hide-on-single-page="true"
+        />
+      </el-tab-pane>
+
+      <el-tab-pane :label="translate('teamManagement.formsTab')">
+        <div class="popup-container">
+          <div style="margin-bottom: 10px;">
+            <el-text>
+              {{ translate('teamManagement.totalCount') }} : {{ teamForms.length }}
+            </el-text>
+          </div>
+
+          <team-form-tree
+              :selectedFormIds="teamForms"
+              :showOnlySelectedNode="true"
+              :expand-all-nodes="false"
+              @on-node-clicked="handleFormNodeClicked"
+          >
+          </team-form-tree>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+  </el-dialog>
+
+  <!-- Add Team Dialog -->
+  <el-dialog
+      :title="translate('teamManagement.addDialog.title')"
+      v-model="addDialogVisible"
+      width="50%"
+      @keyup.enter.native="validateAndAddTeam"
+      align-center
+  >
+    <div class="popup-container">
+      <el-form ref="addTeamForm" :model="newTeam" :rules="rules" label-width="140px">
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="translate('teamManagement.addDialog.name')" prop="name">
+              <el-input v-model="newTeam.name" />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item :label="translate('teamManagement.addDialog.type')" prop="type">
+              <el-input v-model="newTeam.type" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12" align="center">
+            <el-form-item>
+              <el-text style="padding-right: 10px;">
+                {{ translate('teamManagement.isSubTeam') }}
+              </el-text>
+
+              <el-switch
+                  v-model="isSubTeam"
+                  @change="handleIsSubTeam"
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+                :label="translate('teamManagement.parentTeam')"
+                v-if="this.isSubTeam"
+                required
+                prop="parent_id"
+            >
+              <el-tree-select
+                  v-model="newTeam.parent_id"
+                  :data="parentTeamOptions(newTeam.id)"
+                  :placeholder="translate('teamManagement.addDialog.selectParentTeamPlaceholder')"
+                  check-strictly
+                  clearable
+                  @change="clearLeaderMemberFormSeleciton('create')"
+              >
+              </el-tree-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item prop="leader_id">
+              <template #label>
+                <span>{{ translate('teamManagement.addDialog.leader')}}</span>
+              </template>
+
+              <el-select
+                  v-model="newTeam.leader_id"
+                  filterable
+                  clearable
+                  :placeholder="translate('teamManagement.addDialog.selectLeaderPlaceholder')"
+                  @visible-change="open => { if (open) previousLeaderSelectionId = newTeam.leader_id }"
+                  @change="(newVal)=>handleNewLeaderSelection(newTeam, newUser.selectedUsers, newVal)"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
+              >
+                <el-option
+                    v-for="user in teamLeaderOptions"
+                    :key="user.id"
+                    :label="user.name"
+                    :value="user.id"
+                    :disabled="user.disabled"
+                >
+                  <span style="float:left">{{ user.name }}</span>
+                  <span
+                      style="
+                      float: right;
+                      color: var(--el-text-color-secondary);
+                      font-size: 13px;"
+                  >
+                  {{ getRole(user.role_id).name }}
+                 <span v-if="user.team_name">
+                   - {{ user.team_name }} ({{user.team_id}})
+                 </span>
+              </span>
+                </el-option>
+              </el-select>
+
+              <el-text type="info">
+                <el-icon>
+                  <InfoFilled />
+                </el-icon>
+                {{ leaderLabelSuffix.replace(/[()]/g, '') }}
+              </el-text>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+                :label="translate('teamManagement.addDialog.members')"
+                prop="selectedUsers"
+            >
+              <el-select
+                  v-model="newUser.selectedUsers"
+                  multiple
+                  filterable
+                  :placeholder="translate('teamManagement.addDialog.selectMembersPlaceholder')"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
+                  collapse-tags
+                  collapse-tags-tooltip
+                  :max-collapse-tags="3"
+              >
+                <el-option
+                    v-for="user in teamMemberOptions"
+                    :key="user.id"
+                    :label="user.name"
+                    :value="user.id"
+                    :disabled="user.id === newTeam.leader_id"
+                >
+                  <span style="float:left">{{ user.name }}</span>
+                  <span
+                      style="
+                      float: right;
+                      color: var(--el-text-color-secondary);
+                      font-size: 13px;
+                      padding-right: 10px;
+                      "
+                  >
+                    {{ getRole(user.role_id).name }}
+                  </span>
+                </el-option>
+              </el-select>
+
+              <span v-if="newTeam.parent_id == null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+                  {{ translate('teamManagement.rootTeamLimitedMemberOptionsHint') }}
+                </el-text>
+              </span>
+
+              <span v-if="newTeam.parent_id != null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+                  {{ translate('teamManagement.nonRootTeamLimitedMemberOptionsHint') }}
+                </el-text>
+              </span>
+            </el-form-item>
+
+          </el-col>
+        </el-row>
+
+        <el-row justify="space-between" :gutter=20>
+          <el-col :span="14">
+            <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
+              <team-form-tree
+                  :showOnlySelectedNode="false"
+                  :expand-all-nodes="false"
+                  :allowed-form-ids="parentFormIds"
+                  @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
+
+              <span v-if="newTeam.parent_id != null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+
+                  {{ translate('teamManagement.limitedFormOptionsHint') }}
+                </el-text>
+              </span>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="10" style="background: #f9f9f9; border-color: #f9f9f9; border-width: 1px; border-radius: 5px;">
+            <div style="margin-bottom: 10px; margin-top: 5px;">
+              <el-text>
+                {{ translate('teamManagement.formSelectionPreview') }} - {{ translate('teamManagement.totalCount') }} : {{ newForm.selectedForms.length }}
+              </el-text>
+            </div>
+
+            <div style="margin-bottom: 10px">
+              <team-form-tree
+                  :selectedFormIds="newForm.selectedForms"
+                  :showOnlySelectedNode="true"
+                  :expand-all-nodes="true"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
+            </div>
+          </el-col>
+        </el-row>
+
+        <el-form-item :label="translate('teamManagement.addDialog.description')" prop="description">
+          <el-input type="textarea" v-model="newTeam.description" />
+        </el-form-item>
+
+        <el-form-item :label="translate('teamManagement.addDialog.status')" prop="status">
+          <el-select v-model="newTeam.status" :placeholder="translate('teamManagement.addDialog.selectStatus')">
+            <el-option :label="translate('teamManagement.status.active')" :value="1" />
+            <el-option :label="translate('teamManagement.status.inactive')" :value="0" />
+          </el-select>
+        </el-form-item>
+      </el-form>
     </div>
 
-    <el-pagination
-        v-if="filteredData.length > 15"
-        style="margin-top: 10px"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="currentPage"
-        :page-size="pageSize"
-        :page-sizes="[15, 30, 45, 60]"
-        layout="total, sizes, prev, pager, next"
-        :total="filteredData.length"
-        :hide-on-single-page="true"
-    />
+    <template #footer>
+      <div class="popup-container">
+        <el-button @click="addDialogVisible = false">{{ translate('teamManagement.addDialog.cancelButton') }}</el-button>
+        <el-button type="primary" @click="validateAndAddTeam">{{ translate('teamManagement.addDialog.confirmButton') }}</el-button>
+      </div>
+    </template>
+  </el-dialog>
 
-    <!-- Team Info Dialog -->
-    <el-dialog v-model="dialogTableVisible" :title="`${selectedTeamName}`" width="800">
-      <el-tabs>
-        <el-tab-pane :label="translate('teamManagement.membersTab')">
-          <!-- Filter Bar -->
-          <el-input
-              v-model="searchUserQuery"
-              :placeholder="translate('orderManagement.orderFormDialog.searchUserPlaceholder')"
-              clearable
-              @input="filterTeamUsers"
-              style="margin-bottom: 10px; width: 300px;"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
+  <!-- Edit Team Dialog -->
+  <el-dialog
+      :title="translate('teamManagement.editDialog.title')"
+      v-model="editDialogVisible"
+      width="50%"
+      @close="closeEditDialog"
+      @keyup.enter.native="handleEditConfirm"
+      align-center
+  >
+    <div class="popup-container">
+      <el-form ref="editTeamForm" :model="editTeam" :rules="rules" label-width="140px">
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="translate('teamManagement.editDialog.name')" prop="name">
+              <el-input v-model="editTeam.name" />
+            </el-form-item>
+          </el-col>
 
-      <!-- Table with Sorting -->
-      <el-table v-loading="loadingUsers" :data="paginatedTeamUsers" @sort-change="handleUserSortChange">
-        <el-table-column prop="id" :label="translate('userManagement.table.id')" width="100" sortable />
-        <el-table-column prop="name" :label="translate('userManagement.table.name')" width="180" sortable />
-        <el-table-column prop="role" :label="translate('userManagement.table.role')" width="150" sortable>
-          <template #default="scope">
-            <el-tag :type="scope.row.role?.el_tag_type || 'info'">
-              {{ scope.row.role?.name || translate('userManagement.role.unknown') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="wecom_id" :label="translate('userManagement.table.wecomId')" width="180" sortable />
-        <el-table-column prop="username" :label="translate('userManagement.table.username')" width="180" sortable />
-        <el-table-column prop="email" :label="translate('userManagement.table.email')" width="220" sortable />
-        <el-table-column prop="phone_number" :label="translate('userManagement.table.phoneNumber')" width="180" sortable>
-          <template #default="scope">
-            <span>{{ scope.row.phone_number || '-' }}</span>
-          </template>
-        </el-table-column>
-      </el-table>
+          <el-col :span="12">
+            <el-form-item :label="translate('teamManagement.editDialog.type')" prop="type">
+              <el-input v-model="editTeam.type" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-          <!-- Pagination -->
-          <el-pagination
-              style="margin-top: 10px"
-              @size-change="handleUserSizeChange"
-              @current-change="handleUserPageChange"
-              :current-page="userCurrentPage"
-              :page-size="userPageSize"
-              :page-sizes="[10, 20, 30, 50]"
-              layout="total, sizes, prev, pager, next"
-              :total="filteredTeamUsers.length"
-              :hide-on-single-page="true"
-          />
-        </el-tab-pane>
+        <el-row>
+          <el-col :span="12" align="center">
+            <el-form-item>
+              <el-text style="padding-right: 10px;">
+              {{ translate('teamManagement.isSubTeam') }}
+              </el-text>
 
-        <el-tab-pane :label="translate('teamManagement.formsTab')">
-            <div class="popup-container">
-              <el-form>
-                <team-form-tree
-                    :selectedFormIds="teamForms"
-                    :showOnlySelectedNode="true"
-                    :expand-all-nodes="false"
-                    @on-node-clicked="handleFormNodeClicked"
+              <el-switch
+                  v-model="isSubTeam"
+                  @change="handleIsSubTeam"
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+                :label="translate('teamManagement.parentTeam')"
+                v-if="this.isSubTeam"
+                required
+                prop="parent_id"
+            >
+              <el-tree-select
+                  v-model="editTeam.parent_id"
+                  :data="parentTeamOptions(editTeam.id)"
+                  check-strictly
+                  clearable
+                  :placeholder="translate('teamManagement.editDialog.selectParentTeamPlaceholder')"
+                  @change="clearLeaderMemberFormSeleciton('edit')"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item prop="leader_id">
+              <template #label>
+                <span>{{ translate('teamManagement.editDialog.leader')}}</span>
+              </template>
+
+              <el-select
+                  v-model="editTeam.leader_id"
+                  filterable
+                  clearable
+                  :placeholder="translate('teamManagement.editDialog.selectLeaderPlaceholder')"
+                  @visible-change="open => { if (open) previousLeaderSelectionId = editTeam.leader_id }"
+                  @change="(newVal)=>handleNewLeaderSelection(editTeam, editUser.assignedUsers ,newVal)"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
+              >
+                <el-option
+                    v-for="user in teamLeaderOptions"
+                    :key="user.id"
+                    :label="user.name"
+                    :value="user.id"
+                    :disabled="user.disabled"
                 >
-                </team-form-tree>
-              </el-form>
+                  <span style="float:left">{{ user.name }}</span>
+                  <span
+                      style="
+                      float: right;
+                      color: var(--el-text-color-secondary);
+                      font-size: 13px;
+                   "
+                  >
+                    {{ getRole(user.role_id).name }}
+
+                    <!-- team name, if this user is currently a leader -->
+                    <span v-if="user.team_name">
+                      - {{ user.team_name }} ({{user.team_id}})
+                    </span>
+                  </span>
+                </el-option>
+              </el-select>
+
+              <el-text type="info" v-if="this.depth">
+                <el-icon>
+                  <InfoFilled />
+                </el-icon>
+
+                {{ leaderLabelSuffix.replace(/[()]/g, '') }}
+              </el-text>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item
+                :label="translate('teamManagement.editDialog.members')"
+                prop="assignedUsers"
+            >
+              <el-select
+                  v-model="editUser.assignedUsers"
+                  multiple
+                  filterable
+                  :placeholder="translate('teamManagement.editDialog.selectMembersPlaceholder')"
+                  :no-data-text="translate('common.noDataAvailable')"
+                  :no-match-text="translate('common.noDataAvailable')"
+                  collapse-tags
+                  collapse-tags-tooltip
+                  :max-collapse-tags="3"
+              >
+                <el-option
+                    v-for="user in teamMemberOptions"
+                    :key="user.id"
+                    :label="user.name"
+                    :value="user.id"
+                    :disabled="user.id === editTeam.leader_id"
+                >
+                  <span style="float:left">{{ user.name }}</span>
+                  <span
+                      style="
+                      float: right;
+                      color: var(--el-text-color-secondary);
+                      font-size: 13px;
+                      padding-right: 10px;
+                      "
+                  >
+                    {{ getRole(user.role_id).name }}
+                  </span>
+                </el-option>
+              </el-select>
+
+              <span v-if="editTeam.parent_id == null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+                  {{ translate('teamManagement.rootTeamLimitedMemberOptionsHint') }}
+                </el-text>
+              </span>
+
+              <span v-if="editTeam.parent_id != null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+
+                  {{ translate('teamManagement.nonRootTeamLimitedMemberOptionsHint') }}
+                </el-text>
+              </span>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row justify="space-between" :gutter=20>
+          <el-col :span="14">
+            <el-form-item :label="translate('teamManagement.editDialog.forms')">
+              <team-form-tree
+                  :selectedFormIds="editForm.assignedForms"
+                  :showOnlySelectedNode="false"
+                  :expand-all-nodes="false"
+                  :allowed-form-ids="parentFormIds"
+                  @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
+
+              <span v-if="editTeam.parent_id != null">
+                <el-text type="info">
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
+
+                  {{ translate('teamManagement.limitedFormOptionsHint') }}
+                </el-text>
+              </span>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="10"  style="background: #f9f9f9; border-color: #f9f9f9; border-width: 1px; border-radius: 5px;">
+            <div style="margin-bottom: 10px; margin-top: 5px;">
+              <el-text>
+                {{ translate('teamManagement.formSelectionPreview') }} - {{ translate('teamManagement.totalCount') }} : {{ editForm.assignedForms.length }}
+              </el-text>
             </div>
-        </el-tab-pane>
-      </el-tabs>
-    </el-dialog>
 
-    <!-- Add Team Dialog -->
-    <el-dialog :title="translate('teamManagement.addDialog.title')" v-model="addDialogVisible" width="50%" @keyup.enter.native="validateAndAddTeam">
-      <div v-loading="loadingTeam" class="popup-container">
-        <el-form ref="addTeamForm" :model="newTeam" :rules="rules" label-width="140px">
-          <el-form-item :label="translate('teamManagement.addDialog.name')" prop="name">
-            <el-input v-model="newTeam.name" />
-          </el-form-item>
+            <div style="margin-bottom: 10px">
+              <team-form-tree
+                  :selectedFormIds="editForm.assignedForms"
+                  :showOnlySelectedNode="true"
+                  :expand-all-nodes="true"
+                  @on-node-clicked="handleFormNodeClicked"
+              >
+              </team-form-tree>
+            </div>
+          </el-col>
+        </el-row>
 
-          <el-form-item :label="translate('teamManagement.addDialog.type')" prop="type">
-            <el-input v-model="newTeam.type" />
-          </el-form-item>
+        <el-form-item :label="translate('teamManagement.editDialog.description')" prop="description">
+          <el-input type="textarea" v-model="editTeam.description" />
+        </el-form-item>
 
-          <el-form-item :label="translate('teamManagement.addDialog.leader')" prop="leader_id">
-            <el-select
-                v-model="newTeam.leader_id"
-                filterable
-                :placeholder="translate('teamManagement.addDialog.selectLeaderPlaceholder')"
-                style="width: 480px"
-            >
-              <el-option
-                  v-for="user in teamLeaderOptions"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-              />
-            </el-select>
-          </el-form-item>
+        <el-form-item :label="translate('teamManagement.editDialog.status')" prop="status">
+          <el-select v-model="editTeam.status" :placeholder="translate('teamManagement.editDialog.selectStatusPlaceholder')">
+            <el-option :label="translate('teamManagement.status.active')" :value="1" />
+            <el-option :label="translate('teamManagement.status.inactive')" :value="0" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </div>
 
-          <el-form-item :label="translate('teamManagement.addDialog.startTime')" prop="start_time">
-            <el-time-picker
-                v-model="newTeam.start_time"
-                :placeholder="translate('teamManagement.addDialog.startTime')"
-            />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.addDialog.endTime')" prop="end_time">
-            <el-time-picker
-                v-model="newTeam.end_time"
-                :placeholder="translate('teamManagement.addDialog.endTime')"
-            />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.addDialog.members')" prop="selectedUsers">
-            <el-select
-                v-model="newUser.selectedUsers"
-                multiple
-                filterable
-                :placeholder="translate('teamManagement.addDialog.selectMembers')"
-                style="width: 100%;"
-            >
-              <el-option
-                  v-for="user in userOptions"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.addDialog.forms')" prop="selectedForms">
-            <team-form-tree
-                :showOnlySelectedNode="false"
-                :expand-all-nodes="false"
-                @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
-                @on-node-clicked="handleFormNodeClicked"
-            >
-            </team-form-tree>
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.addDialog.description')" prop="description">
-            <el-input type="textarea" v-model="newTeam.description" />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.addDialog.status')" prop="status">
-            <el-select v-model="newTeam.status" :placeholder="translate('teamManagement.addDialog.selectStatus')">
-              <el-option :label="translate('teamManagement.status.active')" :value="1" />
-              <el-option :label="translate('teamManagement.status.inactive')" :value="0" />
-            </el-select>
-          </el-form-item>
-        </el-form>
+    <template #footer>
+      <div class="popup-container">
+        <el-button @click="editDialogVisible = false">{{ translate('teamManagement.editDialog.cancelButton') }}</el-button>
+        <el-button type="primary" @click="handleEditConfirm">{{ translate('teamManagement.editDialog.confirmButton') }}</el-button>
       </div>
-
-      <template #footer>
-        <div class="popup-container">
-          <el-button @click="addDialogVisible = false">{{ translate('teamManagement.addDialog.cancelButton') }}</el-button>
-          <el-button type="primary" @click="validateAndAddTeam">{{ translate('teamManagement.addDialog.confirmButton') }}</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <!-- Edit Team Dialog -->
-    <el-dialog :title="translate('teamManagement.editDialog.title')" v-model="editDialogVisible" width="50%" @close="closeEditDialog" @keyup.enter.native="handleEditConfirm">
-      <div v-loading="loadingTeam" class="popup-container">
-        <el-form ref="editTeamForm" :model="editTeam" :rules="rules" label-width="140px">
-          <el-form-item :label="translate('teamManagement.editDialog.name')" prop="name">
-            <el-input v-model="editTeam.name" />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.type')" prop="type">
-            <el-input v-model="editTeam.type" />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.leader')" prop="leader_id">
-            <el-select v-model="editTeam.leader_id" filterable :placeholder="translate('teamManagement.editDialog.selectLeaderPlaceholder')" style="width: 480px">
-              <el-option
-                  v-for="user in teamLeaderOptions"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.startTime')" prop="start_time">
-            <el-time-picker
-                v-model="editTeam.start_time"
-                :placeholder="translate('teamManagement.editDialog.startTime')"
-            />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.endTime')" prop="end_time">
-            <el-time-picker
-                v-model="editTeam.end_time"
-                :placeholder="translate('teamManagement.editDialog.endTime')"
-            />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.members')" prop="assignedUsers">
-            <el-select
-                v-model="editUser.assignedUsers"
-                multiple
-                filterable
-                :placeholder="translate('teamManagement.editDialog.selectMembersPlaceholder')"
-                style="width: 100%;"
-            >
-              <el-option
-                  v-for="user in userOptions"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.id"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.forms')">
-            <team-form-tree
-                :selectedFormIds="editForm.assignedForms"
-                :showOnlySelectedNode="false"
-                :expand-all-nodes="false"
-                @update-selected-forms="(formIds)=> editForm.assignedForms = formIds.map(f => f.id)"
-                @on-node-clicked="handleFormNodeClicked"
-            >
-            </team-form-tree>
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.description')" prop="description">
-            <el-input type="textarea" v-model="editTeam.description" />
-          </el-form-item>
-
-          <el-form-item :label="translate('teamManagement.editDialog.status')" prop="status">
-            <el-select v-model="editTeam.status" :placeholder="translate('teamManagement.editDialog.selectStatusPlaceholder')">
-              <el-option :label="translate('teamManagement.status.active')" :value="1" />
-              <el-option :label="translate('teamManagement.status.inactive')" :value="0" />
-            </el-select>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <template #footer>
-        <div class="popup-container">
-          <el-button @click="editDialogVisible = false">{{ translate('teamManagement.editDialog.cancelButton') }}</el-button>
-          <el-button type="primary" @click="handleEditConfirm">{{ translate('teamManagement.editDialog.confirmButton') }}</el-button>
-        </div>
-      </template>
-    </el-dialog>
-  </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script>
-import { Search, Plus, QuestionFilled, RefreshRight } from "@element-plus/icons-vue";
-import {assignUsersToTeam, removeTeamFromAllUsers} from '@/services/teamUserService';
+import {Search, Plus, QuestionFilled, RefreshRight, InfoFilled, StarFilled} from "@element-plus/icons-vue";
+import { removeTeamFromAllUsers } from '@/services/teamUserService';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -406,16 +753,19 @@ import {
   updateTeam,
   activateTeam,
   deactivateTeam,
-  deleteTeam
+  deleteTeam,
+  getTeamDepth, getTeamById
 } from "@/services/teamService.js";
-import {formatDate} from "@/utils/task-center/dateFormatUtils";
-import {fetchUsers} from "@/services/userService";
-import {getUsersForTeam} from "@/services/teamUserService";
-import {translate, translateWithParams} from "@/utils/i18n";
-import {assignFormsToTeam, getFormIdsForTeam, removeAllFormsFromTeam} from "@/services/teamFormService";
+import { formatDate} from "@/utils/task-center/dateFormatUtils";
+import { fetchUsers} from "@/services/userService";
+import { getUsersForTeam} from "@/services/teamUserService";
+import { translate, translateWithParams } from "@/utils/i18n";
+import { getFormIdsForTeam } from "@/services/teamFormService";
 import TeamFormTree from "@/components/dispatch/TeamFormTree.vue";
-import {openFormPreviewWindow} from "@/utils/dispatch-utils";
-import { getCurrentLeaderIds } from "@/services/teamService";
+import { openFormPreviewWindow } from "@/utils/dispatch-utils";
+import { getCurrentLeaders } from "@/services/teamService";
+import { fetchRoles } from "@/services/roleService";
+import { ElLoading } from 'element-plus';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -423,6 +773,8 @@ dayjs.extend(timezone);
 export default {
   name: "TeamManagement",
   components: {
+    StarFilled,
+    InfoFilled,
     TeamFormTree,
     Search,
     Plus,
@@ -433,27 +785,35 @@ export default {
     return {
       tableHeight: window.innerHeight - 50 - 100 - 20 - 20 - 10,
       loadingTeam: false,
-      searchUserQuery: "", // Search input value for users
-      userCurrentPage: 1, // Current page for members
-      userPageSize: 10, // Page size for members
-      filteredTeamUsers: [], // Filtered users for pagination
-      userSortSettings: { prop: "", order: "" }, // Sort settings
-      tableData: [], // Original data
-      filteredData: [], // Filtered data for display
-      userOptions: [], // Dropdown options for all users
-      teamLeaderOptions: [], // Dropdown options for team leaders
+      loadingTeamDetails: false, // Loading state for the user list
+      searchQuery: "", // Search input value
+      searchUserQuery: "", // Search input value for team detail user table
       currentPage: 1, // Current page number
       pageSize: 15, // Number of items per page
-      searchQuery: "", // Search input value
+      userCurrentPage: 1, // Current page for team detail user table
+      userPageSize: 10, // Page size for team detail user table
+      isSubTeam: false,
+      depth: 1, // Depth of the team to populate related options for create/edite dialog
+      filteredTeamUsers: [], // Filtered users for pagination
+      sortSettings: { prop: "", order: "" },
+      userSortSettings: { prop: "", order: "" }, // Sort settings for team detail user table
+      tableData: [], // Original data
+      teamOptions: [], // Dropdown options for all teams (used for selecting parent team)
+      filteredData: [], // Filtered data for display
+      userOptions: [], // Dropdown options for all users
+      teamLeaderOptions: [], // Leader options for create/edit team
+      teamMemberOptions: [],   // Member options for create/edit team
+      currentLeaders: {}, // Map that stores all current leader objects
+      rolesMap: {}, // Stores all roles data
+      parentFormIds: [], // Stores forms from parent team
       addDialogVisible: false, // Add dialog visibility
       editDialogVisible: false, // Edit dialog visibility
+      teamDetailDialogVisible: false, // Controls the visibility of the table dialog
       teamUsers: [], // Stores users assigned to the team
       teamForms: [], // Stores forms assigned to the team
-      dialogTableVisible: false, // Controls the visibility of the table dialog
-      loadingUsers: false, // Loading state for the user list
-      sortSettings: { prop: "", order: "" },
       selectedTeamName: "", // store the selected team for showing users
-      currentLeaderIds: [], // Stores all current leader IDs
+      expandedKeys: [],
+      processing: false,
       newTeam: {
         name: "",
         type: "",
@@ -462,6 +822,13 @@ export default {
         end_time: "",
         description: "",
         status: 1, // Default null
+        parent_id: null,
+      },
+      newUser: { // representing add new members
+        selectedUsers: [],
+      },
+      newForm: {
+        selectedForms: [],
       },
       editTeam: {
         id: null,
@@ -472,32 +839,26 @@ export default {
         end_time: "",
         description: "",
         status: 1,
+        parent_id: null,
       },
       editUser: { // representing edit members
         assignedUsers: []
       },
-      newUser: { // representing add new members
-        selectedUsers: [],
-      },
       editForm: {
         assignedForms: [],
       },
-      newForm: {
-        selectedForms: [],
-      },
+      previousLeaderSelectionId: null, // Remember old leader selection to clear up that user in member's list
+      originalLeaderId: null, // Reflect actual original id of the team before editing
       rules: {
         name: [{ required: true, message: translate("teamManagement.validation.nameRequired"), trigger: "blur" }],
-        type: [{ required: true, message: translate("teamManagement.validation.typeRequired"), trigger: "blur" }],
-        leader_id: [{ required: true, message: translate("teamManagement.validation.leaderRequired"), trigger: "blur" }],
-        start_time: [{ required: true, message: translate("teamManagement.validation.startTimeRequired"), trigger: "blur" }],
-        end_time: [{ required: true, message: translate("teamManagement.validation.endTimeRequired"), trigger: "blur" }],
+        type: [{ required: false, message: translate("teamManagement.validation.typeRequired"), trigger: "blur" }],
+        leader_id: [{ required: false, message: translate("teamManagement.validation.leaderRequired"), trigger: "blur" }],
+        parent_id: [{ required: true, message: translate("teamManagement.validation.parentTeamRequired"), trigger: "blur" }],
       },
     };
   },
   created() {
-    this.fetchTeamData();
-    this.fetchUserOptions();
-    this.fetchCurrentLeaderIds();
+    this.fetchAllData();
   },
   computed: {
     paginatedTeamUsers() {
@@ -529,6 +890,15 @@ export default {
       const end = start + this.pageSize;
       return sortedData.slice(start, end);
     },
+    leaderLabelSuffix() {
+      const depth = this.depth;
+
+      if (depth === 1) {
+        return translate('teamManagement.depth1RoleAllowed');
+      } else {
+        return translate('teamManagement.depth2RoleAllowed');
+      }
+    },
   },
   mounted() {
     window.addEventListener("resize", this.updateTableHeight);
@@ -540,6 +910,7 @@ export default {
     window.removeEventListener("resize", this.updateTableHeight);
   },
   methods: {
+    getTeamDepth,
     translate,
     filterTeamUsers() {
       const searchText = this.searchUserQuery.toLowerCase();
@@ -594,15 +965,18 @@ export default {
       return date.toLocaleTimeString('en-US', {hour12: false}); // Format to HH:mm:ss
     },
     async openTeamInfoDialog(team) {
-      this.dialogTableVisible = true;
-      this.loadingUsers = true;
+      this.teamDetailDialogVisible = true;
+      this.loadingTeamDetails = true;
       this.selectedTeamName = team.name;
 
       try {
         let response = await getUsersForTeam(team.id);
         if (response.data.status === "200") {
-          this.teamUsers = response.data.data;
-          this.filteredTeamUsers = [...this.teamUsers];
+          const teamLeadId = team.leader?.id;
+
+          // Mark the leader user with isLeader
+          this.teamUsers = response.data.data.map(u => ({...u, isLeader: u.id === teamLeadId}));
+          this.filteredTeamUsers = this.teamUsers;
         } else {
           this.teamUsers = [];
           this.filteredTeamUsers = [];
@@ -621,14 +995,11 @@ export default {
         this.filteredTeamUsers = [];
         this.teamForms = [];
       } finally {
-        this.loadingUsers = false;
+        this.loadingTeamDetails = false;
       }
     },
     async handleFormNodeClicked(formTemplateId) {
       await openFormPreviewWindow(formTemplateId, this)
-    },
-    getRoleName(roleId) {
-      return roleId === 1 ? "管理员" : "质检人员";
     },
     closeEditDialog() {
       // Reset the editTeam object to prevent data conflicts
@@ -641,31 +1012,29 @@ export default {
         end_time: null,
         description: "",
         status: null,
+        parent_id: null,
       };
+
       this.editDialogVisible = false; // Close the dialog
+    },
+    async fetchAllData() {
+      await this.fetchTeamData();
+      await this.fetchCurrentLeaders();
+      await this.fetchUserOptions();
+      await this.fetchRoles();
     },
     async fetchUserOptions() {
       try {
-        const response = await fetchUsers(); // Fetch users from the backend
+        const response = await fetchUsers();
         if (response.data && response.data.status === "200") {
           // Store all users for general use
           this.userOptions = response.data.data
-              .filter(user => !this.currentLeaderIds.includes(user.id)) // exclude current leaders
               .map(user => ({
                 id: user.id,
                 name: user.name,
+                role_id: user.role?.id,
               }));
 
-          // Filter only 班长 (role.id === 3) TODO: Should be specified in the backend
-          this.teamLeaderOptions = response.data.data
-              .filter(user =>
-                  user.role?.id === 3 &&
-                  (!this.currentLeaderIds.includes(user.id) || user.id === this.editTeam.leader_id)
-              )
-              .map(user => ({
-                id: user.id,
-                name: user.name,
-              }));
         } else {
           this.userOptions = [];
           this.teamLeaderOptions = []; // Ensure empty state
@@ -676,58 +1045,44 @@ export default {
         this.teamLeaderOptions = [];
       }
     },
-    async fetchCurrentLeaderIds() {
+    async fetchCurrentLeaders() {
       try {
-        const response = await getCurrentLeaderIds();
+        const response = await getCurrentLeaders();
+        const map = new Map();
+
         if (response.data.status === "200") {
-          this.currentLeaderIds = response.data.data;
+          response.data.data.forEach(leaderObj => {
+            map.set(leaderObj.user_id, leaderObj);
+          });
+          this.currentLeaders = map;
         } else {
-          this.currentLeaderIds = [];
+          this.currentLeaders = {};
         }
       } catch (error) {
         console.error("Error fetching current leader IDs:", error);
-        this.currentLeaderIds = [];
-      }
-    },
-    async updateUsersForTeam(teamId) {
-      this.loadingTeam = true;
-      try {
-        await removeTeamFromAllUsers(teamId); // Remove all users from team
-        if (this.editUser.assignedUsers.length > 0) {
-          await assignUsersToTeam(teamId, this.editUser.assignedUsers);
-        }
-        this.loadingTeam = false;
-      } catch (error) {
-        console.error('Error updating users for team:', error);
-        this.$message.error('人员更新失败');
-        this.loadingTeam = false;
-      }
-    },
-    async updateFormsForTeam(teamId) {
-      try {
-        await removeAllFormsFromTeam(teamId);
-        if (this.editForm.assignedForms.length > 0) {
-          await assignFormsToTeam(teamId, this.editForm.assignedForms);
-        }
-      } catch (error) {
-        console.error('Error updating forms for team:', error);
-        this.$message.error('表单更新失败');
+        this.currentLeaders = {};
       }
     },
     async fetchTeamData() {
       try {
+        this.loadingTeam = true;
         const response = await getAllTeams(); // API call
         if (response.data.status === '200') {
           this.tableData = response.data.data || []; // Assign data
           this.filteredData = [...this.tableData]; // Initialize filtered data
+          this.teamOptions = this.toTeamOptions(this.tableData)
+          // this.expandedKeys = this.expandAllKeys(this.tableData);
         } else {
           this.tableData = [];
           this.filteredData = [];
+          this.teamOptions = [];
         }
       } catch (error) {
         console.error('Error fetching team data:', error);
         this.tableData = [];
         this.filteredData = [];
+      } finally {
+        this.loadingTeam = false;
       }
     },
     filterTable() {
@@ -752,69 +1107,91 @@ export default {
       this.currentPage = page;
     },
     async validateAndAddTeam() {
-      this.loadingTeam = true;
+      if (this.processing) return;
+      this.processing = true;
+
+      const loader = ElLoading.service({
+        lock: true,
+        text: this.translate('common.processing'),
+        background: 'rgba(255, 255 ,255, 0.35)',
+      });
+
       this.$refs.addTeamForm.validate(async (valid) => {
-        if (valid) {
-          try {
-            const createdBy = this.$store.getters.getUser.id;
-            // Avoid modifying reactive properties repeatedly
-            const startTime = this.toOffsetTime(this.newTeam.start_time);
-            const endTime = this.toOffsetTime(this.newTeam.end_time);
+        if (!valid) {
+          loader.close();
+          this.processing = false;
+          return;
+        }
 
-            const payload = { ...this.newTeam, start_time: startTime, end_time: endTime };
-            console.log("Creating team:", payload)
-            const response = await createTeam(payload, createdBy);
-            const teamId = response.data.data.id;
-            console.log("Team created:", response.data.data)
-            if (this.newUser.selectedUsers.length > 0) {
-              await assignUsersToTeam(teamId, this.newUser.selectedUsers);
-            }
+        try {
+          // Avoid modifying reactive properties repeatedly
+          const startTime = this.toOffsetTime(this.newTeam.start_time);
+          const endTime = this.toOffsetTime(this.newTeam.end_time);
 
-            if (this.newForm.selectedForms.length > 0) {
-              await assignFormsToTeam(teamId, this.newForm.selectedForms);
-            }
+          const payload = { ...this.newTeam,
+            start_time: startTime,
+            end_time: endTime,
+            created_by: this.$store.getters.getUser.id,
+            member_ids: this.newUser.selectedUsers,
+            form_ids: this.newForm.selectedForms,
+          };
 
-            await this.$nextTick(() => this.resetNewTeamForm());
-            // Force reset after successful addition
-            this.addDialogVisible = false;
-            await this.fetchTeamData();
-            this.$message.success(translate('teamManagement.messages.teamAddedSuccess'));
-          } catch (error) {
-            console.error("Error adding team:", error);
-            this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
-          } finally {
-            this.loadingTeam = false;
-          }
-        } else {
-          this.loadingTeam = false;
+          const response = await createTeam(payload);
+
+          this.resetNewTeamForm();
+          // Force reset after successful addition
+          this.addDialogVisible = false;
+          await this.fetchTeamData();
+          await this.fetchCurrentLeaders();
+          this.$message.success(translate('teamManagement.messages.teamAddedSuccess'));
+        } catch (error) {
+          console.error("Error adding team:", error);
+          this.$message.error(translate('teamManagement.messages.teamAddedFailed'));
+        } finally {
+          loader.close();
+          this.processing = false;
         }
       });
     },
     async handleEditConfirm() {
-      this.loadingTeam = true;
-      await this.$nextTick();
-      try {
-        const payload = {...this.editTeam}; // 浅拷贝原始对象
-        delete payload.leader; // 去掉 `leader` 键值对
+      if (this.processing) return;
+      this.processing = true;
 
-        // Format start_time and end_time
-        payload.start_time = this.toOffsetTime(payload.start_time);
-        payload.end_time = this.toOffsetTime(payload.end_time);
+      const loader = ElLoading.service({
+        lock: true,
+        text: this.translate('common.processing'),
+        background: 'rgba(255, 255 ,255, 0.35)',
+      });
 
-        await updateTeam(payload.id, payload, this.$store.getters.getUser.id);
-        // deal with team members update
-        await this.updateUsersForTeam(payload.id);
-        await this.updateFormsForTeam(payload.id);
-        this.editDialogVisible = false;
+      this.$refs.editTeamForm.validate(async (valid) => {
+        if (!valid) {
+          loader.close();
+          this.processing = false;
+          return;
+        }
 
-        await this.fetchTeamData();
-        this.$message.success(translate('teamManagement.messages.teamEditedSuccess'));
-      } catch (error) {
-        console.error("Error updating team:", error);
-        this.$message.error(translate('teamManagement.messages.teamEditedFailed'));
-      } finally {
-        this.loadingTeam = false;
-      }
+        try {
+          const payload = {...this.editTeam};
+          payload.start_time = this.toOffsetTime(payload.start_time);
+          payload.end_time = this.toOffsetTime(payload.end_time);
+          payload.updated_by = this.$store.getters.getUser.id;
+          payload.member_ids = this.editUser.assignedUsers;
+          payload.form_ids = this.editForm.assignedForms;
+
+          await updateTeam(payload.id, payload);
+
+          this.editDialogVisible = false;
+          await this.fetchTeamData();
+          await this.fetchCurrentLeaders();
+          this.$message.success(translate('teamManagement.messages.teamEditedSuccess'));
+        } catch (error) {
+          console.error("Error updating team:", error);
+          this.$message.error(translate('teamManagement.messages.teamEditedFailed'));
+        } finally {
+          loader.close();
+          this.processing = false;
+        }
+      });
     },
     async handleStatusChange(id, status) {
       try {
@@ -852,47 +1229,77 @@ export default {
         this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
       }
     },
-    handleEdit(index, row) {
-      // Close the dialog first
+    async handleEdit(index, row) {
       this.editDialogVisible = false;
-      this.loadingUsers = true;
 
-      // Wait for the next DOM update to reopen the dialog
-      this.$nextTick(async () => {
-        // Map all relevant fields from the selected row to editTeam
-        this.editTeam = {
-          id: row.id || null,
-          name: row.name || "",
-          type: row.type || "",
-          leader_id: row.leader?.id || null, // Map leader_id from row.leader
-          start_time: row.start_time
-              ? new Date(`1970-01-01T${row.start_time}`)
-              : null, // Ensure start_time is handled
-          end_time: row.end_time
-              ? new Date(`1970-01-01T${row.end_time}`)
-              : null, // Ensure end_time is handled
-          description: row.description || "",
-          status: row.status
-        };
-        this.editUser.assignedUsers = (await getUsersForTeam(row.id)).data.data.map(user => user.id);
-        this.editForm.assignedForms = [...(await getFormIdsForTeam(row.id)).data.data];
-        // Fetch user options for the dropdown
-        await this.fetchUserOptions();
+      // Gather all async data in parallel
+      const [userRes, formRes] = await Promise.all([
+        getUsersForTeam(row.id),
+        getFormIdsForTeam(row.id),
+      ]);
 
-        // Reopen the dialog
-        this.editDialogVisible = true;
+      this.editTeam = {
+        id: row.id ?? null,
+        name: row.name ?? "",
+        type: row.type ?? "",
+        leader_id: row.leader?.id ?? null,
+        start_time: row.start_time ? new Date(`1970-01-01T${row.start_time}`) : null,
+        end_time: row.end_time ? new Date(`1970-01-01T${row.end_time}`) : null,
+        description: row.description ?? "",
+        status: row.status,
+        parent_id: row.parent_id,
+      };
 
-        this.loadingUsers = false; // Ensure loading state is cleared
-      });
+      this.isSubTeam = this.editTeam.parent_id != null;
+      this.editUser.assignedUsers = userRes.data.data.map(u => u.id);
+      this.editForm.assignedForms = [...formRes.data.data];
+      this.syncMembersWithLeader(this.editUser.assignedUsers, this.editTeam.leader_id, null);
+      this.previousLeaderSelectionId = this.editTeam.leader_id;
+      this.originalLeaderId = this.editTeam.leader_id;
+      this.editDialogVisible = true;
+
+      await this.$nextTick();
+
+      if (this.$refs.editTeamForm) {
+        this.$refs.editTeamForm.clearValidate();
+      }
     },
-    showAddDialog() {
-      this.fetchUserOptions(); // Fetch the user list
-      this.addDialogVisible = true; // Open the dialog
-      // this.$nextTick(() => {
-      //   this.resetNewTeamForm(); // Reset the form after rendering : has bug but I do not know why
-      // });
+    async showAddDialog(row = null) {
+      const oldParentId = this.newTeam.parent_id;
+      this.addDialogVisible = true;
+      this.originalLeaderId = null;
+
+      if (row.id) {
+        if (this.newTeam.parent_id !== row.id) {
+          this.clearLeaderMemberFormSeleciton('create');
+          this.newTeam.parent_id = row.id;
+        }
+
+        this.isSubTeam = true;
+      } else {
+        this.newTeam.parent_id = null;
+        this.isSubTeam = false;
+      }
+
+      // Rebuild leader/member/form options when parent id changed to same value within same tick.
+      // This case does not get capture by the watcher, however leader options, member options, form options could be
+      // dirty due to access by both create/edit team form
+      if (oldParentId === this.newTeam.parent_id) {
+        await this.onParentChanged(this.newTeam.parent_id, null, 'create');
+      }
+
+      // Ensure form is ready before clearing validate
+      await this.$nextTick();
+
+      if (this.$refs.addTeamForm){
+        this.$refs.addTeamForm.clearValidate();
+      }
     },
     resetNewTeamForm() {
+      if (this.$refs.addTeamForm){
+        this.$refs.addTeamForm.clearValidate();
+      }
+
       this.newTeam = {
         name: "",
         type: "",
@@ -901,26 +1308,307 @@ export default {
         end_time: null, // Ensure end_time is reset to null
         description: "", // Ensure description is reset to empty string
         status: 1,
+        parent_id: null,
       };
 
       // Reset users and forms
       this.newUser.selectedUsers = [];
       this.newForm.selectedForms = [];
     },
+    toTeamOptions(nodes) {
+      return nodes.map(({ id, name, children }) => ({
+        value: id,            // keep as string if your component expects it
+        label: name,
+        ...(children && children.length
+            ? { children: this.toTeamOptions(children) }   // recurse
+            : {})
+      }));
     },
-  watch: {
-    addDialogVisible(newVal) {
-      if (!newVal) {
-        // this.$nextTick(() => {
-        //   this.resetNewTeamForm(); // Reset form after dialog closes
-        // });
+    // Prevent selecting itself or child team of itself as its parent team
+    markSelfAndDescDisabled(nodes, selfId){
+      return nodes.map((n) => {
+        const isSelf = n.value === selfId;
+
+        // Shallow clone + disabled flag
+        const clone = { ...n, disabled: isSelf };
+
+        // Recurse into children
+        if (n.children && n.children.length) {
+          clone.children = this.markSelfAndDescDisabled(n.children, selfId);
+
+          // Also disable all descendants of self
+          if (isSelf) {
+            clone.children = clone.children.map((c) => ({
+              ...c,
+              disabled: true
+            }));
+          }
+        }
+        return clone;
+      });
+    },
+    parentTeamOptions(id) {
+      return this.markSelfAndDescDisabled(this.teamOptions, id);
+    },
+    // Reload leader/member/form options whenever parent_id changes. Works for both add & edit dialog.
+    async onParentChanged(newParentId, oldParentId, type) {
+      let leaderId = null;
+
+      if (type === 'create') {
+        leaderId = this.newTeam.leader_id;
+      } else {
+        leaderId = this.editTeam.leader_id
+      }
+
+      const allowedRoleIdByDepthForMember = { 1: [2, 3], 2: [2]};
+      this.parentFormIds = [];
+
+      // If parent id is null, allow manager/supervisor role to be chosen as leader, and all user to be chosen as member
+      if (!newParentId) {
+        this.depth = 1;
+        this.buildLeaderOptions(this.depth);
+        const allowed = allowedRoleIdByDepthForMember[this.depth] ?? [2,3];
+
+        // Limit root team member options to only users with role lower than leader, keep leader user option that is not editable
+        this.teamMemberOptions = this.userOptions.filter(u => (allowed.includes(u.role_id)
+            || (leaderId != null && u.id === leaderId)));
+        return;
+      }
+
+      // Otherwise if team has a parent, build  leader/form/member options based on it
+      this.depth = 2; // Root depth starts from 1
+      let parentLeaderId = null;
+
+      try {
+        const { data } = await getTeamById(newParentId);
+        if (data.status === '200') {
+          parentLeaderId = data.data.leader?.id ?? null;
+        }
+      } catch (err) {
+        parentLeaderId = null;
+      }
+
+      try {
+        const { data } = await getTeamDepth(newParentId);
+        if (data.status === '200'){
+          this.depth = data.data + 1;
+        }
+      } catch (err) {
+        console.error('getTeamDepth failed', err);
+      }
+
+      this.buildLeaderOptions(this.depth, parentLeaderId);
+
+      // Prevent choosing parent team's leader user as a member
+      try {
+        const { data } = await getUsersForTeam(newParentId);
+        const allowed = allowedRoleIdByDepthForMember[this.depth] ?? [2];
+
+        // Limit non-root teams member options to: not leader in parent teams and has allowed role or equal to leader
+        if (data.status === '200') {
+          this.teamMemberOptions = data.data
+              .filter(u => (u.id !== parentLeaderId && allowed.includes(u.role?.id))
+                  || (leaderId != null && u.id === leaderId))
+              .map(u => ({
+                role_id: u.role?.id,
+                ...u
+              }));
+        }
+      } catch (err) {
+        console.error('Failed to retrieve member ids for team.', err);
+      }
+
+      // Fetch parent team's form for disabling form
+      try {
+        const { data } = await getFormIdsForTeam(newParentId);
+        if (data.status === '200') {
+          this.parentFormIds = data.data;
+        }
+      } catch (err) {
+        console.error('Failed to retrieve form ids for team.', err);
       }
     },
-    dialogTableVisible(newVal) {
-      if (!newVal) {
-        this.searchUserQuery = ""; // Clear the search query when closing the dialog
+    // Helper that fills team leader options according to depth
+    buildLeaderOptions(depth, reservedLeaderId = null) {
+      // depth 1 team allow leader of manager/supervisor user, otherwise allow supervisor role user.
+      const allowedRoleIdByDepthForLeader = { 1: [1, 4], 2: [3]};
+      const allowed = allowedRoleIdByDepthForLeader[depth] ?? [3];
+
+      this.teamLeaderOptions = this.userOptions.filter(u => allowed.includes(u.role_id))
+          .map(u => ({
+            id: u.id,
+            name: u.name,
+            role_id: u.role_id,
+            disabled: u.id === reservedLeaderId,
+            team_name: this.currentLeaders.get(u.id) ? this.currentLeaders.get(u.id).team_name : null,
+            team_id: this.currentLeaders.get(u.id) ? this.currentLeaders.get(u.id).team_id : null,
+          }));
+    },
+    async fetchRoles() {
+      try {
+        const { data } = await fetchRoles();
+        if (data.status === '200') {
+          this.rolesMap = Object.fromEntries(
+              data.data.map(r => [r.id, r])
+          );
+        }
+      } catch (e) {
+        console.error('role list fetch failed', e);
+        this.rolesMap = {};
+      }
+    },
+    /* helper for template */
+    getRole(roleId) { return this.rolesMap[roleId] || {}; },
+    expandAllKeys(list) {
+      return list.flatMap(n => [
+        String(n.id),
+        ...(Array.isArray(n.children) ? this.expandAllKeys(n.children) : [])
+      ])
+    },
+    indentCellStyle({ row /* , column, rowIndex, columnIndex */ }) {
+      const depth = (row.level || 1) - 1;            // root (level 1) → 0 px
+      return { paddingLeft: `${depth * 10}px` };     // same 16 px Element-Plus uses
+    },
+    handleIsSubTeam() {
+      // Clears team form's parent id when isSubTeam is toggled to false
+      if (this.isSubTeam === false) {
+        if (this.newTeam.parent_id != null) {
+          this.newTeam.parent_id = null;
+        }
+
+        if (this.editTeam.parent_id != null) {
+          this.editTeam.parent_id = null;
+        }
+      }
+    },
+    syncMembersWithLeader(membersArr, newLeaderSelectionId, oldLeaderSelectionId){
+      const set = new Set(membersArr);
+      const memberOptions = this.teamMemberOptions;
+
+      if (oldLeaderSelectionId) {
+        set.delete(oldLeaderSelectionId);
+
+        // Remove previous leader from the member options
+        const optionIndex = memberOptions.findIndex(u => u.id === oldLeaderSelectionId);
+
+        if (optionIndex !== -1) {
+          memberOptions.splice(optionIndex, 1);
+        }
+      }
+
+      if (!newLeaderSelectionId) {
+        membersArr.splice(0, membersArr.length, ...set);
+        return;
+      }
+
+      set.add(newLeaderSelectionId);
+      membersArr.splice(0, membersArr.length, ...set);
+
+      // Add leader to the member options
+      if (!memberOptions.some(u => u.id === newLeaderSelectionId)) {
+        const user = this.userOptions.find(u => u.id === newLeaderSelectionId);
+
+        if (user) {
+          memberOptions.push({
+            id: user.id,
+            name: user.name,
+            role_id: user.role?.id,
+          });
+        }
+      }
+    },
+    async handleNewLeaderSelection(teamObj, members, newVal) {
+      // previousLeader id is use for sync member list, this changes as dropdown selection changes
+      // original leader id is used for displaying when a swapping happens
+
+      const oldVal = this.previousLeaderSelectionId ?? null;
+
+      if (newVal === oldVal) { // unchanged
+        return;
+      }
+
+      if (!newVal) {  // leader cleared
+        this.syncMembersWithLeader(members, newVal, oldVal);
+        this.previousLeaderSelectionId = null;
+        return;
+      }
+
+      const hasOriginalLeader   = this.originalLeaderId != null;
+      const allUsers = this.userOptions;
+      const userById = id => allUsers.find(u => u.id === id);
+      const newLeader = userById(newVal) ?? null;
+
+      // !! convert all including false, empty string, 0, undefined, and null to false
+      const isNewValCurrentLead = !!(newLeader && this.currentLeaders.get(newLeader.id));
+      const isNewValSameAsOriginal = (this.originalLeaderId === newVal);
+
+      // Skip confirmation if new selection is not a current leader or same as original leader
+      if (!isNewValCurrentLead || isNewValSameAsOriginal) {
+        this.syncMembersWithLeader(members, newVal, oldVal);
+        this.previousLeaderSelectionId = newVal;
+        return;
+      }
+
+      const oldLeader = userById(this.originalLeaderId);
+      let otherTeamName = 'none';
+
+      // New leader can be null, and it may not be a existing leader
+      if (newLeader && this.currentLeaders.get(newLeader.id)) {
+        otherTeamName = this.currentLeaders.get(newLeader.id).team_name;
+      }
+
+      await this.$confirm(
+          translateWithParams('teamManagement.messages.leaderSwapMessage',
+              {
+                targetLeader: oldLeader?.name ?? translate('common.none'),
+                otherTeamName: otherTeamName,
+                otherTeamLeader: newLeader.name,
+              }),
+          this.translate('teamManagement.leaderSwapWarning'),
+          {
+            confirmButtonText: this.translate('common.confirm'),
+            cancelButtonText:  this.translate('common.cancel'),
+            type: 'warning',
+          }).then(()=> { // user confirmed
+            this.syncMembersWithLeader(members, newVal, oldVal);
+            this.previousLeaderSelectionId = newVal;
+          }).catch(()=> { // user cancelled – revert selection
+            this.syncMembersWithLeader(members, null, oldVal);
+            teamObj.leader_id = this.originalLeaderId;
+          });
+    },
+    clearTeamDialogSearch() {
+      this.searchUserQuery = "";
+    },
+    clearLeaderMemberFormSeleciton(type) {
+      if (type === 'edit') {
+        this.editTeam.leader_id = null;
+        this.editUser.assignedUsers = [];
+        this.editForm.assignedForms = [];
+      } else {
+        this.newTeam.leader_id = null;
+        this.newUser.selectedUsers = [];
+        this.newForm.selectedForms = [];
       }
     }
+  },
+  watch: {
+    'newTeam.parent_id': {
+      immediate: true,
+      async handler(newId, oldId) {
+        if (newId !== oldId) {
+          await this.onParentChanged(newId, oldId, 'create');
+        }
+      }
+    },
+    'editTeam.parent_id': {
+      immediate: true,
+      async handler(newId, oldId) {
+        if (newId !== oldId) {
+          await this.onParentChanged(newId, oldId, 'edit');
+        }
+      }
+    },
   }
 };
 </script>

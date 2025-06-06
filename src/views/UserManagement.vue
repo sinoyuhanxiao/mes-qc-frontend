@@ -37,7 +37,14 @@
 
     <!-- Table -->
     <div class="tableContainer" style="overflow-x: auto; max-width: 100%;">
-      <el-table v-loading="loading" :data="paginatedUsers" :height="tableHeight" style="width: 100%" @sort-change="handleSortChange">
+      <el-table
+          v-loading="loading"
+          :data="paginatedUsers"
+          :height="tableHeight"
+          style="width: 100%"
+          @sort-change="handleSortChange"
+          :empty-text="translate('common.noDataAvailable')"
+      >
         <el-table-column :label="translate('userManagement.table.id')" width="100" prop="id" sortable>
           <template #default="scope">
             <span>{{ scope.row.id }}</span>
@@ -52,7 +59,7 @@
                 <p>{{ translate('userManagement.table.wecomId') }}: {{ scope.row.wecom_id }}</p>
               </template>
               <template #reference>
-                <el-tag size="medium">{{ scope.row.name }}</el-tag>
+                <el-tag size="default">{{ scope.row.name }}</el-tag>
               </template>
             </el-popover>
           </template>
@@ -99,7 +106,7 @@
           <template #default="scope">
             <el-tag
                 :type="scope.row.role.el_tag_type || 'info'"
-                size="medium"
+                size="default"
                 style="font-weight:bold"
             >
               {{ scope.row.role.name }}
@@ -199,7 +206,7 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.table.role')" prop="role">
-            <el-select v-model="newUser.role" placeholder="Select a Role">
+            <el-select v-model="newUser.role" :placeholder="translate('userManagement.role.selectRolePlaceHolder')">
               <el-option
                   v-for="role in rolesOptions"
                   :key="role.id"
@@ -224,31 +231,33 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.addDialog.assignedTeams')" prop="assignedTeams">
-            <el-select
+            <el-tree-select
                 v-model="newUser.assignedTeams"
+                :data="teamsOptions"
+                show-checkbox
+                check-on-click-node
+                check-strictly
                 multiple
-                filterable
                 :placeholder="translate('userManagement.addDialog.assignedTeamPlaceHolder')"
-                style="width: 100%;"
             >
-              <el-option
-                  v-for="team in teamsOptions"
-                  :key="team.id"
-                  :label="team.label"
-                  :value="team.id"
-              >
-                <span style="float: left">{{ team.label }}</span>
+              <template #default="{ data }">
+                <span style="float:left">{{ data.label }}</span>
                 <span
                     style="
-                        float: right;
-                        color: var(--el-text-color-secondary);
-                        font-size: 13px;
-                     "
+                    float:right;
+                    color: var(--el-text-color-secondary);
+                    font-size: 13px;"
                 >
-                    {{ translate('userManagement.table.leader') + ": " + team.value }}
+                  {{ translate('userManagement.table.leader') }}: {{ data.leader?.name ?? '-' }}
                 </span>
-              </el-option>
-            </el-select>
+              </template>
+
+              <template v-slot:footer>
+                <el-text>
+                  {{ assignTeamHintText(newUser.role) }}
+                </el-text>
+              </template>
+            </el-tree-select>
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.addDialog.status')" prop="status">
@@ -285,7 +294,7 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.role')" prop="role">
-            <el-select v-model="editUser.role" placeholder="Select a Role">
+            <el-select v-model="editUser.role" :placeholder="translate('userManagement.role.selectRolePlaceHolder')">
               <el-option
                   v-for="role in rolesOptions"
                   :key="role.id"
@@ -314,31 +323,33 @@
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.assignedTeams')" prop="assignedTeams">
-            <el-select
+            <el-tree-select
                 v-model="editUser.assignedTeams"
+                :data="teamsOptions"
+                show-checkbox
+                check-on-click-node
+                check-strictly
                 multiple
-                filterable
                 :placeholder="translate('userManagement.editDialog.assignedTeams')"
-                style="width: 100%;"
             >
-              <el-option
-                  v-for="team in teamsOptions"
-                  :key="team.value"
-                  :label="team.label"
-                  :value="team.id"
-              >
-                <span style="float: left">{{ team.label }}</span>
+              <template #default="{ data }">
+                <span style="float:left">{{ data.label }}</span>
                 <span
                     style="
-                  float: right;
-                  color: var(--el-text-color-secondary);
-                  font-size: 13px;
-                "
+                    float:right;
+                    color: var(--el-text-color-secondary);
+                    font-size: 13px;"
                 >
-              {{ translate('userManagement.table.leader') + ": " + team.value }}
-            </span>
-              </el-option>
-            </el-select>
+                  {{ translate('userManagement.table.leader') }}: {{ data.leader?.name ?? '-' }}
+                </span>
+              </template>
+
+              <template v-slot:footer>
+                <el-text>
+                  {{ assignTeamHintText(editUser.role) }}
+                </el-text>
+              </template>
+            </el-tree-select>
           </el-form-item>
 
           <el-form-item :label="translate('userManagement.editDialog.status')" prop="status">
@@ -361,7 +372,6 @@
           <el-form-item v-if="changePassword" :label="translate('userManagement.editDialog.confirmPassword')" prop="confirmPassword">
             <el-input v-model="confirmPassword" type="password" show-password />
           </el-form-item>
-
         </el-form>
       </div>
 
@@ -472,7 +482,7 @@ export default {
           },
           {
             pattern: /^\+?[1-9]\d{1,14}$/,
-            message: translate('userManagement.validation.phoneNumberInvalid'),
+            message: translate('userManagement.validation.phoneNumberFormat'),
             trigger: 'blur'
           }
         ]
@@ -517,15 +527,112 @@ export default {
       },
       deep: true, // Ensures nested changes are tracked
     },
-    // Watch for changes in editUser.role and log the changes
-    "editUser.role": {
-      handler(newValue, oldValue) {
-        console.log("Role changed:", {
-          newValue,
-          oldValue,
-        });
+    "newUser.role": {
+      handler(newRoleId, oldRoleId) {
+        /**
+         Recursively walk the team tree and set the disabled flag according to the selected role.
+         **/
+        const setDisabledRecursive = (nodes) => {
+          nodes.forEach((node) => {
+            let disabled;
+
+            switch (newRoleId) {
+              case 1:
+                disabled = true; // everything disabled
+                break;
+              case 2:
+                disabled = false; // everything enabled
+                break;
+              case 3:
+                disabled = node.level !== 1; // only root-level teams enabled
+                break;
+              case 4:
+                disabled = true;  // everything disabled
+                break;
+            }
+
+            node.disabled = disabled;
+
+            if (Array.isArray(node.children) && node.children.length) {
+              setDisabledRecursive(node.children);
+            }
+          })
+        };
+
+        /**
+         Check if a selected team is valid by finding matching team object and get its disabled value
+         */
+        const isAllowed = (teamId, nodes) => {
+          nodes.forEach((node) => {
+            if (node.id === teamId) {
+              return !node.disabled;
+            }
+
+            return !!(node.children?.length && isAllowed(teamId, node.children));
+          })
+        };
+
+        /**
+         * Team has restriction on what user can be assigned as member depending on its depth, depth is calculated by
+         hierarchy distance to root level. Traverse through teams tree structure data, adjust each team's disabled
+         field to true/false depending on the new role id.
+
+         Role id of:
+         1, 2, all teams have disabled as true
+         3, root level teams have disabled as false, all other teams have disabled as true
+         4, all teams have disabled as false
+         **/
+
+        // Update teams option disabled field based on new role id
+        setDisabledRecursive(this.teamsOptions);
+
+        // Clean up invalid team selection
+        this.newUser.assignedTeams = this.newUser.assignedTeams.filter(id => {isAllowed(id, this.teamsOptions)})
       },
-      immediate: true // Trigger the watch immediately upon initialization
+      immediate: true
+    },
+    "editUser.role": {
+      handler(newRoleId, oldRoleId) {
+        const setDisabledRecursive = (nodes) => {
+          nodes.forEach((node) => {
+            let disabled;
+
+            switch (newRoleId) {
+              case 1:
+                disabled = true; // everything disabled
+                break;
+              case 2:
+                disabled = false; // everything enabled
+                break;
+              case 3:
+                disabled = node.level !== 1; // only root-level teams enabled
+                break;
+              case 4:
+                disabled = true;  // everything disabled
+                break;
+            }
+
+            node.disabled = disabled;
+
+            if (Array.isArray(node.children) && node.children.length) {
+              setDisabledRecursive(node.children);
+            }
+          })
+        };
+        const isAllowed = (teamId, nodes) => {
+          nodes.forEach((node) => {
+            if (node.id === teamId) {
+              return !node.disabled;
+            }
+
+            return !!(node.children?.length && isAllowed(teamId, node.children));
+          })
+        };
+
+        setDisabledRecursive(this.teamsOptions);
+        this.editUser.assignedTeams = this.editUser.assignedTeams.filter(id => {isAllowed(id, this.teamsOptions)})
+      },
+      immediate: true
     }
   },
   created() {
@@ -610,20 +717,39 @@ export default {
         this.loading = false;
       }
     },
-    async fetchTeamOptions() {
+    async fetchTeamOptions () {
       try {
-        const response = await getAllTeams();
-        if (response.data.status === "200") {
-          this.teamsOptions = response.data.data.map(team => ({
-            value: team.leader?.name || "-", // Team Name
-            label: team.name, // Team Leader Name
-            id: team.id
-          }));
-        } else {
+        const { data } = await getAllTeams();
+
+        if (data.status !== '200') {
           this.teamsOptions = [];
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching teams:", error);
+
+        /** Recursively copy node → add value/label → skip nodes with status = 0 */
+        const toOptionNode = (team) => {
+          // Allow status 0 teams for now
+          // if (team.status === 0) return null;
+
+          const children =
+              Array.isArray(team.children)
+                  ? team.children.map(toOptionNode).filter(Boolean) // remove nulls
+                  : [];
+
+          return {
+            ...team,
+            value: team.id,
+            label: team.name,
+            disabled: false,
+            children,
+          };
+        };
+
+        this.teamsOptions = data.data
+            .map(toOptionNode)
+            .filter(Boolean);    // strip any nulls that bubbled up
+      } catch (err) {
+        console.error('Error fetching teams:', err);
         this.teamsOptions = [];
       }
     },
@@ -646,7 +772,7 @@ export default {
                 // Proceed with deactivation
                 const payload = { status: newStatus };
                 await updateUser(userId, payload);
-                this.$message.success(translate('userManagement.validation.selfDeactivationSuccess'));
+                this.$message.success(translate('userManagement.messages.selfDeactivationSuccess'));
                 // Handle logout or session cleanup here
               })
               .catch(() => {
@@ -864,6 +990,10 @@ export default {
         wecomId: '',
         username: '',
         password: '',
+        email: '',
+        phone_number: '',
+        status: 1,
+        assignedTeams: []
       };
     },
     filterTable() {
@@ -889,6 +1019,19 @@ export default {
     },
     handleCurrentChange(page) {
       this.currentPage = page;
+    },
+    assignTeamHintText(roleId) {
+      switch (roleId) {
+        case 4:
+          return translate('userManagement.managerAssignTeamHint');
+        case 1:
+          return translate('userManagement.supervisorAssignTeamHint');
+        case 3:
+          return translate('userManagement.teamLeadAssignTeamHint');
+
+        default:
+          return '';
+      }
     },
   },
 };

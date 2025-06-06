@@ -7,7 +7,7 @@
         <h2>{{ translate('shiftManagement.title') }}</h2>
         <el-input
             v-model="searchQuery"
-            :placeholder="translate('shiftManagement.searchPlaceholder')"
+            :placeholder="translate('common.searchPlaceholder')"
             clearable
             style="width: 300px; margin-left: 20px;"
         >
@@ -32,13 +32,14 @@
           </el-button>
         </el-tooltip>
         <el-button type="primary" @click="openDialog()">
-          {{ translate('shiftManagement.addShift') }}
+          {{ translate('common.addButton') }}
         </el-button>
       </div>
     </div>
 
     <!-- Shift List -->
     <ShiftList
+        :loading="loading"
         :shifts="shifts"
         @edit-shift="openDialog"
         @delete-shift="confirmDelete"
@@ -53,6 +54,7 @@
         :close-on-click-modal="false"
     >
       <ShiftForm
+          ref="shiftFormComp"
           :shift="shiftForm"
           :is-edit-mode="isEditMode"
           @submit="submitForm"
@@ -65,8 +67,8 @@
 <script>
 import {createShift, deleteShift, getAllShifts, updateShift} from "@/services/shiftService";
 import {fetchUsers} from "@/services/userService";
-import ShiftList from "@/components/shift/ShiftList.vue";
-import ShiftForm from "@/components/shift/ShiftForm.vue";
+import ShiftList from "@/components/shift/shiftList.vue";
+import ShiftForm from "@/components/shift/shiftForm.vue";
 import {translate} from "@/utils/i18n";
 import {RefreshRight, Search} from "@element-plus/icons-vue";
 import dayjs from "dayjs";
@@ -75,6 +77,7 @@ export default {
   components: { RefreshRight, Search, ShiftList, ShiftForm },
   data() {
     return {
+      loading: false,
       shifts: [],
       searchQuery: "",
       dialogVisible: false,
@@ -108,6 +111,12 @@ export default {
       this.shiftForm.start_time = this.shiftForm.start_time ? new Date(`1970-01-01T${this.shiftForm.start_time}`) : null;
       this.shiftForm.end_time = this.shiftForm.end_time ? new Date(`1970-01-01T${this.shiftForm.end_time}`) : null;
       this.dialogVisible = true;
+
+      // wait for the dialog & child form to render, then clear validation
+      this.$nextTick(() => {
+        const formEl = this.$refs.shiftFormComp?.$refs.shiftFormRef;
+        formEl?.clearValidate();
+      });
     },
     toOffsetTime(rawTime) {
       if (!rawTime) return null;
@@ -142,11 +151,14 @@ export default {
     },
     async loadShifts() {
       try {
+        this.loading = true;
         const response = await getAllShifts();
         this.shifts = response.data?.data || [];
       } catch (error) {
         console.error("Failed to load shifts:", error);
         this.shifts = [];
+      } finally {
+        this.loading = false;
       }
     },
     async loadUserMap() {
@@ -166,9 +178,6 @@ export default {
         const offsetTimeEndTime = this.toOffsetTime(updatedShift.end_time);
         updatedShift.start_time = offsetTimeStartTime;
         updatedShift.end_time = offsetTimeEndTime;
-
-        // TODO: delete logging after testing
-        console.log(updatedShift);
 
         if (this.isEditMode) {
           await updateShift(updatedShift.id, updatedShift);
@@ -202,11 +211,6 @@ export default {
     async handleRefreshButton() {
       this.searchQuery = "";
       await this.loadShifts();
-      this.$notify({
-        title: translate("orderManagement.messages.messageTitle"),
-        message: translate("orderManagement.messages.listRefreshed"),
-        type: "success",
-      });
     },
   },
   mounted() {

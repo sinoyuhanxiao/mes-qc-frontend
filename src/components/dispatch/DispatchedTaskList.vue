@@ -19,9 +19,16 @@
         style="width: 100%"
         :default-sort="{ prop: 'dispatch_time', order: 'descending' }"
         @sort-change="handleSortChange"
+        :empty-text="translate('common.noDataAvailable')"
     >
       <!-- 查看提交记录 -->
-      <el-table-column :label="translate('orderManagement.dispatchedTaskTable.actions')" width="220" :fixed="'right'">
+      <el-table-column
+          :label="translate('orderManagement.dispatchedTaskTable.actions')"
+          width="220"
+          :fixed="'right'"
+          align="right"
+          header-align="right"
+      >
         <template #default="scope">
           <el-button
               type="primary"

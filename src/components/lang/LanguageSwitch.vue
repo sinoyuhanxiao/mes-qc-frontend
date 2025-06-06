@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { changeLocale } from '@/utils/i18n';
+import { ArrowDown } from "@element-plus/icons-vue";
 
 // Initialize current language from localStorage or default to English
 const currentLanguage = ref(localStorage.getItem('app-language') || 'en-US');
@@ -26,9 +27,6 @@ const handleLanguageChanged = (lang: string) => {
   // Update the current language
   currentLanguage.value = lang;
   currentLanguageName.value = lang === 'en-US' ? 'English' : '中文';
-
-  // Persist language selection in localStorage
-  // localStorage.setItem('app-language', lang);
 
   // Change the i18n locale reactively
   changeLocale(lang);

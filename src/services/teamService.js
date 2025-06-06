@@ -2,6 +2,9 @@ import api from "./api";
 
 const BASE_URL = "/teams";
 
+const buildArrayParams = (key, arr = []) =>
+    arr?.length ? { [key]: arr } : {};
+
 /**
  * Fetch all teams.
  * @returns {Promise} API response with the list of all teams.
@@ -20,24 +23,22 @@ export const getTeamById = (id) => {
 };
 
 /**
- * Create a new team.
+ * Create team + initial members / forms.
  * @param {Object} teamData - The data for creating a new team.
- * @param {number} createdBy - The ID of the user creating the team.
  * @returns {Promise} API response with the created team details.
  */
-export const createTeam = (teamData, createdBy) => {
-    return api.post(`${BASE_URL}?createdBy=${createdBy}`, teamData);
+export const createTeam = (teamData) => {
+    return api.post(BASE_URL, teamData);
 };
 
 /**
- * Update an existing team.
- * @param {number} id - The ID of the team to update.
- * @param {Object} teamData - The updated data for the team.
- * @param updatedBy
+ * Full update of team + re-sync of members / forms.
+ * @param {number}   id
+ * @param {Object}   teamData   payload for TeamRequest (already contains updatedBy)
  * @returns {Promise} API response with the updated team details.
  */
-export const updateTeam = (id, teamData, updatedBy) => {
-    return api.put(`${BASE_URL}/${id}?updatedBy=${updatedBy}`, teamData);
+export const updateTeam = (id, teamData) => {
+    return api.put(`${BASE_URL}/${id}`, teamData);
 };
 
 /**
@@ -86,6 +87,15 @@ export const getTeamByTeamLeadId = (id) => {
  *
  * @returns {Promise} API response containing an array of user IDs who are team leaders.
  */
-export const getCurrentLeaderIds = () => {
+export const getCurrentLeaders = () => {
     return api.get(`${BASE_URL}/leaders`);
+};
+
+/**
+ * Get the hierarchical depth of a team (root = 1).
+ * @param {number} id - The ID of the team.
+ * @returns {Promise} API response with the depth as an integer.
+ */
+export const getTeamDepth = (id) => {
+    return api.get(`${BASE_URL}/depth/${id}`);
 };

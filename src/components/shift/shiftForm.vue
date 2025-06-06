@@ -23,48 +23,60 @@
       />
     </el-form-item>
 
-    <!-- Start Time (Required) -->
-    <el-form-item
-        :label="translate('shiftManagement.startTime')"
-        prop="start_time"
-    >
-      <el-time-picker
-          v-model="shift.start_time"
-          :placeholder="translate('shiftManagement.startTimePlaceholder')"
-      />
-    </el-form-item>
+    <el-row>
+      <el-col :span="7">
 
-    <!-- End Time (Required) -->
-    <el-form-item
-        :label="translate('shiftManagement.endTime')"
-        prop="end_time"
-    >
-      <el-time-picker
-          v-model="shift.end_time"
-          :placeholder="translate('shiftManagement.endTimePlaceholder')"
-      />
-    </el-form-item>
+        <!-- Start Time (Required) -->
+        <el-form-item
+            :label="translate('shiftManagement.startTime')"
+            prop="start_time"
+        >
+          <el-time-picker
+              v-model="shift.start_time"
+              :placeholder="translate('shiftManagement.startTimePlaceholder')"
+          />
+        </el-form-item>
+      </el-col>
 
-    <!-- Grace Minute -->
-    <el-form-item
-        :label="translate('shiftManagement.graceMinute')"
-    >
-      <el-input-number
-          v-model="shift.grace_minute"
-          :min="0"
-          :max="120"
-          :placeholder="translate('shiftManagement.graceMinute')"
-          style="margin-right: 10px;"
-      />
-      <span>{{translate('MyTaskTable.time.minute')}}</span>
-    </el-form-item>
+      <el-col :span="7">
+
+        <!-- End Time (Required) -->
+        <el-form-item
+            :label="translate('shiftManagement.endTime')"
+            prop="end_time"
+        >
+          <el-time-picker
+              v-model="shift.end_time"
+              :placeholder="translate('shiftManagement.endTimePlaceholder')"
+          />
+        </el-form-item>
+      </el-col>
+
+      <el-col :span="10">
+        <!-- Grace Minute -->
+        <el-form-item
+            :label="translate('shiftManagement.graceMinute')"
+        >
+          <el-input-number
+              v-model="shift.grace_minute"
+              :min="0"
+              :max="120"
+              :placeholder="translate('shiftManagement.graceMinute')"
+              style="margin-right: 10px;"
+          />
+          <span>{{translate('MyTaskTable.time.minute')}}</span>
+        </el-form-item>
+      </el-col>
+    </el-row>
+
+
 
     <!-- Buttons -->
-    <el-form-item>
-      <el-button type="primary" @click="validateAndSubmit">{{ translate('orderManagement.confirm') }}</el-button>
+    <div style="display: flex; justify-content: end;">
       <el-button @click="$emit('cancel')">{{ translate('orderManagement.cancel') }}</el-button>
-    </el-form-item>
-  </el-form>
+      <el-button type="primary" @click="validateAndSubmit">{{ translate('orderManagement.confirm') }}</el-button>
+    </div>
+      </el-form>
 </template>
 
 <script>

@@ -45,6 +45,7 @@
 
     <!-- Instrument List -->
     <InstrumentList
+        :loading="loading"
         :instruments="instruments"
         @edit-instrument="openDialog"
         @delete-instrument="confirmDelete"
@@ -81,6 +82,7 @@ export default {
   data() {
     return {
       instruments: [],
+      loading: false,
       searchQuery: "",
       dialogVisible: false,
       isEditMode: false,
@@ -99,6 +101,7 @@ export default {
     translate,
     async loadInstruments() {
       try {
+        this.loading = true;
         const response = await getAllInstruments();
         if (response.data && response.data.data) {
           this.instruments = response.data.data;  // Extract only the `data` array
@@ -108,6 +111,8 @@ export default {
       } catch (error) {
         console.error("Failed to load instruments:", error);
         this.instruments = []; // Fallback to an empty array in case of error
+      } finally {
+        this.loading = false;
       }
     },
     async loadUserMap() {
@@ -167,11 +172,6 @@ export default {
     async handleRefreshButton() {
       this.searchQuery = "";
       await this.loadInstruments()
-      this.$notify({
-        title: translate('orderManagement.messages.messageTitle'),
-        message: translate('orderManagement.messages.listRefreshed'),
-        type: "success",
-      });
     },
 
   },
