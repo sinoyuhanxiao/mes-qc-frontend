@@ -1146,7 +1146,7 @@ export default {
           this.$message.success(translate('teamManagement.messages.teamAddedSuccess'));
         } catch (error) {
           console.error("Error adding team:", error);
-          this.$message.error(translate('teamManagement.messages.teamDeletionFailed'));
+          this.$message.error(translate('teamManagement.messages.teamAddedFailed'));
         } finally {
           loader.close();
           this.processing = false;

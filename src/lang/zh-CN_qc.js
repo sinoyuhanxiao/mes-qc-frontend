@@ -299,6 +299,7 @@ export default {
         },
         messages: {
             teamAddedSuccess: '班组创建成功',
+            teamAddedFailed: '班组创建失败',
             teamUpdatedSuccess: '班组更新成功',
             teamDeletedSuccess: '班组删除成功',
             teamDeletionFailed: '班组删除失败',

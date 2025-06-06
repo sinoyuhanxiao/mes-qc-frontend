@@ -299,6 +299,7 @@ export default {
         },
         messages: {
             teamAddedSuccess: 'Team added successfully',
+            teamAddedFailed: 'Failed to add team',
             teamUpdatedSuccess: 'Team updated successfully',
             teamDeletedSuccess: 'Team deleted successfully',
             teamDeletionFailed: 'Failed to delete team',

@@ -54,6 +54,7 @@
         :close-on-click-modal="false"
     >
       <ShiftForm
+          ref="shiftFormComp"
           :shift="shiftForm"
           :is-edit-mode="isEditMode"
           @submit="submitForm"
@@ -110,6 +111,12 @@ export default {
       this.shiftForm.start_time = this.shiftForm.start_time ? new Date(`1970-01-01T${this.shiftForm.start_time}`) : null;
       this.shiftForm.end_time = this.shiftForm.end_time ? new Date(`1970-01-01T${this.shiftForm.end_time}`) : null;
       this.dialogVisible = true;
+
+      // wait for the dialog & child form to render, then clear validation
+      this.$nextTick(() => {
+        const formEl = this.$refs.shiftFormComp?.$refs.shiftFormRef;
+        formEl?.clearValidate();
+      });
     },
     toOffsetTime(rawTime) {
       if (!rawTime) return null;
