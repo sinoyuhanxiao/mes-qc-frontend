@@ -259,7 +259,7 @@
               :type="scope.row.isEditing ? 'success' : 'plain'"
               @click="toggleEdit(scope.row)"
           >
-            {{ scope.row.isEditing ? '保存' : '修改' }}
+            {{ scope.row.isEditing ? '保存' : '编辑' }}
           </el-button>
           <el-button size="small" type="danger" @click="deleteRecord(scope.row)">删除</el-button>
         </template>
@@ -321,6 +321,15 @@
     </template>
   </el-dialog>
 
+  <QcRecordDetailDialogRefactored
+      :visible="dialogs.showDetailDialog"
+      :submission-id="selectedDetail.submissionId"
+      :qc-form-template-id="selectedDetail.formTemplateId"
+      :created-at="selectedDetail.createdAt"
+      :danger-label="selectedDetail.inspectionItemLabel"
+      @close="dialogs.showDetailDialog = false"
+  />
+
 </template>
 
 <script>
@@ -340,12 +349,13 @@ import {getAlActiveSuggestedProducts} from "@/services/production/suggestedProdu
 import {getAllActiveSuggestedBatches} from "@/services/production/suggestedBatchService";
 import { getRiskLevels, getAlertStatuses } from "@/services/alarmRecordService";
 import {debounce} from "lodash";
+import QcRecordDetailDialogRefactored from "@/components/common/qc/QcRecordDetailDialogRefactored.vue";
 
 use([PieChart, CanvasRenderer]);
 
 export default {
   name: 'AlertRecordsTable',
-  components: {ArrowUpBold, ArrowDownBold, Setting, QuestionFilled, Search, VChart },
+  components: {QcRecordDetailDialogRefactored, ArrowUpBold, ArrowDownBold, Setting, QuestionFilled, Search, VChart },
   data() {
     return {
       // 表格数据
@@ -385,7 +395,8 @@ export default {
       // 弹窗控制
       dialogs: {
         showRpnDialog: false,
-        showSettingsDialog: false
+        showSettingsDialog: false,
+        showDetailDialog: false
       },
 
       // 自动刷新设置
@@ -411,6 +422,14 @@ export default {
         riskLevelCounts: {},
         productCounts: {},
         inspectionItemCounts: {}
+      },
+
+      // for view detail dialogs:
+      selectedDetail: {
+        submissionId: '',
+        formTemplateId: null,
+        createdAt: '',
+        inspectionItemLabel: ''
       }
     };
   },
@@ -760,7 +779,11 @@ export default {
       this.fetchPaginatedAlerts(newPage - 1, this.pagination.pageSize);
     },
     viewDetails(row) {
-      this.$message.info(`此功能正在开发中`);
+      this.selectedDetail.submissionId = row.submission_id;
+      this.selectedDetail.formTemplateId = row.qc_form_template?.id;
+      this.selectedDetail.createdAt = row.created_at;
+      this.selectedDetail.inspectionItemLabel = row.inspection_item?.label || '';
+      this.dialogs.showDetailDialog = true;
     },
     applyAlarmSetting() {
       this.autoRefresh.enabledTemp = this.autoRefresh.enabled;

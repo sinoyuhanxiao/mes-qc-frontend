@@ -50,6 +50,20 @@ export const getDocumentsForUser = (qcFormTemplateId, createdBy) => {
 };
 
 /**
+ * Get raw MongoDB document (unformatted) by submissionId and createdAt.
+ * @param {String} submissionId - The MongoDB document's ObjectId.
+ * @param {Long} qcFormTemplateId - The QC Form Template ID.
+ * @param {String} createdAt - The timestamp when the document was created (e.g., "2025-05-01 16:50:52.427519100").
+ * @returns {Promise} API response containing the raw document.
+ */
+export const getRawMongoDocument = (submissionId, qcFormTemplateId, createdAt) => {
+    return api.get(`${BASE_URL}/raw_document`, {
+        params: { submissionId, qcFormTemplateId, createdAt },
+    });
+};
+
+
+/**
  * Export all documents by qcFormTemplateId and createdBy to Excel.
  * @param {Long} qcFormTemplateId - The QC Form Template ID.
  * @param {Integer} createdBy - The user who created the documents.

@@ -34,7 +34,7 @@ function loadUser() {
         }
     }
 
-    return { id: 0, username: '默认用户', role: 0, name: '默认名称'};
+    return { id: 0, username: '', role: { id: 0, name: '' }, name: '' };
 }
 
 export default createStore({

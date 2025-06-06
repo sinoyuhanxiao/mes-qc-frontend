@@ -129,6 +129,18 @@ export const fetchQcRecords = (formTemplateId, startDateTime, endDateTime, page 
     });
 };
 
+/**
+ * Fetch all version records for a specific version group.
+ * @param {Number} formTemplateId - Form template ID.
+ * @param {String} versionGroupId - UUID string of the version group.
+ * @returns {Promise} API response containing all versioned records, sorted latest first.
+ */
+export const fetchQcVersionsByGroupId = (formTemplateId, versionGroupId) => {
+    return api.get(`${BASE_URL}/qc-records/versions`, {
+        params: { formTemplateId, versionGroupId },
+        headers: { 'Content-Type': 'application/json' }
+    });
+};
 
 /**
  * Generate and download QC report as a PDF.

@@ -20,17 +20,53 @@
           设置警戒值
         </el-button>
 
-        <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">
-          {{ translate('FormDisplay.quickDispatch') }}
+        <el-button type="primary" @click="openApprovalDialog">
+          编辑审批流
         </el-button>
+
+
+        <!--        <el-button type="primary" v-if="switchDisplayed" @click="handleQuickDispatch">-->
+<!--          {{ translate('FormDisplay.quickDispatch') }}-->
+<!--        </el-button>-->
       </template>
 
 <!--      <el-button type="success" v-if="props.accessByTeam" @click="openQcRecordsDialog" style="margin-left: 10px">-->
 <!--        {{ translate('FormDataSummary.viewRecords') }}-->
 <!--      </el-button>-->
 
-        <el-button type="primary" v-if="props.accessByTeam" @click="qcRecordsDialogVisible = true" style="margin-left: 10px">
+        <el-button
+            type="info"
+            @click="saveDraft"
+            v-show="props.accessByTeam"
+        >
+          保存草稿
+        </el-button>
+
+<!--        <el-button-->
+<!--            v-if="props.accessByTeam !== null"-->
+<!--            type="success"-->
+<!--            @click="loadDraft"-->
+<!--        >-->
+<!--          加载草稿-->
+<!--        </el-button>-->
+
+        <el-button
+            type="primary"
+            v-if="props.accessByTeam"
+            @click="handleViewRecords"
+            style="margin-left: 10px"
+        >
           {{ translate('FormDataSummary.viewRecords') }}
+        </el-button>
+
+        <el-button
+            type="success"
+            v-if="props.accessByTeam"
+            @update:modelValue="emit('update:visible', $event)"
+            @click="exportDialogVisible = true"
+            style="margin-left: 10px"
+        >
+          导出本班汇总
         </el-button>
 
 
@@ -204,6 +240,26 @@
                     />
                   </el-select>
                 </el-form-item>
+
+                <!-- 新增：所属班组 -->
+                <el-form-item label="所属班组">
+                  <el-select
+                      v-model="selectedTeam"
+                      filterable
+                      clearable
+                      placeholder="选择班组"
+                      style="width: 100%;"
+                      :disabled="!(enable_form || enable_common_fields)"
+                  >
+                    <el-option
+                        v-for="team in teamOptions"
+                        :key="team.id"
+                        :label="team.name"
+                        :value="team.name"
+                    />
+                  </el-select>
+                </el-form-item>
+
           </el-form>
         </div>
 
@@ -415,6 +471,27 @@
       :dateRange="[getStartOfMonth(), getEndOfMonth()]"
   />
 
+  <PasswordPrompt
+      v-model="showPasswordDialog"
+      :correct-password="'Sv@18388'"
+      @verified="openQcRecords"
+  />
+
+  <EditApprovalFlowDialog
+      v-if="selectedApprovalType"
+      :visible="showApprovalDialog"
+      :template-id="props.currentForm?.qcFormTemplateId"
+      :initial-approval-type="selectedApprovalType"
+      @update-success="handleApprovalUpdated"
+      @update:visible="val => showApprovalDialog = val"
+  />
+
+  <ExportDocumentDialog
+      v-if="selectedTeamId !== null"
+      v-model:visible="exportDialogVisible"
+      :default-team-id=selectedTeamId
+      :default-date-range="[new Date(), new Date()]"
+  />
 </template>
 
 <script setup>
@@ -432,11 +509,12 @@ import { fetchFormTemplate } from '@/services/qcFormTemplateService.js';
 import { insertFormData } from '@/services/qcFormDataService.js';
 import QuickDispatch from "@/components/dispatch/QuickDispatch.vue";
 import {insertTaskSubmissionLog} from "@/services/qcTaskSubmissionLogsService";
+import PasswordPrompt from '@/components/common/PasswordPrompt.vue';
 import dayjs from 'dayjs';
 import dispatchedTaskList from "@/components/dispatch/DispatchedTaskList.vue";
-import QcRecordsTable from "@/components/tables/QcRecordsTable.vue";
 import SignaturePadComponent from "@/components/form-manager/SignaturePad.vue";
 import { windowMaskVisible } from '@/globals/mask'
+import { updateApprovalType } from '@/services/qcFormTemplateService.js';
 const showEditProductDialog = ref(false);
 const showEditBatchDialog = ref(false);
 const editProduct = reactive({ id: null, name: '', code: '', description: '' });
@@ -444,10 +522,14 @@ const editBatch = reactive({ id: null, code: '' });
 import { fetchUsers } from '@/services/userService'
 import { getAllShifts } from '@/services/shiftService'
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
+import { getAllTeams, getTeamByTeamLeadId } from '@/services/teamService';
+const showApprovalDialog = ref(false)
 
+import ExportDocumentDialog from '@/components/export/ExportDocumentDialog.vue'
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
-import { fetchQcRecords } from "@/services/qcReportingService"; // make sure this is imported
+import { saveFormDraftForUser, loadFormDraftForUser, clearDraftForUser } from '@/utils/formDraftStorage';
+
 // 通用submit功能导入
 import {
   getAlActiveSuggestedProducts,
@@ -469,6 +551,8 @@ const reorderedColumnHeaders = ref([]);
 const loadingQcRecords = ref(true);
 const currentPage = ref(1);
 const pageSize = 15;
+const showPasswordDialog = ref(false);
+const exportDialogVisible = ref(false);
 
 const qcUsers = ref([])
 const selectedQcUserIds = ref([]) // 存储选择的质检人员 ID
@@ -501,6 +585,12 @@ const showAddBatchDialog = ref(false);
 const newProduct = reactive({ name: '', code: '', description: '' });
 const newBatch = reactive({ code: '' });
 const autoGenerateBatchCode = ref(true);
+const selectedApprovalType = ref() // default fallback
+
+// team
+const selectedTeam = ref('');
+const selectedTeamId = ref(null);
+const teamOptions = ref([]);
 
 const handleSignatureSave = (data) => {
   signatureData.value = data; // Save the base64 image data here
@@ -510,6 +600,27 @@ const handleSignatureSave = (data) => {
 const handleSignatureClear = () => {
   signatureData.value = null; // Clear the preview when cleared from the pad
 };
+
+const handleViewRecords = () => {
+  if (userRole.id === 3) {
+    showPasswordDialog.value = true;
+  } else {
+    openQcRecords()
+  }
+};
+
+const handleApprovalUpdated = (newVal) => {
+  selectedApprovalType.value = newVal
+  ElMessage.success('审批流程已更新')
+}
+
+const openQcRecords = () => {
+  qcRecordsDialogVisible.value = true;
+};
+
+const openApprovalDialog = () => {
+  showApprovalDialog.value = true;
+}
 
 const updateTableHeight = () => {
   qcRecordsTableHeight.value = window.innerHeight - otherElementsHeight;
@@ -593,7 +704,11 @@ const switchDisplayed = ref(
     !route.params.qcFormTemplateId
 );
 
+const store = useStore();
+let userId = store.getters.getUser.id;
+const userRole = store.getters.getUser.role;
 import { useDirtyCheck } from '@/composables/useDirtyCheck.js'
+import EditApprovalFlowDialog from "@/components/approval-designer/EditApprovalFlowDialog.vue";
 const { isDirty, startDirtyCheck, resetDirty, stopDirtyCheck } = useDirtyCheck(vFormRef, emit)
 
 const cancelClear = () => {
@@ -608,6 +723,9 @@ const confirmClear = () => {
     signatureData.value = null;
     ElMessage.success(translate('FormDisplay.formClearedSuccess'))
   }
+  clearDraftForUser(userId, formId);        // 清除草稿
+  emit('refreshFormTree');            // 刷新树节点（草稿标签消失）
+  resetDirty();                             // 标记已清除更改状态
 };
 
 const closeCountdownEnded = () => {
@@ -639,6 +757,21 @@ const fetchCommonFieldOptions = async () => {
   const batchResp = await getAllActiveSuggestedBatches();
   productOptions.value = productResp.data || [];
   batchOptions.value = batchResp.data || [];
+
+  // 👇 新增：加载班组选项并默认设置为当前用户所属班组
+  try {
+    const allTeamResp = await getAllTeams();
+    teamOptions.value = allTeamResp.data.data || [];
+
+    const leadTeamResp = await getTeamByTeamLeadId(userId);
+    const defaultTeam = leadTeamResp.data.data;
+    if (defaultTeam) {
+      selectedTeam.value = defaultTeam.name;
+      selectedTeamId.value = defaultTeam.id;
+    }
+  } catch (e) {
+    console.error("加载班组数据失败", e);
+  }
 };
 
 const fetchQcUsersAndShifts = async () => {
@@ -741,6 +874,10 @@ watch(selectedShift, (shiftName) => {
   selectedShiftId.value = shifts.value.find(s => s.name === shiftName)?.id || null;
 });
 
+watch(selectedTeam, (teamName) => {
+  selectedTeamId.value = teamOptions.value.find(t => t.name === teamName)?.id || null;
+});
+
 // ✅ Ensure the countdown starts when mounted
 onMounted(() => {
   fetchQcUsersAndShifts()
@@ -761,7 +898,8 @@ onMounted(() => {
   const waitUntilFormReady = setInterval(() => {
     if (vFormRef.value && typeof vFormRef.value.getFormData === 'function') {
       clearInterval(waitUntilFormReady)
-      startDirtyCheck()
+      startDirtyCheck();
+      tryLoadDraft();
     }
   }, 100)
 });
@@ -791,9 +929,6 @@ const clearForm = () => {
 
 const previewState = ref(true)
 let formId = null
-
-const store = useStore();
-let userId = store.getters.getUser.id;
 
 // dynamic size:
 const scrollBarHeight = ref(`${window.innerHeight-140}px`);
@@ -923,6 +1058,7 @@ const confirmSubmission = async () => {
     formData['related_batch_ids'] = selectedBatchIds.value;
     formData['related_inspector_ids'] = selectedQcUserIds.value;
     formData['related_shift_id'] = selectedShiftId.value;
+    formData['related_team_id'] = selectedTeamId.value;
 
     // 添加一条可读的字段，便于快速显示在 MongoDB 中查看和前端取数据
     const selectedProductNames = selectedProductCodes.value
@@ -939,6 +1075,7 @@ const confirmSubmission = async () => {
     formData['related_batches'] = selectedBatchCodes.value.join(', ');
     formData['related_inspectors'] = selectedInspectorNames.join(', ');
     formData['related_shifts'] = selectedShiftName; // already a string, no .join()
+    formData['related_teams'] = selectedTeam.value || '';
 
     formData['e-signature'] = signatureData.value || null;
 
@@ -965,6 +1102,8 @@ const confirmSubmission = async () => {
     if (response.status === 200) {
       console.log(response.data);
       ElMessage.success(translate('FormDisplay.formSubmitSuccess'))
+      clearDraftForUser(userId, formId);
+      emit('refreshFormTree');
       showResetConfirmation.value = true; // Show second popup after success
       await resetDirty();
     } else {
@@ -1018,6 +1157,58 @@ const handleUpdateBatch = async () => {
   }
 };
 
+const saveDraft = async () => {
+  const formId = props.currentForm?.qcFormTemplateId;
+  if (!formId || props.accessByTeam === null) return;
+
+  const data = await vFormRef.value?.getFormData?.();
+  if (data && userId) {
+    saveFormDraftForUser(userId, formId, data);
+    ElMessage.success('草稿已保存');
+    console.log('📦 已保存草稿:', {
+      userId,
+      formId,
+      draft: data
+    });
+  }
+  emit('refreshFormTree');
+};
+
+// const loadDraft = async () => {
+//   const formId = props.currentForm?.qcFormTemplateId;
+//   if (!formId || props.accessByTeam === null) return;
+//
+//   const draft = loadFormDraftForUser(userId, formId);
+//   if (draft) {
+//     try {
+//       // Ensure form JSON is already rendered
+//       await nextTick(); // wait for render
+//       vFormRef.value?.setFormData?.(draft);
+//       ElMessage.success('草稿已加载');
+//       console.log('📥 加载的草稿内容:', { userId, formId, draft });
+//     } catch (err) {
+//       console.error('❌ 加载草稿失败:', err);
+//       ElMessage.error('加载草稿时发生错误');
+//     }
+//   } else {
+//     ElMessage.warning('未找到可用草稿');
+//     console.log('⚠️ 无草稿可加载:', { userId, formId });
+//   }
+// };
+
+const tryLoadDraft = async () => {
+  const formId = props.currentForm?.qcFormTemplateId;
+  if (!formId || props.accessByTeam === null) return;
+
+  const draft = loadFormDraftForUser(userId, formId);
+  if (draft) {
+    await nextTick();
+    vFormRef.value?.setFormData?.(draft);
+    ElMessage.info('已加载草稿');
+    console.log('📥 自动加载草稿:', { userId, formId, draft });
+  }
+};
+
 // Watch the qcFormTemplateId in the passed currentForm
 watch(
     () => props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId, // Safely access qcFormTemplateId
@@ -1030,6 +1221,7 @@ watch(
           const templateJson = JSON.parse(response.data.data.form_template_json);
           formTitle.value = response.data.data.name
           vFormRef.value.setFormJson(templateJson); // Update the form JSON dynamically
+          selectedApprovalType.value = response.data.data.approval_type;
           initialFormSnapshot = JSON.stringify(await vFormRef.value.getFormData());
           await nextTick();
           enable_common_fields.value = true;
@@ -1039,6 +1231,7 @@ watch(
             enable_common_fields.value = false;
           }
           ElMessage.success(translate('FormDisplay.formLoadSuccess'))
+          // await tryLoadDraft();
         } else {
           ElMessage.error(translate('FormDisplay.formLoadFailed'))
         }
@@ -1109,45 +1302,6 @@ const audio = new Audio(soundEffect);
 //     await new Promise((resolve) => setTimeout(resolve, interval));
 //   }
 // }
-
-const openQcRecordsDialog = async () => {
-  qcRecordsDialogVisible.value = true;
-  loadingQcRecords.value = true;
-
-  // TODO: remove the hardcoded datetime values
-  const formTemplateId = props.currentForm?.qcFormTemplateId || route.params.qcFormTemplateId;
-  const startDateTime = "2025-04-01 00:00:00";
-  const endDateTime = "2025-05-01 23:59:59";
-
-  try {
-    const response = await fetchQcRecords(formTemplateId, startDateTime, endDateTime);
-    qcRecords.value = response.data;
-
-    if (qcRecords.value.length > 0) {
-      let headers = Object.keys(qcRecords.value[0]);
-      headers = headers.filter(h => h !== "_id" && h !== "created_by").map(h => h === "created_at" ? "提交时间" : h);
-      headers.push("_id");
-      reorderedColumnHeaders.value = headers;
-
-      qcRecords.value = qcRecords.value.map(r => {
-        if (r.created_at) {
-          const localDate = new Date(r.created_at);
-          r["提交时间"] = localDate.toLocaleString("zh-CN", {
-            year: "numeric", month: "2-digit", day: "2-digit",
-            hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
-          }).replace(/\//g, "-");
-          delete r.created_at;
-        }
-        return r;
-      });
-    }
-  } catch (err) {
-    console.error("Error fetching records:", err);
-  } finally {
-    loadingQcRecords.value = false;
-  }
-};
-
 
 watch(remainingTime, (newTime) => {
   nextTick(() => {

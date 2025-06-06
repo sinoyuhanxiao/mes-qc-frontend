@@ -20,7 +20,7 @@
     </template>
     <el-scrollbar max-height="500px">
       <!-- Render uncategorized -->
-      <template v-if="groupedDetails.uncategorized && Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info').length > 0">
+      <template v-if="displayableUncategorizedEntries.length > 0">
       <el-descriptions
           :title="translate('FormDataSummary.recordTable.groupUncategorized')"
           border
@@ -29,7 +29,7 @@
           :label-width="descriptionLabelWidth"
       >
         <el-descriptions-item
-            v-for="(value, key) in Object.entries(groupedDetails.uncategorized).filter(([k, _]) => k !== 'e-signature' && k !== 'exceeded_info')"
+            v-for="([key, value]) in displayableUncategorizedEntries"
             :key="key"
             :label="key"
         >
@@ -84,6 +84,7 @@
         <el-descriptions-item label="涉及批次">{{ basicInfo.涉及批次 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="质检人员">{{ basicInfo.质检人员 || " - " }}</el-descriptions-item>
         <el-descriptions-item label="所属班次">{{ basicInfo.所属班次 || " - " }}</el-descriptions-item>
+        <el-descriptions-item label="所属班组">{{ basicInfo.所属班组 || " - " }}</el-descriptions-item>
       </el-descriptions>
 
       <el-descriptions
@@ -104,18 +105,29 @@
     </el-scrollbar>
 
     <template #footer>
-      <el-button type="info" @click="onClose">{{ translate('FormDataSummary.detailDialog.cancelButton') }}</el-button>
-      <el-button type="primary" @click="exportSubmissionLogToPdf">{{ translate('FormDataSummary.detailDialog.exportButton') }}</el-button>
+      <el-button v-if="!props.fromApprovalPage"
+                 type="info"
+                 @click="onClose"
+      >
+        {{ translate('FormDataSummary.detailDialog.cancelButton') }}
+      </el-button>
+      <el-button
+          v-if="!props.fromApprovalPage"
+          type="primary"
+          @click="exportSubmissionLogToPdf"
+      >
+        {{ translate('FormDataSummary.detailDialog.exportButton') }}
+      </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
   import { translate } from '@/utils/i18n'
-  import { ref } from 'vue'
+  import {computed, ref} from 'vue'
   import { useAlertHighlight } from '@/composables/useAlertHighlight'
 
-  const showAlerts = ref(true)
+  const showAlerts = ref(false)
   const descriptionLabelWidth = '200px'
   const rangeLabelWidth = '60px'
   const { getAlertIcon, getAlertStyle, getAlertTooltip } = useAlertHighlight(showAlerts)
@@ -128,7 +140,11 @@
     groupedDetails: Object,
     basicInfo: Object,
     systemInfo: Object,
-    eSignature: String
+    eSignature: String,
+    fromApprovalPage: {
+      type: Boolean,
+      default: false
+    }
   })
   const emit = defineEmits(['close', 'export'])
 
@@ -145,6 +161,14 @@
       translate
     });
   }
+
+  const displayableUncategorizedEntries = computed(() => {
+    const excludedKeys = ['e-signature', 'exceeded_info', 'approval_info', 'version_group_id', 'version']
+    if (!props.groupedDetails?.uncategorized) return []
+    return Object.entries(props.groupedDetails.uncategorized).filter(
+        ([k, _]) => !excludedKeys.includes(k)
+    )
+  })
 
 </script>
 

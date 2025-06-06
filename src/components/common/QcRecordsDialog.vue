@@ -9,15 +9,14 @@
         :records="paginatedRecords"
         :headers="displayedHeaders"
         :search="search"
-        :dateRange="props.dateRange"
+        v-model:dateRange="dateRange"
         :loading="localLoading"
         :tableHeight="tableHeight"
+        :qcFormTemplateId="props.selectedForm.qcFormTemplateId"
         @view-details="viewDetails"
         @delete="deleteRecord"
         @export-excel="exportRecordsToExcel"
-        @update:dateRange="handleDateRangeChange"
-        @update:search="search = $event"
-        @current-change="currentPage = $event"
+        @edit-record="editQcSubmissionRecord"
     />
 
     <QcRecordDetailDialog
@@ -46,19 +45,22 @@
       </el-button>
     </template>
   </el-dialog>
+
 </template>
 
 <script setup>
 import QcRecordsTable from "./qc/QcRecordsTable.vue";
 import {translate, translateWithParams} from "@/utils/i18n";
 import QcRecordDetailDialog from "@/components/common/qc/QcRecordDetailDialog.vue";
-import {deleteTaskSubmissionLog, getMyDocument} from "@/services/qcTaskSubmissionLogsService";
+import {deleteTaskSubmissionLog, getMyDocument, getRawMongoDocument} from "@/services/qcTaskSubmissionLogsService";
 import {getUserById} from "@/services/userService";
 import {parseFormDocument} from "@/utils/formUtils";
-import {computed, nextTick, ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {exportQcRecordsToExcel, exportSubmissionLogToPdf} from "@/utils/exportUtils";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useQcRecordsDialog} from "@/composables/useQcRecordsDialog";
+import {fetchFormTemplate} from "@/services/qcFormTemplateService";
+
 const {
   fetchRecordsData,
 } = useQcRecordsDialog();
@@ -80,6 +82,27 @@ const props = defineProps({
   visible: Boolean,
   selectedForm: Object,
   dateRange: Array
+});
+
+const defaultStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0); // e.g. 2025-06-01 00:00:00
+const defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0, 23, 59, 59); // e.g. 2025-06-30 23:59:59
+const dateRange = ref(props.dateRange ?? [defaultStart, defaultEnd]);
+
+// fetch new records whenever the date range is changed
+watch(dateRange, handleDateRangeChange);
+
+// Sync prop change to internal ref for the date range change
+watch(() => props.dateRange, (newVal) => {
+  if (newVal && newVal.length === 2) {
+    dateRange.value = newVal;
+  }
+});
+
+// Reset the dateRange when the window closes
+watch(() => props.visible, (visibleNow) => {
+  if (!visibleNow && props.dateRange?.length === 2) {
+    dateRange.value = [...props.dateRange]; // Reset dateRange to initial prop value
+  }
 });
 
 defineEmits(["update:visible"])
@@ -128,7 +151,8 @@ async function openDetailsDialog(row) {
       涉及产品: rawData.uncategorized.related_products,
       涉及批次: rawData.uncategorized.related_batches,
       质检人员: rawData.uncategorized.related_inspectors,
-      所属班次: rawData.uncategorized.related_shifts
+      所属班次: rawData.uncategorized.related_shifts,
+      所属班组: rawData.uncategorized.related_teams
     };
 
     systemInfo.value = {
@@ -163,6 +187,21 @@ async function deleteRecord(row) {
     );
     await deleteTaskSubmissionLog(row._id, props.selectedForm.qcFormTemplateId, row["提交时间"]);
     ElMessage.success(translate("FormDataSummary.recordTable.deleteSuccess"));
+
+    // 删除成功后，刷新记录
+    if (props.selectedForm?.qcFormTemplateId && props.dateRange?.length === 2) {
+      localLoading.value = true;
+      const result = await fetchRecordsData(props.selectedForm.qcFormTemplateId, props.dateRange);
+      localRecords.value = result.map(item => ({
+        ...item,
+        related_products: item.related_products || item.uncategorized?.related_products || "-",
+        related_batches: item.related_batches || item.uncategorized?.related_batches || "-",
+        related_inspectors: item.related_inspectors || item.uncategorized?.related_inspectors || "-",
+        related_shifts: item.related_shifts || item.uncategorized?.related_shifts || "-",
+        related_teams: item.related_teams || item.uncategorized?.related_teams || "-"
+      }));
+      localLoading.value = false;
+    }
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
@@ -196,12 +235,13 @@ async function viewDetails(row) {
       提交人: await getUserById(selectedDetails.created_by).then(res => res.data?.data?.name || "-")
     };
 
-    // TODO: add a basicInfo field includes the 4 fields: 涉及产品，涉及批次，质检人员，所属班次
+    // Add a basicInfo field includes the 4 fields: 涉及产品，涉及批次，质检人员，所属班次, 所属班组
     basicInfo.value = {
       涉及产品: selectedDetails.uncategorized.related_products,
       涉及批次: selectedDetails.uncategorized.related_batches,
       质检人员: selectedDetails.uncategorized.related_inspectors,
-      所属班次: selectedDetails.uncategorized.related_shifts
+      所属班次: selectedDetails.uncategorized.related_shifts,
+      所属班组: selectedDetails.uncategorized.related_teams,
     };
 
     // // add dummy data first
@@ -221,6 +261,9 @@ async function viewDetails(row) {
         if (key.startsWith("related_")) {
           delete grouped.uncategorized[key];
         }
+        if (key === "approver_updated_at") {
+          delete grouped.uncategorized[key];
+        }
       }
     }
 
@@ -232,6 +275,37 @@ async function viewDetails(row) {
 
   } catch (err) {
     console.error("Error fetching document details:", err);
+  }
+}
+
+async function editQcSubmissionRecord(row) {
+  try {
+    const createdAt = new Date(row['提交时间']);
+    const formattedCreatedAt = createdAt.toISOString();
+
+    // 获取原始 Mongo 数据
+    const response = await getRawMongoDocument(
+        row._id,
+        props.selectedForm.qcFormTemplateId,
+        formattedCreatedAt
+    );
+    const rawData = response.data;
+
+    // 获取表单结构
+    const templateRes = await fetchFormTemplate(props.selectedForm.qcFormTemplateId);
+    if (templateRes.status !== 200 || !templateRes.data?.data?.form_template_json) {
+      ElMessage.error("无法加载表单结构");
+      return;
+    }
+
+    const formTemplateJson = templateRes.data.data.form_template_json;
+
+    // 构造 URL 并打开新 Tab
+    const url = `/form-edit?templateId=${props.selectedForm.qcFormTemplateId}&submissionId=${row._id}&createdAt=${formattedCreatedAt}`;
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error('❌ Failed to fetch raw document for editing:', err);
+    ElMessage.error("加载原始数据失败");
   }
 }
 
@@ -253,7 +327,6 @@ function exportRecordsToExcel() {
 async function handleDateRangeChange(dateRange) {
   if (!dateRange || dateRange.length !== 2) return;
   const formTemplateId = props.selectedForm?.qcFormTemplateId;
-
   localLoading.value = true;
   try {
     localRecords.value = await fetchRecordsData(formTemplateId, dateRange);
@@ -278,19 +351,20 @@ watch(() => props.visible, async (val) => {
         related_products: item.related_products || item.uncategorized?.related_products || "-",
         related_batches: item.related_batches || item.uncategorized?.related_batches || "-",
         related_inspectors: item.related_inspectors || item.uncategorized?.related_inspectors || "-",
-        related_shifts: item.related_shifts || item.uncategorized?.related_shifts || "-"
+        related_shifts: item.related_shifts || item.uncategorized?.related_shifts || "-",
+        related_teams: item.related_teams || item.uncategorized?.related_teams || "-"
       }));
 
       localRecords.value = result;
 
-      // ✅ Step 1: 先过滤掉不需要展示的字段
+      // Step 1: 先过滤掉不需要展示的字段
       let fields = Object.keys(result[0]);
-      fields = fields.filter(key => !['_id', 'created_by', 'e-signature', '提交时间', '提交人', 'exceeded_info'].includes(key)); // filter some system fields
+      fields = fields.filter(key => !['_id', 'created_by', 'e-signature', '提交时间', '提交人', 'exceeded_info', 'approval_info', 'version', 'version_group_id', 'approver_updated_at'].includes(key)); // filter some system fields
       fields = fields.filter(key => !key.startsWith('related_')); // remove all related_* fields
-      // ✅ Step 2: 替换字段名（如 created_at ➝ 提交时间）
+      // Step 2: 替换字段名（如 created_at ➝ 提交时间）
       // fields = fields.map(key => key === 'created_at' ? '提交时间' : key);
 
-      // ✅ Step 3: push this to the last column
+      // Step 3: push this to the last column
       fields.push('_id');
 
       headers.value = fields;
@@ -300,6 +374,4 @@ watch(() => props.visible, async (val) => {
     }
   }
 });
-
-
 </script>

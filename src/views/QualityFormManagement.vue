@@ -33,7 +33,7 @@ export default {
     selectForm(form) {
       if (this.isFormDirty) {
         this.$confirm(
-            '您有未保存的更改，是否确定切换表单？',
+            '您有未提交的更改，是否确定切换表单？',
             '警告',
             {
               confirmButtonText: '切换',

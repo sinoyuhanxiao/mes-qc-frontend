@@ -1,13 +1,19 @@
 <template>
   <el-container>
-    <el-aside width="25%">
-      <FormTree
-          v-if="teamId !== null"
-          :accessByTeam="teamId"
-          @select-form="selectForm"
-          @add-form="addForm"
-          @is-deletion="handleDeletion"
-      />
+    <el-aside width="25%" style="padding: 20px">
+      <template v-if="teamId !== null">
+        <FormTree
+            ref="formTreeRef"
+            :accessByTeam="teamId"
+            :userId="store.getters.getUser.id"
+            @select-form="selectForm"
+            @add-form="addForm"
+            @is-deletion="handleDeletion"
+        />
+      </template>
+      <template v-else>
+        <el-empty description="无待办任务" image-size="120" />
+      </template>
     </el-aside>
     <el-main>
       <FormDisplay
@@ -17,6 +23,7 @@
           :usable="true"
           :accessByTeam="1"
           @updateIsDirty="isFormDirty = $event"
+          @refreshFormTree="refreshTree"
       />
 
     </el-main>
@@ -52,7 +59,7 @@ export default {
     selectForm(form) {
       if (this.isFormDirty) {
         this.$confirm(
-            '您有未保存的更改，是否确定切换表单？',
+            '您有未提交的更改，是否确定切换表单？',
             '警告',
             {
               confirmButtonText: '切换',
@@ -81,6 +88,9 @@ export default {
     handleDeletion() {
       this.selectedForm = null;
     },
+    refreshTree() {
+      this.$refs.formTreeRef?.reload?.();
+    }
   },
   mounted: async function () {
     try {

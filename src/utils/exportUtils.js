@@ -10,9 +10,11 @@ const { getAlertTooltip, getAlertTextColor, getStyledValueWithIcon } = useAlertH
 
 export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basicInfo, systemInfo, eSignature, translate }) {
     const doc = new jsPDF();
+    const excludedKeys = ['e-signature', 'exceeded_info', 'approval_info', 'version_group_id', 'version'];
     callAddFont.apply(doc);
     callAddBoldFont.apply(doc);
     doc.setFont("simfang", "bold");
+
 
     let y = 10;
     const title = `${formLabel}${translate('Export.titleSuffix')}`;
@@ -26,9 +28,10 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
     // groupedDetails
     Object.entries(groupedDetails).forEach(([category, fields]) => {
         if (category === 'exceeded_info') return;
+
         const tableData = Object.entries(fields)
             .filter(([key, val]) =>
-                key !== 'exceeded_info' && val !== undefined && val !== null && val !== ""
+                !excludedKeys.includes(key) && val !== undefined && val !== null && val !== ""
             )
             .map(([key, value]) => {
                 const styledVal = getStyledValueWithIcon(value, groupedDetails.exceeded_info?.[key]);
@@ -38,7 +41,7 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
                 return [key, styledVal, passedRange];
             });
 
-        if (tableData.length === 0) return;
+        if (tableData.length === 0) return; // Don't render empty sections
 
         const sectionTitle = category === 'uncategorized'
             ? translate('FormDataSummary.recordTable.groupUncategorized')
@@ -81,7 +84,8 @@ export async function exportSubmissionLogToPdf({ formLabel, groupedDetails, basi
             ["涉及产品", basicInfo.涉及产品 || translate('Export.fallback')],
             ["涉及批次", basicInfo.涉及批次 || translate('Export.fallback')],
             ["质检人员", basicInfo.质检人员 || translate('Export.fallback')],
-            ["所属班次", basicInfo.所属班次 || translate('Export.fallback')]
+            ["所属班次", basicInfo.所属班次 || translate('Export.fallback')],
+            ["所属班组", basicInfo.所属班组 || translate('Export.fallback')]
         ],
         theme: "grid",
         styles: { font: "simfang", fontSize: 10 },
@@ -150,15 +154,30 @@ export function exportQcRecordsToExcel({ records, label, translate }) {
         const normalFields = entries.filter(([key]) =>
             !key.startsWith('related_') &&
             !key.endsWith('_id') &&
-            !key.endsWith('_ids')
+            !key.endsWith('_ids') &&
+            !key.endsWith('approval_info') &&
+            !key.endsWith('version_group_id') &&
+            !key.endsWith('version') &&
+            !key.endsWith('exceeded_info') &&
+            !key.endsWith('approver_updated_at')
         );
 
-        // Only keep related_* fields that do NOT end with _id or _ids
-        const relatedFields = entries.filter(([key]) =>
-            key.startsWith('related_') &&
-            !key.endsWith('_id') &&
-            !key.endsWith('_ids')
-        );
+        // Only keep related_* fields that do NOT end with _id or _ids, and translate keys
+        const relatedFields = entries
+            .filter(([key]) =>
+                key.startsWith('related_') &&
+                !key.endsWith('_id') &&
+                !key.endsWith('_ids')
+            )
+            .map(([key, value]) => {
+                let translatedKey = key;
+                if (key === 'related_products') translatedKey = '涉及产品';
+                else if (key === 'related_batches') translatedKey = '涉及批次';
+                else if (key === 'related_inspectors') translatedKey = '质检人员';
+                else if (key === 'related_shifts') translatedKey = '所属班次';
+                else if (key === 'related_teams') translatedKey = '所属班组';
+                return [translatedKey, value];
+            });
 
         return {
             [translate('Export.systemInfo.submittedAt')]: created_at || "-",

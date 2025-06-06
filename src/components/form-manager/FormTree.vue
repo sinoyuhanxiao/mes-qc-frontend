@@ -40,6 +40,13 @@
               <el-text style="max-width: 220px;" truncated>
                 {{ data.label }}
               </el-text>
+              <el-text
+                  v-if="showDraft(data)"
+                  type="warning"
+                  style="margin-left: 6px; font-size: 13px;"
+              >
+                (草稿)
+              </el-text>
             </div>
             <div class="node-actions" v-if="isEditMode">
               <a v-if="data.nodeType === 'folder'" @click="showAppendPopup(data, $event)" style="color: #3f9dfd; cursor: pointer;">{{ translate('FormTree.add') }}
@@ -104,6 +111,7 @@ import {
 import { ElMessageBox } from "element-plus";
 import { defineProps } from 'vue';
 import { getFormTreeByTeam } from '@/services/teamFormService';
+import { loadFormDraftForUser } from '@/utils/formDraftStorage'
 
 interface Tree {
   _id: string
@@ -113,6 +121,7 @@ interface Tree {
 
 const props = defineProps<{
   accessByTeam?: number;
+  userId?: number;
 }>();
 
 const logNodeData = (node: any, data: any) => {
@@ -174,7 +183,10 @@ const fetchFormTreeData = async () => {
   }
 };
 
-
+const reload = () => {
+  fetchFormTreeData();
+};
+defineExpose({ reload });
 
 onMounted(fetchFormTreeData)
 
@@ -299,6 +311,16 @@ const proceedWithNodeCreation = async () => {
     error.value = err.response?.data?.message || translate('FormTree.addFailed')
     appendDialogVisible.value = false;
   }
+};
+
+const showDraft = (data) => {
+  if (props.accessByTeam === undefined || !props.userId || data.nodeType === 'folder') return false;
+
+  const formId = data.qcFormTemplateId;
+  if (!formId) return false;
+
+  const draft = loadFormDraftForUser(props.userId, formId);
+  return !!draft;
 };
 
 </script>

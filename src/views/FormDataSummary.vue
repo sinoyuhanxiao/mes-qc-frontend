@@ -59,18 +59,19 @@ export default {
   setup() {
     const lineChartRefs = [];
     const pieChartRefs = [];
-
     provide("lineChartRefs", lineChartRefs);
     provide("pieChartRefs", pieChartRefs);
 
+    return {
+      lineChartRefs,
+      pieChartRefs
+    };
   },
   data() {
     return {
       tableHeight: window.innerHeight - 220,
       pdfLoading: false,
       isMainDisplayed: true,
-      lineChartRefs: [],
-      pieChartRefs: [],
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
       loadingCharts: false,
       qcRecordsDialogVisible: false,

@@ -193,6 +193,7 @@
               <el-input v-model="formName" :placeholder="translate('FormDesigner.saveDialog.formNamePlaceholder')" />
             </el-form-item>
             <FormTreeMultipleSelection  style="margin-left: 50px" v-model:selectedFolders="selectedFolder" />
+            <ApprovalFlowSelector v-model:selectedFlow="selectedApprovalFlow" style="margin-left: 40px; padding-top: 10px" />
           </el-form>
         </div>
         <template #footer>
@@ -230,11 +231,13 @@
   import FormTreeMultipleSelection from "@/components/form-manager/FormTreeMultipleSelection.vue";
   import api from "@/services/api";
   import { createFormTemplateWithNodes } from '@/services/qcFormTemplateService.js';
+  import ApprovalFlowSelector from "@/components/approval-designer/ApprovalFlowSelector.vue";
 
   export default {
     name: "ToolbarPanel",
     mixins: [i18n],
     components: {
+      ApprovalFlowSelector,
       FormTreeMultipleSelection,
       FormTree,
       VFormRender,
@@ -286,6 +289,8 @@
 
         activeCodeTab: 'vue',
         activeSFCTab: 'vue2',
+
+        selectedApprovalFlow: 'flow_4', // 默认值与 ApprovalFlowSelector 保持一致
 
         testFormData: {
           // 'userName': '666888',
@@ -805,7 +810,8 @@
         const payload = {
           form: {
             name: this.formName,
-            form_template_json: exportedJson, // Use the real JSON
+            form_template_json: exportedJson,
+            approval_type: this.selectedApprovalFlow
           },
           parentFolderIds: this.selectedFolder,
         };
