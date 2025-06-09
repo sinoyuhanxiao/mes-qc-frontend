@@ -660,6 +660,7 @@ export default {
         }
     },
     FormDataSummary: {
+        noChartData: "No chart data available",
         loadingText: "Generating PDF report...",
         summaryTitle: "Summary",
         dateRangeSeparator: "to",

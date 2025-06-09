@@ -619,7 +619,7 @@ const openQcRecords = () => {
 };
 
 const openApprovalDialog = () => {
-  showApprovalDialog.value = true;
+  showApprovalDialog.value = true
 }
 
 const updateTableHeight = () => {

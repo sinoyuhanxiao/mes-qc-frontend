@@ -652,8 +652,9 @@ export default {
         const { prop, order } = this.sortSettings;
         if (!prop || !order) return 0; // No sorting applied
 
-        const valueA = a[prop];
-        const valueB = b[prop];
+        const getValue = (obj, path) => path.split('.').reduce((acc, key) => acc?.[key], obj); // dynamically traverse nested properties so that role.name works
+        const valueA = getValue(a, prop);
+        const valueB = getValue(b, prop);
 
         if (order === 'ascending') return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
         if (order === 'descending') return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;

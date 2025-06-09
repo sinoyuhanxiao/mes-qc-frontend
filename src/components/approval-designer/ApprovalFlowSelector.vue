@@ -24,13 +24,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import {ref, computed, watch} from 'vue'
 
 const props = defineProps({
   selectedFlow: String
 })
 const selectedFlow = ref(props.selectedFlow || 'flow_4')
 const emit = defineEmits(['update:selectedFlow'])
+
+watch(() => props.selectedFlow, (val) => {
+  selectedFlow.value = val
+})
 
 const flowMap = {
   flow_1: [

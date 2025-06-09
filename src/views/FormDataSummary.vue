@@ -29,7 +29,11 @@
 
       <el-skeleton v-if="loadingCharts" :rows="6" animated />
 
+      <div v-if="selectedForm && lineChartWidgets.length === 0 && pieChartWidgets.length === 0 && !loadingCharts" style="text-align: center; margin-top: 50px;">
+        <el-empty :description="translate('FormDataSummary.noChartData')" />
+      </div>
       <QcCharts
+          v-else
           :lineChartWidgets="lineChartWidgets"
           :pieChartWidgets="pieChartWidgets"
       />

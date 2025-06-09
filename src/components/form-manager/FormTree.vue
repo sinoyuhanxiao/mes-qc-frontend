@@ -84,7 +84,7 @@
       <el-input v-model="newNodeLabel" :placeholder="translate('FormTree.namePlaceholder')" style="margin-bottom: 10px;" />
       <el-select v-model="newNodeType" :placeholder="translate('FormTree.typePlaceholder')">
         <el-option :label="translate('FormTree.type.folder')" value="folder" />
-        <el-option :label="translate('FormTree.type.document')" value="document" />
+        <el-option :label="translate('FormTree.type.document')" value="document" :disabled="true"/>
       </el-select>
       <template #footer>
         <span class="dialog-footer">

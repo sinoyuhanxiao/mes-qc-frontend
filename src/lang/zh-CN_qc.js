@@ -659,6 +659,7 @@ export default {
         }
     },
     FormDataSummary: {
+        noChartData: "暂无图表数据",
         loadingText: "正在生成PDF报告...",
         summaryTitle: "汇总",
         dateRangeSeparator: "至",
