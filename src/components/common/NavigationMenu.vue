@@ -68,18 +68,18 @@
 <!--                <el-icon><Files /></el-icon>-->
 <!--                <span>{{ translate('navigationMenu.dispatchManagement') }}</span>-->
 <!--              </el-menu-item>-->
-              <el-menu-item index="/instrument-management">
-                <el-icon><TakeawayBox /></el-icon>
-                <span>{{ translate('navigationMenu.instrumentManagement') }}</span>
-              </el-menu-item>
-              <el-menu-item index="/test-subject-management">
-                <el-icon><Collection /></el-icon>
-                <span>{{ translate('navigationMenu.testSubjectManagement') }}</span>
-              </el-menu-item>
-              <el-menu-item index="/sampling-location-management">
-                <el-icon><Location /></el-icon>
-                <span>{{ translate('navigationMenu.samplingLocationManagement') }}</span>
-              </el-menu-item>
+<!--              <el-menu-item index="/instrument-management">-->
+<!--                <el-icon><TakeawayBox /></el-icon>-->
+<!--                <span>{{ translate('navigationMenu.instrumentManagement') }}</span>-->
+<!--              </el-menu-item>-->
+<!--              <el-menu-item index="/test-subject-management">-->
+<!--                <el-icon><Collection /></el-icon>-->
+<!--                <span>{{ translate('navigationMenu.testSubjectManagement') }}</span>-->
+<!--              </el-menu-item>-->
+<!--              <el-menu-item index="/sampling-location-management">-->
+<!--                <el-icon><Location /></el-icon>-->
+<!--                <span>{{ translate('navigationMenu.samplingLocationManagement') }}</span>-->
+<!--              </el-menu-item>-->
             </el-sub-menu>
 
             <el-sub-menu index="4">
@@ -108,10 +108,10 @@
               <el-icon><Collection /></el-icon>
               <span v-if="!isCollapsed">{{ translate('navigationMenu.taskCenter') }}</span>
             </template>
-            <el-menu-item index="/task-center-dashboard">
-              <el-icon><DataAnalysis /></el-icon>
-              <span>{{ translate('navigationMenu.taskDashboard') }}</span>
-            </el-menu-item>
+<!--            <el-menu-item index="/task-center-dashboard">-->
+<!--              <el-icon><DataAnalysis /></el-icon>-->
+<!--              <span>{{ translate('navigationMenu.taskDashboard') }}</span>-->
+<!--            </el-menu-item>-->
             <el-menu-item index="/pending-tasks">
               <el-icon><Document /></el-icon>
               <span>{{ translate('navigationMenu.pendingTasks') }}</span>
@@ -120,22 +120,22 @@
               <el-icon><Edit /></el-icon>
               <span>{{ translate('navigationMenu.approvalCenter')}}</span>
             </el-menu-item>
-            <el-menu-item index="/current-tasks">
-              <el-icon><Document /></el-icon>
-              <span>{{ translate('navigationMenu.todayTasks') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/future-tasks">
-              <el-icon><List /></el-icon>
-              <span>{{ translate('navigationMenu.futureTasks') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/history-tasks">
-              <el-icon><Files /></el-icon>
-              <span>{{ translate('navigationMenu.historyTasks') }}</span>
-            </el-menu-item>
-            <el-menu-item index="/overdue-tasks">
-              <el-icon><Warning /></el-icon>
-              <span>{{ translate('navigationMenu.overdueTasks') }}</span>
-            </el-menu-item>
+<!--            <el-menu-item index="/current-tasks">-->
+<!--              <el-icon><Document /></el-icon>-->
+<!--              <span>{{ translate('navigationMenu.todayTasks') }}</span>-->
+<!--            </el-menu-item>-->
+<!--            <el-menu-item index="/future-tasks">-->
+<!--              <el-icon><List /></el-icon>-->
+<!--              <span>{{ translate('navigationMenu.futureTasks') }}</span>-->
+<!--            </el-menu-item>-->
+<!--            <el-menu-item index="/history-tasks">-->
+<!--              <el-icon><Files /></el-icon>-->
+<!--              <span>{{ translate('navigationMenu.historyTasks') }}</span>-->
+<!--            </el-menu-item>-->
+<!--            <el-menu-item index="/overdue-tasks">-->
+<!--              <el-icon><Warning /></el-icon>-->
+<!--              <span>{{ translate('navigationMenu.overdueTasks') }}</span>-->
+<!--            </el-menu-item>-->
     <!--        <el-menu-item index="/task-calendar">-->
     <!--          <el-icon><Calendar /></el-icon>-->
     <!--          <span>{{ translate('navigationMenu.taskCalendar') }}</span>-->

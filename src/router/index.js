@@ -33,7 +33,7 @@ import QcSummary from "@/views/QcSummary.vue";
 const routes = [
     {
         path: '/',
-        redirect: '/task-center-dashboard', // Default route
+        name: 'Root', // Default route
     },
     {
         path: '/form-designer',
@@ -204,32 +204,47 @@ const router = createRouter({
 // Global navigation guard to restrict routes based on user role
 router.beforeEach((to, from, next) => {
     const user = store.state.user;
-    const userRole = user?.role?.id || 0;
-    const isLoggedIn = !!user.username && userRole !== 0;
+    const userRoleId = user?.role?.id || 0;
+    const isLoggedIn = !!user.username && userRoleId !== 0;
 
+    const isRestrictedRouteForRole3 = [
+        '/form-designer',
+        '/user-management',
+        '/team-management',
+        '/quality-form-management',
+        '/form-data-summary',
+        '/task-assignment',
+        '/instrument-management',
+        '/sampling-location-management',
+        '/test-subject-management'
+    ].includes(to.path);
+
+    const isHomepageRoute = to.path === '/' || to.path === '/task-center-dashboard';
+
+    // Allow login page access for everyone
     if (to.path === '/LoginPage') {
-        next(); // 登录页允许访问
-    } else if (!isLoggedIn) {
-        // 如果未登录，跳转到登录页
-        next('/LoginPage');
-    } else if (
-        userRole === 3 &&
-        [
-            '/form-designer',
-            '/user-management',
-            '/team-management',
-            '/quality-form-management',
-            '/form-data-summary',
-            '/task-assignment',
-            '/instrument-management',
-            '/sampling-location-management',
-            '/test-subject-management'
-        ].includes(to.path)
-    ) {
-        next('/task-center-dashboard');
-    } else {
-        next(); // 其他情况允许访问
+        return next();
     }
+
+    // Redirect unauthenticated users to login
+    if (!isLoggedIn) {
+        return next('/LoginPage');
+    }
+
+    // Restrict role 3 from accessing certain admin/config pages
+    if (userRoleId === 3 && isRestrictedRouteForRole3) {
+        return next('/pending-tasks');
+    }
+
+    // Handle homepage redirect based on role
+    if (isHomepageRoute) {
+        return (userRoleId === 1 || userRoleId === 4)
+            ? next('/qc-summary')
+            : next('/pending-tasks');
+    }
+
+    // Allow all other routes
+    return next();
 });
 
 export default router;
