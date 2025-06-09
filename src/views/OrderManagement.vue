@@ -142,7 +142,7 @@ import {fetchFormNodes} from "@/services/formNodeService";
 import {generateFormMap} from "@/utils/dispatch-utils";
 import {fetchUsers} from "@/services/userService";
 import DispatchedTasksList from "@/components/dispatch/DispatchedTaskList.vue";
-import {getAllTeams} from "@/services/teamService";
+import {getAllTeamTree} from "@/services/teamService";
 import {getUsersForTeam} from "@/services/teamUserService";
 import {getFormIdsForTeam} from "@/services/teamFormService";
 import {translate} from "@/utils/i18n";
@@ -351,7 +351,7 @@ export default {
     },
     async loadTeamMap() {
       try {
-        const response = await getAllTeams();
+        const response = await getAllTeamTree();
         const teams = response.data?.data || [];
 
         const updatedTeamMap = {};

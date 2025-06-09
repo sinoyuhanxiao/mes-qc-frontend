@@ -9,7 +9,7 @@ const buildArrayParams = (key, arr = []) =>
  * Fetch all teams.
  * @returns {Promise} API response with the list of all teams.
  */
-export const getAllTeams = () => {
+export const getAllTeamTree = () => {
     return api.get(`${BASE_URL}`);
 };
 

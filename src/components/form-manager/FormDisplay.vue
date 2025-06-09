@@ -522,7 +522,7 @@ const editBatch = reactive({ id: null, code: '' });
 import { fetchUsers } from '@/services/userService'
 import { getAllShifts } from '@/services/shiftService'
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
-import { getAllTeams, getTeamByTeamLeadId } from '@/services/teamService';
+import { getAllTeamTree, getTeamByTeamLeadId } from '@/services/teamService';
 const showApprovalDialog = ref(false)
 
 import ExportDocumentDialog from '@/components/export/ExportDocumentDialog.vue'
@@ -760,7 +760,7 @@ const fetchCommonFieldOptions = async () => {
 
   // 👇 新增：加载班组选项并默认设置为当前用户所属班组
   try {
-    const allTeamResp = await getAllTeams();
+    const allTeamResp = await getAllTeamTree();
     teamOptions.value = allTeamResp.data.data || [];
 
     const leadTeamResp = await getTeamByTeamLeadId(userId);

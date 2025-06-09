@@ -526,7 +526,7 @@ import {getAllSamplingLocations} from "@/services/samplingLocationService";
 import QcOrderPreview from "@/components/dispatch/QcOrderPreviewV2.vue"
 import UserTeamTree from "@/components/dispatch/UserTeamTree.vue";
 import {Avatar, Check} from "@element-plus/icons-vue";
-import {getAllTeams} from "@/services/teamService";
+import {getAllTeamTree} from "@/services/teamService";
 import {getFormIdsForTeam} from "@/services/teamFormService";
 import {getUsersForTeam} from "@/services/teamUserService";
 import {translate} from "@/utils/i18n";
@@ -920,7 +920,7 @@ export default {
     },
     async loadTeamSelectOptions() {
       try {
-        const response = await getAllTeams();
+        const response = await getAllTeamTree();
         if (response.data.status === "200") {
           this.teamSelectOptions = response.data?.data || [];
         }

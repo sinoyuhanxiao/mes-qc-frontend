@@ -43,7 +43,7 @@
 
 <script setup>
   import {ref, reactive, onMounted, watch} from 'vue'
-  import { getAllTeams } from '@/services/teamService'
+  import { getAllTeamTree } from '@/services/teamService'
   import { getAllShifts } from '@/services/shiftService'
   import { getAlActiveSuggestedProducts } from '@/services/production/suggestedProductService'
   import { getAllActiveSuggestedBatches } from '@/services/production/suggestedBatchService'
@@ -177,7 +177,7 @@
 
   async function loadFilters() {
     const [teamsRes, shiftsRes, productsRes, batchesRes] = await Promise.all([
-      getAllTeams(),
+      getAllTeamTree(),
       getAllShifts(),
       getAlActiveSuggestedProducts(),
       getAllActiveSuggestedBatches()

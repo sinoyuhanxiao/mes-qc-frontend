@@ -395,7 +395,7 @@ import {
   updateUser,
   deleteUser,
 } from '@/services/userService.js';
-import {getAllTeams} from "@/services/teamService";
+import {getAllTeamTree} from "@/services/teamService";
 import {assignUserToTeams, removeUserFromAllTeams} from "@/services/teamUserService";
 import {fetchRoles} from "@/services/roleService";
 
@@ -719,7 +719,7 @@ export default {
     },
     async fetchTeamOptions () {
       try {
-        const { data } = await getAllTeams();
+        const { data } = await getAllTeamTree();
 
         if (data.status !== '200') {
           this.teamsOptions = [];

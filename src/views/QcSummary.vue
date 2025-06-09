@@ -24,15 +24,25 @@
 <!--        <el-option label="成品检测" value="form2" />-->
 <!--      </el-select>-->
 
-      <!-- 班组 -->
-      <el-select v-model="filters.teamId" placeholder="选择班组" filterable clearable style="width: 120px">
-        <el-option
-            v-for="team in teamOptions"
-            :key="team.id"
-            :label="team.name"
-            :value="team.id"
-        />
-      </el-select>
+      <!-- 班组 Flat -->
+<!--      <el-select v-model="filters.teamId" placeholder="选择班组" filterable clearable style="width: 120px">-->
+<!--        <el-option-->
+<!--            v-for="team in teamOptions"-->
+<!--            :key="team.id"-->
+<!--            :label="team.name"-->
+<!--            :value="team.id"-->
+<!--        />-->
+<!--      </el-select>-->
+
+      <!-- 班组 Hierarchy -->
+      <el-tree-select
+          v-model="selectedTeamId"
+          placeholder="选择班组"
+          :data="teamTreeData"
+          :render-after-expand="false"
+          style="width: 240px"
+          clearable
+      />
 
       <!-- 班次 -->
       <el-select v-model="filters.shiftId" placeholder="选择班次" filterable clearable style="width: 100px">
@@ -506,7 +516,7 @@ import { convertDateRangeToUtc } from '@/utils/time_utils';
 // Common fields API section
 import { getAlActiveSuggestedProducts } from '@/services/production/suggestedProductService';
 import { getAllActiveSuggestedBatches } from '@/services/production/suggestedBatchService';
-import { getAllTeams } from '@/services/teamService';
+import { getAllTeamTree } from '@/services/teamService';
 import { getAllShifts } from '@/services/shiftService';
 
 // Summary API section
@@ -561,6 +571,8 @@ const chartImages = reactive({
 const productOptions = ref([]);
 const batchOptions = ref([]);
 const teamOptions = ref([]);
+const teamTreeData = ref([])
+const selectedTeamId = ref()
 const shifts = ref([]);
 const personnelKpi = ref([])
 const qcSummaryLoading = ref(false);
@@ -923,6 +935,8 @@ function resetFilters() {
     summaryType: 'weekly'
   }
 
+  selectedTeamId.value = null
+
   // 强制触发日期范围更新逻辑
   setTimeout(() => {
     setDateRangeBySummaryType(filters.value.summaryType)
@@ -944,11 +958,13 @@ function scrollToKpiSection() {
 const fetchCommonFieldOptions = async () => {
   const productResp = await getAlActiveSuggestedProducts();
   const batchResp = await getAllActiveSuggestedBatches();
-  const teamResp = await getAllTeams();
+  const teamResp = await getAllTeamTree();
 
   productOptions.value = productResp.data || [];
   batchOptions.value = batchResp.data || [];
-  teamOptions.value = teamResp.data.data || [];
+  // teamOptions.value = teamResp.data.data || [];
+  teamTreeData.value = transformTeamTreeToTreeSelectFormat(teamResp.data.data || [])
+  console.log('✅ team tree raw =', teamResp.data.data)
 };
 
 // 加载班次数据（质检人员这页暂时不需要）
@@ -1018,7 +1034,7 @@ function buildFilterParams() {
   return {
     start_date: startDateUtc,
     end_date: endDateUtc,
-    team_id: filters.value.teamId,
+    team_id: selectedTeamId.value,
     shift_id: filters.value.shiftId,
     product_id: filters.value.productId,
     batch_id: filters.value.batchId
@@ -1149,7 +1165,7 @@ async function handleDocumentExport() {
     const res = await getDocumentList({
       start_date: startDateUtc,
       end_date: endDateUtc,
-      team_id: filters.value.teamId,
+      team_id: selectedTeamId.value,
       shift_id: filters.value.shiftId,
       product_id: filters.value.productId,
       batch_id: filters.value.batchId
@@ -1168,7 +1184,7 @@ async function handleDocumentExport() {
     await downloadPdfReport({
       start_date: startDateUtc,
       end_date: endDateUtc,
-      team_id: filters.value.teamId,
+      team_id: selectedTeamId.value,
       shift_id: filters.value.shiftId,
       product_id: filters.value.productId,
       batch_id: filters.value.batchId,
@@ -1217,6 +1233,17 @@ async function extractAllChartImages() {
     console.log("✅ chartImages ready to send to backend:", chartImages);
     downloadButtonEnabled.value = true
   }, 2000); // short delay to ensure canvas is painted
+}
+
+function transformTeamTreeToTreeSelectFormat(teams) {
+  return teams.map(team => ({
+    value: team.id,
+    label: team.name,
+    children: (team.children || []).map(child => ({
+      value: child.id,
+      label: child.name
+    }))
+  }))
 }
 
 watch(() => filters.value.summaryType, (newType) => {

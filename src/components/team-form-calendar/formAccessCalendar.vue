@@ -254,7 +254,7 @@ import allLocales from '@fullcalendar/core/locales-all.js';
 import TeamFormTree from "@/components/dispatch/TeamFormTree.vue";
 import {translate} from "@/utils/i18n";
 import {Check, QuestionFilled, Search} from "@element-plus/icons-vue";
-import {getAllTeams} from "@/services/teamService";
+import {getAllTeamTree} from "@/services/teamService";
 import {getCurrentLanguage} from '@/utils/dispatch-utils';
 
 
@@ -666,7 +666,7 @@ export default {
     },
     async fetchTeamOptions() {
       try {
-        const response = await getAllTeams();
+        const response = await getAllTeamTree();
         if (response.data.status === "200") {
           this.teamsOptions = response.data.data.map(team => ({
             value: team.leader?.name || "-", // Team Name

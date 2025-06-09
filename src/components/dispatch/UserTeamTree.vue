@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import {getAllTeams} from "@/services/teamService";
+import {getAllTeamTree} from "@/services/teamService";
 import {getAllTeamUsers} from "@/services/teamUserService";
 import {fetchUsers} from "@/services/userService";
 import {Search} from "@element-plus/icons-vue";
@@ -66,7 +66,7 @@ export default {
     async loadTeamTreeData() {
       try {
         const [teamsRes, teamUserRes, usersRes] = await Promise.all([
-          getAllTeams(),
+          getAllTeamTree(),
           getAllTeamUsers(),
           fetchUsers(),
         ]);

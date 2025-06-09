@@ -748,7 +748,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import {
-  getAllTeams,
+  getAllTeamTree,
   createTeam,
   updateTeam,
   activateTeam,
@@ -1066,7 +1066,7 @@ export default {
     async fetchTeamData() {
       try {
         this.loadingTeam = true;
-        const response = await getAllTeams(); // API call
+        const response = await getAllTeamTree(); // API call
         if (response.data.status === '200') {
           this.tableData = response.data.data || []; // Assign data
           this.filteredData = [...this.tableData]; // Initialize filtered data
