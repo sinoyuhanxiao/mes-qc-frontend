@@ -364,10 +364,10 @@
 
   <el-dialog v-model="showAddProductDialog" title="添加新产品" width="30%">
     <el-form label-width="80px">
-      <el-form-item label="产品名称">
+      <el-form-item label="产品名称" required>
         <el-input v-model="newProduct.name" />
       </el-form-item>
-      <el-form-item label="产品编码">
+      <el-form-item label="产品编码" required>
         <el-input v-model="newProduct.code" />
       </el-form-item>
       <el-form-item label="描述">
@@ -376,13 +376,13 @@
     </el-form>
     <template #footer>
       <el-button @click="showAddProductDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleAddProduct">添加</el-button>
+      <el-button type="primary" :disabled="!newProduct.name || !newProduct.code" @click="handleAddProduct">添加</el-button>
     </template>
   </el-dialog>
 
   <el-dialog v-model="showAddBatchDialog" title="添加新批次" width="30%">
     <el-form label-width="80px">
-      <el-form-item label="批次编码">
+      <el-form-item label="批次编码" required>
         <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
           <el-input v-model="newBatch.code" style="flex: 1;" />
           <el-switch
@@ -396,16 +396,16 @@
     </el-form>
     <template #footer>
       <el-button @click="showAddBatchDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleAddBatch">添加</el-button>
+      <el-button type="primary" :disabled="!newBatch.code" @click="handleAddBatch">添加</el-button>
     </template>
   </el-dialog>
 
   <el-dialog v-model="showEditProductDialog" title="编辑产品" width="30%">
     <el-form label-width="80px">
-      <el-form-item label="产品名称">
+      <el-form-item label="产品名称" required>
         <el-input v-model="editProduct.name" />
       </el-form-item>
-      <el-form-item label="产品编码">
+      <el-form-item label="产品编码" required>
         <el-input v-model="editProduct.code" disabled />
       </el-form-item>
       <el-form-item label="描述">
@@ -414,19 +414,19 @@
     </el-form>
     <template #footer>
       <el-button @click="showEditProductDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleUpdateProduct">保存</el-button>
+      <el-button type="primary" :disabled="!editProduct.name || !editProduct.code" @click="handleUpdateProduct">保存</el-button>
     </template>
   </el-dialog>
 
   <el-dialog v-model="showEditBatchDialog" title="编辑批次" width="30%">
     <el-form label-width="80px">
-      <el-form-item label="批次编码">
-        <el-input v-model="editBatch.code" disabled />
+      <el-form-item label="批次编码" required>
+        <el-input v-model="editBatch.code" />
       </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="showEditBatchDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleUpdateBatch">保存</el-button>
+      <el-button type="primary" :disable="!editBatch.code" @click="handleUpdateBatch">保存</el-button>
     </template>
   </el-dialog>
 
@@ -579,7 +579,7 @@ const showAddProductDialog = ref(false);
 const showAddBatchDialog = ref(false);
 const newProduct = reactive({ name: '', code: '', description: '' });
 const newBatch = reactive({ code: '' });
-const autoGenerateBatchCode = ref(true);
+const autoGenerateBatchCode = ref(false);
 const selectedApprovalType = ref() // default fallback
 
 // team
@@ -1157,7 +1157,7 @@ const handleUpdateBatch = async () => {
     ElMessage.success(`批次「${editBatch.code}」更新成功`);
     showEditBatchDialog.value = false;
   } catch (err) {
-    ElMessage.error('批次更新失败，请重试');
+    ElMessage.error('有重复批次，请重试');
     console.error(err);
   }
 };
