@@ -160,7 +160,12 @@ export function exportQcRecordsToExcel({ records, label, translate }) {
             !key.endsWith('version') &&
             !key.endsWith('exceeded_info') &&
             !key.endsWith('approver_updated_at')
-        );
+        ).map(([key, value]) => {
+            if (Array.isArray(value) || Object.prototype.toString.call(value) === '[object Array]') {
+                return [key, value.join(', ')];
+            }
+            return [key, value];
+        });
 
         // Only keep related_* fields that do NOT end with _id or _ids, and translate keys
         const relatedFields = entries
