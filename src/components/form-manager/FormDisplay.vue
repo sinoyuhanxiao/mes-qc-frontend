@@ -242,23 +242,17 @@
                 </el-form-item>
 
                 <!-- 新增：所属班组 -->
-                <el-form-item label="所属班组">
-                  <el-select
-                      v-model="selectedTeam"
-                      filterable
-                      clearable
-                      placeholder="选择班组"
-                      style="width: 100%;"
-                      :disabled="!(enable_form || enable_common_fields)"
-                  >
-                    <el-option
-                        v-for="team in teamOptions"
-                        :key="team.id"
-                        :label="team.name"
-                        :value="team.name"
-                    />
-                  </el-select>
-                </el-form-item>
+              <el-form-item label="所属班组">
+                <el-tree-select
+                    v-model="selectedTeamId"
+                    :data="teamTreeData"
+                    placeholder="选择班组"
+                    style="width: 100%;"
+                    check-strictly
+                    clearable
+                    :disabled="!(enable_form || enable_common_fields)"
+                />
+              </el-form-item>
 
           </el-form>
         </div>
@@ -519,6 +513,7 @@ const showEditProductDialog = ref(false);
 const showEditBatchDialog = ref(false);
 const editProduct = reactive({ id: null, name: '', code: '', description: '' });
 const editBatch = reactive({ id: null, code: '' });
+const teamTreeData = ref([]);
 import { fetchUsers } from '@/services/userService'
 import { getAllShifts } from '@/services/shiftService'
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
@@ -588,7 +583,6 @@ const autoGenerateBatchCode = ref(true);
 const selectedApprovalType = ref() // default fallback
 
 // team
-const selectedTeam = ref('');
 const selectedTeamId = ref(null);
 const teamOptions = ref([]);
 
@@ -761,12 +755,11 @@ const fetchCommonFieldOptions = async () => {
   // 👇 新增：加载班组选项并默认设置为当前用户所属班组
   try {
     const allTeamResp = await getAllTeamTree();
-    teamOptions.value = allTeamResp.data.data || [];
+    teamTreeData.value = transformTeamTreeToTreeSelectFormat(allTeamResp.data.data || []);
 
     const leadTeamResp = await getTeamByTeamLeadId(userId);
     const defaultTeam = leadTeamResp.data.data;
     if (defaultTeam) {
-      selectedTeam.value = defaultTeam.name;
       selectedTeamId.value = defaultTeam.id;
     }
   } catch (e) {
@@ -789,7 +782,7 @@ const fetchQcUsersAndShifts = async () => {
 const handleAddProduct = async () => {
   if (!newProduct.name || !newProduct.code) return;
 
-  // 🔍 检查是否已存在相同 product code
+  // 检查是否已存在相同 product code
   const exists = productOptions.value.some(p => p.code === newProduct.code);
   if (exists) {
     ElMessage.error(`产品编码 ${newProduct.code} 已存在，无法重复添加`);
@@ -800,6 +793,8 @@ const handleAddProduct = async () => {
     await createSuggestedProduct({ ...newProduct, created_by: userId });
     await fetchCommonFieldOptions();
     selectedProductCodes.value.push(newProduct.code);
+    // Force reactivity to trigger the watch and update selectedProductIds
+    selectedProductCodes.value = [...selectedProductCodes.value]; // 强制触发 watch，更新 selectedProductIds
     ElMessage.success(`产品「${newProduct.name}」添加成功`);
     showAddProductDialog.value = false;
     Object.assign(newProduct, { name: '', code: '', description: '' });
@@ -823,14 +818,27 @@ const handleAddBatch = async () => {
     await createSuggestedBatch({ ...newBatch, created_by: userId });
     await fetchCommonFieldOptions();
     selectedBatchCodes.value.push(newBatch.code);
+    // Force reactivity to trigger the watch and update selectedBatchIds
+    selectedBatchCodes.value = [...selectedBatchCodes.value]; // 强制触发 watch，更新 selectedBatchIds
     ElMessage.success(`批次 ${newBatch.code} 添加成功`);
     showAddBatchDialog.value = false;
     newBatch.code = '';
   } catch (err) {
-    console.error('添加批次失败:', err); // ⛔️ 后台或网络错误
+    console.error('添加批次失败:', err); // 后台或网络错误
     ElMessage.error(`批次 ${newBatch.code} 添加失败，请重试`);
   }
 };
+
+function transformTeamTreeToTreeSelectFormat(teams) {
+  return teams.map(team => ({
+    value: team.id,
+    label: team.name,
+    children: (team.children || []).map(child => ({
+      value: child.id,
+      label: child.name
+    }))
+  }));
+}
 
 // ✅ Watch `rt` in case it changes dynamically
 watch(() => route.query.rt, (newRt) => {
@@ -872,10 +880,6 @@ watch(selectedBatchCodes, (codes) => {
 // 根据 selectedShift 名称映射出 selectedShiftId
 watch(selectedShift, (shiftName) => {
   selectedShiftId.value = shifts.value.find(s => s.name === shiftName)?.id || null;
-});
-
-watch(selectedTeam, (teamName) => {
-  selectedTeamId.value = teamOptions.value.find(t => t.name === teamName)?.id || null;
 });
 
 // ✅ Ensure the countdown starts when mounted
@@ -1075,7 +1079,8 @@ const confirmSubmission = async () => {
     formData['related_batches'] = selectedBatchCodes.value.join(', ');
     formData['related_inspectors'] = selectedInspectorNames.join(', ');
     formData['related_shifts'] = selectedShiftName; // already a string, no .join()
-    formData['related_teams'] = selectedTeam.value || '';
+    const selectedTeamName = findTeamNameById(selectedTeamId.value);
+    formData['related_teams'] = selectedTeamName || '';
 
     formData['e-signature'] = signatureData.value || null;
 
@@ -1250,6 +1255,30 @@ watch(enable_form, (newVal) => {
     vFormRef.value.disableForm(); // Disable the form when switched off
   }
 });
+
+watch(
+    [selectedProductIds, selectedBatchIds],
+    ([newProductIds, newBatchIds]) => {
+      console.log('✅ selectedProductIds:', newProductIds);
+      console.log('✅ selectedBatchIds:', newBatchIds);
+    }
+);
+
+
+function findTeamNameById(id) {
+  let name = '';
+  const traverse = (nodes) => {
+    for (const node of nodes) {
+      if (node.value === id) {
+        name = node.label;
+        return;
+      }
+      if (node.children) traverse(node.children);
+    }
+  };
+  traverse(teamTreeData.value || []);
+  return name;
+}
 
 const audio = new Audio(soundEffect);
 // audio.play();

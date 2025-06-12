@@ -11,9 +11,15 @@
           style="width: 94.5%;"
       />
 
-      <el-select v-model="filters.teamId" placeholder="选择班组" filterable clearable>
-        <el-option v-for="team in teamOptions" :key="team.id" :label="team.name" :value="team.id" />
-      </el-select>
+      <el-tree-select
+          v-model="filters.teamId"
+          :data="teamTreeData"
+          placeholder="选择班组"
+          filterable
+          clearable
+          check-strictly
+          style="width: 100%;"
+      />
 
       <el-select v-model="filters.shiftId" placeholder="选择班次" filterable clearable>
         <el-option v-for="shift in shifts" :key="shift.id" :label="shift.name" :value="shift.id" />
@@ -54,6 +60,7 @@
   import { translate } from '@/utils/i18n'
   import DownloadProgress from "@/components/export/DownloadProgress.vue";
   const downloadingProgress = reactive({ visible: false, total: 0, current: 0 });
+  const teamTreeData = ref([]);
 
   const props = defineProps({
     visible: Boolean,
@@ -94,6 +101,17 @@
     downloadingProgress.current = current;
     downloadingProgress.total = total;
     downloadingProgress.visible = true;
+  }
+
+  function transformTeamTreeToTreeSelectFormat(teams) {
+    return teams.map(team => ({
+      value: team.id,
+      label: team.name,
+      children: (team.children || []).map(child => ({
+        value: child.id,
+        label: child.name
+      }))
+    }));
   }
 
   async function handleDocumentExport() {
@@ -183,7 +201,7 @@
       getAllActiveSuggestedBatches()
     ])
 
-    teamOptions.value = teamsRes.data.data
+    teamTreeData.value = transformTeamTreeToTreeSelectFormat(teamsRes.data.data || []);
     shifts.value = shiftsRes.data.data
     productOptions.value = productsRes.data
     batchOptions.value = batchesRes.data

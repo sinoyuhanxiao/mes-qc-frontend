@@ -1106,8 +1106,25 @@ async function loadProductDate(params) {
     return;
   }
 
-  const xDates = [...new Set(raw.map(item => item.snapshot_date))];
-  const yProducts = [...new Set(raw.map(item => item.product_name))];
+  // Step: Get top 10 products by total abnormal count
+  const productCounts = new Map();
+  raw.forEach(item => {
+    const name = item.product_name?.trim();
+    productCounts.set(name, (productCounts.get(name) || 0) + item.abnormal_count);
+  });
+
+  const topProducts = [...productCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name]) => name);
+
+  // Step: Filter raw to only include top 10 products
+  const filteredRaw = raw.filter(item =>
+      topProducts.includes(item.product_name?.trim())
+  );
+
+  const xDates = [...new Set(filteredRaw.map(item => item.snapshot_date))];
+  const yProducts = topProducts; // already sorted
 
   chartHeatmapByProductDate.value.xAxis.data = xDates;
   chartHeatmapByProductDate.value.yAxis.data = yProducts;
