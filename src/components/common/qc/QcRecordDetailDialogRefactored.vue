@@ -72,6 +72,9 @@
       <!-- System Info -->
       <el-descriptions :title="translate('FormDataSummary.recordTable.groupSystemInfo')" :column="1" border
                        style="margin-top: 10px" :label-width="descriptionLabelWidth">
+        <el-descriptions-item :label="translate('FormDataSummary.detailDialog.submissionId')">
+          {{ systemInfo.提交单号 || " - " }}
+        </el-descriptions-item>
         <el-descriptions-item :label="translate('FormDataSummary.detailDialog.submitter')">
           {{ systemInfo.提交人 || " - " }}
         </el-descriptions-item>

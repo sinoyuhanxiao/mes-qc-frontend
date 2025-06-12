@@ -689,6 +689,7 @@ export default {
         },
         detailDialog: {
             titleSuffix: "提交记录",
+            submissionId: "提交单号",
             uncategorized: "uncategorized",
             submitter: "提交人",
             submittedAt: "提交时间",

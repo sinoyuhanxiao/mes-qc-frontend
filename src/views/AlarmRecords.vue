@@ -99,7 +99,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="告警时间" prop="alertTime" width="180" sortable fixed="left">
+      <el-table-column label="告警时间" prop="alertTime" width="180" sortable="custom" fixed="left">
         <template #default="scope">
           <span>{{ formatDate(scope.row.alert_time) }}</span>
         </template>
@@ -131,7 +131,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="检测值" prop="inspectionValue" width="180" sortable>
+      <el-table-column label="检测值" prop="inspectionValue" width="180" sortable="custom">
         <template #default="scope">
           <!-- 如果是数字类型 -->
           <template v-if="scope.row.alert_type === 'number'">
@@ -191,7 +191,7 @@
 <!--        </template>-->
 <!--      </el-table-column>-->
 
-      <el-table-column label="RPN" prop="rpn" width="120" sortable>
+      <el-table-column label="RPN" prop="rpn" width="120" sortable="custom">
         <template #header>
           <span>RPN</span>
           <el-tooltip content="点击查看 RPN 说明" placement="top">
@@ -211,7 +211,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="预警等级" prop="risk_level" width="120" sortable>
+      <el-table-column label="预警等级" prop="risk_level" width="120">
         <template #default="scope">
           <el-tag :type="scope.row.risk_level.id === 3 ? 'danger' : scope.row.risk_level.id === 2 ? 'warning' : 'info'">
             {{ scope.row.risk_level.name }}
@@ -238,7 +238,7 @@
       <el-table-column label="状态" prop="status" width="120">
         <template #header>
           <span>状态</span>
-          <el-tooltip content="RPN值低于100时，状态将自动设为已关闭" placement="top">
+          <el-tooltip content="RPN值低于20时，状态将自动设为已关闭" placement="top">
             <el-icon style="cursor: pointer; margin-left: 5px;" @click.stop="dialogs.showRpnDialog = true">
               <QuestionFilled />
             </el-icon>
@@ -261,7 +261,7 @@
           >
             {{ scope.row.isEditing ? '保存' : '编辑' }}
           </el-button>
-          <el-button size="small" type="danger" @click="deleteRecord(scope.row)">删除</el-button>
+          <el-button v-if="false" size="small" type="danger" @click="deleteRecord(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -730,10 +730,26 @@ export default {
           const updatedBy = this.$store.getters.getUser.id;
           await updateAlertRecord({ id: row.id, rpn: row.rpn, updatedBy });
           this.$message.success('保存并更新成功');
+
+          const rpn = row.rpn;
+          if (rpn >= 200) {
+            row.risk_level = { id: 3, name: "高风险" };
+          } else if (rpn >= 100) {
+            row.risk_level = { id: 2, name: "中风险" };
+          } else {
+            row.risk_level = { id: 1, name: "低风险" };
+          }
+          if (rpn < 30) {
+            row.alert_status = { id: 2, name: "已关闭" };
+          } else {
+            row.alert_status = { id: 1, name: "处理中" };
+          }
         } catch (error) {
           this.$message.error('更新失败，请稍后重试');
           console.error("❌ 更新告警记录失败", error);
         }
+
+        await this.fetchAlertSummary(); // Refresh all chart data after risk level change
 
         const idx = this.table.indexesForEdit[currentPage].indexOf(index);
         if (idx !== -1) this.table.indexesForEdit[currentPage].splice(idx, 1);
@@ -743,7 +759,7 @@ export default {
         this.$message({
           type: 'success',
           dangerouslyUseHTMLString: true,
-          message: `保存成功，RPN值: <span style="color: #2c4cb3">${oldRpn}</span> → <span style="color: #f46666">${rpn}</span>${rpn < 100 ? '，状态已自动设为<span style="color: green">已关闭</span>' : ''}`
+          message: `保存成功，RPN值: <span style="color: #2c4cb3">${oldRpn}</span> → <span style="color: #f46666">${rpn}</span>${rpn < 30 ? '，状态已自动设为<span style="color: green">已关闭</span>' : ''}`
         });
       }
 

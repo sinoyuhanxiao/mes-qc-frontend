@@ -115,7 +115,7 @@
             <el-link type="primary" style="margin-left: 10px" @click="$emit('edit-record', scope.row)">
               {{ translate('common.table.editButton') }}
             </el-link>
-            <el-link type="danger" style="margin-left: 10px" @click="() => {
+            <el-link v-if="false" type="danger" style="margin-left: 10px" @click="() => {
                   $emit('delete', scope.row)
                   emit('update:dateRange', [...localDateRange.value]) // 刷新页面
                 }">

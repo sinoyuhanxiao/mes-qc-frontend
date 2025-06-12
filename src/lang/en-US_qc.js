@@ -690,6 +690,7 @@ export default {
         },
         detailDialog: {
             titleSuffix: "Submission Records",
+            submissionId: "Submission ID",
             uncategorized: "Uncategorized",
             submitter: "Submitter",
             submittedAt: "Submission Time",
