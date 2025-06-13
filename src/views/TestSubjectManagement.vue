@@ -25,7 +25,7 @@
               circle
               @click="handleRefreshButton"
           >
-            <el-icon style="color: #004085;">
+            <el-icon style="color: white;">
               <RefreshRight />
             </el-icon>
           </el-button>
@@ -189,6 +189,6 @@ export default {
 }
 
 .refresh-button el-icon {
-  color: #004085; /* Darker primary-like color for the refresh icon */
+  color: white; /* Darker primary-like color for the refresh icon */
 }
 </style>

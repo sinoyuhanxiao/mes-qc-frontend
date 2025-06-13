@@ -25,7 +25,7 @@
             circle
             @click="fetchAllData"
         >
-          <el-icon style="color: #004085;"><RefreshRight /></el-icon>
+          <el-icon style="color: white;"><RefreshRight /></el-icon>
         </el-button>
       </el-tooltip>
 

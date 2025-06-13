@@ -26,7 +26,7 @@
               circle
               @click="fetchUserData"
           >
-            <el-icon style="color: #004085;"><RefreshRight /></el-icon>
+            <el-icon style="color: white;"><RefreshRight /></el-icon>
           </el-button>
         </el-tooltip>
 
@@ -1056,7 +1056,7 @@ export default {
   }
 
   .refresh-button el-icon {
-    color: #004085; /* Darker primary-like color for the refresh icon */
+    color: white; /* Darker primary-like color for the refresh icon */
   }
 
   .tableContainer {
