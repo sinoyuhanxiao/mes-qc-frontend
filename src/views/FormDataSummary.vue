@@ -16,6 +16,7 @@
             :start-placeholder="translate('FormDataSummary.startPlaceholder')"
             :end-placeholder="translate('FormDataSummary.endPlaceholder')"
             @change="refreshChartData"
+            :clearable="false"
         />
         <el-button type="success" style="margin-top: 0;" @click="exportChartReportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
         <el-button

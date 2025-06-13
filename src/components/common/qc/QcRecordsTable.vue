@@ -32,6 +32,7 @@
           :start-placeholder="translate('FormDataSummary.startPlaceholder')"
           :end-placeholder="translate('FormDataSummary.endPlaceholder')"
           @change="handleDateRangeChange"
+          :clearable="false"
       />
     </div>
 
@@ -131,10 +132,11 @@
         v-if="filteredRecords.length > 0"
         v-model:currentPage="currentPage"
         :page-size="pageSize"
-        :page-sizes="[15]"
+        :page-sizes="[15, 30, 50]"
         layout="total, sizes, prev, pager, next, jumper"
         :total="filteredRecords.length"
         @current-change="handlePageChange"
+        :current-page="currentPage"
         @size-change="handleSizeChange"
     />
   </div>
@@ -167,12 +169,12 @@
 
   const emit = defineEmits(['view-details', 'delete', 'edit-record', 'export-excel', 'update:dateRange'])
 
-  const localSearch = ref(props.search || '')
+  const localSearch = ref('')
   const localDateRange = ref(props.dateRange || [])
   const currentPage = ref(1)
-  let pageSize = ref(15)
+  const pageSize = ref(15)
   const handleSizeChange = (newSize) => {
-    pageSize = newSize
+    pageSize.value = newSize
     currentPage.value = 1
   }
   const showAlerts = ref(true)
@@ -221,13 +223,15 @@
   }
 
   const filteredRecords = computed(() => {
-    if (!localSearch.value) return props.records
+    if (!localSearch.value.trim()) return props.records
+
     return props.records.filter(record =>
         Object.values(record).some(val =>
-            String(val).toLowerCase().includes(localSearch.value.toLowerCase())
+            String(val ?? '').toLowerCase().includes(localSearch.value.toLowerCase())
         )
     )
   })
+
 
   const paginatedRecords = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value
@@ -324,6 +328,33 @@ const getRowClass = ({ row, rowIndex }) => {
     delete window.refreshQcRecordsTableAfterEditRecord
   })
 
+  watch(() => props.records, (newRecords) => {
+    console.log("🔁 props.records changed, resetting currentPage to 1", newRecords.length)
+    currentPage.value = 1
+  })
+
+  console.log("📊 Pagination debug:", {
+    total: filteredRecords.value.length,
+    currentPage: currentPage.value,
+    pageSize: pageSize.value,
+    paginatedResult: filteredRecords.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value).map(x => x._id)
+  });
+
+  watch(() => props.search, (val) => {
+    localSearch.value = val?.trim?.() || ''
+  })
+
+  watch(filteredRecords, (val) => {
+    console.log("🎯 filteredRecords updated:", val.length)
+  })
+
+  watch(localSearch, (val) => {
+    console.log("🔍 localSearch =", JSON.stringify(val))
+  })
+
+  watch(() => props.records, (val) => {
+    console.log("📥 props.records length =", val?.length ?? 0)
+  })
 
 </script>
 

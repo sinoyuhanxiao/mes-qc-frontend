@@ -6,7 +6,7 @@
       @update:modelValue="$emit('update:visible', $event)"
   >
     <QcRecordsTable
-        :records="paginatedRecords"
+        :records="filteredRecords"
         :headers="displayedHeaders"
         :search="search"
         v-model:dateRange="dateRange"
