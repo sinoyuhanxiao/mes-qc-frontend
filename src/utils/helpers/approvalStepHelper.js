@@ -24,8 +24,11 @@ export function getStepsFromState(flow, state) {
     }
 
     return titles.map((title, index) => {
+        const isLast = index === titles.length - 1;
+        if (isLast && state === 'fully_approved') return { title, status: 'success' };
         if (index < currentIndex) return { title, status: 'success' };
         if (index === currentIndex) return { title, status: 'process' };
         return { title, status: 'wait' };
     });
+
 }
