@@ -329,6 +329,7 @@ async function handleDateRangeChange(dateRange) {
   const formTemplateId = props.selectedForm?.qcFormTemplateId;
   localLoading.value = true;
   try {
+    localRecords.value = []  // Clear previous data to avoid ghost children
     localRecords.value = await fetchRecordsData(formTemplateId, dateRange);
     console.log("🟢 QcRecordsDialog handleDateRangeChange:", localRecords.value);
   } catch (error) {

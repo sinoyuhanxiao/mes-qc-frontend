@@ -225,7 +225,7 @@
   const filteredRecords = computed(() => {
     if (!localSearch.value.trim()) return props.records
 
-    return props.records.filter(record =>
+    return sanitizedRecords.value.filter(record =>
         Object.values(record).some(val =>
             String(val ?? '').toLowerCase().includes(localSearch.value.toLowerCase())
         )
@@ -239,22 +239,31 @@
     return filteredRecords.value.slice(start, end)
   })
 
-// 找到这段 computed 逻辑：
-const displayedRecords = computed(() => {
-  const allChildIds = new Set(
-      props.records.flatMap(record => record.children?.map(child => child._id) || [])
-  )
-
-  return paginatedRecords.value.map(record => {
-    if (
-        record.version_group_id &&
-        !allChildIds.has(record._id)
-    ) {
-      return { ...record, hasChildren: true }
-    }
-    return record
+  const sanitizedRecords = computed(() => {
+    return props.records.map(r => {
+      const clone = JSON.parse(JSON.stringify(r)) // Deep clone to break reference
+      delete clone.children
+      delete clone.hasChildren
+      return clone
+    })
   })
-})
+
+  const displayedRecords = computed(() => {
+    const allChildIds = new Set(
+        sanitizedRecords.value.flatMap(record => record.children?.map(child => child._id) || [])
+    )
+
+    const refreshKey = Date.now() // Changes on every compute
+
+    return paginatedRecords.value.map(record => {
+      const clone = { ...record, _refreshKey: refreshKey }
+      if (record.version_group_id && !allChildIds.has(record._id)) {
+        clone.hasChildren = true
+      }
+      return clone
+    })
+  })
+
 
   watch(() => props.search, (val) => localSearch.value = val)
   watch(
@@ -278,10 +287,26 @@ const displayedRecords = computed(() => {
     const children = await loadVersionGroupRecords(props.qcFormTemplateId, row.version_group_id)
     const filtered = children.filter(c => c.version !== row.version)
 
-    // ✅ 添加子项 ID 到 expandedRows（确保高亮）
-    filtered.forEach(child => expandedRows.value.add(child._id))
+    // 强制剥离 children / hasChildren 字段，防止显示箭头
+    const cleaned = filtered.map(child => {
+      const cleanChild = JSON.parse(JSON.stringify(child)) // Deep clone to wipe ghosts
+      delete cleanChild.children
+      delete cleanChild.hasChildren
+      return cleanChild
+    })
 
-    resolve(filtered)
+    // 添加子项 ID 到 expandedRows（用于高亮）
+    cleaned.forEach(child => expandedRows.value.add(child._id))
+
+    resolve(cleaned)
+
+    // Remove non-expanded expand icons to fix the element plus bug
+    setTimeout(() => {
+      document.querySelectorAll('div.el-table__expand-icon:not(.el-table__expand-icon--expanded)').forEach(icon => {
+        icon.style.opacity = '0'                // Make invisible
+        icon.style.pointerEvents = 'none'       // Prevent click
+      })
+    }, 10)
   }
 
   // css
@@ -328,32 +353,8 @@ const getRowClass = ({ row, rowIndex }) => {
     delete window.refreshQcRecordsTableAfterEditRecord
   })
 
-  watch(() => props.records, (newRecords) => {
-    console.log("🔁 props.records changed, resetting currentPage to 1", newRecords.length)
-    currentPage.value = 1
-  })
-
-  console.log("📊 Pagination debug:", {
-    total: filteredRecords.value.length,
-    currentPage: currentPage.value,
-    pageSize: pageSize.value,
-    paginatedResult: filteredRecords.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value).map(x => x._id)
-  });
-
   watch(() => props.search, (val) => {
     localSearch.value = val?.trim?.() || ''
-  })
-
-  watch(filteredRecords, (val) => {
-    console.log("🎯 filteredRecords updated:", val.length)
-  })
-
-  watch(localSearch, (val) => {
-    console.log("🔍 localSearch =", JSON.stringify(val))
-  })
-
-  watch(() => props.records, (val) => {
-    console.log("📥 props.records length =", val?.length ?? 0)
   })
 
 </script>
