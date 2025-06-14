@@ -27,9 +27,9 @@ export function useApprovalDetailExport() {
         const cleanRecords = records.map(record => {
             const clean = { ...record }
 
-            // 提取前置字段
+            // 提取前置字段, keep chinese name as variable here
             const 提交时间 = record['提交时间']
-            const 提交人 = record['提交人'] || record['created_by_name'] || '-'
+            // const 提交人 = record['提交人'] || record['created_by_name'] || '-'
 
             // 提取需要保留的 related 字段（非 *_id / *_ids）并翻译表头
             const relatedFields = {}
@@ -57,7 +57,7 @@ export function useApprovalDetailExport() {
             // 构造最终对象
             return {
                 提交时间,
-                提交人,
+                // 提交人,
                 ...Object.fromEntries(
                     Object.entries(clean).map(([key, value]) => {
                         if (Array.isArray(value)) {
@@ -232,7 +232,7 @@ export function useApprovalDetailExport() {
                 startY: y,
                 head: [['字段', '内容']],
                 body: [
-                    ['提交人', systemInfo.提交人 || '-'],
+                    // ['提交人', systemInfo.提交人 || '-'],
                     ['提交时间', systemInfo.提交时间 || '-'],
                     ['提交单号', systemInfo.提交单号 || '-']
                 ],

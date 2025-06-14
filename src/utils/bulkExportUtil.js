@@ -103,7 +103,7 @@ export function generateSingleRecordPdf({ formLabel, groupedDetails, basicInfo, 
         startY: y,
         head: [translate('Export.tableHead')],
         body: [
-            [translate('Export.systemInfo.submitter'), systemInfo.提交人 || translate('Export.fallback')],
+            // [translate('Export.systemInfo.submitter'), systemInfo.提交人 || translate('Export.fallback')],
             [translate('Export.systemInfo.submittedAt'), systemInfo.提交时间 || translate('Export.fallback')],
             [translate('Export.systemInfo.submissionId'), systemInfo.提交单号 || translate('Export.fallback')]
         ],
@@ -156,7 +156,7 @@ export async function exportDocumentsToZip(documents, translate, onProgress) {
             const systemInfo = {
                 提交单号: submissionId,
                 提交时间: formattedTime,
-                提交人: submitterName
+                // 提交人: submitterName
             };
 
             const uncategorized = doc.uncategorized || {};
@@ -291,7 +291,7 @@ export async function exportDocumentsToExcelZip(documents, translate, onProgress
             const flatRow = {};
 
             flatRow[translate('Export.systemInfo.submittedAt')] = doc.created_at || "-";
-            flatRow[translate('Export.systemInfo.submitter')] = "-";
+            // flatRow[translate('Export.systemInfo.submitter')] = "-";
 
             // 展开 groupedDetails 的所有子字段
             Object.entries(groupedDetails).forEach(([category, fields]) => {
