@@ -63,7 +63,9 @@ export function useAlertHighlight(showAlerts) {
     // useAlertHighlight.js
 
     const getStyledValueWithIcon = (value, exceededInfo) => {
-        const valText = Array.isArray(value) ? value.join(", ") : value || " - ";
+        const valText = Array.isArray(value)
+            ? value.join(", ")
+            : (value === 0 ? 0 : (value || " - "));
         const result = exceededInfo?.result;
 
         const iconMap = {

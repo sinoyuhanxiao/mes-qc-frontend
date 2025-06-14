@@ -33,7 +33,7 @@
             :key="key"
             :label="key"
         >
-          {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+          {{ Array.isArray(value) ? value.join(', ') : (value === 0 ? 0 : (value || " - ")) }}
         </el-descriptions-item>
       </el-descriptions>
       </template>
@@ -51,7 +51,7 @@
             <template v-for="(value, key) in fields" :key="key">
               <el-descriptions-item :label="key">
                 <span>
-                  {{ Array.isArray(value) ? value.join(', ') : (value || " - ") }}
+                  {{ Array.isArray(value) ? value.join(', ') : (value === 0 ? 0 : (value || " - ")) }}
                   <el-icon
                       v-if="showAlerts && getAlertIcon(groupedDetails, key)"
                       style="margin-left: 4px;"
