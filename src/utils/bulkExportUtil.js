@@ -308,7 +308,7 @@ export async function exportDocumentsToExcelZip(documents, translate, onProgress
                         key === 'exceeded_info'
                     ) return;
 
-                    flatRow[key] = value;
+                    flatRow[key] = Array.isArray(value) ? value.join(', ') : value;
                 });
             });
 

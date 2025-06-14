@@ -58,7 +58,14 @@ export function useApprovalDetailExport() {
             return {
                 提交时间,
                 提交人,
-                ...clean,
+                ...Object.fromEntries(
+                    Object.entries(clean).map(([key, value]) => {
+                        if (Array.isArray(value)) {
+                            return [key, value.join(', ')];
+                        }
+                        return [key, value];
+                    })
+                ),
                 ...relatedFields
             }
         })
