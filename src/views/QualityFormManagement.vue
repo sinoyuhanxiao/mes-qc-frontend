@@ -12,6 +12,14 @@
           :usable="false"
           @updateIsDirty="isFormDirty = $event"
       />
+
+      <!-- Show placeholder if no valid form is selected -->
+      <div v-else style="display: flex; justify-content: center; margin-top: 40vh; transform: translateY(-50%);">
+        <el-empty
+            description="点击任意表单以查看内容"
+            image-size="200"
+        />
+      </div>
     </el-main>
   </el-container>
 </template>

@@ -4,40 +4,52 @@
       <FormTree @select-form="selectForm" @add-form="addForm" />
     </el-aside>
 
-    <el-main width="75%" style="max-height: 100vh; overflow-y: auto;" v-show="isMainDisplayed">
-      <div v-if="selectedForm" class="form-header">
-        <h1 style="width: 200px">{{ selectedForm.label }} {{ translate('FormDataSummary.summaryTitle') }}</h1>
-        <el-date-picker
-            style="width: 320px; margin-left: 150px; margin-right: 20px"
-            v-model="dateRange"
-            type="datetimerange"
-            :shortcuts="shortcuts"
-            :range-separator="translate('FormDataSummary.dateRangeSeparator')"
-            :start-placeholder="translate('FormDataSummary.startPlaceholder')"
-            :end-placeholder="translate('FormDataSummary.endPlaceholder')"
-            @change="refreshChartData"
-            :clearable="false"
+    <el-main width="75%" style="max-height: 100vh; overflow-y: auto;">
+      <template v-if="isMainDisplayed">
+        <div v-if="selectedForm" class="form-header">
+          <h1 style="width: 200px">{{ selectedForm.label }} {{ translate('FormDataSummary.summaryTitle') }}</h1>
+          <el-date-picker
+              style="width: 320px; margin-left: 150px; margin-right: 20px"
+              v-model="dateRange"
+              type="datetimerange"
+              :shortcuts="shortcuts"
+              :range-separator="translate('FormDataSummary.dateRangeSeparator')"
+              :start-placeholder="translate('FormDataSummary.startPlaceholder')"
+              :end-placeholder="translate('FormDataSummary.endPlaceholder')"
+              @change="refreshChartData"
+              :clearable="false"
+          />
+          <el-button type="success" style="margin-top: 0;" @click="exportChartReportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
+          <el-button
+              type="primary"
+              @click="qcRecordsDialogVisible = true"
+              style="margin-top: 0"
+          >
+            {{ translate('FormDataSummary.viewRecords') }}
+          </el-button>
+        </div>
+
+        <el-skeleton v-if="loadingCharts" :rows="6" animated />
+
+        <div v-if="selectedForm && lineChartWidgets.length === 0 && pieChartWidgets.length === 0 && !loadingCharts" style="text-align: center; margin-top: 50px;">
+          <el-empty :description="translate('FormDataSummary.noChartData')" />
+        </div>
+
+        <QcCharts
+            v-else
+            :lineChartWidgets="lineChartWidgets"
+            :pieChartWidgets="pieChartWidgets"
         />
-        <el-button type="success" style="margin-top: 0;" @click="exportChartReportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
-        <el-button
-            type="primary"
-            @click="qcRecordsDialogVisible = true"
-            style="margin-top: 0"
-        >
-          {{ translate('FormDataSummary.viewRecords') }}
-        </el-button>
-      </div>
+      </template>
 
-      <el-skeleton v-if="loadingCharts" :rows="6" animated />
-
-      <div v-if="selectedForm && lineChartWidgets.length === 0 && pieChartWidgets.length === 0 && !loadingCharts" style="text-align: center; margin-top: 50px;">
-        <el-empty :description="translate('FormDataSummary.noChartData')" />
-      </div>
-      <QcCharts
-          v-else
-          :lineChartWidgets="lineChartWidgets"
-          :pieChartWidgets="pieChartWidgets"
-      />
+      <template v-else>
+        <div style="display: flex; justify-content: center; margin-top: 40vh; transform: translateY(-50%)">
+          <el-empty
+              description="点击任意表单以查看内容"
+              image-size="200"
+          />
+        </div>
+      </template>
     </el-main>
 
     <!-- 质检记录弹窗组件 -->
@@ -76,7 +88,7 @@ export default {
     return {
       tableHeight: window.innerHeight - 220,
       pdfLoading: false,
-      isMainDisplayed: true,
+      isMainDisplayed: false,
       dateRange: [this.getStartOfMonth(), this.getEndOfMonth()], // Default to current month
       loadingCharts: false,
       qcRecordsDialogVisible: false,
