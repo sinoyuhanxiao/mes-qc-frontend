@@ -47,6 +47,7 @@
         :load="load"
         :row-class-name="getRowClass"
         @expand-change="toggleRowHighlight"
+        empty-text="暂无数据"
         style="width: 100%; white-space: nowrap;"
         v-loading="loading"
     >

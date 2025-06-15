@@ -29,6 +29,7 @@
           :props="defaultProps"
           :filter-node-method="filterNode"
           @node-click="handleNodeClick"
+          empty-text="暂无数据"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node" @click="logNodeData(node, data)">

@@ -177,6 +177,7 @@
           height="440"
           scrollbar-always-on
           :row-class-name="getSummaryRowClass"
+          empty-text="暂无数据"
       >
         <el-table-column label="日期" prop="snapshot_date" sortable />
         <el-table-column label="总批次" prop="total_batches" sortable />
@@ -215,6 +216,7 @@
           height="440"
           scrollbar-always-on
           :row-class-name="getSummaryRowClass"
+          empty-text="暂无数据"
       >
         <el-table-column label="班组" prop="team_name" sortable />
         <el-table-column label="异常检测项" prop="abnormal_fields" sortable />
@@ -246,7 +248,7 @@
           </el-tooltip>
         </div>
       </template>
-      <el-table :data="paged(tableAbnormalRatioByFieldGrouped, paginationField)" size="large" border  height="440" scrollbar-always-on>
+      <el-table :data="paged(tableAbnormalRatioByFieldGrouped, paginationField)" size="large" border  height="440" empty-text="暂无数据" scrollbar-always-on>
         <el-table-column label="检测项目" prop="label" sortable />
         <el-table-column label="异常数" prop="abnormal_count" sortable />
       </el-table>
@@ -278,6 +280,7 @@
           height="440"
           scrollbar-always-on
           :row-class-name="getSummaryRowClass"
+          empty-text="暂无数据"
       >
         <el-table-column label="产品名" prop="product_name" sortable />
         <el-table-column label="总批次" prop="total_batches" sortable />
@@ -311,7 +314,7 @@
           </el-tooltip>
         </div>
       </template>
-      <el-table :data="paged(tableAbnormalHeatmap, paginationHeatmap)" size="large" border  height="440" scrollbar-always-on>
+      <el-table :data="paged(tableAbnormalHeatmap, paginationHeatmap)" size="large" border  height="440" empty-text="暂无数据" scrollbar-always-on>
         <el-table-column label="日期" prop="snapshot_date" sortable />
         <el-table-column label="产品" prop="product_name" sortable />
         <el-table-column label="异常数" prop="abnormal_count" sortable />
@@ -344,6 +347,7 @@
           height="440"
           scrollbar-always-on
           :row-class-name="getSummaryRowClass"
+          empty-text="暂无数据"
       >
         <el-table-column label="检验员" prop="inspector_name" sortable />
         <el-table-column label="检测数" prop="inspection_count" sortable />
@@ -383,6 +387,7 @@
           border
           height="440"
           scrollbar-always-on
+          empty-text="暂无数据"
       >
         <el-table-column label="质检表单" width="200">
           <template #default="scope">

@@ -64,6 +64,7 @@
         :height="tableHeight"
         style="width: 100%;"
         @sort-change="handleSortChange"
+        empty-text="暂无数据"
         border
     >
       <el-table-column label="ID" prop="id" width="100" sortable="custom" />

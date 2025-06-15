@@ -91,6 +91,7 @@
         @sort-change="handleSortChange"
         :allow-drag-last-column="true"
         :row-class-name="renderRows"
+        empty-text="暂无数据"
         border
     >
       <el-table-column label="告警编号" prop="alert_code" width="190" fixed="left">
