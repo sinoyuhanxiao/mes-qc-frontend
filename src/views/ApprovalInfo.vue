@@ -63,9 +63,10 @@
         :data="table.assignments"
         :height="tableHeight"
         style="width: 100%;"
+        @sort-change="handleSortChange"
         border
     >
-      <el-table-column label="ID" prop="id" width="100" />
+      <el-table-column label="ID" prop="id" width="100" sortable="custom" />
 
       <el-table-column label="质检表单名称" prop="qc_form_template_name" width="300">
         <template #default="scope">
@@ -101,7 +102,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="产生时间" prop="created_at" width="180">
+      <el-table-column label="产生时间" prop="created_at" width="180" sortable="custom">
         <template #default="scope">
           {{ formatDate(scope.row.created_at) }}
         </template>
@@ -231,7 +232,11 @@ export default {
       selectedQcFormTemplateName: '',
       selectedQcFormTemplateId: '',
       selectedApprovalType: '',
-      selectedApprovalState: ''
+      selectedApprovalState: '',
+
+      // sorting
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
     };
   },
   methods: {
@@ -242,6 +247,8 @@ export default {
         const params = {
           page,
           size,
+          sortBy: this.sortBy,
+          sortDirection: this.sortDirection
         };
 
         if (this.filters.state) {
@@ -300,6 +307,16 @@ export default {
     handleSizeChange(newSize) {
       this.pagination.pageSize = newSize;
       this.fetchAssignments(this.pagination.currentPage - 1, newSize);
+    },
+    handleSortChange({ prop, order }) {
+      const backendFieldMap = {
+        created_at: 'createdAt',
+        id: 'id' // add others here if needed
+      };
+
+      this.sortBy = backendFieldMap[prop] || prop;
+      this.sortDirection = order === 'ascending' ? 'asc' : 'desc';
+      this.fetchAssignments(this.pagination.currentPage - 1, this.pagination.pageSize);
     },
     viewDetails(row) {
       this.selectedSubmissionId = row.submission_id || row.id;
