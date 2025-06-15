@@ -1,25 +1,33 @@
 <template>
   <el-dialog v-model="visible" title="导出质量报告" width="400px" @close="resetFilters">
     <div class="filter-fields">
-      <el-date-picker
-          v-model="filters.dateRange"
-          type="daterange"
-          unlink-panels
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          :shortcuts="shortcuts"
-          style="width: 94.5%;"
-      />
+      <!-- 日期范围 -->
+      <div style="position: relative;">
+        <span style="position: absolute; top: 2px; left: -10px; color: red;">*</span>
+        <el-date-picker
+            v-model="filters.dateRange"
+            type="daterange"
+            unlink-panels
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :shortcuts="shortcuts"
+            style="width: 94.5%;"
+            :clearable="false"
+        />
+      </div>
 
-      <el-tree-select
-          v-model="filters.teamId"
-          :data="teamTreeData"
-          placeholder="选择班组"
-          filterable
-          clearable
-          check-strictly
-          style="width: 100%;"
-      />
+      <!-- 班组 -->
+      <div style="position: relative;">
+        <span style="position: absolute; top: 2px; left: -10px; color: red;">*</span>
+        <el-tree-select
+            v-model="filters.teamId"
+            :data="teamTreeData"
+            placeholder="选择班组"
+            filterable
+            check-strictly
+            style="width: 100%;"
+        />
+      </div>
 
       <el-select v-model="filters.shiftId" placeholder="选择班次" filterable clearable>
         <el-option v-for="shift in shifts" :key="shift.id" :label="shift.name" :value="shift.id" />
@@ -34,7 +42,13 @@
       </el-select>
 
       <div class="button-row">
-        <el-button type="primary" @click="handleDocumentExport">导出</el-button>
+        <el-button
+            type="primary"
+            :disabled="!filters.teamId || filters.dateRange.length !== 2"
+            @click="handleDocumentExport"
+        >
+          导出
+        </el-button>
         <el-button @click="visible = false">取消</el-button>
       </div>
     </div>
