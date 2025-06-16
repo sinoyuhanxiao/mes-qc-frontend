@@ -267,6 +267,7 @@
           </div>
 
           <team-form-tree
+              :restrict-selection-to-allowed-only="false"
               :selectedFormIds="teamForms"
               :showOnlySelectedNode="true"
               :expand-all-nodes="false"
@@ -328,7 +329,6 @@
                   :data="parentTeamOptions(newTeam.id)"
                   :placeholder="translate('teamManagement.addDialog.selectParentTeamPlaceholder')"
                   check-strictly
-                  clearable
                   @change="clearLeaderMemberFormSeleciton('create')"
               >
               </el-tree-select>
@@ -449,6 +449,7 @@
               <team-form-tree
                   :showOnlySelectedNode="false"
                   :expand-all-nodes="false"
+                  :restrict-selection-to-allowed-only="newTeam.parent_id !== null"
                   :allowed-form-ids="parentFormIds"
                   @update-selected-forms="(formIds)=> newForm.selectedForms = formIds.map(f => f.id)"
                   @on-node-clicked="handleFormNodeClicked"
@@ -476,6 +477,7 @@
 
             <div style="margin-bottom: 10px">
               <team-form-tree
+                  :restrict-selection-to-allowed-only="false"
                   :selectedFormIds="newForm.selectedForms"
                   :showOnlySelectedNode="true"
                   :expand-all-nodes="true"
@@ -557,7 +559,6 @@
                   v-model="editTeam.parent_id"
                   :data="parentTeamOptions(editTeam.id)"
                   check-strictly
-                  clearable
                   :placeholder="translate('teamManagement.editDialog.selectParentTeamPlaceholder')"
                   @change="clearLeaderMemberFormSeleciton('edit')"
               />
@@ -679,6 +680,7 @@
           <el-col :span="14">
             <el-form-item :label="translate('teamManagement.editDialog.forms')">
               <team-form-tree
+                  :restrict-selection-to-allowed-only="editTeam.parent_id != null"
                   :selectedFormIds="editForm.assignedForms"
                   :showOnlySelectedNode="false"
                   :expand-all-nodes="false"
@@ -709,6 +711,7 @@
 
             <div style="margin-bottom: 10px">
               <team-form-tree
+                  :restrict-selection-to-allowed-only="false"
                   :selectedFormIds="editForm.assignedForms"
                   :showOnlySelectedNode="true"
                   :expand-all-nodes="true"

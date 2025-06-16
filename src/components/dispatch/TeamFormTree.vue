@@ -23,7 +23,7 @@
       <el-tree
           ref="treeRef"
           class="qc-tree"
-          :data="data"
+          :data="displayedTreeData"
           node-key="id"
           :props="defaultProps"
           :filter-node-method="filterNode"
@@ -67,11 +67,13 @@ interface Tree {
 const props = withDefaults(defineProps<{
   selectedFormIds?: string[];
   allowedFormIds?: string[];
+  restrictSelectionToAllowedOnly?: boolean;
   showOnlySelectedNode: boolean;
   expandAllNodes: boolean;
 }>(), {
   selectedFormIds: () => [],
   allowedFormIds: () => [],
+  restrictSelectionToAllowedOnly: false,
   showOnlySelectedNode: false,
   expandAllNodes: false,
 });
@@ -84,7 +86,7 @@ const treeRef = ref<InstanceType<typeof ElTree>>()
 const rawTreeData = ref<Tree[]>([]);
 
 // Data to display in el-tree
-const data = ref<Tree[]>([])
+const displayedTreeData = ref<Tree[]>([])
 const error = ref<string | null>(null)
 
 const defaultProps = {
@@ -166,32 +168,37 @@ function markDisabled(tree: Tree[]): Tree[] {
 
   /** returns a deep-copied subtree where `.disabled`
    is set on every node (documents & folders) */
-  const walk = (nodes: Tree[]): Tree[] =>
-      nodes.map(n => {
-        const copy: Tree = { ...n }
-        const isDoc   = copy.nodeType === 'document'
-        const hasKids = Array.isArray(copy.children) && copy.children.length
+  const walk = (nodes: Tree[]): Tree[] => {
 
-        /* ─────────────────────────────  leaves  ── */
+      return nodes.map(n => {
+        const copy: Tree = { ...n }
+        const isDoc   = copy.nodeType === 'document';
+        const hasKids = Array.isArray(copy.children) && copy.children.length;
+
+        // If node is a leaf node, it must be a form, and set disabled to false when the id is in the allowed id list
         if (!hasKids) {
-          copy.disabled = isDoc ?
-              (allowedFormIds.length &&
-              !allowedFormIds.includes(copy.id)) : true;
+          copy.disabled = isDoc ? !(allowedFormIds.includes(copy.id)) : true;
           return copy
         }
 
         /* ─────────────────────────────  folders  ── */
-        copy.children = walk(copy.children)
+        copy.children = walk(copy.children);
         /* folder is disabled ⇢ all direct children are disabled */
-        copy.disabled = copy.children.every(c => c.disabled)
+        copy.disabled = copy.children.every(c => c.disabled);
+
         return copy
       })
+  }
 
   return walk(tree)
 }
 
-function applyAllowed () {
-  data.value = markDisabled(rawTreeData.value);
+function applyAllowed() {
+  if (props.restrictSelectionToAllowedOnly) {
+    displayedTreeData.value = markDisabled(rawTreeData.value);
+  } else {
+    displayedTreeData.value = rawTreeData.value;
+  }
 }
 
 onMounted(async () => {
@@ -204,7 +211,7 @@ onMounted(async () => {
     const nodeKeys = nodesToCheck.map(node => node.id);
     treeRef.value.setCheckedKeys(nodeKeys);
   } else {
-    data.value = filterTreeBySelectedIds(rawTreeData.value, props.selectedFormIds);
+    displayedTreeData.value = filterTreeBySelectedIds(rawTreeData.value, props.selectedFormIds);
   }
 });
 
@@ -216,7 +223,7 @@ watch(
       }
 
       if (props.showOnlySelectedNode) {
-        data.value = filterTreeBySelectedIds(rawTreeData.value, props.selectedFormIds);
+        displayedTreeData.value = filterTreeBySelectedIds(rawTreeData.value, props.selectedFormIds);
       }
     },
     { immediate: true }
@@ -228,7 +235,9 @@ watch(filterText, (val) => {
 });
 
 watch(
-    () => props.allowedFormIds, applyAllowed, {immediate: true, deep: true}
+    () => props.allowedFormIds, (val) => {
+      applyAllowed()
+    },{immediate: true, deep: true}
 )
 
 </script>
