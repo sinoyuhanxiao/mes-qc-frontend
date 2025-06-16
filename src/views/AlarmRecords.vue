@@ -443,7 +443,13 @@ export default {
       return {
         tooltip: {},
         grid: { top: 20, bottom: 20, left: 50, right: 20 },
-        xAxis: { type: 'category', data: sorted.map(item => item[0]) },
+        xAxis: {
+          type: 'category',
+          data: sorted.map(item => item[0]),
+          axisLabel: {
+            formatter: value => value.length > 6 ? value.slice(0, 6) + '..' : value
+          }
+        },
         yAxis: { type: 'value' },
         series: [{ type: 'bar', barWidth: 30, data: sorted.map(item => item[1]) }]
       };
@@ -453,7 +459,13 @@ export default {
       return {
         tooltip: {},
         grid: { top: 20, bottom: 20, left: 50, right: 20 },
-        xAxis: { type: 'category', data: sorted.map(item => item[0]) },
+        xAxis: {
+          type: 'category',
+          data: sorted.map(item => item[0]),
+          axisLabel: {
+            formatter: value => value.length > 6 ? value.slice(0, 6) + '..' : value
+          }
+        },
         yAxis: { type: 'value' },
         series: [{ type: 'bar', barWidth: 30, data: sorted.map(item => item[1]) }]
       };
