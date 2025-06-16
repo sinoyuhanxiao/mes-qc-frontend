@@ -517,16 +517,6 @@ export default {
     };
   },
   watch: {
-    // Watch for changes in assignedTeams and log its content
-    "editUser.assignedTeams": {
-      handler(newValue, oldValue) {
-        console.log("Assigned Teams changed:", {
-          newValue,
-          oldValue,
-        });
-      },
-      deep: true, // Ensures nested changes are tracked
-    },
     "newUser.role": {
       handler(newRoleId, oldRoleId) {
         /**
@@ -619,6 +609,7 @@ export default {
             }
           })
         };
+
         const isAllowed = (teamId, nodes) => {
           nodes.forEach((node) => {
             if (node.id === teamId) {
@@ -902,6 +893,7 @@ export default {
       });
     },
     handleEdit(index, row) {
+
       this.editUser = {
         id: row.id,
         name: row.name,
@@ -911,14 +903,18 @@ export default {
         email: row.email,
         phone_number: row.phone_number,
         status: row.status,
-        assignedTeams: row.teams
-            ? row.teams.map(team => team.id) // Only map team.id
-            : [],
+        assignedTeams: [],
       };
       this.changePassword = false; // Reset checkbox
       this.newPassword = ''; // Reset password fields
       this.confirmPassword = '';
       this.editDialogVisible = true;
+
+      // on nextTick -> set the real team list
+      this.$nextTick(() => {
+        this.editUser.assignedTeams =
+            row.teams ? row.teams.map(t => t.id) : [];
+      });
     },
     async handleDelete(index, row) {
       const currentUserId = this.$store.getters.getUser.id; // Get logged-in user ID
