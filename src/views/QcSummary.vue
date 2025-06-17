@@ -753,9 +753,17 @@ const chartTeamAbnormalComparison = ref({
   xAxis: {
     type: 'category',
     name: '班组',
-    nameTextStyle: {
-    },
-    data: []
+    nameTextStyle: {},
+    data: [],
+    axisLabel: {
+      interval: 0, // 确保每个标签都显示
+      formatter: function (value) {
+        return value.length > 5 ? value.slice(0, 5) + '…' : value;
+      },
+      overflow: 'breakAll', // 确保标签不被隐藏
+      width: 60,             // 固定宽度以触发裁剪行为
+      ellipsis: true,        // ECharts v5+ 支持（若无效可以忽略）
+    }
   },
   yAxis: {
     name: '异常数',
