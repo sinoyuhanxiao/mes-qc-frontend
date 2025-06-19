@@ -134,11 +134,11 @@
 <!--          </template>-->
 <!--        </el-table-column>-->
 
-        <el-table-column :label="translate('teamManagement.table.updatedAt')" prop="updated_at" width="180" sortable>
-          <template #default="scope">
-            <span>{{ formatDate(scope.row.updated_at) }}</span>
-          </template>
-        </el-table-column>
+      <el-table-column :label="translate('teamManagement.table.updatedAt')" prop="updated_at" width="180" sortable>
+        <template #default="scope">
+          <span>{{ scope.row.updated_at ? formatDate(scope.row.updated_at) : '-' }}</span>
+        </template>
+      </el-table-column>
 
       <el-table-column :label="translate('teamManagement.table.actions')" align="right" header-align="right" width="280" fixed="right">
         <template #default="scope">
