@@ -495,7 +495,7 @@ watch(() => props.submissionId, async (newId) => {
     if (versionRecords.value.length > 0) {
       const rawKeys = Object.keys(versionRecords.value[0])
       const filteredKeys = rawKeys.filter(k =>
-          !['_id', 'created_by', 'created_at', 'e-signature', '提交人', 'version', 'approval_info', 'exceeded_info', 'version_group_id'].includes(k) &&
+          !['_id', 'created_by', 'created_at', 'e-signature', '提交人', 'version', 'approval_info', 'exceeded_info', 'version_group_id', 'approver_updated_at'].includes(k) &&
           !k.startsWith('related_')
       )
       versionHeaders.value = filteredKeys
