@@ -903,7 +903,7 @@ onMounted(() => {
     if (vFormRef.value && typeof vFormRef.value.getFormData === 'function') {
       clearInterval(waitUntilFormReady)
       startDirtyCheck();
-      tryLoadDraft();
+      // tryLoadDraft();
     }
   }, 100)
 });
@@ -1237,6 +1237,8 @@ watch(
           }
           ElMessage.success(translate('FormDisplay.formLoadSuccess'))
           // await tryLoadDraft();
+          await nextTick();
+          await tryLoadDraft()
         } else {
           ElMessage.error(translate('FormDisplay.formLoadFailed'))
         }
