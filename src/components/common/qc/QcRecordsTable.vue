@@ -303,9 +303,12 @@
 
     // Remove non-expanded expand icons to fix the element plus bug
     setTimeout(() => {
-      document.querySelectorAll('div.el-table__expand-icon:not(.el-table__expand-icon--expanded)').forEach(icon => {
-        icon.style.opacity = '0'                // Make invisible
-        icon.style.pointerEvents = 'none'       // Prevent click
+      document.querySelectorAll('.el-table__expand-icon').forEach(icon => {
+        const indent = icon.previousElementSibling
+        if (indent && indent.classList.contains('el-table__indent')) {
+          icon.style.opacity = '0'
+          icon.style.pointerEvents = 'none'
+        }
       })
     }, 10)
   }
