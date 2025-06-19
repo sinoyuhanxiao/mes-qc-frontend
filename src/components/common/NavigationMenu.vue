@@ -3,12 +3,39 @@
     <el-menu
         :default-active="activeMenu"
         class="el-menu-vertical-demo"
-        background-color="#545c64"
+        background-color="#466a9f"
         text-color="#fff"
         active-text-color="#ffd04b"
         router
         :collapse="isCollapsed"
     >
+      <!-- FPS Logo Section -->
+      <div
+          :style="{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '90px', // 保证上下留白
+              width: isCollapsed ? '64px' : '240px',
+              backgroundColor: 'transparent',
+              transition: 'width 0.2s ease'
+            }"
+      >
+        <div style="width: 100%; text-align: center">
+          <img
+              v-if="!isCollapsed"
+              src="@/assets/fps_logo_medium_white.png"
+              alt="FPS Logo"
+              style="height: 200px; padding-top: 30px; max-width: 100%; object-fit: contain"
+          />
+          <img
+              v-else
+              src="@/assets/fps-logo.png"
+              alt="FPS Logo (Collapsed)"
+              style="height: 40px; max-width: 100%; object-fit: contain"
+          />
+        </div>
+      </div>
       <el-scrollbar>
         <div class="menu-container">
           <!-- 顶部菜单栏，添加可折叠按钮 -->
@@ -491,6 +518,7 @@ export default {
 }
 
 .menu-container {
+  max-height: calc(100vh - 260px); /* 视口减去 logo + 用户栏高度 */
   flex: 1;              /* Takes available space */
   flex-direction: column;
   align-items: flex-start;
@@ -570,7 +598,7 @@ export default {
   left: 70px;  /* 让它浮在侧边栏右侧 */
   width: 30px;
   height: 30px;
-  background-color: #545c64;
+  background-color: #466a9f;
   color: #fff;
   border-radius: 50%;
   border: none;
