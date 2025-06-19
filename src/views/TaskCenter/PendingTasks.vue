@@ -1,6 +1,6 @@
 <template>
   <el-container>
-    <el-aside width="25%" style="padding: 20px">
+    <el-aside width="25%">
       <template v-if="teamId !== null">
         <FormTree
             ref="formTreeRef"
