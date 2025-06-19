@@ -53,7 +53,7 @@
         <el-button
             type="primary"
             v-if="props.accessByTeam"
-            @click="handleViewRecords"
+            @click="prepareSecureAction('view')"
             style="margin-left: 10px"
         >
           {{ translate('FormDataSummary.viewRecords') }}
@@ -62,8 +62,7 @@
         <el-button
             type="success"
             v-if="props.accessByTeam"
-            @update:modelValue="emit('update:visible', $event)"
-            @click="exportDialogVisible = true"
+            @click="prepareSecureAction('export')"
             style="margin-left: 10px"
         >
           导出本班汇总
@@ -467,8 +466,7 @@
 
   <PasswordPrompt
       v-model="showPasswordDialog"
-      :correct-password="'Sv@18388'"
-      @verified="openQcRecords"
+      @verified="handlePasswordVerified"
   />
 
   <EditApprovalFlowDialog
@@ -519,7 +517,7 @@ import { getAllShifts } from '@/services/shiftService'
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue"
 import { getAllTeamTree, getTeamByTeamLeadId } from '@/services/teamService';
 const showApprovalDialog = ref(false)
-
+const secureAction = ref(null); // dealing with the second password prompt
 import ExportDocumentDialog from '@/components/export/ExportDocumentDialog.vue'
 import soundEffect from '@/assets/sound_effect.mp3'; // Import your audio file
 import RecipeSetting from "@/components/form-manager/RecipeSetting.vue";
@@ -537,7 +535,6 @@ import {
   deleteSuggestedBatch, updateSuggestedBatch
 } from '@/services/production/suggestedBatchService';
 import {Close, Edit} from "@element-plus/icons-vue";
-
 
 const showRecipeDrawer = ref(false)
 const qcRecordsDialogVisible = ref(false);
@@ -827,6 +824,20 @@ const handleAddBatch = async () => {
     console.error('添加批次失败:', err); // 后台或网络错误
     ElMessage.error(`批次 ${newBatch.code} 添加失败，请重试`);
   }
+};
+
+const prepareSecureAction = (actionType) => {
+  secureAction.value = actionType;
+  showPasswordDialog.value = true;
+};
+
+const handlePasswordVerified = () => {
+  if (secureAction.value === 'view') {
+    openQcRecords();
+  } else if (secureAction.value === 'export') {
+    exportDialogVisible.value = true;
+  }
+  secureAction.value = null;
 };
 
 function transformTeamTreeToTreeSelectFormat(teams) {
