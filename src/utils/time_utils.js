@@ -12,3 +12,24 @@ export function convertDateRangeToUtc(dateRange) {
   return [start.toISOString(), end.toISOString()];
 }
 
+export function formatClientTime(utcDateTime) {
+  if (!utcDateTime) return "-";
+
+  // 只在不含时区信息的时间戳后加 Z，避免重复加导致 Invalid Date
+  const dateStr = /Z|[+-]\d{2}:?\d{2}/.test(utcDateTime) ? utcDateTime : utcDateTime + "Z";
+
+  const utcDate = new Date(dateStr);
+  if (isNaN(utcDate.getTime())) return "Invalid Date";
+
+  return utcDate.toLocaleString("zh-CN", {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).replace(/\//g, "-");
+}
+

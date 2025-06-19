@@ -7,6 +7,7 @@ import autoTable from 'jspdf-autotable'
 import callAddFont from '@/assets/simfang.js'
 import callAddBoldFont from '@/assets/simfang-bold.js'
 import { useAlertHighlight } from '@/composables/useAlertHighlight'
+import {formatClientTime} from "@/utils/time_utils";
 const { getAlertTextColor, getStyledValueWithIcon, getAlertTooltip } = useAlertHighlight(true)
 
 const excludedKeys = ['exceeded_info', 'approval_info', 'version_group_id', 'version', 'approver_updated_at']; // set the excluded key in uncategorized in here
@@ -288,7 +289,7 @@ export function useApprovalDetailExport() {
                 r.user_name,
                 { submitter: '填报员', leader: '班长', supervisor: '主管' }[r.role] || r.role,
                 { completed: '已完成', pending: '待操作', not_started: '未开始' }[r.status] || r.status,
-                r.timestamp || '-',
+                formatClientTime(r.timestamp),
                 r.comments || '',
                 r.suggest_retest ? '是' : '否'
             ]),
