@@ -89,7 +89,7 @@
     <span>是否确定保存当前配方警戒值？</span>
     <template #footer>
       <el-button @click="handleDialogClose">取消</el-button>
-      <el-button type="primary" @click="pendingSave && pendingSave()">确认</el-button>
+      <el-button type="primary" @click="handleDebouncedSave">确认</el-button>
     </template>
   </el-dialog>
 
@@ -101,6 +101,7 @@ import { ElMessage } from 'element-plus'
 import { windowMaskVisible } from '@/globals/mask'
 import { leftHoverDotPoint, rightHoverDotPoint } from '@/globals/line'
 import { fetchControlLimitsByTemplateId, updateControlLimits  } from '@/services/recipeService'
+import { debounce } from 'lodash-es'
 
 const showSaveConfirm = ref(false);
 const loading = ref(false)
@@ -129,6 +130,10 @@ watch(
 onMounted(() => {
   fetchData(props.qcFormTemplateId)
 })
+
+const handleDebouncedSave = debounce(() => {
+  pendingSave && pendingSave()
+}, 1000, { leading: true, trailing: false })
 
 const controlLimits = reactive({})
 const originalControlLimits = reactive({})
