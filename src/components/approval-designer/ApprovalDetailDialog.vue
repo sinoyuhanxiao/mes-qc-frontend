@@ -226,7 +226,7 @@ const emit = defineEmits(['update:visible'])
 
 const computedTableHeight = computed(() => {
   const rowCount = versionRecords.value.length
-  const rowHeight = 100
+  const rowHeight = 150
   const maxHeight = 1000
   return Math.min(rowCount * rowHeight + 100, maxHeight)
 })
