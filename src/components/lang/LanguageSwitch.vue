@@ -19,7 +19,7 @@ import { changeLocale } from '@/utils/i18n';
 import { ArrowDown } from "@element-plus/icons-vue";
 
 // Initialize current language from localStorage or default to English
-const currentLanguage = ref(localStorage.getItem('app-language') || 'en-US');
+const currentLanguage = ref(localStorage.getItem('app-language') || 'zh-CN');
 const currentLanguageName = ref(currentLanguage.value === 'zh-CN' ? '中文' : 'English');
 
 // Function to handle language change
