@@ -332,6 +332,7 @@ export default {
       this.tableHeight = window.innerHeight - 200;
     },
     shouldDisableApprove(row) {
+      if (this.userRoleId === 4) return false; // Manager can always approve
       return (
           (this.userRoleId === 1 && row.state === 'pending_leader') ||
           (this.userRoleId === 3 && row.state === 'pending_supervisor')

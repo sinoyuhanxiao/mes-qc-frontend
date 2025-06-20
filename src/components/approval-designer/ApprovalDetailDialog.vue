@@ -269,10 +269,13 @@ const store = useStore();
 const user = store.getters.getUser;
 const approverId = user?.id;
 
-// 🔽 Determine approver role string based on user's role ID
+// Determine approver role string based on user's role ID
 const approverRole = computed(() => {
   if (user?.role?.id === 1) return 'supervisor';
   if (user?.role?.id === 3) return 'leader';
+  if (user?.role?.id === 4) {
+    return props.approvalState === 'pending_leader' ? 'leader' : 'supervisor';
+  }
   return null;
 });
 
