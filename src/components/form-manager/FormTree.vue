@@ -30,6 +30,9 @@
           :filter-node-method="filterNode"
           @node-click="handleNodeClick"
           empty-text="暂无数据"
+          :draggable="isEditMode"
+          :allow-drop="allowDrop"
+          @node-drop="handleDrop"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node" @click="logNodeData(node, data)">
@@ -113,6 +116,7 @@ import { ElMessageBox } from "element-plus";
 import { defineProps } from 'vue';
 import { getFormTreeByTeam } from '@/services/teamFormService';
 import { loadFormDraftForUser } from '@/utils/formDraftStorage'
+import { moveFormNode } from '@/services/formNodeService.js';
 
 interface Tree {
   _id: string
@@ -166,6 +170,9 @@ const handleNodeClick = (nodeData) => {
 
 const toggleEditMode = () => {
   isEditMode.value = !isEditMode.value
+  if (isEditMode.value) {
+    ElMessage.info('您现在可以编辑和拖动节点')
+  }
 }
 
 // Fetch data from the backend
@@ -323,6 +330,50 @@ const showDraft = (data) => {
   const draft = loadFormDraftForUser(props.userId, formId);
   return !!draft;
 };
+
+const allowDrop = (draggingNode, dropNode, type) => {
+  // Only allow dropping into folders (and not into itself or its child)
+  return dropNode.data.nodeType === 'folder' && type === 'inner' && draggingNode.data.id !== dropNode.data.id;
+};
+
+const handleDrop = async (draggingNode, dropNode, dropType) => {
+  if (dropType !== 'inner') return; // only allow moving into folders
+
+  const getColoredLabel = (node) => {
+    const name = node.data.label
+    const isForm = node.data.nodeType === 'document'
+    const label = isForm ? `${name}（质检表单）` : `${name}（文件夹）`
+    const color = isForm ? 'var(--el-color-primary)' : 'var(--el-color-warning)'
+    return `<span style="color: ${color}">${label}</span>`
+  }
+
+  const draggedLabel = getColoredLabel(draggingNode)
+  const dropLabel = getColoredLabel(dropNode)
+
+  try {
+    await ElMessageBox.confirm(
+        `确定要将${draggedLabel}移动到${dropLabel}吗？`,
+        '确认移动',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
+        }
+    )
+
+    // User confirmed: proceed to move
+    await moveFormNode(draggingNode.data.id, dropNode.data.id)
+    ElMessage.success('节点已移动')
+    reload()
+  } catch (e) {
+    // User clicked cancel or closed dialog — do nothing
+    console.log('用户取消了移动操作')
+    reload()
+  }
+}
+
+
 
 </script>
 
