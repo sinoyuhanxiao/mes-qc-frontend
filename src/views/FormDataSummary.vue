@@ -1,57 +1,58 @@
 <template>
   <el-container v-loading="pdfLoading" :element-loading-text="translate('FormDataSummary.loadingText')" element-loading-background="rgba(0, 0, 0, 0.4)" class="qcsum-container">
-    <el-aside width="25%">
-      <FormTree @select-form="selectForm" @add-form="addForm" />
-    </el-aside>
+    <splitpanes class="mes-split" style="height: 100%;" gutter-size="24" gutter-class="mes-gutter">
+      <pane size="25" max-size="50" min-size="20" class="form-tree-pane">
+        <FormTree @select-form="selectForm" @add-form="addForm" />
+      </pane>
 
-    <el-main width="75%" style="max-height: 100vh; overflow-y: auto;">
-      <template v-if="isMainDisplayed">
-        <div v-if="selectedForm" class="form-header">
-          <h1 style="width: 200px">{{ selectedForm.label }} {{ translate('FormDataSummary.summaryTitle') }}</h1>
-          <el-date-picker
-              style="width: 320px; margin-left: 150px; margin-right: 20px"
-              v-model="dateRange"
-              type="datetimerange"
-              :shortcuts="shortcuts"
-              :range-separator="translate('FormDataSummary.dateRangeSeparator')"
-              :start-placeholder="translate('FormDataSummary.startPlaceholder')"
-              :end-placeholder="translate('FormDataSummary.endPlaceholder')"
-              @change="refreshChartData"
-              :clearable="false"
+      <pane style="padding: 15px; max-height: 100vh; overflow-y: auto;">
+        <template v-if="isMainDisplayed">
+          <div v-if="selectedForm" class="form-header">
+            <h1 style="width: 200px">{{ selectedForm.label }} {{ translate('FormDataSummary.summaryTitle') }}</h1>
+            <el-date-picker
+                style="width: 320px; margin-left: 150px; margin-right: 20px"
+                v-model="dateRange"
+                type="datetimerange"
+                :shortcuts="shortcuts"
+                :range-separator="translate('FormDataSummary.dateRangeSeparator')"
+                :start-placeholder="translate('FormDataSummary.startPlaceholder')"
+                :end-placeholder="translate('FormDataSummary.endPlaceholder')"
+                @change="refreshChartData"
+                :clearable="false"
+            />
+            <el-button type="success" style="margin-top: 0;" @click="exportChartReportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
+            <el-button
+                type="primary"
+                @click="qcRecordsDialogVisible = true"
+                style="margin-top: 0"
+            >
+              {{ translate('FormDataSummary.viewRecords') }}
+            </el-button>
+          </div>
+
+          <el-skeleton v-if="loadingCharts" :rows="6" animated />
+
+          <div v-if="selectedForm && lineChartWidgets.length === 0 && pieChartWidgets.length === 0 && !loadingCharts" style="text-align: center; margin-top: 50px;">
+            <el-empty :description="translate('FormDataSummary.noChartData')" />
+          </div>
+
+          <QcCharts
+              v-else
+              :lineChartWidgets="lineChartWidgets"
+              :pieChartWidgets="pieChartWidgets"
           />
-          <el-button type="success" style="margin-top: 0;" @click="exportChartReportToPdf">{{ translate('FormDataSummary.generatePdf') }}</el-button>
-          <el-button
-              type="primary"
-              @click="qcRecordsDialogVisible = true"
-              style="margin-top: 0"
-          >
-            {{ translate('FormDataSummary.viewRecords') }}
-          </el-button>
-        </div>
+        </template>
 
-        <el-skeleton v-if="loadingCharts" :rows="6" animated />
-
-        <div v-if="selectedForm && lineChartWidgets.length === 0 && pieChartWidgets.length === 0 && !loadingCharts" style="text-align: center; margin-top: 50px;">
-          <el-empty :description="translate('FormDataSummary.noChartData')" />
-        </div>
-
-        <QcCharts
-            v-else
-            :lineChartWidgets="lineChartWidgets"
-            :pieChartWidgets="pieChartWidgets"
-        />
-      </template>
-
-      <template v-else>
-        <div style="display: flex; justify-content: center; margin-top: 40vh; transform: translateY(-50%)">
-          <el-empty
-              description="点击任意表单以查看内容"
-              image-size="200"
-          />
-        </div>
-      </template>
-    </el-main>
-
+        <template v-else>
+          <div style="display: flex; justify-content: center; margin-top: 40vh; transform: translateY(-50%)">
+            <el-empty
+                description="点击任意表单以查看内容"
+                image-size="200"
+            />
+          </div>
+        </template>
+      </pane>
+    </splitpanes>
     <!-- 质检记录弹窗组件 -->
     <QcRecordsDialog
         v-model:visible="qcRecordsDialogVisible"
@@ -70,9 +71,11 @@ import QcCharts from "@/components/common/qc/QcCharts.vue";
 import {provide, ref, watch} from "vue";
 import {exportChartReportToPdf} from "@/utils/exportUtils";
 import QcRecordsDialog from "@/components/common/QcRecordsDialog.vue";
+import { Splitpanes, Pane } from 'splitpanes';
+import 'splitpanes/dist/splitpanes.css';
 
 export default {
-  components: {QcRecordsDialog, QcCharts, FormTree },
+  components: {QcRecordsDialog, QcCharts, FormTree, Splitpanes, Pane },
   setup() {
     const lineChartRefs = [];
     const pieChartRefs = [];
@@ -289,4 +292,49 @@ export default {
     font-size: 16px; /* Adjust the size as needed */
     text-align: center;
   }
+
+  .mes-split {
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .form-tree-pane {
+    border-right: 2px solid rgba(102, 102, 102, 0.2);
+  }
+
+  .empty-placeholder {
+    display: flex;
+    justify-content: center;
+    margin-top: 40vh;
+    transform: translateY(-50%);
+  }
+
+  :deep(.splitpanes__splitter) {
+    background-color: #ccc;
+    position: relative;
+  }
+
+  :deep(.splitpanes__splitter)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: opacity 0.4s;
+    background-color: #466a9f55;
+    opacity: 0;
+    z-index: 1;
+  }
+
+  :deep(.splitpanes__splitter):hover::before {
+    opacity: 1;
+  }
+
+  :deep(.splitpanes--vertical > .splitpanes__splitter)::before {
+    left: -5px;
+    right: -5px;
+    height: 100%;
+  }
+
+
 </style>

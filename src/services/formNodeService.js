@@ -49,3 +49,14 @@ export const addChildNode = (newNode, parentId) => {
 export const deleteNode = (nodeId) => {
     return api.delete(`${BASE_URL}/${nodeId}`);
 };
+
+
+/**
+ * Move a node to a new parent.
+ * @param {string} nodeId - The ID of the node to move.
+ * @param {string} newParentId - The ID of the new parent node.
+ * @returns {Promise} API response.
+ */
+export const moveFormNode = (nodeId, newParentId) => {
+    return api.put(`/form-nodes/${nodeId}/move`, { newParentId });
+};
