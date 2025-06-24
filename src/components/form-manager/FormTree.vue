@@ -19,6 +19,19 @@
       </el-button>
     </div>
 
+    <!-- template：root-zone 事件统一加 .stop，阻断冒泡 -->
+    <div
+        v-if="isEditMode"
+        class="drop-to-root-zone"
+        @dragenter.stop="onDragEnterRootZone"
+        @dragover.stop.prevent
+        @dragleave.stop="onDragLeaveRootZone"
+        @drop.stop.prevent="handleDropToRoot"
+    >
+    <el-text type="info" style="font-size: 13px;">
+      拖到此处可变为根节点
+    </el-text>
+  </div>
     <el-scrollbar :height="scrollbarHeight">
       <el-tree
           ref="treeRef"
@@ -33,6 +46,7 @@
           :draggable="isEditMode"
           :allow-drop="allowDrop"
           @node-drop="handleDrop"
+          @node-drag-start="handleDragStart"
       >
         <template #default="{ node, data }">
           <div class="custom-tree-node" @click="logNodeData(node, data)">
@@ -41,7 +55,7 @@
                 <Folder v-if="data.nodeType === 'folder'" />
                 <Document v-else />
               </el-icon>
-              <el-text style="max-width: 220px;" truncated>
+              <el-text style="max-width: 40vw;" truncated>
                 {{ data.label }}
               </el-text>
               <el-text
@@ -112,11 +126,11 @@ import {
   addChildNode,
   deleteNode,
 } from '@/services/formNodeService.js';
-import { ElMessageBox } from "element-plus";
 import { defineProps } from 'vue';
 import { getFormTreeByTeam } from '@/services/teamFormService';
 import { loadFormDraftForUser } from '@/utils/formDraftStorage'
 import { moveFormNode } from '@/services/formNodeService.js';
+import { ElMessageBox } from 'element-plus'
 
 interface Tree {
   _id: string
@@ -147,12 +161,39 @@ const parentDataToAppend = ref<Tree | null>(null)
 const newNodeLabel = ref('')
 const newNodeType = ref('folder') // Default to folder
 const emit = defineEmits(['select-form', 'is-deletion']);
+const draggingNodeDataRef = ref(null)
+const draggingToRootZone = ref(false)
+const droppedToRoot = ref(false)
+const onDragEnterRootZone = () => { draggingToRootZone.value = true }
+const onDragLeaveRootZone = () => { draggingToRootZone.value = false }
+const scrollbarHeight = ref('');
 
-const scrollbarHeight = ref(`${window.innerHeight - 70}px`); // Adjust height dynamically
+let isMsgBoxOpen = false
+const _confirm = ElMessageBox.confirm
+
+ElMessageBox.confirm = function (...args) {
+  if (isMsgBoxOpen) {
+    // 如果已有弹窗正在显示，就直接返回一个拒绝的 Promise
+    return Promise.reject('已有确认框打开')
+  }
+  isMsgBoxOpen = true
+  // 调用原始的 confirm
+  const p = _confirm.apply(this, args)
+  // 无论点“确定”还是“取消”，都要在 finally 把锁打开
+  p.finally(() => {
+    isMsgBoxOpen = false
+  })
+  return p
+}
 
 const updateScrollbarHeight = () => {
-  scrollbarHeight.value = `${window.innerHeight - 70}px`; // Adjust height dynamically with padding
+  const offset = isEditMode.value ? 125 : 70;
+  scrollbarHeight.value = `${window.innerHeight - offset}px`;
 };
+
+watch(isEditMode, () => {
+  updateScrollbarHeight();
+});
 
 onMounted(() => {
   window.addEventListener('resize', updateScrollbarHeight);
@@ -191,9 +232,12 @@ const fetchFormTreeData = async () => {
   }
 };
 
-const reload = () => {
-  fetchFormTreeData();
-};
+const reload = async () => {
+  await fetchFormTreeData()
+  if (filterText.value) {
+    treeRef.value?.filter(filterText.value)
+  }
+}
 defineExpose({ reload });
 
 onMounted(fetchFormTreeData)
@@ -332,20 +376,31 @@ const showDraft = (data) => {
 };
 
 const allowDrop = (draggingNode, dropNode, type) => {
-  // Only allow dropping into folders (and not into itself or its child)
-  return dropNode.data.nodeType === 'folder' && type === 'inner' && draggingNode.data.id !== dropNode.data.id;
-};
+  if (draggingToRootZone.value) return false          // 彻底禁用
+  return dropNode && dropNode.data.nodeType === 'folder' && type === 'inner'
+}
+
+const getColoredLabel = (nodeData: { label: string; nodeType?: string; data?: { nodeType: string } }) => {
+  const name = nodeData.label
+  // 如果 nodeData.nodeType 不存在，就去取 nodeData.data.nodeType
+  const type = nodeData.nodeType ?? nodeData.data?.nodeType
+  const isForm = type === 'document'
+  const label = isForm
+      ? `${name}（质检表单）`
+      : `${name}（文件夹）`
+  const color = isForm
+      ? 'var(--el-color-primary)'
+      : 'var(--el-color-warning)'
+  return `<span style="color: ${color}">${label}</span>`
+}
 
 const handleDrop = async (draggingNode, dropNode, dropType) => {
-  if (dropType !== 'inner') return; // only allow moving into folders
-
-  const getColoredLabel = (node) => {
-    const name = node.data.label
-    const isForm = node.data.nodeType === 'document'
-    const label = isForm ? `${name}（质检表单）` : `${name}（文件夹）`
-    const color = isForm ? 'var(--el-color-primary)' : 'var(--el-color-warning)'
-    return `<span style="color: ${color}">${label}</span>`
+  if (draggingToRootZone.value) {
+    // This drop will be handled by `handleDropToRoot`
+    draggingToRootZone.value = false;
+    return;
   }
+  if (dropType !== 'inner') return; // only allow moving into folders
 
   const draggedLabel = getColoredLabel(draggingNode)
   const dropLabel = getColoredLabel(dropNode)
@@ -365,15 +420,45 @@ const handleDrop = async (draggingNode, dropNode, dropType) => {
     // User confirmed: proceed to move
     await moveFormNode(draggingNode.data.id, dropNode.data.id)
     ElMessage.success('节点已移动')
-    reload()
+    await reload()
   } catch (e) {
     // User clicked cancel or closed dialog — do nothing
     console.log('用户取消了移动操作')
-    reload()
+    await reload()
   }
 }
 
+const handleDragStart = (node, event) => {
+  draggingNodeDataRef.value = node.data
+}
 
+const handleDropToRoot = async (event: DragEvent) => {
+  event.stopPropagation()
+  draggingToRootZone.value = false; // Reset after drop
+  const draggingNodeData = draggingNodeDataRef.value;
+  if (!draggingNodeData) return;
+
+  try {
+    await ElMessageBox.confirm(
+        `确定要将 ${getColoredLabel(draggingNodeData)} 移动为顶级节点吗？`,
+        '确认移动',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
+        }
+    )
+
+    await moveFormNode(draggingNodeData.id, 'root');
+    droppedToRoot.value = true;
+    ElMessage.success('已设为顶级节点');
+    await reload();
+  } catch (e) {
+    console.log('用户取消了设为顶级节点的操作');
+    await reload();
+  }
+};
 
 </script>
 
@@ -410,6 +495,23 @@ const handleDrop = async (draggingNode, dropNode, dropType) => {
 
 .node-actions a {
   margin-left: 8px;
+}
+
+.drop-to-root-zone {
+  border: 2px dashed var(--el-color-info);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+  margin-bottom: 16px; /* increase spacing from the tree */
+  margin-right: 10px;
+  cursor: move;
+  height: 20px; /* was 20px */
+  background-color: rgba(240, 248, 255, 0.6); /* light hint background */
+}
+
+.drop-to-root-zone.dragging-over {
+  background-color: #ecf5ff;
+  border-color: var(--el-color-primary);
 }
 
 </style>
