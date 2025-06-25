@@ -56,6 +56,7 @@
     "qs": "^6.14.0",
     "sockjs-client": "^1.6.1",
     "sortablejs": "1.14.0",
+    "splitpanes": "^4.0.4",
     "stompjs": "^2.3.3",
     "vform-builds": "^2.2.9",
     "vform3-builds": "^3.0.10",
